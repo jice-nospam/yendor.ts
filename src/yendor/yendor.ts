@@ -1,5 +1,6 @@
 /// <reference path="../decl/jquery.d.ts" />
 /// <reference path="console.ts" />
+/// <reference path="console_pixi.ts" />
 /// <reference path="rng.ts" />
 /// <reference path="bsp.ts" />
 /// <reference path="fov.ts" />
@@ -43,7 +44,7 @@ module Yendor {
 				window.setTimeout(callback, 1000 / 60, new Date().getTime()); 
 			}; 
 		})(); 	
-		return new DivConsole( width, height, foreground, background, divSelector );
+		return new PixiConsole( width, height, foreground, background, divSelector, 'terminal.png' );
 	}
 
 	export interface FrameRenderer {
