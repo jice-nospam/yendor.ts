@@ -16,7 +16,12 @@ module Yendor {
 		private stage: PIXI.Stage;
 		private font: PIXI.BaseTexture;
 		private chars: PIXI.Texture[];
-		private cells: PIXI.Sprite[][];
+		private backCells: PIXI.Sprite[][];
+		private foreCells: PIXI.Sprite[][];
+		// empty character
+		private static ASCII_SPACE : number = 32;
+		// full character (all white)
+		private static ASCII_FULL : number = 219;
 
 		/*
 			Property: charWidth
@@ -46,32 +51,66 @@ module Yendor {
 			super(_width, _height, foreground, background);
 			this.canvasSelector = canvasSelector;
 			this.canvas = <HTMLCanvasElement>$(canvasSelector)[0];
-			this.stage = new PIXI.Stage(0xFFFFFF);
+			this.stage = new PIXI.Stage(ColorUtils.toNumber(background));
 			this.renderer = PIXI.autoDetectRenderer(640,480, {antialias:false, clearBeforeRender:false, preserveDrawingBuffer:false, resolution:1, transparent:false, view:this.canvas});
+			this.loadFont(fontUrl);
+			this.initCharacterMap();
+			this.initBackgroundCells(background);
+			this.initForegroundCells(foreground);
+		}
+
+		private loadFont( fontUrl: string ) {
 			this.font = PIXI.BaseTexture.fromImage(fontUrl, false, PIXI.scaleModes.NEAREST);
 			this.charWidth = this.font.width/16;
-			this.charHeight = this.font.height/16;
-			this.cells = [];
+			this.charHeight = this.font.height/16;			
+		}
+
+		private initCharacterMap() {
 			this.chars=[];
 			for ( var x=0; x < 16; x++) {
 				for ( var y=0; y < 16; y++) {
-					var rect=new PIXI.Rectangle(y*this.charHeight, x*this.charWidth, this.charWidth, this.charHeight);
-					this.chars[x+y*16]=new PIXI.Texture(this.font,rect);
+					var rect = new PIXI.Rectangle(y*this.charHeight, x*this.charWidth, this.charWidth, this.charHeight);
+					this.chars[x+y*16] = new PIXI.Texture(this.font,rect);
 				}
-			}
+			}			
+		}
+
+		private initBackgroundCells( background: Color ) {
+			this.backCells = [];
+			var defaultTint = ColorUtils.toNumber(background);
 			for ( var x=0; x < this.width; x++) {
-				this.cells[x] = [];
+				this.backCells[x] = [];
 				for ( var y=0; y < this.height; y++) {
 					var rect=new PIXI.Rectangle(0, 0, this.charWidth, this.charHeight);
-					var cell=new PIXI.Sprite(this.chars[32]);
+					var cell=new PIXI.Sprite(this.chars[PixiConsole.ASCII_FULL]);
 					cell.position.x = x * this.charWidth;
 					cell.position.y = y * this.charHeight;
 					cell.width = this.charWidth;
 					cell.height = this.charHeight;
-					this.cells[x][y]=cell;
+					cell.tint = defaultTint;
+					this.backCells[x][y]=cell;
 					this.stage.addChild(cell);
 				}
-			}
+			}			
+		}
+
+		private initForegroundCells( foreground: Color ) {
+			this.foreCells = [];
+			var defaultTint = ColorUtils.toNumber(foreground);
+			for ( var x=0; x < this.width; x++) {
+				this.foreCells[x] = [];
+				for ( var y=0; y < this.height; y++) {
+					var rect=new PIXI.Rectangle(0, 0, this.charWidth, this.charHeight);
+					var cell=new PIXI.Sprite(this.chars[PixiConsole.ASCII_SPACE]);
+					cell.position.x = x * this.charWidth;
+					cell.position.y = y * this.charHeight;
+					cell.width = this.charWidth;
+					cell.height = this.charHeight;
+					cell.tint = defaultTint;
+					this.foreCells[x][y]=cell;
+					this.stage.addChild(cell);
+				}
+			}			
 		}
 
 		/*
@@ -82,8 +121,9 @@ module Yendor {
 			for ( var x=0; x < this.width; x++) {
 				for ( var y=0; y < this.height; y++) {
 					var ascii = this.text[y].charCodeAt(x);
-					this.cells[x][y].texture = this.chars[ascii];
-					this.cells[x][y].tint = ColorUtils.toNumber(this.fore[x][y]);
+					this.foreCells[x][y].texture = this.chars[ascii];
+					this.foreCells[x][y].tint = ColorUtils.toNumber(this.fore[x][y]);
+					this.backCells[x][y].tint = ColorUtils.toNumber(this.back[x][y]);
 				}
 			}
 			this.renderer.render(this.stage);
