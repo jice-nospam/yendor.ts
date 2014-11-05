@@ -4,8 +4,9 @@ var	root: Yendor.Console;
 
 module Benchmark {
 
+	// these are the dimensions of the libtcod benchmark sample
 	var WIDTH: number = 80;
-	var HEIGHT: number = 30;
+	var HEIGHT: number = 60;
 	var rootDiv: HTMLElement;
 	var rng: Yendor.Random = new Yendor.ComplementaryMultiplyWithCarryRandom();
 	var framesPerSecond: number = 0;

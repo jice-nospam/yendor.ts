@@ -111,8 +111,12 @@ module Yendor {
 			A number between 0x000000 and 0xFFFFFF.
 		*/
 		static toNumber(color:Color) : number {
-			var rgb = ColorUtils.toRgb(color);
-			return rgb[0]*65536 + rgb[1]*256 + rgb[2];
+			if (color.charAt(0)=='#') {
+				return parseInt('0x'+color.substr(1));
+			} else {
+				var rgb = ColorUtils.toRgb(color);
+				return rgb[0]*65536 + rgb[1]*256 + rgb[2];
+			}
 		}
 	}
 

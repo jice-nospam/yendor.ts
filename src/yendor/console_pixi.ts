@@ -46,13 +46,11 @@ module Yendor {
 			super(_width, _height, foreground, background);
 			this.canvasSelector = canvasSelector;
 			this.canvas = <HTMLCanvasElement>$(canvasSelector)[0];
-			this.stage = new PIXI.Stage(0x888888);
-			this.renderer = PIXI.autoDetectRenderer(640,480, {antialias:false, clearBeforeRender:false, preserveDrawingBuffer:true, resolution:1, transparent:false, view:this.canvas});
-			var gameContainer = new PIXI.SpriteBatch();
+			this.stage = new PIXI.Stage(0xFFFFFF);
+			this.renderer = PIXI.autoDetectRenderer(640,480, {antialias:false, clearBeforeRender:false, preserveDrawingBuffer:false, resolution:1, transparent:false, view:this.canvas});
 			this.font = PIXI.BaseTexture.fromImage(fontUrl, false, PIXI.scaleModes.NEAREST);
 			this.charWidth = this.font.width/16;
 			this.charHeight = this.font.height/16;
-			this.stage.addChild(gameContainer);
 			this.cells = [];
 			this.chars=[];
 			for ( var x=0; x < 16; x++) {
@@ -68,9 +66,10 @@ module Yendor {
 					var cell=new PIXI.Sprite(this.chars[32]);
 					cell.position.x = x * this.charWidth;
 					cell.position.y = y * this.charHeight;
-					cell.tint=0xFF0000;
+					cell.width = this.charWidth;
+					cell.height = this.charHeight;
 					this.cells[x][y]=cell;
-					gameContainer.addChild(cell);
+					this.stage.addChild(cell);
 				}
 			}
 		}
@@ -84,7 +83,7 @@ module Yendor {
 				for ( var y=0; y < this.height; y++) {
 					var ascii = this.text[y].charCodeAt(x);
 					this.cells[x][y].texture = this.chars[ascii];
-					this.cells[x][y].tint = 0xFF0000; //ColorUtils.toNumber(this.fore[x][y]);
+					this.cells[x][y].tint = ColorUtils.toNumber(this.fore[x][y]);
 				}
 			}
 			this.renderer.render(this.stage);
