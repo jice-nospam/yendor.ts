@@ -4,8 +4,13 @@ var	root: Yendor.Console;
 
 module Benchmark {
 
+	// these are the dimensions of the libtcod benchmark sample
 	var WIDTH: number = 80;
-	var HEIGHT: number = 30;
+	var HEIGHT: number = 60;
+	var SAMPLE_SCREEN_WIDTH: number = 46;
+	var SAMPLE_SCREEN_HEIGHT: number = 20;
+	var SAMPLE_SCREEN_X: number = 20;
+	var SAMPLE_SCREEN_Y: number = 10;
 	var rootDiv: HTMLElement;
 	var rng: Yendor.Random = new Yendor.ComplementaryMultiplyWithCarryRandom();
 	var framesPerSecond: number = 0;
@@ -13,8 +18,8 @@ module Benchmark {
 	var fpsTimer: number = 0;
 
 	function render() {
-		for (var x = 0; x < WIDTH; x++ ) {
-			for ( var y = 0; y < HEIGHT; y++ ) {
+		for (var x = SAMPLE_SCREEN_X; x < SAMPLE_SCREEN_X + SAMPLE_SCREEN_WIDTH; x++ ) {
+			for ( var y = SAMPLE_SCREEN_Y; y < SAMPLE_SCREEN_Y + SAMPLE_SCREEN_HEIGHT; y++ ) {
 				var r = rng.getNumber(0,255);
 				var g = rng.getNumber(0,255);
 				var b = rng.getNumber(0,255);
@@ -29,6 +34,7 @@ module Benchmark {
 				root.setChar(x,y,String.fromCharCode(ch));
 			}
 		}
+		root.print(1,46,'fps : ' + framesPerSecond);
 	}
 
 	function handleNewFrame(time:number) {
@@ -38,7 +44,6 @@ module Benchmark {
 		} else if ( time - fpsTimer > 1000 ) {
 			framesPerSecond = currentFrameCount;
 			fpsTimer = time;
-			$('#fps')[0].innerHTML = framesPerSecond+' fps';
 			currentFrameCount = 0;
 		}
 		render();
@@ -46,7 +51,7 @@ module Benchmark {
 	}
 
 	$(function(){
-		root = Yendor.init( '#console', WIDTH, HEIGHT, '#000', '#fff' );
+		root = Yendor.init( '#console', WIDTH, HEIGHT, '#ffffff', '#000000' );
 		$('body').append("<div id = 'fps'/>");
 		Yendor.loop(handleNewFrame);
 	});

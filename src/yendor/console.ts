@@ -100,6 +100,24 @@ module Yendor {
 			}
 			return [0,0,0];
 		}
+		/*
+			Function: toNumber
+			Convert a string color into a number.
+
+			Parameters:
+			color - the color
+
+			Returns:
+			A number between 0x000000 and 0xFFFFFF.
+		*/
+		static toNumber(color:Color) : number {
+			if (color.charAt(0)=='#') {
+				return parseInt('0x'+color.substr(1));
+			} else {
+				var rgb = ColorUtils.toRgb(color);
+				return rgb[0]*65536 + rgb[1]*256 + rgb[2];
+			}
+		}
 	}
 
 	/*
@@ -383,7 +401,7 @@ module Yendor {
 
 	/*
 		Class: DivConsole
-		A console that can be renderer as divs (one per row) filled with spans.
+		A console that can be rendered as divs (one per row) filled with spans.
 	*/
 	export class DivConsole extends Console {
 		private divSelector: string;
@@ -409,7 +427,7 @@ module Yendor {
 			height - number of rows
 			foreground - default foreground color
 			background - default background color
-			div - HTML element where to render this console
+			divSelector - JQuery selector for the element where to render this console
 		*/
 		constructor( _width: number, _height: number,
 			foreground: Color, background: Color, divSelector : string ) {
