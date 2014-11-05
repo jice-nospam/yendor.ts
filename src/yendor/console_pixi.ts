@@ -12,7 +12,7 @@ module Yendor {
 	export class PixiConsole extends Console {
 		private canvasSelector: string;
 		private canvas: HTMLCanvasElement;
-		private renderer: PIXI.IPixiRenderer;
+		private renderer: PIXI.PixiRenderer;
 		private stage: PIXI.Stage;
 		private font: PIXI.BaseTexture;
 		private chars: PIXI.Texture[];
@@ -47,11 +47,11 @@ module Yendor {
 			this.canvasSelector = canvasSelector;
 			this.canvas = <HTMLCanvasElement>$(canvasSelector)[0];
 			this.stage = new PIXI.Stage(0x888888);
-			this.renderer = PIXI.autoDetectRenderer(640,480, this.canvas);
+			this.renderer = PIXI.autoDetectRenderer(640,480, {antialias:false, clearBeforeRender:false, preserveDrawingBuffer:true, resolution:1, transparent:false, view:this.canvas});
 			var gameContainer = new PIXI.SpriteBatch();
 			this.font = PIXI.BaseTexture.fromImage(fontUrl, false, PIXI.scaleModes.NEAREST);
 			this.charWidth = this.font.width/16;
-			this.charHeight = this.font.width/16;
+			this.charHeight = this.font.height/16;
 			this.stage.addChild(gameContainer);
 			this.cells = [];
 			this.chars=[];

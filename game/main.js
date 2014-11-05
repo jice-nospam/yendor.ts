@@ -559,7 +559,7 @@ var Yendor;
             this.canvasSelector = canvasSelector;
             this.canvas = $(canvasSelector)[0];
             this.stage = new PIXI.Stage(0x888888);
-            this.renderer = PIXI.autoDetectRenderer(640, 480, this.canvas);
+            this.renderer = PIXI.autoDetectRenderer(640, 480, { antialias: false, clearBeforeRender: false, preserveDrawingBuffer: true, resolution: 1, transparent: false, view: this.canvas });
             var gameContainer = new PIXI.SpriteBatch();
             this.font = PIXI.BaseTexture.fromImage(fontUrl, false, PIXI.scaleModes.NEAREST);
             this.charWidth = this.font.width / 16;
