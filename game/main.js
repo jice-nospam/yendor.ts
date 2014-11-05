@@ -2764,10 +2764,10 @@ var Game;
                 if (node.isLeaf()) {
                     var x, y, w, h;
                     var rng = new Yendor.ComplementaryMultiplyWithCarryRandom();
-                    w = rng.getNumber(Game.Constants.ROOM_MIN_SIZE, node.w - 2);
-                    h = rng.getNumber(Game.Constants.ROOM_MIN_SIZE, node.h - 2);
-                    x = rng.getNumber(node.x + 1, node.x + node.w - w - 1);
-                    y = rng.getNumber(node.y + 1, node.y + node.h - h - 1);
+                    w = rng.getNumber(Game.Constants.ROOM_MIN_SIZE, node.w);
+                    h = rng.getNumber(Game.Constants.ROOM_MIN_SIZE, node.h);
+                    x = rng.getNumber(node.x, node.x + node.w - w);
+                    y = rng.getNumber(node.y, node.y + node.h - h);
                     dungeonBuilder.createRoom(map, actorManager, dungeonBuilder.roomNum == 0, x, y, x + w - 1, y + h - 1);
                     if (dungeonBuilder.roomNum != 0) {
                         // build a corridor from previous room
