@@ -1,19 +1,15 @@
 # Introduction
 
-Yendor is a [TypeScript](http://www.typescriptlang.org) API for roguelike developers. It provides a true color console, a robust random number generator, a field of view toolkit, and other utilities frequently used in roguelikes.
+Yendor.ts is a [TypeScript](http://www.typescriptlang.org) API for roguelike developers. It provides a true color console, a robust random number generator, a field of view toolkit, and other utilities frequently used in roguelikes.
 
 It comes with a simple generic roguelike game to extend. 
 
 # Features
 
-* true color console
+* fast WebGL/Canvas true color console  (using [pixi.js](http://www.pixijs.com/))
 * BSP based dungeon building toolkit
-* CMWC random number generator
-* field of view toolkit
-
-# Downloads
-
-[download page](http://doryen.eptalys.net/yendor/download)
+* [CMWC random number generator](https://en.wikipedia.org/wiki/Multiply-with-carry#Complementary-multiply-with-carry_generators)
+* field of view toolkit using [restrictive precise angle shadowcasting](http://www.roguebasin.com/index.php?title=Restrictive_Precise_Angle_Shadowcasting)
 
 # Quick Start
 
