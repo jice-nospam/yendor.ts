@@ -292,7 +292,8 @@ module Game {
 		It creates the root console, register the keyboard and mouse event callbacks, and draw the first frame.
 	*/
 	$(function(){
-		root = Yendor.init( '#console', Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT, '#fff', '#000' );
+		Yendor.init();
+		root = new Yendor.PixiConsole( Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT, '#ffffff', '#000000', '#console', 'terminal.png' );
 		$(document).keydown(handleKeypress);
 		$(document).mousemove(handleMouseMove);
 		Yendor.loop(handleNewFrame);

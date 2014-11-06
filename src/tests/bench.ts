@@ -50,9 +50,10 @@ module Benchmark {
 		root.render();
 	}
 
-	$(function(){
-		root = Yendor.init( '#console', WIDTH, HEIGHT, '#ffffff', '#000000' );
-		$('body').append("<div id = 'fps'/>");
+	$(function() {
+		Yendor.init();
+		root = new Yendor.PixiConsole( WIDTH, HEIGHT, '#ffffff', '#000000', '#console', 'terminal.png' );
+		//root = new Yendor.DivConsole( WIDTH, HEIGHT, '#ffffff', '#000000', '#console' );
 		Yendor.loop(handleNewFrame);
 	});
 }
