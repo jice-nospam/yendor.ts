@@ -434,6 +434,9 @@ module Yendor {
 			super(_width, _height, foreground, background);
 			this.divSelector = divSelector;
 			this.div = $(divSelector)[0];
+			this.div.style.fontFamily='monospace';
+			this.div.style.whiteSpace='pre';
+			this.div.style.display='table';
 			this.computeCharSize();
 		}
 

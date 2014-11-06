@@ -447,6 +447,9 @@ var Yendor;
             _super.call(this, _width, _height, foreground, background);
             this.divSelector = divSelector;
             this.div = $(divSelector)[0];
+            this.div.style.fontFamily = 'monospace';
+            this.div.style.whiteSpace = 'pre';
+            this.div.style.display = 'table';
             this.computeCharSize();
         }
         /*
@@ -555,39 +558,56 @@ var Yendor;
         height - number of rows
         foreground - default foreground color
         background - default background color
-        canvasSelector - JQuery selector for the canvas where to render this console
+        divSelector - JQuery selector for the div where to render this console
         fontUrl - URL of the image containing the font
         */
-        function PixiConsole(_width, _height, foreground, background, canvasSelector, fontUrl) {
+        function PixiConsole(_width, _height, foreground, background, divSelector, fontUrl) {
             _super.call(this, _width, _height, foreground, background);
-            this.canvasSelector = canvasSelector;
-            this.canvas = $(canvasSelector)[0];
-            this.stage = new PIXI.Stage(Yendor.ColorUtils.toNumber(background));
-            this.renderer = PIXI.autoDetectRenderer(640, 480, { antialias: false, clearBeforeRender: false, preserveDrawingBuffer: false, resolution: 1, transparent: false, view: this.canvas });
+            this.divSelector = divSelector;
+            this.loadComplete = false;
+            this.defaultBackgroundColor = Yendor.ColorUtils.toNumber(background);
+            this.defaultForegroundColor = Yendor.ColorUtils.toNumber(foreground);
             this.loadFont(fontUrl);
-            this.initCharacterMap();
-            this.initBackgroundCells(background);
-            this.initForegroundCells(foreground);
         }
         PixiConsole.prototype.loadFont = function (fontUrl) {
             this.font = PIXI.BaseTexture.fromImage(fontUrl, false, PIXI.scaleModes.NEAREST);
+            if (!this.font.hasLoaded) {
+                this.font.on('loaded', this.onFontLoaded.bind(this));
+            } else {
+                this.onFontLoaded();
+            }
+        };
+
+        PixiConsole.prototype.onFontLoaded = function () {
             this.charWidth = this.font.width / 16;
             this.charHeight = this.font.height / 16;
+            this.initCanvas();
+            this.initCharacterMap();
+            this.initBackgroundCells();
+            this.initForegroundCells();
+            this.loadComplete = true;
+        };
+
+        PixiConsole.prototype.initCanvas = function () {
+            var div = $(this.divSelector)[0];
+            div.innerHTML = "<canvas id='" + PixiConsole.CANVAS_ID + "' width='" + this.width * this.charWidth + "' height='" + this.height * this.charHeight + "'></canvas>";
+            this.canvas = $(PixiConsole.CANVAS_SELECTOR)[0];
+            this.stage = new PIXI.Stage(this.defaultBackgroundColor);
+            this.renderer = PIXI.autoDetectRenderer(640, 480, { antialias: false, clearBeforeRender: false, preserveDrawingBuffer: false, resolution: 1, transparent: false, view: this.canvas });
         };
 
         PixiConsole.prototype.initCharacterMap = function () {
             this.chars = [];
             for (var x = 0; x < 16; x++) {
                 for (var y = 0; y < 16; y++) {
-                    var rect = new PIXI.Rectangle(y * this.charHeight, x * this.charWidth, this.charWidth, this.charHeight);
+                    var rect = new PIXI.Rectangle(x * this.charWidth, y * this.charHeight, this.charWidth, this.charHeight);
                     this.chars[x + y * 16] = new PIXI.Texture(this.font, rect);
                 }
             }
         };
 
-        PixiConsole.prototype.initBackgroundCells = function (background) {
+        PixiConsole.prototype.initBackgroundCells = function () {
             this.backCells = [];
-            var defaultTint = Yendor.ColorUtils.toNumber(background);
             for (var x = 0; x < this.width; x++) {
                 this.backCells[x] = [];
                 for (var y = 0; y < this.height; y++) {
@@ -597,16 +617,15 @@ var Yendor;
                     cell.position.y = y * this.charHeight;
                     cell.width = this.charWidth;
                     cell.height = this.charHeight;
-                    cell.tint = defaultTint;
+                    cell.tint = this.defaultBackgroundColor;
                     this.backCells[x][y] = cell;
                     this.stage.addChild(cell);
                 }
             }
         };
 
-        PixiConsole.prototype.initForegroundCells = function (foreground) {
+        PixiConsole.prototype.initForegroundCells = function () {
             this.foreCells = [];
-            var defaultTint = Yendor.ColorUtils.toNumber(foreground);
             for (var x = 0; x < this.width; x++) {
                 this.foreCells[x] = [];
                 for (var y = 0; y < this.height; y++) {
@@ -616,7 +635,7 @@ var Yendor;
                     cell.position.y = y * this.charHeight;
                     cell.width = this.charWidth;
                     cell.height = this.charHeight;
-                    cell.tint = defaultTint;
+                    cell.tint = this.defaultForegroundColor;
                     this.foreCells[x][y] = cell;
                     this.stage.addChild(cell);
                 }
@@ -628,15 +647,17 @@ var Yendor;
         Update the content of the canvas
         */
         PixiConsole.prototype.render = function () {
-            for (var x = 0; x < this.width; x++) {
-                for (var y = 0; y < this.height; y++) {
-                    var ascii = this.text[y].charCodeAt(x);
-                    this.foreCells[x][y].texture = this.chars[ascii];
-                    this.foreCells[x][y].tint = Yendor.ColorUtils.toNumber(this.fore[x][y]);
-                    this.backCells[x][y].tint = Yendor.ColorUtils.toNumber(this.back[x][y]);
+            if (this.loadComplete) {
+                for (var x = 0; x < this.width; x++) {
+                    for (var y = 0; y < this.height; y++) {
+                        var ascii = this.text[y].charCodeAt(x);
+                        this.foreCells[x][y].texture = this.chars[ascii];
+                        this.foreCells[x][y].tint = Yendor.ColorUtils.toNumber(this.fore[x][y]);
+                        this.backCells[x][y].tint = Yendor.ColorUtils.toNumber(this.back[x][y]);
+                    }
                 }
+                this.renderer.render(this.stage);
             }
-            this.renderer.render(this.stage);
         };
 
         /*
@@ -651,10 +672,17 @@ var Yendor;
         The <Position> in the console.
         */
         PixiConsole.prototype.getPositionFromPixels = function (x, y) {
-            var dx = x - $(this.canvasSelector).offset().left;
-            var dy = y - $(this.canvasSelector).offset().top;
-            return new Yendor.Position(Math.floor(dx / this.charWidth), Math.floor(dy / this.charHeight));
+            if (this.loadComplete) {
+                var dx = x - $(PixiConsole.CANVAS_SELECTOR).offset().left;
+                var dy = y - $(PixiConsole.CANVAS_SELECTOR).offset().top;
+                return new Yendor.Position(Math.floor(dx / this.charWidth), Math.floor(dy / this.charHeight));
+            } else {
+                return new Yendor.Position(-1, -1);
+            }
         };
+        PixiConsole.CANVAS_ID = '__yendor_canvas';
+        PixiConsole.CANVAS_SELECTOR = '#' + PixiConsole.CANVAS_ID;
+
         PixiConsole.ASCII_SPACE = 32;
 
         PixiConsole.ASCII_FULL = 219;
@@ -1383,25 +1411,10 @@ var Yendor;
     /*
     Function: init
     
-    Create the main console inside an HTML element.
+    Initialize the library.
     
-    Parameters:
-    divSelector - a CSS selector for the HTML element containing the console.
-    width - number of columns.
-    height - number of rows.
-    foreground - default foreground color.
-    background - default background color.
-    
-    Returns:
-    
-    The Yendor.Console created.
     */
-    function init(divSelector, width, height, foreground, background) {
-        var div = $(divSelector)[0];
-        div.style.fontFamily = 'monospace';
-        div.style.whiteSpace = 'pre';
-        div.style.display = 'table';
-
+    function init() {
         /*
         Provides requestAnimationFrame in a cross browser way.
         http://paulirish.com/2011/requestanimationframe-for-smart-animating/
@@ -1411,7 +1424,6 @@ var Yendor;
                 window.setTimeout(callback, 1000 / 60, new Date().getTime());
             };
         })();
-        return new Yendor.PixiConsole(width, height, foreground, background, divSelector, 'terminal.png');
     }
     Yendor.init = init;
 
@@ -1421,6 +1433,11 @@ var Yendor;
         renderer(elapsedTime);
     }
 
+    /*
+    Function: loop
+    
+    Start the frame rendering loop.
+    */
     function loop(theRenderer) {
         renderer = theRenderer;
         frameLoop(frameFunc);
@@ -3450,7 +3467,8 @@ var Game;
     It creates the root console, register the keyboard and mouse event callbacks, and draw the first frame.
     */
     $(function () {
-        root = Yendor.init('#console', Game.Constants.CONSOLE_WIDTH, Game.Constants.CONSOLE_HEIGHT, '#fff', '#000');
+        Yendor.init();
+        root = new Yendor.PixiConsole(Game.Constants.CONSOLE_WIDTH, Game.Constants.CONSOLE_HEIGHT, '#ffffff', '#000000', '#console', 'terminal.png');
         $(document).keydown(handleKeypress);
         $(document).mousemove(handleMouseMove);
         Yendor.loop(handleNewFrame);
