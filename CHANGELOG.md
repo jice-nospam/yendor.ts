@@ -1,6 +1,11 @@
+# 0.0.3 / TBD
+* Yendor toolkit
+	- mush faster console implementation using pixi.js
+
 # 0.0.2 / 15-oct-2014
 
-* improve browser compatibility (tested firefox + chrome + IE9 + IE11)
+* Yendor toolkit
+	- improve browser compatibility (tested firefox + chrome + IE9 + IE11)
 
 # 0.0.1 / 15-may-2014
 
