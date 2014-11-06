@@ -220,6 +220,9 @@ module Game {
 		/*
 			Function: handleNewFrame
 			Render a new frame. Frame rate is not tied to game turns to allow animations between turns.
+			This function is called by the browser before a screen repaint.
+			The number of callbacks is usually 60 times per second, but will generally match the display refresh rate 
+			in most web browsers as per W3C recommendation. The callback rate may be reduced to a lower rate when running in background tabs.
 
 			Parameters:
 			time - elapsed time since the last frame in milliseconds
@@ -251,35 +254,6 @@ module Game {
 	/*
 		Section: Game startup
 
-		Function: handleNewFrame
-		Renders a single frame and request a new call by the browser. This function is called by the browser before a screen repaint.
-		The number of callbacks is usually 60 times per second, but will generally match the display refresh rate 
-		in most web browsers as per W3C recommendation. The callback rate may be reduced to a lower rate when running in background tabs.
-
-		Parameters:
-		time - elapsed time since the last frame in milliseconds.
-	*/
-	function handleNewFrame(time: number) {
-		engine.handleNewFrame(time);
-	}
-
-	/*
-		Function: handleKeypress
-		Keypress event callback wrapping the engine method.
-	*/
-	function handleKeypress(event: KeyboardEvent) {
-		engine.handleKeypress(event);
-	}
-
-	/*
-		Function: handleMouseMove
-		JQuery mouse motion callback wrapping the engine method.
-	*/
-	function handleMouseMove(event: JQueryMouseEventObject) {
-		engine.handleMouseMove(event);
-	}
-
-	/*
 		Function: log
 		Utility to send a LOG_MESSAGE event on the event bus.
 	*/
@@ -289,13 +263,13 @@ module Game {
 
 	/*
 		This function is called when the document has finished loading in the browser.
-		It creates the root console, register the keyboard and mouse event callbacks, and draw the first frame.
+		It creates the root console, register the keyboard and mouse event callbacks, and starts the frame rendering loop.
 	*/
 	$(function(){
 		Yendor.init();
 		root = new Yendor.PixiConsole( Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT, '#ffffff', '#000000', '#console', 'terminal.png' );
-		$(document).keydown(handleKeypress);
-		$(document).mousemove(handleMouseMove);
-		Yendor.loop(handleNewFrame);
+		$(document).keydown(engine.handleKeypress.bind(engine));
+		$(document).mousemove(engine.handleMouseMove.bind(engine));
+		Yendor.loop(engine.handleNewFrame.bind(engine));
 	});
 }
