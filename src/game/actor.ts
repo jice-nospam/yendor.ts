@@ -4,13 +4,13 @@
 module Game {
 	export interface ActorManager {
 		getPlayer() : Actor;
-		addCreature( actor:Actor );
-		addItem( actor:Actor );
+		addCreature( actor: Actor );
+		addItem( actor: Actor );
 		getCreatures() : Actor[];
 		getCorpses() : Actor[];
 		getItems() : Actor[];
-		findActorsOnCell( pos: Yendor.Position, actors: Actor[]) :Actor[];
-		findClosestActor( pos: Yendor.Position, range:number, actors:Actor[] ) : Actor;
+		findActorsOnCell( pos: Yendor.Position, actors: Actor[]): Actor[];
+		findClosestActor( pos: Yendor.Position, range: number, actors: Actor[] ) : Actor;
 	}
 
 	/********************************************************************************
@@ -22,7 +22,7 @@ module Game {
 		Something that can take damages and heal/repair.
 	*/
 	export class Destructible {
-		private _hp:number;
+		private _hp: number;
 		/*
 			Constructor: constructor
 
@@ -31,7 +31,7 @@ module Game {
 			_defense - when attacked, how much hit points are deflected
 			_corpseName - new name of the actor when its health points reach 0
 		*/
-		constructor(private _maxHp:number, private _defense: number, private _corpseName: string) {
+		constructor(private _maxHp: number, private _defense: number, private _corpseName: string) {
 			this._hp = _maxHp;
 		}
 
@@ -63,7 +63,7 @@ module Game {
 			if ( damage > 0 ) {
 				this._hp -= damage;
 				if ( this.isDead() ) {
-					this._hp=0;
+					this._hp = 0;
 					this.die(owner);
 				}
 			} else {
@@ -99,11 +99,11 @@ module Game {
 			owner - the actor owning this Destructible
 		*/
 		die(owner: Actor) {
-			owner.ch = '%';
+			owner.ch = "%";
 			owner.col = Constants.CORPSE_COLOR;
 			owner.name = this._corpseName;
 			owner.blocks = false;
-		}		
+		}
 	}
 
 	/*
@@ -112,7 +112,7 @@ module Game {
 	*/
 	export class MonsterDestructible extends Destructible {
 		die(owner: Actor) {
-			log(owner.name+' is dead');
+			log(owner.name + " is dead");
 			super.die(owner);
 		}
 	}
@@ -123,7 +123,7 @@ module Game {
 	*/
 	export class PlayerDestructible extends Destructible {
 		die(owner: Actor) {
-			log('You died!','red');
+			log("You died!", "red");
 			super.die(owner);
 			EventBus.getInstance().publishEvent(new Event<GameStatus>( EventType.CHANGE_STATUS, GameStatus.DEFEAT ));
 		}
@@ -161,13 +161,13 @@ module Game {
 			if ( target.destructible && ! target.destructible.isDead() ) {
 				var damage = this._power - target.destructible.defense;
 				if ( damage >= target.destructible.hp ) {
-					log( owner.name+' attacks '+target.name+' and kill it !', 'orange');
+					log( owner.name + " attacks " + target.name + " and kill it !", "orange");
 					target.destructible.takeDamage(target, this._power);
 				} else if ( damage > 0 ) {
-					log( owner.name+' attacks '+target.name+' for '+damage+' hit points.', 'orange');
+					log( owner.name + " attacks " + target.name + " for " + damage + " hit points.", "orange");
 					target.destructible.takeDamage(target, this._power);
 				} else {
-					log( owner.name+' attacks '+target.name+' but it has no effect!');
+					log( owner.name + " attacks " + target.name + " but it has no effect!");
 				}
 			}
 		}
@@ -182,7 +182,7 @@ module Game {
 		Owned by self-updating actors
 	*/
 	export class Ai {
-		update(owner: Actor, map:Map, actorManager:ActorManager) {}
+		update(owner: Actor, map: Map, actorManager: ActorManager) {}
 	}
 
 	/*
@@ -190,9 +190,9 @@ module Game {
 		Handles player input. Determin in a new game turn must be started.
 	*/
 	export class PlayerAi extends Ai implements EventListener {
-		private first: boolean=true;
-		private keyCode:number=0;
-		private keyChar:string;
+		private first: boolean = true;
+		private keyCode: number = 0;
+		private keyChar: string;
 		constructor() {
 			super();
 			EventBus.getInstance().registerListener(this, EventType.KEY_PRESSED);
@@ -205,8 +205,8 @@ module Game {
 			Parameters:
 			event - the KEY_PRESSED <Event>
 		*/
-		processEvent(event:Event<any>) {
-			if ( event.type == EventType.KEY_PRESSED ) {
+		processEvent(event: Event<any>) {
+			if ( event.type === EventType.KEY_PRESSED ) {
 				this.keyCode = event.data.keyCode;
 				this.keyChar = event.data.key;
 			} else {
@@ -223,26 +223,26 @@ module Game {
 			owner - the actor owning this PlayerAi (obviously, the player)
 			actorManager - the main actor manager used to check it there are monsters nearby.
 		*/
-		update(owner: Actor, map:Map, actorManager:ActorManager) {
+		update(owner: Actor, map: Map, actorManager: ActorManager) {
 			// don't update a dead actor
-			if ( owner.destructible && owner.destructible.isDead()){
+			if ( owner.destructible && owner.destructible.isDead()) {
 				return;
 			}
 			// check movement keys
 			var dx : number = 0;
 			var dy : number = 0;
-			switch(this.keyCode) {
+			switch (this.keyCode) {
 				case KeyEvent.DOM_VK_LEFT: dx = -1; break;
 				case KeyEvent.DOM_VK_RIGHT: dx = 1; break;
 				case KeyEvent.DOM_VK_UP: dy = -1; break;
 				case KeyEvent.DOM_VK_DOWN: dy = 1; break;
 				default : this.handleActionKey(owner, map, actorManager); break;
 			}
-			if ( dx != 0 || dy != 0 )  {
+			if ( dx !== 0 || dy !== 0 )  {
 				// the player moved or try to move. New game turn
 				EventBus.getInstance().publishEvent(new Event<GameStatus>(EventType.CHANGE_STATUS, GameStatus.NEW_TURN));
 				// move to the target cell or attack if there's a creature
-				if ( this.moveOrAttack(owner, owner.x+dx, owner.y+dy, map, actorManager) ) {
+				if ( this.moveOrAttack(owner, owner.x + dx, owner.y + dy, map, actorManager) ) {
 					// the player actually move. Recompute the field of view
 					map.computeFov(owner.x, owner.y, Constants.FOV_RADIUS);
 				}
@@ -253,22 +253,22 @@ module Game {
 			}
 		}
 
-		private handleActionKey(owner: Actor, map:Map, actorManager:ActorManager) {
-			if ( this.keyChar == 'g' ) {
+		private handleActionKey(owner: Actor, map: Map, actorManager: ActorManager) {
+			if ( this.keyChar === "g" ) {
 				this.pickupItem(owner, map, actorManager);
 			}
 		}
 
-		private pickupItem(owner: Actor, map:Map, actorManager:ActorManager) {
-			var found:boolean = false;
+		private pickupItem(owner: Actor, map: Map, actorManager: ActorManager) {
+			var found: boolean = false;
 			EventBus.getInstance().publishEvent(new Event<GameStatus>(EventType.CHANGE_STATUS, GameStatus.NEW_TURN));
 			actorManager.getItems().some(function(item) {
-				if ( item.pickable && item.x == owner.x && item.y == owner.y ) {
-					found=true;
+				if ( item.pickable && item.x === owner.x && item.y === owner.y ) {
+					found = true;
 					if ( item.pickable.pick(item, owner)) {
-						log('You pick the '+item.name+'.');
+						log("You pick the " + item.name + ".");
 					} else {
-						log('Your inventory is full.');
+						log("Your inventory is full.");
 					}
 					return true;
 				} else {
@@ -294,16 +294,16 @@ module Game {
 			Returns:
 			true if the player actually moved to the new cell
 		*/
-		private moveOrAttack(owner: Actor, x: number, y: number, map:Map, actorManager:ActorManager): boolean {
+		private moveOrAttack(owner: Actor, x: number, y: number, map: Map, actorManager: ActorManager): boolean {
 			// cannot move or attack a wall! 
-			if ( map.isWall(x,y)) {
+			if ( map.isWall(x, y)) {
 				return false;
 			}
 			// check for living monsters on the destination cell
-			var cellPos: Yendor.Position = new Yendor.Position(x,y);
-			var actors:Actor[] = actorManager.findActorsOnCell(cellPos, actorManager.getCreatures());
-			for (var i=0; i < actors.length; i++) {
-				var actor:Actor = actors[i];
+			var cellPos: Yendor.Position = new Yendor.Position(x, y);
+			var actors: Actor[] = actorManager.findActorsOnCell(cellPos, actorManager.getCreatures());
+			for (var i = 0; i < actors.length; i++) {
+				var actor: Actor = actors[i];
 				if ( actor.destructible && ! actor.destructible.isDead() ) {
 					// attack the first living actor found on the cell
 					owner.attacker.attack( owner, actor );
@@ -312,10 +312,10 @@ module Game {
 			}
 			// no living actor. Log exising corpses and items
 			actorManager.findActorsOnCell(cellPos, actorManager.getCorpses()).forEach(function(actor) {
-				log("There's a "+actor.name+' here');
+				log("There's a " + actor.name + " here");
 			});
 			actorManager.findActorsOnCell(cellPos, actorManager.getItems()).forEach(function(actor) {
-				log("There's a "+actor.name+' here');
+				log("There's a " + actor.name + " here");
 			});
 			// move the player
 			owner.x = x;
@@ -340,7 +340,7 @@ module Game {
 		*/
 		update(owner: Actor, map: Map, actorManager: ActorManager) {
 			// don't update a dead monster
-			if ( owner.destructible && owner.destructible.isDead()){
+			if ( owner.destructible && owner.destructible.isDead()) {
 				return;
 			}
 			// attack the player when at melee range, else try to track his scent
@@ -359,11 +359,11 @@ module Game {
 			map - the game map. Used to check if player is in sight
 			actorManager - used to get the player actor
 		*/
-		private moveOrAttack(owner: Actor, x: number, y: number, map:Map, actorManager: ActorManager) {
-			var dx:number = x - owner.x;
-			var dy:number = y - owner.y;
+		private moveOrAttack(owner: Actor, x: number, y: number, map: Map, actorManager: ActorManager) {
+			var dx: number = x - owner.x;
+			var dy: number = y - owner.y;
 			// compute distance from player
-			var distance:number = Math.sqrt(dx*dx+dy*dy);
+			var distance: number = Math.sqrt(dx * dx + dy * dy);
 			if ( distance < 2 ) {
 				// at melee range. Attack !
 				if ( owner.attacker ) {
@@ -371,8 +371,8 @@ module Game {
 				}
 			} else if ( map.isInFov(owner.x, owner.y) ) {
 				// not at melee range, but in sight. Move towards him
-				dx = Math.round(dx/distance);
-				dy = Math.round(dy/distance);
+				dx = Math.round(dx / distance);
+				dy = Math.round(dy / distance);
 				this.move(owner, dx, dy, map, actorManager);
 			} else {
 				// player not in range. Use scent tracking
@@ -391,25 +391,25 @@ module Game {
 			map - the game map (to check if a cell is walkable)
 			actorManager - to check blocking actors
 		*/
-		private move(owner: Actor, dx: number, dy: number, map:Map, actorManager: ActorManager) {
+		private move(owner: Actor, dx: number, dy: number, map: Map, actorManager: ActorManager) {
 			// compute the unitary move vector
-			var stepdx:number = dx > 0 ? 1 : -1;
-			var stepdy:number = dy > 0 ? 1 : -1;
-			if ( map.canWalk(owner.x+dx, owner.y+dy, actorManager)) {
+			var stepdx: number = dx > 0 ? 1 : -1;
+			var stepdy: number = dy > 0 ? 1 : -1;
+			if ( map.canWalk(owner.x + dx, owner.y + dy, actorManager)) {
 				// can walk
 				owner.x += dx;
 				owner.y += dy;
-			} else if ( map.canWalk(owner.x+stepdx, owner.y, actorManager)) {
+			} else if ( map.canWalk(owner.x + stepdx, owner.y, actorManager)) {
 				// horizontal slide
 				owner.x += stepdx;
-			} else if ( map.canWalk(owner.x, owner.y+stepdy, actorManager)) {
+			} else if ( map.canWalk(owner.x, owner.y + stepdy, actorManager)) {
 				// vertical slide
 				owner.y += stepdy;
-			}			
+			}
 		}
 
-		private static TDX: number[] = [-1,0,1,-1,1,-1,0,1];
-		private static TDY: number[] = [-1,-1,-1,0,0,1,1,1];
+		private static TDX: number[] = [-1, 0, 1, -1, 1, -1, 0, 1];
+		private static TDY: number[] = [-1, -1, -1, 0, 0, 1, 1, 1];
 
 		/*
 			Function: findHighestScentCellIndex
@@ -441,7 +441,7 @@ module Game {
 				if ( !map.isWall(cellx, celly)) {
 					// not a wall, check if scent is higher
 					var scentAmount = map.getScent(cellx, celly);
-					if ( scentAmount > map.currentScentValue - Constants.SCENT_THRESHOLD 
+					if ( scentAmount > map.currentScentValue - Constants.SCENT_THRESHOLD
 						&& scentAmount > bestScentLevel ) {
 						// scent is higher. New candidate
 						bestScentLevel = scentAmount;
@@ -449,7 +449,7 @@ module Game {
 					}
 				}
 			}
-			return bestCellIndex;			
+			return bestCellIndex;
 		}
 
 		/*
@@ -459,7 +459,7 @@ module Game {
 		private trackScent(owner: Actor, map: Map, actorManager: ActorManager) {
 			// get the adjacent cell with the highest scent value
 			var bestCellIndex: number = this.findHighestScentCellIndex(owner, map);
-			if ( bestCellIndex != -1 ) {
+			if ( bestCellIndex !== -1 ) {
 				// found. try to move 
 				this.move(owner, MonsterAi.TDX[bestCellIndex], MonsterAi.TDY[bestCellIndex], map, actorManager);
 			}
@@ -486,11 +486,11 @@ module Game {
 	 	*/
 	 	constructor( private _capaticty: number) {}
 
-	 	get capacity(): number { return this._capaticty;}
-	 	set capacity(newValue: number) {this._capaticty=newValue;}
+	 	get capacity(): number { return this._capaticty; }
+	 	set capacity(newValue: number) {this._capaticty = newValue; }
 	 	size(): number { return this.actors.length; }
 
-	 	get(index:number) : Actor {
+	 	get(index: number) : Actor {
 	 		return this.actors[index];
 	 	}
 
@@ -504,7 +504,7 @@ module Game {
 	 		Returns:
 	 		false if the operation failed because the container is full
 	 	*/
-	 	add(actor:Actor) {
+	 	add(actor: Actor) {
 	 		if ( this.actors.length >= this._capaticty ) {
 	 			return false;
 	 		}
@@ -520,9 +520,9 @@ module Game {
 	 		actor - the actor to remove
 	 	*/
 	 	remove(actor: Actor) {
-	 		var idx:number = this.actors.indexOf(actor);
-	 		if ( idx != -1 ) {
-	 			this.actors.splice(idx,1);
+	 		var idx: number = this.actors.indexOf(actor);
+	 		if ( idx !== -1 ) {
+	 			this.actors.splice(idx, 1);
 	 		}
 	 	}
 	}
@@ -556,7 +556,7 @@ module Game {
 			_method - the target selection method
 			_range - for methods requiring a range
 		*/
-		constructor(private _method:TargetSelectionMethod, private _range:number = 0) {}
+		constructor(private _method: TargetSelectionMethod, private _range: number = 0) {}
 
 		/*
 			Property: method
@@ -577,11 +577,11 @@ module Game {
 			Parameters:
 			wearer - 
 		*/
-		selectTargets(wearer:Actor, actorManager:ActorManager) : Actor[] {
-			var selectedTargets:Actor[] = [];
-			switch(this._method) {
-				case TargetSelectionMethod.WEARER_CLOSEST_ENEMY : 
-					var actor = actorManager.findClosestActor(wearer, this.range, actorManager.getCreatures()); 
+		selectTargets(wearer: Actor, actorManager: ActorManager) : Actor[] {
+			var selectedTargets: Actor[] = [];
+			switch (this._method) {
+				case TargetSelectionMethod.WEARER_CLOSEST_ENEMY :
+					var actor = actorManager.findClosestActor(wearer, this.range, actorManager.getCreatures());
 					if ( actor ) {
 						selectedTargets.push(actor);
 					}
@@ -684,15 +684,15 @@ module Game {
 				actors = [];
 				actors.push( wearer ) ;
 			}
-			var success:boolean =false;
+			var success: boolean = false;
 
-			for (var i=0; i < actors.length; ++i) {
+			for (var i = 0; i < actors.length; ++i) {
 				if (this._effect.applyTo(actors[i])) {
 					success = true;
 				}
 			}
 			if ( success && wearer.container ) {
-				wearer.container.remove( owner );				
+				wearer.container.remove( owner );
 			}
 			return success;
 		}
@@ -700,16 +700,16 @@ module Game {
 		/*
 			Some factory helpers
 		*/
-		static createHealthPotion(x:number, y:number, amount: number): Actor {
-			var healthPotion = new Actor(x,y,'!', 'health potion', 'purple');
-			healthPotion.pickable = new Pickable(new InstantHealthEffect(amount, 'You drink the health potion'));
+		static createHealthPotion(x: number, y: number, amount: number): Actor {
+			var healthPotion = new Actor(x, y, "!", "health potion", "purple");
+			healthPotion.pickable = new Pickable(new InstantHealthEffect(amount, "You drink the health potion"));
 			healthPotion.blocks = false;
 			return healthPotion;
 		}
 
-		static createLightningBoltScroll(x:number, y:number, range:number, damages:number): Actor {
-			var lightningBolt = new Actor(x,y, '#', 'scroll of lightning bolt', 'rgb(255,255,63)');
-			lightningBolt.pickable = new Pickable( new InstantHealthEffect(-damages, 'A lightning bolt hits with a loud thunder!'),
+		static createLightningBoltScroll(x: number, y: number, range: number, damages: number): Actor {
+			var lightningBolt = new Actor(x, y, "#", "scroll of lightning bolt", "rgb(255,255,63)");
+			lightningBolt.pickable = new Pickable( new InstantHealthEffect(-damages, "A lightning bolt hits with a loud thunder!"),
 				new TargetSelector( TargetSelectionMethod.WEARER_CLOSEST_ENEMY, range));
 			lightningBolt.blocks = false;
 			return lightningBolt;
@@ -728,8 +728,8 @@ module Game {
 		private _pickable: Pickable;
 		private _container: Container;
 
-		constructor(_x: number, _y: number, private _ch: string, 
-			private _name: string, private _col: Yendor.Color) { super(_x,_y); }
+		constructor(_x: number, _y: number, private _ch: string,
+			private _name: string, private _col: Yendor.Color) { super(_x, _y); }
 
 		get ch() { return this._ch; }
 		set ch(newValue: string) { this._ch = newValue[0]; }
@@ -746,25 +746,25 @@ module Game {
 		set blocks(newValue: boolean) { this._blocks = newValue; }
 
 		get destructible() { return this._destructible; }
-		set destructible(newValue: Destructible) { this._destructible = newValue;}
+		set destructible(newValue: Destructible) { this._destructible = newValue; }
 
 		get attacker() { return this._attacker; }
-		set attacker(newValue: Attacker) { this._attacker = newValue;}
+		set attacker(newValue: Attacker) { this._attacker = newValue; }
 
 		get ai() { return this._ai; }
-		set ai(newValue: Ai) { this._ai = newValue;}
+		set ai(newValue: Ai) { this._ai = newValue; }
 
-		get pickable() {return this._pickable;}
+		get pickable() {return this._pickable; }
 		set pickable(newValue: Pickable) { this._pickable = newValue; }
 
-		get container() {return this._container;}
-		set container(newValue: Container) {this._container = newValue;}
+		get container() {return this._container; }
+		set container(newValue: Container) {this._container = newValue; }
 
-		update(map:Map, actorManager:ActorManager) {
+		update(map: Map, actorManager: ActorManager) {
 			if ( this._ai ) {
 				this._ai.update(this, map, actorManager);
 			}
-		} 
+		}
 
 		render() {
 			root.setChar( this.x, this.y, this._ch );
@@ -773,12 +773,12 @@ module Game {
 	}
 
 	export class Player extends Actor {
-		constructor(_x: number, _y: number, _ch: string, 
+		constructor(_x: number, _y: number, _ch: string,
 			_name: string, _col: Yendor.Color) {
-			super(_x,_y,_ch,_name,_col);
+			super(_x, _y, _ch, _name, _col);
 			this.ai = new PlayerAi();
 			this.attacker = new Attacker(5);
-			this.destructible = new PlayerDestructible(30, 2, 'your cadaver');
+			this.destructible = new PlayerDestructible(30, 2, "your cadaver");
 			this.container = new Container(26);
 		}
 	}
