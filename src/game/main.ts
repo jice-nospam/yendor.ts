@@ -41,6 +41,9 @@ module Game {
 
 			var inventoryPanel: Gui = new InventoryPanel( Constants.INVENTORY_PANEL_WIDTH, Constants.INVENTORY_PANEL_HEIGHT, this.player );
 			this.addGui(inventoryPanel, "inventoryPanel", Math.floor(Constants.CONSOLE_WIDTH / 2 - Constants.INVENTORY_PANEL_WIDTH / 2), 0);
+
+			var tilePicker: Gui = new TilePicker();
+			this.addGui(tilePicker, "tilePicker");
 		}
 
 		/*
@@ -73,7 +76,7 @@ module Game {
 		/*
 			GuiManager interface
 		*/
-		addGui(gui: Gui, name: string, x: number, y: number) {
+		addGui(gui: Gui, name: string, x: number = 0, y: number = 0) {
 			gui.moveTo(x, y);
 			this.guis.push(gui);
 		}
@@ -123,13 +126,37 @@ module Game {
 		findActorsOnCell( pos: Yendor.Position, actors: Actor[]) : Actor[] {
 			var actorsOnCell: Actor[] = [];
 			var nbActors: number = actors.length;
-			for (var i = 0; i < nbActors; i++) {
+			for (var i: number = 0; i < nbActors; i++) {
 				var actor: Actor = actors[i];
 				if ( actor.x === pos.x && actor.y === pos.y ) {
 					actorsOnCell.push(actor);
 				}
 			}
 			return actorsOnCell;
+		}
+
+		/*
+			Function: findActorsInRange
+			Returns all actor near a position
+
+			Parameters:
+			pos - a position on the map
+			range - maximum distance from position
+			actors - actor array to look up
+
+			Returns:
+			an actor array containing all actor within range
+		*/
+		findActorsInRange( pos: Yendor.Position, range: number, actors: Actor[]): Actor[] {
+			var actorsInRange: Actor[] = [];
+			var nbActors: number = actors.length;
+			for (var i: number = 0; i < nbActors; i++) {
+				var actor: Actor = actors[i];
+				if (Yendor.Position.distance(pos, actor) <= range ) {
+					actorsInRange.push( actor );
+				}
+			}
+			return actorsInRange;
 		}
 
 		/*
@@ -157,7 +184,8 @@ module Game {
 
 		private renderActors(actors: Actor[]) {
 			var nbActors: number = actors.length;
-			for (var i = 0; i < nbActors; i++) {
+			if ( nbActors === 0 ) { return; }
+			for (var i: number = 0; i < nbActors; i++) {
 				var actor: Actor = actors[i];
 				if ( this.map.isInFov( actor.x, actor.y)) {
 					actor.render();
@@ -247,6 +275,18 @@ module Game {
 			var pos: Yendor.Position = root.getPositionFromPixels( event.pageX, event.pageY );
 			EventBus.getInstance().publishEvent(new Event<Yendor.Position>( EventType.MOUSE_MOVE, pos));
 		}
+
+		/*
+			Function: handleMouseClick
+			Triggered by mouse button click events.
+
+			Parameters:
+			event - the JQueryMouseEventObject
+		*/
+		handleMouseClick(event: JQueryMouseEventObject) {
+			var pos: Yendor.Position = root.getPositionFromPixels( event.pageX, event.pageY );
+			EventBus.getInstance().publishEvent(new Event<MouseButton>( EventType.MOUSE_CLICK, <MouseButton>event.which));
+		}
 	}
 
 	var engine = new Engine();
@@ -270,6 +310,7 @@ module Game {
 		root = new Yendor.PixiConsole( Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT, "#ffffff", "#000000", "#console", "terminal.png" );
 		$(document).keydown(engine.handleKeypress.bind(engine));
 		$(document).mousemove(engine.handleMouseMove.bind(engine));
+		$(document).click(engine.handleMouseClick.bind(engine));
 		Yendor.loop(engine.handleNewFrame.bind(engine));
 	});
 }

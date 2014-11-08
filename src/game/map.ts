@@ -45,8 +45,10 @@ module Game {
 			var item: Actor;
 			if ( dice < 70 ) {
 				item = Pickable.createHealthPotion(x, y, 4);
-			} else {
+			} else if ( dice < 80 ) {
 				item = Pickable.createLightningBoltScroll(x, y, 5, 20);
+			} else {
+				item = Pickable.createFireballScroll(x, y, 3, 12);
 			}
 			return item;
 		}
@@ -156,7 +158,7 @@ module Game {
 				return false;
 			}
 			actorManager.findActorsOnCell(new Yendor.Position(x, y), actorManager.getCreatures()).forEach( function(actor) {
-				if (  actor.isBlocking() ) {
+				if ( actor.isBlocking() ) {
 					return false;
 				}
 			});

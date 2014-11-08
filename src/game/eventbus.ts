@@ -1,4 +1,10 @@
 module Game {
+	export enum MouseButton {
+		LEFT = 1,
+		MIDDLE = 2,
+		RIGHT = 3
+	}
+
 	export enum EventType {
 		/*
 			change game status. Associated data : GameStatus
@@ -9,7 +15,7 @@ module Game {
 		*/
 		KEY_PRESSED,
 		/*
-			sends a message to the log. Associated data : 
+			sends a message to the log. Associated data : Message containing the text and the color
 		*/
 		LOG_MESSAGE,
 		/*
@@ -17,7 +23,7 @@ module Game {
 		*/
 		MOUSE_MOVE,
 		/*
-			mouse button press event. Associated data : button num (0: left, 1: middle, 2: right)
+			mouse button press event. Associated data : MouseButton
 		*/
 		MOUSE_CLICK,
 		/*
@@ -62,6 +68,15 @@ module Game {
 				this.listeners[type] = new Array<EventListener>();
 			}
 			this.listeners[type].push(listener);
+		}
+
+		unregisterListener(listener: EventListener, type: EventType) {
+			if (this.listeners[type]) {
+				var index: number = this.listeners[type].indexOf(listener);
+				if ( index > -1 ) {
+					this.listeners[type].splice(index, 1);
+				}
+			}
 		}
 
 		publishEvent( event: Event<any>) {

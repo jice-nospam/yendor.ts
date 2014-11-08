@@ -11,6 +11,7 @@ module Game {
 		getItems() : Actor[];
 		findActorsOnCell( pos: Yendor.Position, actors: Actor[]): Actor[];
 		findClosestActor( pos: Yendor.Position, range: number, actors: Actor[] ) : Actor;
+		findActorsInRange( pos: Yendor.Position, range: number, actors: Actor[]): Actor[];
 	}
 
 	/********************************************************************************
@@ -532,12 +533,14 @@ module Game {
 		Define how we select the actors that are impacted by an effect.
 		The wearer is the actor triggering the effect (by using an item or casting a spell)
 
+		WEARER - the actor using the item or casting the spell
 		WEARER_CLOSEST_ENEMY - the closest enemy 
 		SELECTED_ACTOR - an actor manually selected
 		WEARER_RANGE - all actors close to the wearer
 		SELECTED_RANGE - all actors close to a manually selected position
 	*/
 	export enum TargetSelectionMethod {
+		WEARER,
 		WEARER_CLOSEST_ENEMY,
 		SELECTED_ACTOR,
 		WEARER_RANGE,
@@ -575,11 +578,17 @@ module Game {
 			Return all the actors matching the selection criteria
 
 			Parameters:
-			wearer - 
+			owner - the actor owning the effect (the magic item or the scroll)
+			wearer - the actor using the item
+			actorManager -
 		*/
-		selectTargets(wearer: Actor, actorManager: ActorManager) : Actor[] {
+		selectTargets(owner: Actor, wearer: Actor, actorManager: ActorManager,
+			applyEffects: (owner: Actor, wearer: Actor, actors: Actor[]) => void) {
 			var selectedTargets: Actor[] = [];
 			switch (this._method) {
+				case TargetSelectionMethod.WEARER :
+					selectedTargets.push(wearer);
+				break;
 				case TargetSelectionMethod.WEARER_CLOSEST_ENEMY :
 					var actor = actorManager.findClosestActor(wearer, this.range, actorManager.getCreatures());
 					if ( actor ) {
@@ -589,9 +598,22 @@ module Game {
 			// TODO
 			//	case TargetSelectionMethod.SELECTED_ACTOR : return selectActor(wearer, actorManager); break;
 			//	case TargetSelectionMethod.WEARER_RANGE : return selectCloseEnemies(wearer, actorManager); break;
-			//	case TargetSelectionMethod.SELECTED_RANGE : return selectActors(wearer, actorManager); break;
+				case TargetSelectionMethod.SELECTED_RANGE :
+					log("Left-click a target tile for the fireball,\nor right-click to cancel.");
+					var theRange = this.range;
+					EventBus.getInstance().publishEvent(new Event<TilePickerListener>(EventType.PICK_TILE,
+						function(pos: Yendor.Position) {
+							var actors: Actor[] = actorManager.findActorsInRange( pos, theRange, actorManager.getCreatures() );
+							if (actors.length > 0) {
+								applyEffects(owner, wearer, actors);
+							}
+						}
+					));
+				break;
 			}
-			return selectedTargets;
+			if (selectedTargets.length > 0) {
+				applyEffects(owner, wearer, selectedTargets);
+			}
 		}
 	}
 
@@ -676,14 +698,13 @@ module Game {
 			Returns:
 			true if the action succeeded
 		*/
-		use(owner: Actor, wearer: Actor, actorManager: ActorManager): boolean {
-			var actors: Actor[];
+		use(owner: Actor, wearer: Actor, actorManager: ActorManager) {
 			if ( this._targetSelector ) {
-				actors = this._targetSelector.selectTargets(wearer, actorManager);
-			} else {
-				actors = [];
-				actors.push( wearer ) ;
+				this._targetSelector.selectTargets(owner, wearer, actorManager, this.applyEffectToActorList.bind(this));
 			}
+		}
+
+		private applyEffectToActorList(owner: Actor, wearer: Actor, actors: Actor[]) {
 			var success: boolean = false;
 
 			for (var i = 0; i < actors.length; ++i) {
@@ -694,7 +715,6 @@ module Game {
 			if ( success && wearer.container ) {
 				wearer.container.remove( owner );
 			}
-			return success;
 		}
 
 		/*
@@ -702,7 +722,8 @@ module Game {
 		*/
 		static createHealthPotion(x: number, y: number, amount: number): Actor {
 			var healthPotion = new Actor(x, y, "!", "health potion", "purple");
-			healthPotion.pickable = new Pickable(new InstantHealthEffect(amount, "You drink the health potion"));
+			healthPotion.pickable = new Pickable(new InstantHealthEffect(amount, "You drink the health potion"),
+				new TargetSelector( TargetSelectionMethod.WEARER ));
 			healthPotion.blocks = false;
 			return healthPotion;
 		}
@@ -713,6 +734,14 @@ module Game {
 				new TargetSelector( TargetSelectionMethod.WEARER_CLOSEST_ENEMY, range));
 			lightningBolt.blocks = false;
 			return lightningBolt;
+		}
+
+		static createFireballScroll(x: number, y: number, range: number, damages: number): Actor {
+			var fireball = new Actor(x, y, "#", "scroll of fireball", "rgb(255,255,63)");
+			fireball.pickable = new Pickable( new InstantHealthEffect(-damages, "A fireball burns all nearby creatures!"),
+				new TargetSelector( TargetSelectionMethod.SELECTED_RANGE, range));
+			fireball.blocks = false;
+			return fireball;
 		}
 	}
 
