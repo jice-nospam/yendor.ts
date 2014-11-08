@@ -26,11 +26,11 @@ module Game {
 			Constructor: constructor
 		*/
 		constructor() {
-			this.player = new Game.Player(Constants.CONSOLE_WIDTH/2, Constants.CONSOLE_HEIGHT/2, '@', 'player', '#fff');
+			this.player = new Game.Player(Constants.CONSOLE_WIDTH / 2, Constants.CONSOLE_HEIGHT / 2, "@", "player", "#fff");
 			this.map = new Map( Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT );
 			EventBus.getInstance().init(this, this.map);
 			this.actors.push(this.player);
-			var dungeonBuilder:BspDungeonBuilder = new BspDungeonBuilder();
+			var dungeonBuilder: BspDungeonBuilder = new BspDungeonBuilder();
 			dungeonBuilder.build(this.map, this);
 			EventBus.getInstance().registerListener(this, EventType.CHANGE_STATUS);
 			EventBus.getInstance().registerListener(this, EventType.REMOVE_ACTOR);
@@ -40,7 +40,7 @@ module Game {
 			this.addGui(statusPanel, "statusPanel", 0, Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT);
 
 			var inventoryPanel: Gui = new InventoryPanel( Constants.INVENTORY_PANEL_WIDTH, Constants.INVENTORY_PANEL_HEIGHT, this.player );
-			this.addGui(inventoryPanel, "inventoryPanel", Math.floor(Constants.CONSOLE_WIDTH/2 - Constants.INVENTORY_PANEL_WIDTH/2), 0);
+			this.addGui(inventoryPanel, "inventoryPanel", Math.floor(Constants.CONSOLE_WIDTH / 2 - Constants.INVENTORY_PANEL_WIDTH / 2), 0);
 		}
 
 		/*
@@ -50,11 +50,11 @@ module Game {
 			return this.player;
 		}
 
-		addCreature( actor:Actor ) {
+		addCreature( actor: Actor ) {
 			this.actors.push(actor);
 		}
 
-		addItem( actor:Actor ) {
+		addItem( actor: Actor ) {
 			this.items.push(actor);
 		}
 
@@ -73,14 +73,14 @@ module Game {
 		/*
 			GuiManager interface
 		*/
-		addGui(gui:Gui, name:string,x:number,y:number) {
-			gui.moveTo(x,y);
-			this.guis.push(gui)
+		addGui(gui: Gui, name: string, x: number, y: number) {
+			gui.moveTo(x, y);
+			this.guis.push(gui);
 		}
 
 		renderGui(rootConsole: Yendor.Console) {
-			for (var i:number = 0; i < this.guis.length; i++) {
-				var gui:Gui = this.guis[i];
+			for (var i: number = 0; i < this.guis.length; i++) {
+				var gui: Gui = this.guis[i];
 				if ( gui.isVisible()) {
 					gui.render(this.map, this, rootConsole);
 				}
@@ -93,14 +93,14 @@ module Game {
 			In the `actors` array, find the closest actor (except the player) from position `pos` within `range`.
 			If range is 0, no range limitation.
 		*/
-		findClosestActor( pos: Yendor.Position, range:number, actors:Actor[] ) : Actor {
-			var bestDistance:number = 1E8;
-			var closestActor:Actor = undefined;
-			var player:Actor = this.getPlayer();
-			actors.forEach(function(actor){		
-				if ( actor != player ) {		
-					var distance:number = Yendor.Position.distance(pos, actor);
-					if ( distance < bestDistance && (distance < range || range == 0) ) {
+		findClosestActor( pos: Yendor.Position, range: number, actors: Actor[] ) : Actor {
+			var bestDistance: number = 1E8;
+			var closestActor: Actor = undefined;
+			var player: Actor = this.getPlayer();
+			actors.forEach(function(actor) {
+				if ( actor !== player ) {
+					var distance: number = Yendor.Position.distance(pos, actor);
+					if ( distance < bestDistance && (distance < range || range === 0) ) {
 						bestDistance = distance;
 						closestActor = actor;
 					}
@@ -120,12 +120,12 @@ module Game {
 			an array containing all the living actors on the cell
 
 		*/
-		findActorsOnCell( pos: Yendor.Position, actors:Actor[]) : Actor[] {
+		findActorsOnCell( pos: Yendor.Position, actors: Actor[]) : Actor[] {
 			var actorsOnCell: Actor[] = [];
 			var nbActors: number = actors.length;
 			for (var i = 0; i < nbActors; i++) {
-				var actor:Actor = actors[i];
-				if ( actor.x == pos.x && actor.y == pos.y ) {
+				var actor: Actor = actors[i];
+				if ( actor.x === pos.x && actor.y === pos.y ) {
 					actorsOnCell.push(actor);
 				}
 			}
@@ -139,30 +139,30 @@ module Game {
 			Parameters:
 				event - the CHANGE_STATUS event
 		*/
-		processEvent(event:Event<any>) {
-			if ( event.type == EventType.CHANGE_STATUS ) {
+		processEvent(event: Event<any>) {
+			if ( event.type === EventType.CHANGE_STATUS ) {
 				this.status = event.data;
-			} else if ( event.type == EventType.REMOVE_ACTOR ) {
-				var item:Actor = event.data;
+			} else if ( event.type === EventType.REMOVE_ACTOR ) {
+				var item: Actor = event.data;
 				this.removeItem(item);
 			}
 		}
 
-		private removeItem(item:Actor) {
-			var idx:number = this.items.indexOf(item);
-			if ( idx != -1 ) {
-				this.items.splice(idx,1);
+		private removeItem(item: Actor) {
+			var idx: number = this.items.indexOf(item);
+			if ( idx !== -1 ) {
+				this.items.splice(idx, 1);
 			}
 		}
 
-		private renderActors(actors:Actor[]) {
+		private renderActors(actors: Actor[]) {
 			var nbActors: number = actors.length;
 			for (var i = 0; i < nbActors; i++) {
-				var actor:Actor = actors[i];
+				var actor: Actor = actors[i];
 				if ( this.map.isInFov( actor.x, actor.y)) {
 					actor.render();
 				}
-			}			
+			}
 		}
 
 		/*
@@ -190,15 +190,15 @@ module Game {
 		private updateActors() {
 			var nbActors: number = this.actors.length;
 			for (var i = 1; i < nbActors; i++) {
-				var actor:Actor = this.actors[i];
+				var actor: Actor = this.actors[i];
 				actor.update( this.map, this );
 				if ( actor.destructible && actor.destructible.isDead() ) {
-					this.actors.splice(i,1);
+					this.actors.splice(i, 1);
 					i--;
 					nbActors--;
 					this.corpses.push(actor);
 				}
-			}			
+			}
 		}
 
 		/*
@@ -211,7 +211,7 @@ module Game {
 		handleKeypress(event: KeyboardEvent) {
 			EventBus.getInstance().publishEvent(new Event<KeyboardEvent>(EventType.KEY_PRESSED, event));
 			this.player.ai.update(this.player, this.map, this);
-			if ( this.status == GameStatus.NEW_TURN )  {
+			if ( this.status === GameStatus.NEW_TURN )  {
 				this.updateActors();
 				this.status = GameStatus.IDLE;
 			}
@@ -227,8 +227,8 @@ module Game {
 			Parameters:
 			time - elapsed time since the last frame in milliseconds
 		*/
-		handleNewFrame (time:number) {
-			if ( this.status == GameStatus.STARTUP ) {
+		handleNewFrame (time: number) {
+			if ( this.status === GameStatus.STARTUP ) {
 				this.player.ai.update(this.player, this.map, this);
 				this.status = GameStatus.IDLE;
 			}
@@ -244,7 +244,7 @@ module Game {
 			event - the JQueryMouseEventObject
 		*/
 		handleMouseMove(event: JQueryMouseEventObject) {
-			var pos:Yendor.Position = root.getPositionFromPixels( event.pageX, event.pageY );
+			var pos: Yendor.Position = root.getPositionFromPixels( event.pageX, event.pageY );
 			EventBus.getInstance().publishEvent(new Event<Yendor.Position>( EventType.MOUSE_MOVE, pos));
 		}
 	}
@@ -257,17 +257,17 @@ module Game {
 		Function: log
 		Utility to send a LOG_MESSAGE event on the event bus.
 	*/
-	log = function(text: string, color:Yendor.Color='white') {
-		EventBus.getInstance().publishEvent(new Event<Message>(EventType.LOG_MESSAGE,new Message(color,text)));
-	}
+	log = function(text: string, color: Yendor.Color = "white") {
+		EventBus.getInstance().publishEvent(new Event<Message>(EventType.LOG_MESSAGE, new Message(color, text)));
+	};
 
 	/*
 		This function is called when the document has finished loading in the browser.
 		It creates the root console, register the keyboard and mouse event callbacks, and starts the frame rendering loop.
 	*/
-	$(function(){
+	$(function() {
 		Yendor.init();
-		root = new Yendor.PixiConsole( Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT, '#ffffff', '#000000', '#console', 'terminal.png' );
+		root = new Yendor.PixiConsole( Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT, "#ffffff", "#000000", "#console", "terminal.png" );
 		$(document).keydown(engine.handleKeypress.bind(engine));
 		$(document).mousemove(engine.handleMouseMove.bind(engine));
 		Yendor.loop(engine.handleNewFrame.bind(engine));

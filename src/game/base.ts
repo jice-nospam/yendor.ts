@@ -5,27 +5,27 @@ module Game {
 		export var CONSOLE_HEIGHT: number = 34;
 
 		// rendering
-		export var DARK_WALL: Yendor.Color = 'rgb(0,0,100)';
-		export var LIGHT_WALL: Yendor.Color = 'rgb(130,110,50)';
-		export var DARK_GROUND: Yendor.Color = 'rgb(50,50,150)';
-		export var LIGHT_GROUND: Yendor.Color = 'rgb(200,180,50)';
-        export var CORPSE_COLOR: Yendor.Color = 'rgb(191,0,0)';
+		export var DARK_WALL: Yendor.Color = "rgb(0,0,100)";
+		export var LIGHT_WALL: Yendor.Color = "rgb(130,110,50)";
+		export var DARK_GROUND: Yendor.Color = "rgb(50,50,150)";
+		export var LIGHT_GROUND: Yendor.Color = "rgb(200,180,50)";
+        export var CORPSE_COLOR: Yendor.Color = "rgb(191,0,0)";
         export var FOV_RADIUS: number = 10;
 
         // gui
-		export var LOG_DARKEN_COEF:number = 0.9;
+		export var LOG_DARKEN_COEF: number = 0.9;
 		export var STATUS_PANEL_HEIGHT: number = 7;
 		export var STAT_BAR_WIDTH: number = 20;
-		export var HEALTH_BAR_BACKGROUND: Yendor.Color = 'rgb(255,63,63)';
-		export var HEALTH_BAR_FOREGROUND: Yendor.Color = 'rgb(127,0,0)';
+		export var HEALTH_BAR_BACKGROUND: Yendor.Color = "rgb(255,63,63)";
+		export var HEALTH_BAR_FOREGROUND: Yendor.Color = "rgb(127,0,0)";
         export var INVENTORY_PANEL_WIDTH: number = 50;
         export var INVENTORY_PANEL_HEIGHT: number = 28;
 
 		// map building
-		export var MAX_MONSTERS_PER_ROOM: number = 3;		
+		export var MAX_MONSTERS_PER_ROOM: number = 3;
         export var MAX_ITEMS_PER_ROOM: number = 2;
-		export var ROOM_MAX_SIZE:number = 8;
-		export var ROOM_MIN_SIZE:number = 4;
+		export var ROOM_MAX_SIZE: number = 8;
+		export var ROOM_MIN_SIZE: number = 4;
 
 		// AI
 		export var SCENT_THRESHOLD: number = 10;
@@ -164,5 +164,5 @@ module Game {
     };
 
 	// utilities
-	export var log:(text: string, color?:Yendor.Color) => void;
+	export var log: (text: string, color?: Yendor.Color) => void;
 }

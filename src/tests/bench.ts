@@ -20,26 +20,26 @@ module Benchmark {
 	function render() {
 		for (var x = SAMPLE_SCREEN_X; x < SAMPLE_SCREEN_X + SAMPLE_SCREEN_WIDTH; x++ ) {
 			for ( var y = SAMPLE_SCREEN_Y; y < SAMPLE_SCREEN_Y + SAMPLE_SCREEN_HEIGHT; y++ ) {
-				var r = rng.getNumber(0,255);
-				var g = rng.getNumber(0,255);
-				var b = rng.getNumber(0,255);
-				var col = 'rgb(' + r + ',' + g + ',' + b + ')';
-				root.back[x][y]=col;
-				r = rng.getNumber(0,255);
-				g = rng.getNumber(0,255);
-				b = rng.getNumber(0,255);
-				col = 'rgb(' + r + ',' + g + ',' + b + ')';
-				root.fore[x][y]=col;
-				var ch = rng.getNumber(32,128);
-				root.setChar(x,y,String.fromCharCode(ch));
+				var r = rng.getNumber(0, 255);
+				var g = rng.getNumber(0, 255);
+				var b = rng.getNumber(0, 255);
+				var col = "rgb(" + r + "," + g + "," + b + ")";
+				root.back[x][y] = col;
+				r = rng.getNumber(0, 255);
+				g = rng.getNumber(0, 255);
+				b = rng.getNumber(0, 255);
+				col = "rgb(" + r + "," + g + "," + b + ")";
+				root.fore[x][y] = col;
+				var ch = rng.getNumber(32, 128);
+				root.setChar(x, y, String.fromCharCode(ch));
 			}
 		}
-		root.print(1,46,'fps : ' + framesPerSecond);
+		root.print(1, 46, "fps : " + framesPerSecond);
 	}
 
-	function handleNewFrame(time:number) {
+	function handleNewFrame(time: number) {
 		currentFrameCount++;
-		if ( fpsTimer == 0 ) {
+		if ( fpsTimer === 0 ) {
 			fpsTimer = time;
 		} else if ( time - fpsTimer > 1000 ) {
 			framesPerSecond = currentFrameCount;
@@ -52,8 +52,8 @@ module Benchmark {
 
 	$(function() {
 		Yendor.init();
-		root = new Yendor.PixiConsole( WIDTH, HEIGHT, '#ffffff', '#000000', '#console', 'terminal.png' );
-		//root = new Yendor.DivConsole( WIDTH, HEIGHT, '#ffffff', '#000000', '#console' );
+		root = new Yendor.PixiConsole( WIDTH, HEIGHT, "#ffffff", "#000000", "#console", "terminal.png" );
+		//root = new Yendor.DivConsole( WIDTH, HEIGHT, "#ffffff", "#000000", "#console" );
 		Yendor.loop(handleNewFrame);
 	});
 }
