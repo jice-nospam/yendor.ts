@@ -42,7 +42,7 @@ module Game {
 			var inventoryPanel: Gui = new InventoryPanel( Constants.INVENTORY_PANEL_WIDTH, Constants.INVENTORY_PANEL_HEIGHT, this.player );
 			this.addGui(inventoryPanel, "inventoryPanel", Math.floor(Constants.CONSOLE_WIDTH / 2 - Constants.INVENTORY_PANEL_WIDTH / 2), 0);
 
-			var tilePicker: Gui = new TilePicker();
+			var tilePicker: Gui = new TilePicker(this.map);
 			this.addGui(tilePicker, "tilePicker");
 		}
 
@@ -289,8 +289,6 @@ module Game {
 		}
 	}
 
-	var engine = new Engine();
-
 	/*
 		Section: Game startup
 
@@ -308,6 +306,8 @@ module Game {
 	$(function() {
 		Yendor.init();
 		root = new Yendor.PixiConsole( Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT, "#ffffff", "#000000", "#console", "terminal.png" );
+
+		var engine = new Engine();
 		$(document).keydown(engine.handleKeypress.bind(engine));
 		$(document).mousemove(engine.handleMouseMove.bind(engine));
 		$(document).click(engine.handleMouseClick.bind(engine));

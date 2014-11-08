@@ -157,11 +157,13 @@ module Game {
 			if ( this.isWall(x, y) ) {
 				return false;
 			}
-			actorManager.findActorsOnCell(new Yendor.Position(x, y), actorManager.getCreatures()).forEach( function(actor) {
+			var actorsOnCell: Actor[] = actorManager.findActorsOnCell(new Yendor.Position(x, y), actorManager.getCreatures());
+			for ( var i: number = 0; i < actorsOnCell.length; i++) {
+				var actor: Actor = actorsOnCell[i];
 				if ( actor.isBlocking() ) {
 					return false;
 				}
-			});
+			}
 			return true;
 		}
 

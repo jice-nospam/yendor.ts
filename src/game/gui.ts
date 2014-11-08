@@ -196,8 +196,11 @@ module Game {
 	export class TilePicker extends Gui implements EventListener {
 		private tilePos : Yendor.Position;
 		private listener: TilePickerListener;
-		constructor() {
+		private tileIsValid: boolean = false;
+		private map: Map;
+		constructor(map: Map) {
 			super(Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT);
+			this.map = map;
 			EventBus.getInstance().registerListener(this, EventType.PICK_TILE);
 		}
 
@@ -207,11 +210,17 @@ module Game {
 				EventBus.getInstance().registerListener(this, EventType.MOUSE_MOVE);
 				EventBus.getInstance().registerListener(this, EventType.MOUSE_CLICK);
 				this.show();
+				this.tileIsValid = false;
 			} else if (this.isVisible() && event.type === EventType.MOUSE_MOVE) {
 				this.tilePos = event.data;
+				this.tileIsValid = this.map.isInFov(this.tilePos.x, this.tilePos.y);
 			} else if (this.isVisible() && event.type === EventType.MOUSE_CLICK) {
-				if ( event.data === MouseButton.LEFT && this.listener ) {
-					this.listener(this.tilePos);
+				if ( event.data === MouseButton.LEFT ) {
+					if (! this.tileIsValid ) {
+						return;
+					} else if (this.listener) {
+						this.listener(this.tilePos);
+					}
 				}
 				EventBus.getInstance().unregisterListener(this, EventType.MOUSE_MOVE);
 				EventBus.getInstance().unregisterListener(this, EventType.MOUSE_CLICK);
@@ -220,6 +229,8 @@ module Game {
 		}
 
 		render(map: Map, actorManager: ActorManager, console: Yendor.Console) {
+			console.setChar( this.tilePos.x, this.tilePos.y, this.tileIsValid ? "+" : "x" );
+			console.fore[this.tilePos.x][this.tilePos.y] = this.tileIsValid ? "green" : "red";
 		}
 	}
 }
