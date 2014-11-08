@@ -154,6 +154,7 @@ module Game {
 					if ( index >= 0 && index < this.actor.container.size() ) {
 						var item: Actor = this.actor.container.get(index);
 						if (item.pickable) {
+							this.hide();
 							item.pickable.use(item, this.actor, event.actorManager);
 						}
 					}
@@ -183,33 +184,42 @@ module Game {
 	 ********************************************************************************/
 
 	export interface TilePickerListener {
-		onTilePicked(pos: Yendor.Position);
+		(pos: Yendor.Position): void;
 	}
 
+	/*
+		Class: TilePicker
+		A background Gui that sleeps until it receives a PICK_TILE event containing a TilePickerListener.
+		It then listens to mouse move events until the player left-clicks a tile.
+		Then it calls the TilePickerListener with the selected tile position.
+	*/
 	export class TilePicker extends Gui implements EventListener {
 		private tilePos : Yendor.Position;
 		private listener: TilePickerListener;
 		constructor() {
 			super(Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT);
 			EventBus.getInstance().registerListener(this, EventType.PICK_TILE);
-			EventBus.getInstance().registerListener(this, EventType.MOUSE_MOVE);
 		}
 
 		processEvent( event: Event<any> ) {
 			if (!this.isVisible() && event.type === EventType.PICK_TILE ) {
 				this.listener = event.data;
+				EventBus.getInstance().registerListener(this, EventType.MOUSE_MOVE);
+				EventBus.getInstance().registerListener(this, EventType.MOUSE_CLICK);
 				this.show();
 			} else if (this.isVisible() && event.type === EventType.MOUSE_MOVE) {
 				this.tilePos = event.data;
 			} else if (this.isVisible() && event.type === EventType.MOUSE_CLICK) {
-				if ( this.listener ) {
-					this.listener.onTilePicked(this.tilePos);
+				if ( event.data === MouseButton.LEFT && this.listener ) {
+					this.listener(this.tilePos);
 				}
+				EventBus.getInstance().unregisterListener(this, EventType.MOUSE_MOVE);
+				EventBus.getInstance().unregisterListener(this, EventType.MOUSE_CLICK);
 				this.hide();
 			}
 		}
 
-		render(map: Map, actorManager: ActorManager, destination: Yendor.Console) {
+		render(map: Map, actorManager: ActorManager, console: Yendor.Console) {
 		}
 	}
 }
