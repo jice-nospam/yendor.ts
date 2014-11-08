@@ -232,16 +232,51 @@ module Game {
 			// check movement keys
 			var dx : number = 0;
 			var dy : number = 0;
+			var newTurn: boolean = false;
 			switch (this.keyCode) {
-				case KeyEvent.DOM_VK_LEFT: dx = -1; break;
-				case KeyEvent.DOM_VK_RIGHT: dx = 1; break;
-				case KeyEvent.DOM_VK_UP: dy = -1; break;
-				case KeyEvent.DOM_VK_DOWN: dy = 1; break;
+				// cardinal movements
+				case KeyEvent.DOM_VK_LEFT:
+				case KeyEvent.DOM_VK_NUMPAD4:
+					dx = -1;
+				break;
+				case KeyEvent.DOM_VK_RIGHT:
+				case KeyEvent.DOM_VK_NUMPAD6:
+					dx = 1;
+				break;
+				case KeyEvent.DOM_VK_UP:
+				case KeyEvent.DOM_VK_NUMPAD8:
+					dy = -1;
+				break;
+				case KeyEvent.DOM_VK_DOWN:
+				case KeyEvent.DOM_VK_NUMPAD2:
+					dy = 1;
+				break;
+				// diagonal movements
+				case KeyEvent.DOM_VK_NUMPAD7:
+					dx = -1;
+					dy = -1;
+				break;
+				case KeyEvent.DOM_VK_NUMPAD9:
+					dx = 1;
+					dy = -1;
+				break;
+				case KeyEvent.DOM_VK_NUMPAD1:
+					dx = -1;
+					dy = 1;
+				break;
+				case KeyEvent.DOM_VK_NUMPAD3:
+					dx = 1;
+					dy = 1;
+				break;
+				// other movements
+				case KeyEvent.DOM_VK_NUMPAD5:
+					// wait for a turn
+					newTurn = true;
+				break;
 				default : this.handleActionKey(owner, map, actorManager); break;
 			}
 			if ( dx !== 0 || dy !== 0 )  {
-				// the player moved or try to move. New game turn
-				EventBus.getInstance().publishEvent(new Event<GameStatus>(EventType.CHANGE_STATUS, GameStatus.NEW_TURN));
+				newTurn = true;
 				// move to the target cell or attack if there's a creature
 				if ( this.moveOrAttack(owner, owner.x + dx, owner.y + dy, map, actorManager) ) {
 					// the player actually move. Recompute the field of view
@@ -251,6 +286,10 @@ module Game {
 				// first game frame : compute the field of view
 				map.computeFov(owner.x, owner.y, Constants.FOV_RADIUS);
 				this.first = false;
+			}
+			if ( newTurn ) {
+				// the player moved or try to move. New game turn
+				EventBus.getInstance().publishEvent(new Event<GameStatus>(EventType.CHANGE_STATUS, GameStatus.NEW_TURN));
 			}
 		}
 
@@ -372,8 +411,8 @@ module Game {
 				}
 			} else if ( map.isInFov(owner.x, owner.y) ) {
 				// not at melee range, but in sight. Move towards him
-				dx = Math.round(dx / distance);
-				dy = Math.round(dy / distance);
+				dx = dx / distance;
+				dy = dy / distance;
 				this.move(owner, dx, dy, map, actorManager);
 			} else {
 				// player not in range. Use scent tracking
@@ -394,8 +433,8 @@ module Game {
 		*/
 		private move(owner: Actor, dx: number, dy: number, map: Map, actorManager: ActorManager) {
 			// compute the unitary move vector
-			var stepdx: number = dx > 0 ? 1 : -1;
-			var stepdy: number = dy > 0 ? 1 : -1;
+			var stepdx: number = dx > 0 ? 1 : (dx < 0 ? -1 : 0);
+			var stepdy: number = dy > 0 ? 1 : (dy < 0 ? -1 : 0);
 			if ( map.canWalk(owner.x + stepdx, owner.y + stepdy, actorManager)) {
 				// can walk
 				owner.x += stepdx;
@@ -599,7 +638,7 @@ module Game {
 			//	case TargetSelectionMethod.SELECTED_ACTOR : return selectActor(wearer, actorManager); break;
 			//	case TargetSelectionMethod.WEARER_RANGE : return selectCloseEnemies(wearer, actorManager); break;
 				case TargetSelectionMethod.SELECTED_RANGE :
-					log("Left-click a target tile for the fireball,\nor right-click to cancel.");
+					log("Left-click a target tile for the fireball,\nor right-click to cancel.", "red");
 					var theRange = this.range;
 					EventBus.getInstance().publishEvent(new Event<TilePickerListener>(EventType.PICK_TILE,
 						function(pos: Yendor.Position) {

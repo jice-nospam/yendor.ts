@@ -2,6 +2,9 @@
 * Yendor toolkit
 	- mush faster console implementation using pixi.js
 
+* GenRogue :
+	- scroll of fireball
+
 # 0.0.2 / 15-oct-2014
 
 * Yendor toolkit
