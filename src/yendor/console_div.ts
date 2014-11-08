@@ -1,7 +1,7 @@
 /// <reference path="../yendor/yendor.ts" />
 
 /*
-	Section: Console
+	Section: DivConsole
 */
 module Yendor {
 	/*
