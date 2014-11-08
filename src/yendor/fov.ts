@@ -23,14 +23,14 @@ module Yendor {
 			width - the map width
 			height - the map height
 		*/
-		constructor(private _width:number, private _height:number) {
+		constructor(private _width: number, private _height: number) {
 			this._walkable = [];
 			this._transparent = [];
 			this._inFov = [];
 			for ( var x = 0; x < _width; x++) {
 				this._walkable[x] = [];
-				this._transparent[x] =[];
-				this._inFov[x] =[];
+				this._transparent[x] = [];
+				this._inFov[x] = [];
 			}
 			this.startAngle = [];
 			this.endAngle = [];
@@ -58,7 +58,7 @@ module Yendor {
 			Returns:
 			true if the cell at coordinate x,y is walkable
 		*/
-		isWalkable(x:number, y:number): boolean {
+		isWalkable(x: number, y: number): boolean {
 			return this._walkable[x] ? this._walkable[x][y] : false;
 		}
 
@@ -72,7 +72,7 @@ module Yendor {
 			Returns:
 			true if the cell at coordinate x,y is transparent (doesn't block field of view)
 		*/
-		isTransparent(x:number, y:number): boolean {
+		isTransparent(x: number, y: number): boolean {
 			return this._transparent[x] ? this._transparent[x][y] : false;
 		}
 
@@ -88,7 +88,7 @@ module Yendor {
 			Returns:
 			true if the cell at coordinate x,y is in the last computed field of view
 		*/
-		isInFov(x:number, y:number): boolean {
+		isInFov(x: number, y: number): boolean {
 			return this._inFov[x] ? this._inFov[x][y] : false;
 		}
 
@@ -102,7 +102,7 @@ module Yendor {
 			walkable - whether a creature can walk on this cell
 			transparent - whether a creature can see through this cell
 		*/
-		setCell(x:number, y:number, walkable:boolean, transparent:boolean) {
+		setCell(x: number, y: number, walkable: boolean, transparent: boolean) {
 			this._walkable[x][y] = walkable;
 			this._transparent[x][y] = transparent;
 		}
@@ -118,17 +118,17 @@ module Yendor {
 			maxRadius - maximum distance for a cell to be visible
 			lightWalls - *optional* (default : true) whether walls are included in the field of view.
 		*/
-		computeFov(x:number, y:number, maxRadius:number, lightWalls:boolean=true) {
+		computeFov(x: number, y: number, maxRadius: number, lightWalls: boolean = true) {
 			this.clearFov();
 			this._inFov[x][y] = true;
-			this.computeQuadrantVertical(x,y,maxRadius,lightWalls,1,1);
-			this.computeQuadrantHorizontal(x,y,maxRadius,lightWalls,1,1);
-			this.computeQuadrantVertical(x,y,maxRadius,lightWalls,1,-1);
-			this.computeQuadrantHorizontal(x,y,maxRadius,lightWalls,1,-1);
-			this.computeQuadrantVertical(x,y,maxRadius,lightWalls,-1,1);
-			this.computeQuadrantHorizontal(x,y,maxRadius,lightWalls,-1,1);
-			this.computeQuadrantVertical(x,y,maxRadius,lightWalls,-1,-1);
-			this.computeQuadrantHorizontal(x,y,maxRadius,lightWalls,-1,-1);
+			this.computeQuadrantVertical(x, y, maxRadius, lightWalls, 1, 1);
+			this.computeQuadrantHorizontal(x, y, maxRadius, lightWalls, 1, 1);
+			this.computeQuadrantVertical(x, y, maxRadius, lightWalls, 1, -1);
+			this.computeQuadrantHorizontal(x, y, maxRadius, lightWalls, 1, -1);
+			this.computeQuadrantVertical(x, y, maxRadius, lightWalls, -1, 1);
+			this.computeQuadrantHorizontal(x, y, maxRadius, lightWalls, -1, 1);
+			this.computeQuadrantVertical(x, y, maxRadius, lightWalls, -1, -1);
+			this.computeQuadrantHorizontal(x, y, maxRadius, lightWalls, -1, -1);
 		}
 
 		/*
@@ -136,54 +136,53 @@ module Yendor {
 			Reset the field of view information. After this, <isInFov> returns false for all the cells.
 		*/
 		private clearFov() {
-			for ( var x:number = 0; x < this.width; x++) {
-				for ( var y:number = 0; y < this.height; y++) {
+			for ( var x: number = 0; x < this.width; x++) {
+				for ( var y: number = 0; y < this.height; y++) {
 					this._inFov[x][y] = false;
 				}
 			}
 		}
 
-		private computeQuadrantVertical(xPov:number, yPov:number, maxRadius:number, lightWalls:boolean, dx:number, dy: number) {
-			var y:number = yPov+dy;
-			var done:boolean = false;
-			var iteration:number = 1;
-			var minAngle:number = 0;
-			var lastLineObstacleCount:number = 0;
+		private computeQuadrantVertical(xPov: number, yPov: number, maxRadius: number, lightWalls: boolean, dx: number, dy: number) {
+			var y: number = yPov + dy;
+			var done: boolean = false;
+			var iteration: number = 1;
+			var minAngle: number = 0;
+			var lastLineObstacleCount: number = 0;
 			var totalObstacleCount = 0;
 			while ( ! done && y >= 0 && y < this.height ) {
-				var slopePerCell:number = 1/iteration;
-				var halfSlope:number = slopePerCell * 0.5;
-				var processedCell:number = Math.floor((minAngle + halfSlope) / slopePerCell);
-				var xMin:number = Math.max(0,xPov-iteration);
-				var xMax:number = Math.min(this.width-1,xPov+iteration);
+				var slopePerCell: number = 1 / iteration;
+				var halfSlope: number = slopePerCell * 0.5;
+				var processedCell: number = Math.floor((minAngle + halfSlope) / slopePerCell);
+				var xMin: number = Math.max(0, xPov - iteration);
+				var xMax: number = Math.min(this.width - 1, xPov + iteration);
 				done = true;
-				for ( var x:number = xPov + processedCell * dx; x >= xMin && x <= xMax; x += dx) {
-					var centreSlope:number = processedCell * slopePerCell;
-					var startSlope:number = centreSlope - halfSlope;
-					var endSlope:number = centreSlope + halfSlope;
-					var visible:boolean = true;
-					var extended:boolean = false;
-					if ( lastLineObstacleCount > 0 && ! this.isInFov(x,y) ) {
-						var idx:number = 0;
-						if ( visible && ! this.canSee(x,y-dy)
-							&& x-dx >= 0 && x-dx < this.width && ! this.canSee(x-dx, y-dy)) {
+				for ( var x: number = xPov + processedCell * dx; x >= xMin && x <= xMax; x += dx) {
+					var centreSlope: number = processedCell * slopePerCell;
+					var startSlope: number = centreSlope - halfSlope;
+					var endSlope: number = centreSlope + halfSlope;
+					var visible: boolean = true;
+					var extended: boolean = false;
+					if ( lastLineObstacleCount > 0 && !this.isInFov(x, y) ) {
+						var idx: number = 0;
+						if ( visible && ! this.canSee(x, y - dy)
+							&& x - dx >= 0 && x - dx < this.width && ! this.canSee(x - dx, y - dy)) {
 							visible = false;
 						} else {
 							while ( visible && idx < lastLineObstacleCount ) {
 								if (this.startAngle[idx] > endSlope || this.endAngle[idx] < startSlope) {
 									++idx;
 								} else {
-			              			if (this.isTransparent(x,y)) {
+			              			if (this.isTransparent(x, y)) {
 			  							if (centreSlope > this.startAngle[idx] && centreSlope < this.endAngle[idx]) {
 			  								visible = false;
 			  							}
-			  						}
-			  						else {
+			  						} else {
 			  							if (startSlope >= this.startAngle[idx] && endSlope <= this.endAngle[idx]) {
 			  								visible = false;
 			  							} else {
-											this.startAngle[idx] = Math.min(this.startAngle[idx],startSlope);
-											this.endAngle[idx] = Math.max(this.endAngle[idx],endSlope);
+											this.startAngle[idx] = Math.min(this.startAngle[idx], startSlope);
+											this.endAngle[idx] = Math.max(this.endAngle[idx], endSlope);
 											extended = true;
 										}
 			  						}
@@ -196,12 +195,12 @@ module Yendor {
 						this._inFov[x][y] = true;
 						done = false;
 						// if the cell is opaque, block the adjacent slopes 
-						if (!this.isTransparent(x,y)) {
+						if (!this.isTransparent(x, y)) {
 							if (minAngle >= startSlope) {
 								minAngle = endSlope;
 								// if min_angle is applied to the last cell in line, nothing more
 								// needs to be checked. 
-								if (processedCell == iteration) {
+								if (processedCell === iteration) {
 									done = true;
 								}
 							} else if (!extended) {
@@ -214,9 +213,9 @@ module Yendor {
 							}
 						}
 					}
-					processedCell++;			
+					processedCell++;
 				}
-				if (iteration == maxRadius) {
+				if (iteration === maxRadius) {
 					done = true;
 				}
 				iteration++;
@@ -228,47 +227,46 @@ module Yendor {
 			}
 		}
 
-		private computeQuadrantHorizontal(xPov:number, yPov:number, maxRadius:number, lightWalls:boolean, dx:number, dy: number) {
-			var x:number = xPov+dx;
-			var done:boolean = false;
-			var iteration:number = 1;
-			var minAngle:number = 0;
-			var lastLineObstacleCount:number = 0;
+		private computeQuadrantHorizontal(xPov: number, yPov: number, maxRadius: number, lightWalls: boolean, dx: number, dy: number) {
+			var x: number = xPov + dx;
+			var done: boolean = false;
+			var iteration: number = 1;
+			var minAngle: number = 0;
+			var lastLineObstacleCount: number = 0;
 			var totalObstacleCount = 0;
 			while ( ! done && x >= 0 && x < this.width ) {
-				var slopePerCell:number = 1/iteration;
-				var halfSlope:number = slopePerCell * 0.5;
-				var processedCell:number = Math.floor((minAngle + halfSlope) / slopePerCell);
-				var yMin:number = Math.max(0,yPov-iteration);
-				var yMax:number = Math.min(this.height-1,yPov+iteration);
+				var slopePerCell: number = 1 / iteration;
+				var halfSlope: number = slopePerCell * 0.5;
+				var processedCell: number = Math.floor((minAngle + halfSlope) / slopePerCell);
+				var yMin: number = Math.max(0, yPov - iteration);
+				var yMax: number = Math.min(this.height - 1, yPov + iteration);
 				done = true;
-				for ( var y:number = yPov + processedCell * dy; y >= yMin && y <= yMax; y += dy) {
-					var centreSlope:number = processedCell * slopePerCell;
-					var startSlope:number = centreSlope - halfSlope;
-					var endSlope:number = centreSlope + halfSlope;
-					var visible:boolean = true;
-					var extended:boolean = false;
-					if ( lastLineObstacleCount > 0 && ! this.isInFov(x,y) ) {
-						var idx:number = 0;
-						if ( visible && ! this.canSee(x-dx,y)
-							&& y-dy >= 0 && y-dy < this.height && ! this.canSee(x-dx, y-dy)) {
+				for ( var y: number = yPov + processedCell * dy; y >= yMin && y <= yMax; y += dy) {
+					var centreSlope: number = processedCell * slopePerCell;
+					var startSlope: number = centreSlope - halfSlope;
+					var endSlope: number = centreSlope + halfSlope;
+					var visible: boolean = true;
+					var extended: boolean = false;
+					if ( lastLineObstacleCount > 0 && ! this.isInFov(x, y) ) {
+						var idx: number = 0;
+						if ( visible && ! this.canSee(x - dx, y)
+							&& y - dy >= 0 && y - dy < this.height && ! this.canSee(x - dx, y - dy)) {
 							visible = false;
 						} else {
 							while ( visible && idx < lastLineObstacleCount ) {
 								if (this.startAngle[idx] > endSlope || this.endAngle[idx] < startSlope) {
 									++idx;
 								} else {
-			              			if (this.isTransparent(x,y)) {
+			              			if (this.isTransparent(x, y)) {
 			  							if (centreSlope > this.startAngle[idx] && centreSlope < this.endAngle[idx]) {
 			  								visible = false;
 			  							}
-			  						}
-			  						else {
+			  						} else {
 			  							if (startSlope >= this.startAngle[idx] && endSlope <= this.endAngle[idx]) {
 			  								visible = false;
 			  							} else {
-											this.startAngle[idx] = Math.min(this.startAngle[idx],startSlope);
-											this.endAngle[idx] = Math.max(this.endAngle[idx],endSlope);
+											this.startAngle[idx] = Math.min(this.startAngle[idx], startSlope);
+											this.endAngle[idx] = Math.max(this.endAngle[idx], endSlope);
 											extended = true;
 										}
 			  						}
@@ -281,12 +279,12 @@ module Yendor {
 						this._inFov[x][y] = true;
 						done = false;
 						// if the cell is opaque, block the adjacent slopes 
-						if (!this.isTransparent(x,y)) {
+						if (!this.isTransparent(x, y)) {
 							if (minAngle >= startSlope) {
 								minAngle = endSlope;
 								// if min_angle is applied to the last cell in line, nothing more
 								// needs to be checked. 
-								if (processedCell == iteration) {
+								if (processedCell === iteration) {
 									done = true;
 								}
 							} else if (!extended) {
@@ -299,9 +297,9 @@ module Yendor {
 							}
 						}
 					}
-					processedCell++;			
+					processedCell++;
 				}
-				if (iteration == maxRadius) {
+				if (iteration === maxRadius) {
 					done = true;
 				}
 				iteration++;
@@ -313,8 +311,8 @@ module Yendor {
 			}
 		}
 
-		private canSee(x:number, y:number) {
-			return this.isInFov(x,y) && this.isTransparent(x,y);
+		private canSee(x: number, y: number) {
+			return this.isInFov(x, y) && this.isTransparent(x, y);
 		}
 	}
 }
