@@ -8,7 +8,7 @@
 # 0.0.2 / 15-oct-2014
 
 * Yendor toolkit
-	- improve browser compatibility (tested firefox + chrome + IE9 + IE11)
+	- improved browser compatibility (tested firefox + chrome + IE9 + IE11)
 
 # 0.0.1 / 15-may-2014
 
