@@ -396,10 +396,10 @@ module Game {
 			// compute the unitary move vector
 			var stepdx: number = dx > 0 ? 1 : -1;
 			var stepdy: number = dy > 0 ? 1 : -1;
-			if ( map.canWalk(owner.x + dx, owner.y + dy, actorManager)) {
+			if ( map.canWalk(owner.x + stepdx, owner.y + stepdy, actorManager)) {
 				// can walk
-				owner.x += dx;
-				owner.y += dy;
+				owner.x += stepdx;
+				owner.y += stepdy;
 			} else if ( map.canWalk(owner.x + stepdx, owner.y, actorManager)) {
 				// horizontal slide
 				owner.x += stepdx;
