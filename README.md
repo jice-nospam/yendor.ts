@@ -41,7 +41,11 @@ Then open game/index.html in your favorite browser.
 
 Then open game/index.html in your favorite browser.
 
-# Documents
+# Links
+* [yendor.ts documentation](http://roguecentral.org/doryen/yendor.ts/doc/yendor/index.html)
+* [GenRogue documentation](http://roguecentral.org/doryen/yendor.ts/doc/game/index.html)
+* [Play GenRogue online](http://roguecentral.org/doryen/yendor.ts/game/index.html)
+* [Run the benchmark online](http://roguecentral.org/doryen/yendor.ts/bench/index.html)
 
 # Community
 
