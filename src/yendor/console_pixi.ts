@@ -2,7 +2,7 @@
 /// <reference path="../yendor/yendor.ts" />
 
 /*
-	Section: Console
+	Section: PixiConsole
 */
 module Yendor {
 	/*

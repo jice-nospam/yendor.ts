@@ -1,5 +1,7 @@
 /// <reference path="../yendor/yendor.ts" />
-
+/*
+	Section: GUI
+*/
 module Game {
 	/********************************************************************************
 	 * Group: generic GUI stuff
