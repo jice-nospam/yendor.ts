@@ -42,12 +42,12 @@ module Yendor {
 			w - the node region's width
 			h - the node region's height
 		*/
-		constructor(x: number, y:number, w: number, h: number, level?: number) {
+		constructor(x: number, y: number, w: number, h: number, level?: number) {
 			this.x = x;
 			this.y = y;
 			this.w = w;
 			this.h = h;
-			if ( level ) { 
+			if ( level ) {
 				this.level = level;
 			}
 		}
@@ -74,8 +74,8 @@ module Yendor {
 			Returns:
 			true if the point is inside the node's region.
 		*/
-		contains(px: number, py:number) : boolean {
-			return px >= this.x && py >= this.y && px <= this.x + this.w && py <= this.y+this.h;
+		contains(px: number, py: number) : boolean {
+			return px >= this.x && py >= this.y && px <= this.x + this.w && py <= this.y + this.h;
 		}
 
 		/*
@@ -88,10 +88,10 @@ module Yendor {
 			Returns:
 			true if node is inside *this*.
 		*/
-		containsNode( node:BSPNode ) {
-			return this.x <= node.x && this.y <= node.y 
-				&& this.x+this.w >= node.x+node.w 
-				&& this.y+this.h >= node.y+node.h;
+		containsNode( node: BSPNode ) {
+			return this.x <= node.x && this.y <= node.y
+				&& this.x + this.w >= node.x + node.w
+				&& this.y + this.h >= node.y + node.h;
 		}
 
 		/*
@@ -105,13 +105,13 @@ module Yendor {
 			Returns:
 			the smallest BSPNode in the hierarchy that contains the point, or *undefined* if the point is outside the tree.
 		*/
-		findNode(px:number, py:number) : BSPNode {
+		findNode(px: number, py: number): BSPNode {
 			if (this.contains(px, py)) {
 				if ( this.leftChild && this.leftChild.contains(px, py)) {
-					return this.leftChild.findNode(px,py);
+					return this.leftChild.findNode(px, py);
 				}
-				if ( this.rightChild && this.rightChild.contains(px,py)) {
-					return this.rightChild.findNode(px,py);
+				if ( this.rightChild && this.rightChild.contains(px, py)) {
+					return this.rightChild.findNode(px, py);
 				}
 				return this;
 			}
@@ -144,12 +144,12 @@ module Yendor {
 		split(horiz: boolean, splitPos: number) {
 			this.horiz = horiz;
 			this.splitPos = splitPos;
-			if ( horiz ) {				
-				this.leftChild = new BSPNode(this.x, this.y, this.splitPos, this.h, this.level+1);
-				this.rightChild = new BSPNode(this.x+this.splitPos, this.y, this.w - this.splitPos, this.h, this.level+1);
+			if ( horiz ) {
+				this.leftChild = new BSPNode(this.x, this.y, this.splitPos, this.h, this.level + 1);
+				this.rightChild = new BSPNode(this.x + this.splitPos, this.y, this.w - this.splitPos, this.h, this.level + 1);
 			} else {
-				this.leftChild = new BSPNode(this.x, this.y, this.w, this.splitPos, this.level+1);
-				this.rightChild = new BSPNode(this.x, this.y+this.splitPos, this.w, this.h - this.splitPos, this.level+1);
+				this.leftChild = new BSPNode(this.x, this.y, this.w, this.splitPos, this.level + 1);
+				this.rightChild = new BSPNode(this.x, this.y + this.splitPos, this.w, this.h - this.splitPos, this.level + 1);
 			}
 		}
 
@@ -171,24 +171,24 @@ module Yendor {
 			if (! minSize) {
 				minSize = 0;
 			} else {
-				if ( this.w < 2*minSize || this.h < 2*minSize) {
+				if ( this.w < 2 * minSize || this.h < 2 * minSize) {
 					return;
-				} else if ( this.w < 2*minSize ) {
+				} else if ( this.w < 2 * minSize ) {
 					horiz = false;
-				} else if (this.h < 2*minSize) {
+				} else if (this.h < 2 * minSize) {
 					horiz = true;
 				}
 			}
-			if (! horiz ) { 
-				horiz = rng.getNumber(0,1) == 0 ? false : true;
+			if (! horiz ) {
+				horiz = rng.getNumber(0, 1) === 0 ? false : true;
 			}
-			var splitPos: number = horiz ? 
+			var splitPos: number = horiz ?
 				rng.getNumber(minSize, this.w - minSize)
 				: rng.getNumber(minSize, this.h - minSize);
 			this.split(horiz, splitPos);
 			if ( count > 1 ) {
-				this.leftChild.splitRecursive(rng, count-1, minSize, maxHVRatio);
-				this.rightChild.splitRecursive(rng, count-1, minSize, maxHVRatio);
+				this.leftChild.splitRecursive(rng, count - 1, minSize, maxHVRatio);
+				this.rightChild.splitRecursive(rng, count - 1, minSize, maxHVRatio);
 			}
 		}
 
@@ -201,15 +201,15 @@ module Yendor {
 			callback - a function called when visiting a node.
 			userData - *optional* some user data sent to the callback.
 		*/
-		traversePreOrder( callback: (node: BSPNode, userData: any)=>BSPTraversalAction, userData?: any): BSPTraversalAction {
-			if (callback(this, userData) == BSPTraversalAction.STOP) {
+		traversePreOrder( callback: (node: BSPNode, userData: any) => BSPTraversalAction, userData?: any): BSPTraversalAction {
+			if (callback(this, userData) === BSPTraversalAction.STOP) {
 				return BSPTraversalAction.STOP;
 			}
 			if ( this.leftChild ) {
-				if (this.leftChild.traversePreOrder(callback, userData)  == BSPTraversalAction.STOP ) {
+				if (this.leftChild.traversePreOrder(callback, userData)  === BSPTraversalAction.STOP ) {
 					return BSPTraversalAction.STOP;
 				}
-				if (this.rightChild.traversePreOrder(callback, userData)  == BSPTraversalAction.STOP ) {
+				if (this.rightChild.traversePreOrder(callback, userData)  === BSPTraversalAction.STOP ) {
 					return BSPTraversalAction.STOP;
 				}
 			}
@@ -224,11 +224,11 @@ module Yendor {
 			callback - a function called when visiting a node.
 			userData - *optional* some user data sent to the callback.
 		*/
-		traverseInOrder( callback: (node: BSPNode, userData: any)=>BSPTraversalAction, userData?: any): BSPTraversalAction {
-			if ( this.leftChild && this.leftChild.traverseInOrder(callback, userData) == BSPTraversalAction.STOP ) {
+		traverseInOrder( callback: (node: BSPNode, userData: any) => BSPTraversalAction, userData?: any): BSPTraversalAction {
+			if ( this.leftChild && this.leftChild.traverseInOrder(callback, userData) === BSPTraversalAction.STOP ) {
 				return BSPTraversalAction.STOP;
-			}			
-			if (callback(this, userData) == BSPTraversalAction.STOP ) {
+			}
+			if (callback(this, userData) === BSPTraversalAction.STOP ) {
 				return BSPTraversalAction.STOP;
 			}
 			if ( this.rightChild ) {
@@ -245,12 +245,12 @@ module Yendor {
 			callback - a function called when visiting a node.
 			userData - *optional* some user data sent to the callback.
 		*/
-		traversePostOrder( callback: (node: BSPNode, userData: any)=>BSPTraversalAction, userData?: any): BSPTraversalAction {
+		traversePostOrder( callback: (node: BSPNode, userData: any) => BSPTraversalAction, userData?: any): BSPTraversalAction {
 			if ( this.leftChild ) {
-				if ( this.leftChild.traversePostOrder(callback, userData) == BSPTraversalAction.STOP ) {
+				if ( this.leftChild.traversePostOrder(callback, userData) === BSPTraversalAction.STOP ) {
 					return BSPTraversalAction.STOP;
 				}
-			 	if ( this.rightChild.traversePostOrder(callback, userData) == BSPTraversalAction.STOP ) {
+			 	if ( this.rightChild.traversePostOrder(callback, userData) === BSPTraversalAction.STOP ) {
 			 		return BSPTraversalAction.STOP;
 			 	}
 			}
@@ -262,14 +262,14 @@ module Yendor {
 			var nodes: BSPNode[] = [];
 			nodes.push(this);
 			while ( nodes.length > 0 ) {
-				var node:BSPNode = nodes.shift();
+				var node: BSPNode = nodes.shift();
 				nodesToTraverse.push(node);
 				if ( node.leftChild ) {
 					nodes.push(node.leftChild);
 					nodes.push(node.rightChild);
 				}
 			}
-			return nodesToTraverse;			
+			return nodesToTraverse;
 		}
 
 		/*
@@ -280,18 +280,18 @@ module Yendor {
 			callback - a function called when visiting a node.
 			userData - *optional* some user data sent to the callback.
 		*/
-		traverseLevelOrder( callback: (node: BSPNode, userData: any)=>BSPTraversalAction, userData?: any): BSPTraversalAction {
+		traverseLevelOrder( callback: (node: BSPNode, userData: any) => BSPTraversalAction, userData?: any): BSPTraversalAction {
 			var nodes: BSPNode[] = this.buildLevelTraversalNodeArray();
-			var nodeCount:number = nodes.length;
+			var nodeCount: number = nodes.length;
 			for ( var i = 0; i < nodeCount; i++) {
 				var node: BSPNode = nodes[i];
-				if (callback(node, userData) == BSPTraversalAction.STOP) {
+				if (callback(node, userData) === BSPTraversalAction.STOP) {
 					return BSPTraversalAction.STOP;
 				}
 			}
 			return BSPTraversalAction.CONTINUE;
 		}
-		
+
 		/*
 			Function: traverseInvertedLevelOrder
 			Traverse the tree level by level, starting with the lowest levels (lowest leafs, up to the root).
@@ -299,17 +299,17 @@ module Yendor {
 			Parameters:
 			callback - a function called when visiting a node.
 			userData - *optional* some user data sent to the callback.
-		*/		
-		traverseInvertedLevelOrder( callback: (node: BSPNode, userData: any)=>BSPTraversalAction, userData?: any): BSPTraversalAction {
+		*/
+		traverseInvertedLevelOrder( callback: (node: BSPNode, userData: any) => BSPTraversalAction, userData?: any): BSPTraversalAction {
 			var nodes: BSPNode[] = this.buildLevelTraversalNodeArray();
 			var nbNodes = nodes.length;
-			for ( var i = nbNodes-1; i >= 0; i--) {
+			for ( var i = nbNodes - 1; i >= 0; i--) {
 				var node: BSPNode = nodes[i];
-				if (callback(node, userData) == BSPTraversalAction.STOP) {
+				if (callback(node, userData) === BSPTraversalAction.STOP) {
 					return BSPTraversalAction.STOP;
 				}
 			}
 			return BSPTraversalAction.CONTINUE;
-		}		
+		}
 	}
 }

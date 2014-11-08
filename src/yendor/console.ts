@@ -43,31 +43,31 @@ module Yendor {
 			Returns:
 			A new color
 		*/
-		static multiply(color:Color, coef:number):Color {
-			var rgb:number[] = ColorUtils.toRgb(color);
-			var r:number = Math.round(rgb[0]*coef);
-			var g:number = Math.round(rgb[1]*coef);
-			var b:number = Math.round(rgb[2]*coef);
-			return 'rgb('+r+','+g+','+b+')';
+		static multiply(color: Color, coef: number): Color {
+			var rgb: number[] = ColorUtils.toRgb(color);
+			var r: number = Math.round(rgb[0] * coef);
+			var g: number = Math.round(rgb[1] * coef);
+			var b: number = Math.round(rgb[2] * coef);
+			return "rgb(" + r + "," + g + "," + b + ")";
 		}
 		private static stdCol = {
-			'aqua':[0,255,255],
-			'black':[0,0,0],
-			'blue':[0,0,255],
-			'fuchsia':[255,0,255],
-			'gray':[128,128,128],
-			'green':[0,128,0],
-			'lime':[0,255,0],
-			'maroon':[128,0,0],
-			'navy':[0,0,128],
-			'olive':[128,128,0],
-			'orange':[255,165,0],
-			'purple':[128,0,128],
-			'red':[255,0,0],
-			'silver':[192,192,192],
-			'teal':[0,128,128],
-			'white':[255,255,255],
-			'yellow':[255,255,0],
+			"aqua": [0, 255, 255],
+			"black": [0, 0, 0],
+			"blue": [0, 0, 255],
+			"fuchsia": [255, 0, 255],
+			"gray": [128, 128, 128],
+			"green": [0, 128, 0],
+			"lime": [0, 255, 0],
+			"maroon": [128, 0, 0],
+			"navy": [0, 0, 128],
+			"olive": [128, 128, 0],
+			"orange": [255, 165, 0],
+			"purple": [128, 0, 128],
+			"red": [255, 0, 0],
+			"silver": [192, 192, 192],
+			"teal": [0, 128, 128],
+			"white": [255, 255, 255],
+			"yellow": [255, 255, 0]
 		};
 		/*
 			Function: toRgb
@@ -79,26 +79,27 @@ module Yendor {
 			Returns:
 			An array of 3 numbers [r,g,b] between 0 and 255.
 		*/
-		static toRgb(color:Color) : number[] {
+		static toRgb(color: Color): number[] {
 			color = color.toLowerCase();
-			var stdColValues:number[] = ColorUtils.stdCol[String(color)];
+			var stdColValues: number[] = ColorUtils.stdCol[String(color)];
 			if ( stdColValues ) {
 				return stdColValues;
 			}
-			if (color.charAt(0)=='#') {
+			if (color.charAt(0) === "#") {
 				// #FFF or #FFFFFF format
-				if ( color.length == 4) {
+				if ( color.length === 4) {
 					// expand #FFF to #FFFFFF
-					color = '#'+color.charAt(1)+color.charAt(1)+color.charAt(2)+color.charAt(2)+color.charAt(3)+color.charAt(3);
+					color = "#" + color.charAt(1) + color.charAt(1) + color.charAt(2)
+						+ color.charAt(2) + color.charAt(3) + color.charAt(3);
 				}
-				var num:number = parseInt(color.substr(1),16);
+				var num: number = parseInt(color.substr(1), 16);
 				return [ num >> 16, num >> 8 & 0xFF, num & 0xFF ];
-			} else if (color.indexOf('rgb(') == 0) {
+			} else if (color.indexOf("rgb(") === 0) {
 				// rgb(r,g,b) format
-				var rgbList = color.substr(4, color.length-5 ).split(',');
-				return [ parseInt(rgbList[0]), parseInt(rgbList[1]), parseInt(rgbList[2])];
+				var rgbList = color.substr(4, color.length - 5 ).split(",");
+				return [ parseInt(rgbList[0], 10), parseInt(rgbList[1], 10), parseInt(rgbList[2], 10)];
 			}
-			return [0,0,0];
+			return [0, 0, 0];
 		}
 		/*
 			Function: toNumber
@@ -110,12 +111,12 @@ module Yendor {
 			Returns:
 			A number between 0x000000 and 0xFFFFFF.
 		*/
-		static toNumber(color:Color) : number {
-			if (color.charAt(0)=='#') {
-				return parseInt('0x'+color.substr(1));
+		static toNumber(color: Color): number {
+			if (color.charAt(0) === "#" && color.length === 7) {
+				return parseInt(color.substr(1), 16);
 			} else {
 				var rgb = ColorUtils.toRgb(color);
-				return rgb[0]*65536 + rgb[1]*256 + rgb[2];
+				return rgb[0] * 65536 + rgb[1] * 256 + rgb[2];
 			}
 		}
 	}
@@ -132,8 +133,8 @@ module Yendor {
 			_x : the column
 			_y : the row
 		*/
-		constructor( private _x: number=0, private _y: number=0 ) {}
-		
+		constructor( private _x: number = 0, private _y: number = 0 ) {}
+
 		/*
 			Property: x
 		*/
@@ -154,15 +155,15 @@ module Yendor {
 			x - the column
 			y - the row
 		*/
-		moveTo( x:number, y:number ) {
+		moveTo(x: number, y: number) {
 			this.x = x;
 			this.y = y;
 		}
 
-		static distance( p1: Position, p2: Position) : number {
-			var dx:number = p1.x - p2.x;
-			var dy:number = p1.y - p2.y;
-			return Math.sqrt(dx*dx+dy*dy);
+		static distance(p1: Position, p2: Position): number {
+			var dx: number = p1.x - p2.x;
+			var dy: number = p1.y - p2.y;
+			return Math.sqrt(dx * dx + dy * dy);
 		}
 	}
 
@@ -171,25 +172,6 @@ module Yendor {
 		An offscreen console that cannot be rendered on screen, but can be blit on other consoles.
 	*/
 	export class Console {
-		/*
-			Constructor: constructor
-
-			Parameters:
-			width - the number of columns
-			height - the number of rows
-			foreground - *optional* (default : white) default foreground color
-			background - *optional* (default : black) default background color
-		*/
-		constructor( private _width: number, private _height: number,
-			foreground: Color = 'white', background:Color = 'black' ) {
-			this.text = [];
-			this.clearText();
-			this.fore = this.newColorTable();
-			this.back = this.newColorTable();
-			this.clearFore(foreground) ;
-			this.clearBack(background);
-		}
-
 		/*
 			Property: text
 			Array of <height> strings storing the characters. The character at coordinate x,y is text[y][x].
@@ -207,6 +189,25 @@ module Yendor {
 			Matrix of <Color> storing the background color. The background color at coordinate x,y is back[x][y].
 		*/
 		back: Color[][];
+
+		/*
+			Constructor: constructor
+
+			Parameters:
+			width - the number of columns
+			height - the number of rows
+			foreground - *optional* (default : white) default foreground color
+			background - *optional* (default : black) default background color
+		*/
+		constructor( private _width: number, private _height: number,
+			foreground: Color = "white", background: Color = "black" ) {
+			this.text = [];
+			this.clearText();
+			this.fore = this.newColorTable();
+			this.back = this.newColorTable();
+			this.clearFore(foreground) ;
+			this.clearBack(background);
+		}
 
 		/*
 			Property: height
@@ -238,7 +239,7 @@ module Yendor {
 			Returns:
 			The <Position> in the console.
 		*/
-		getPositionFromPixels( x: number, y:number ) : Position { return undefined; }
+		getPositionFromPixels( x: number, y: number ) : Position { return undefined; }
 
 		/*
 			Function: setChar
@@ -249,26 +250,26 @@ module Yendor {
 			y - the row
 			char - the new character (must be a one character string)
 		*/
-		setChar(x:number, y:number, char:string) {
-			var s = this.text[y].substr(0,x) + char[0] + this.text[y].substr(x+1);
+		setChar(x: number, y: number, char: string) {
+			var s = this.text[y].substr(0, x) + char[0] + this.text[y].substr(x + 1);
 			this.text[y] = s;
 		}
 
 		/*
 			Function: print
-			Print a string on the console. If the string starts before the first column (x < 0) or ends after the last rows, it's truncated.
+			Print a string on the console. If the string starts before the first column (x < 0) or ends after the last rows, it"s truncated.
 
 			Parameters:
-			x - the column of the string's first character
+			x - the column of the string"s first character
 			y - the row
 			text - the string to print
 			color - *optional* (default white)
 		*/
-		print(x: number, y: number, text: string, color: Color='white') {
+		print(x: number, y: number, text: string, color: Color = "white") {
 			var begin = 0;
 			var end = text.length;
-			if ( x+end > this.width ) {
-				end = this.width-x;
+			if ( x + end > this.width ) {
+				end = this.width - x;
 			}
 			if ( x < 0 ) {
 				end += x;
@@ -276,7 +277,7 @@ module Yendor {
 			}
 			this.clearFore(color, x, y, end, 1);
 			for ( var i = begin; i < end; ++i ) {
-				this.setChar(x+i, y, text[i]);
+				this.setChar(x + i, y, text[i]);
 			}
 		}
 
@@ -287,14 +288,14 @@ module Yendor {
 		clearText() {
 			for (var i = 0; i < this.height; i++) {
 				this.text[i] = this.emptyLine();
-			}			
+			}
 		}
 
 		/*
 			Function: clearFore
 			Change all the foreground colors of a rectangular zone. If width and height are undefined, fills the area to the border of the console.
 			Using
-			> console.clearFore('red');
+			> console.clearFore("red");
 			fills the whole console foreground with red.
 
 			Parameters:
@@ -305,7 +306,7 @@ module Yendor {
 			height - *optional* the rectangle height
 		*/
 		clearFore( value: Color,
-			x: number = 0, y: number=0, width: number = -1, height: number=-1 ) {
+			x: number = 0, y: number = 0, width: number = -1, height: number = -1 ) {
 			this.clearColorTable( this.fore, value, x, y, width, height );
 		}
 
@@ -314,7 +315,7 @@ module Yendor {
 			Function: clearBack
 			Change all the background colors of a rectangular zone. If width and height are undefined, fills the area to the border of the console.
 			Using
-			> console.clearBack('red');
+			> console.clearBack("red");
 			fills the whole console background with red.
 
 			Parameters:
@@ -325,7 +326,7 @@ module Yendor {
 			height - *optional* the rectangle height
 		*/
 		clearBack( value: Color,
-			x: number = 0, y: number=0, width: number = -1, height: number=-1 ) {
+			x: number = 0, y: number = 0, width: number = -1, height: number = -1 ) {
 			this.clearColorTable( this.back, value, x, y, width, height );
 		}
 
@@ -344,10 +345,10 @@ module Yendor {
 		*/
 		blit( console: Console, x: number = 0, y: number = 0, xSrc: number = 0, ySrc: number = 0,
 				srcWidth: number = -1, srcHeight: number = -1) {
-			if ( srcWidth == -1 ) {
+			if ( srcWidth === -1 ) {
 				srcWidth = this.width;
 			}
-			if ( srcHeight == -1 ) {
+			if ( srcHeight === -1 ) {
 				srcHeight = this.height;
 			}
 			if ( x + srcWidth > console.width ) {
@@ -356,11 +357,11 @@ module Yendor {
 			if ( y + srcHeight > console.height ) {
 				srcHeight = console.height - y;
 			}
-			for ( var desty = y; desty < y+srcHeight; ++desty ) {
-				for ( var destx = x; destx < x+srcWidth; ++destx ) {
+			for ( var desty = y; desty < y + srcHeight; ++desty ) {
+				for ( var destx = x; destx < x + srcWidth; ++destx ) {
 					var sourcex = xSrc + destx - x;
 					var sourcey = ySrc + desty - y;
-					console.setChar(destx,desty,this.text[sourcey][sourcex]);
+					console.setChar(destx, desty, this.text[sourcey][sourcex]);
 					console.back[destx][desty] = this.back[sourcex][sourcey];
 					console.fore[destx][desty] = this.fore[sourcex][sourcey];
 				}
@@ -368,11 +369,11 @@ module Yendor {
 		}
 
 		private clearColorTable( table: Color[][], value: Color,
-			x: number = 0, y: number=0, width: number = -1, height: number=-1 ) {
-			if ( width == -1 ) {
+			x: number = 0, y: number = 0, width: number = -1, height: number = -1 ) {
+			if ( width === -1 ) {
 				width = this.width - x;
 			}
-			if ( height == -1 ) {
+			if ( height === -1 ) {
 				height = this.height - y;
 			}
 			for (var cy = y; cy < y + height; ++cy) {
@@ -391,9 +392,9 @@ module Yendor {
 		}
 
 		private emptyLine(): string {
-			var s='';
+			var s = "";
 			for (var i = 0; i < this.width; i++) {
-				s += ' ';
+				s += " ";
 			}
 			return s;
 		}
@@ -405,7 +406,7 @@ module Yendor {
 	*/
 	export class DivConsole extends Console {
 		private divSelector: string;
-		private div:HTMLElement;
+		private div: HTMLElement;
 
 		/*
 			Property: charWidth
@@ -430,13 +431,13 @@ module Yendor {
 			divSelector - JQuery selector for the element where to render this console
 		*/
 		constructor( _width: number, _height: number,
-			foreground: Color, background: Color, divSelector : string ) {
+			foreground: Color, background: Color, divSelector: string ) {
 			super(_width, _height, foreground, background);
 			this.divSelector = divSelector;
 			this.div = $(divSelector)[0];
-			this.div.style.fontFamily='monospace';
-			this.div.style.whiteSpace='pre';
-			this.div.style.display='table';
+			this.div.style.fontFamily = "monospace";
+			this.div.style.whiteSpace = "pre";
+			this.div.style.display = "table";
 			this.computeCharSize();
 		}
 
@@ -446,20 +447,20 @@ module Yendor {
 		*/
 		private computeCharSize() {
 			// insert a single (invisible) character in the console
-			this.text[0][0]='@';
-			this.fore[0][0]='black';
+			this.text[0][0] = "@";
+			this.fore[0][0] = "black";
 			this.render();
 			// get the resulting span size
 			var oldId = this.div.id;
-			this.div.id='__yendor_div';
-			var span:JQuery = $('#__yendor_div div.line span');
+			this.div.id = "__yendor_div";
+			var span: JQuery = $("#__yendor_div div.line span");
 			this.charWidth = span.width();
 			this.charHeight = span.height();
-			console.log('Char size : '+this.charWidth+ ' x '+this.charHeight);
+			console.log("Char size : " + this.charWidth + " x " + this.charHeight);
 			// restore the console
-			this.div.id=oldId;
-			this.text[0][0]=' ';
-			this.fore[0][0]=this.fore[0][1];
+			this.div.id = oldId;
+			this.text[0][0] = " ";
+			this.fore[0][0] = this.fore[0][1];
 			this.render();
 		}
 
@@ -482,10 +483,10 @@ module Yendor {
 			Returns:
 			The <Position> in the console.
 		*/
-		getPositionFromPixels( x: number, y:number ) : Position {
-			var dx:number = x - $(this.divSelector).offset().left;
-			var dy:number = y - $(this.divSelector).offset().top;
-			return new Position(Math.floor(dx/this.charWidth), Math.floor(dy/this.charHeight));
+		getPositionFromPixels( x: number, y: number ) : Position {
+			var dx: number = x - $(this.divSelector).offset().left;
+			var dy: number = y - $(this.divSelector).offset().top;
+			return new Position(Math.floor(dx / this.charWidth), Math.floor(dy / this.charHeight));
 		}
 
 
@@ -496,9 +497,9 @@ module Yendor {
 			A HTML representation of the console
 		*/
 		getHTML(): string {
-			var s = '';
+			var s = "";
 			for (var i = 0; i < this.height; i++) {
-				s += "<div class='line'>" + this.getLineHTML(i) + '</div>';
+				s += "<div class='line'>" + this.getLineHTML(i) + "</div>";
 			}
 			return s;
 		}
@@ -506,18 +507,18 @@ module Yendor {
 		private getLineHTML( line: number ): string {
 			var currentFore = this.fore[0][line];
 			var currentBack = this.back[0][line];
-			var s = '<span style="color:' + currentFore + ';background-color:' + currentBack + '">' + this.text[line][0];
+			var s = "<span style='color:" + currentFore + ";background-color:" + currentBack + "'>" + this.text[line][0];
 			for ( var i = 1; i < this.width; i++ ) {
 				var nextFore = this.fore[i][line];
 				var nextBack = this.back[i][line];
-				if ( nextFore != currentFore || nextBack != currentBack ) {
+				if ( nextFore !== currentFore || nextBack !== currentBack ) {
 					currentFore = nextFore;
 					currentBack = nextBack;
-					s+='</span><span style="color:' + currentFore + ';background-color:' + currentBack + '">';
+					s += "</span><span style='color:" + currentFore + ";background-color:" + currentBack + "'>";
 				}
 				s += this.text[line][i];
 			}
-			s += '</span>';
+			s += "</span>";
 			return s;
 		}
 	}

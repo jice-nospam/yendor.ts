@@ -5,8 +5,8 @@
 /// <reference path="bsp.ts" />
 /// <reference path="fov.ts" />
 module Yendor {
-	export var VERSION = '0.0.2';
-	var frameLoop : (callback: (elapsedTime:number) => void) => void;
+	export var VERSION = "0.0.2";
+	var frameLoop : (callback: (elapsedTime: number) => void) => void;
 	/*
 		Function: init
 
@@ -19,20 +19,20 @@ module Yendor {
 		http://paulirish.com/2011/requestanimationframe-for-smart-animating/
 		*/
 
-		frameLoop = (function(){ 
-			return window.requestAnimationFrame || 
-			(<any>window).webkitRequestAnimationFrame || 
-			(<any>window).mozRequestAnimationFrame || 
-			(<any>window).oRequestAnimationFrame || 
-			window.msRequestAnimationFrame || 
-			function(callback){ 
-				window.setTimeout(callback, 1000 / 60, new Date().getTime()); 
-			}; 
-		})(); 	
+		frameLoop = (function() {
+			return window.requestAnimationFrame ||
+			(<any>window).webkitRequestAnimationFrame ||
+			(<any>window).mozRequestAnimationFrame ||
+			(<any>window).oRequestAnimationFrame ||
+			window.msRequestAnimationFrame ||
+			function(callback) {
+				window.setTimeout(callback, 1000 / 60, new Date().getTime());
+			};
+		})();
 	}
 
 	export interface FrameRenderer {
-		(elapsedTime:number): void;
+		(elapsedTime: number): void;
 	}
 
 	var renderer : FrameRenderer;
