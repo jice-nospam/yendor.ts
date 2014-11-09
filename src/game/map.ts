@@ -45,10 +45,12 @@ module Game {
 			var item: Actor;
 			if ( dice < 70 ) {
 				item = Pickable.createHealthPotion(x, y, 4);
-			} else if ( dice < 85 ) {
+			} else if ( dice < 80 ) {
 				item = Pickable.createLightningBoltScroll(x, y, 5, 20);
-			} else {
+			} else if ( dice < 90 ) {
 				item = Pickable.createFireballScroll(x, y, 3, 12);
+			} else {
+				item = Pickable.createConfusionScroll(x, y, 5, 12);
 			}
 			return item;
 		}

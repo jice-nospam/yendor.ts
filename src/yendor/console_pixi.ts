@@ -1,5 +1,5 @@
 /// <reference path="../decl/pixi.d.ts" />
-/// <reference path="../yendor/yendor.ts" />
+/// <reference path="../yendor/console.ts" />
 
 /*
 	Section: PixiConsole

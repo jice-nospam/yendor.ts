@@ -1,29 +1,9 @@
+/// <reference path="actor.ts" />
+
 /*
 	Section: creatures
 */
 module Game {
-	/*
-		Class: MonsterDestructible
-		Contains an overloaded die function that logs the monsters death
-	*/
-	export class MonsterDestructible extends Destructible {
-		die(owner: Actor) {
-			log(owner.name + " is dead");
-			super.die(owner);
-		}
-	}
-
-	/*
-		Class: PlayerDestructible
-		Contains an overloaded die function to notify the Engine about the player's death
-	*/
-	export class PlayerDestructible extends Destructible {
-		die(owner: Actor) {
-			log("You died!", "red");
-			super.die(owner);
-			EventBus.getInstance().publishEvent(new Event<GameStatus>( EventType.CHANGE_STATUS, GameStatus.DEFEAT ));
-		}
-	}
 
 	/********************************************************************************
 	 * Group: articifial intelligence
@@ -35,6 +15,43 @@ module Game {
 	*/
 	export class Ai {
 		update(owner: Actor, map: Map, actorManager: ActorManager) {}
+
+		/*
+			Function: moveOrAttack
+			Try to move the owner to a new map cell. If there's a living creature on this map cell, attack it.
+
+			Parameters:
+			owner - the actor owning this Ai
+			x - the destination cell x coordinate
+			y - the destination cell y coordinate
+			map - the game map, used to check for wall collisions
+			actorManager - used to check for living actors
+
+			Returns:
+			true if the owner actually moved to the new cell
+		*/
+		moveOrAttack(owner: Actor, x: number, y: number, map: Map, actorManager: ActorManager): boolean {
+			// cannot move or attack a wall! 
+			if ( map.isWall(x, y)) {
+				return false;
+			}
+			// check for living creatures on the destination cell
+			var cellPos: Yendor.Position = new Yendor.Position(x, y);
+			var actors: Actor[] = actorManager.findActorsOnCell(cellPos, actorManager.getCreatures());
+			var player = actorManager.getPlayer();
+			if ( player !== owner && <Yendor.Position>player === cellPos ) {
+				actors.push(player);
+			}
+			for (var i = 0; i < actors.length; i++) {
+				var actor: Actor = actors[i];
+				if ( actor.destructible && ! actor.destructible.isDead() ) {
+					// attack the first living actor found on the cell
+					owner.attacker.attack( owner, actor );
+					return false;
+				}
+			}
+			return true;
+		}
 	}
 
 	/*
@@ -185,22 +202,11 @@ module Game {
 			Returns:
 			true if the player actually moved to the new cell
 		*/
-		private moveOrAttack(owner: Actor, x: number, y: number, map: Map, actorManager: ActorManager): boolean {
-			// cannot move or attack a wall! 
-			if ( map.isWall(x, y)) {
+		moveOrAttack(owner: Actor, x: number, y: number, map: Map, actorManager: ActorManager): boolean {
+			if ( !super.moveOrAttack(owner, x, y, map, actorManager) ) {
 				return false;
 			}
-			// check for living monsters on the destination cell
 			var cellPos: Yendor.Position = new Yendor.Position(x, y);
-			var actors: Actor[] = actorManager.findActorsOnCell(cellPos, actorManager.getCreatures());
-			for (var i = 0; i < actors.length; i++) {
-				var actor: Actor = actors[i];
-				if ( actor.destructible && ! actor.destructible.isDead() ) {
-					// attack the first living actor found on the cell
-					owner.attacker.attack( owner, actor );
-					return false;
-				}
-			}
 			// no living actor. Log exising corpses and items
 			actorManager.findActorsOnCell(cellPos, actorManager.getCorpses()).forEach(function(actor) {
 				log("There's a " + actor.name + " here");
@@ -250,7 +256,7 @@ module Game {
 			map - the game map. Used to check if player is in sight
 			actorManager - used to get the player actor
 		*/
-		private moveOrAttack(owner: Actor, x: number, y: number, map: Map, actorManager: ActorManager) {
+		moveOrAttack(owner: Actor, x: number, y: number, map: Map, actorManager: ActorManager): boolean {
 			var dx: number = x - owner.x;
 			var dy: number = y - owner.y;
 			// compute distance from player
@@ -269,6 +275,7 @@ module Game {
 				// player not in range. Use scent tracking
 				this.trackScent(owner, map, actorManager);
 			}
+			return true;
 		}
 
 		/*
@@ -357,10 +364,100 @@ module Game {
 		}
 	}
 
+	/*
+		Class: TemporaryAi
+		Some artificial intelligence that temporarily replace a NPC Ai.
+		Stores the old Ai to be able to restore it.
+	*/
+	export class TemporaryAi extends Ai {
+		private oldAi: Ai;
+
+		constructor(private _nbTurns: number) {
+			super();
+		}
+
+		update(owner: Actor, map: Map, actorManager: ActorManager) {
+			this._nbTurns--;
+			if ( this._nbTurns === 0 ) {
+				owner.ai = this.oldAi;
+			}
+		}
+
+		applyTo(actor: Actor) {
+			this.oldAi = actor.ai;
+			actor.ai = this;
+		}
+	}
+
+
+	/*
+		Class: ConfusedMonsterAi
+		NPC monsters articial intelligence. Moves randomly, 
+		then attacks any creature at melee range.
+	*/
+	export class ConfusedMonsterAi extends TemporaryAi {
+		/*
+			Function: update
+
+			Parameters:
+			owner - the actor owning this MonsterAi (the monster)
+			map - the game map (used to check player line of sight)
+			actorManager - used to get the player actor
+		*/
+		update(owner: Actor, map: Map, actorManager: ActorManager) {
+			// don't update a dead monster
+			if ( owner.destructible && owner.destructible.isDead()) {
+				return;
+			}
+			this.moveRandomly(owner, map, actorManager);
+			super.update(owner, map, actorManager);
+		}
+
+		/*
+			Function: moveRandomly
+			Move in a random direction, attacking anything on this cell.
+
+			Parameters:
+			owner - the actor owning this MonsterAi (the monster)
+			map - the game map. Used to check if player is in sight
+			actorManager - used to get the player actor
+		*/
+		private moveRandomly(owner: Actor, map: Map, actorManager: ActorManager) {
+			var dx: number = rng.getNumber(-1, 1);
+			var dy: number = rng.getNumber(-1, 1);
+			if (dx !== 0 && dy !== 0 && super.moveOrAttack(owner, owner.x + dx, owner.y + dy, map, actorManager)) {
+				owner.x += dx;
+				owner.y += dy;
+			}
+		}
+	}
+
 
 	/********************************************************************************
 	 * Group: actors
 	 ********************************************************************************/
+	/*
+		Class: MonsterDestructible
+		Contains an overloaded die function that logs the monsters death
+	*/
+	export class MonsterDestructible extends Destructible {
+		die(owner: Actor) {
+			log(owner.name + " is dead");
+			super.die(owner);
+		}
+	}
+
+	/*
+		Class: PlayerDestructible
+		Contains an overloaded die function to notify the Engine about the player's death
+	*/
+	export class PlayerDestructible extends Destructible {
+		die(owner: Actor) {
+			log("You died!", "red");
+			super.die(owner);
+			EventBus.getInstance().publishEvent(new Event<GameStatus>( EventType.CHANGE_STATUS, GameStatus.DEFEAT ));
+		}
+	}
 
 	export class Player extends Actor {
 		constructor(_x: number, _y: number, _ch: string,

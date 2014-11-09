@@ -3,7 +3,7 @@
 */
 module Game {
 	/********************************************************************************
-	 * Group: items
+	 * Group: target selection
 	 ********************************************************************************/
 	/*
 		Enum: TargetSelectionMethod
@@ -72,11 +72,21 @@ module Game {
 						selectedTargets.push(actor);
 					}
 				break;
+				case TargetSelectionMethod.SELECTED_ACTOR :
+					log("Left-click a target creature,\nor right-click to cancel.", "red");
+					EventBus.getInstance().publishEvent(new Event<TilePickerListener>(EventType.PICK_TILE,
+						function(pos: Yendor.Position) {
+							var actors: Actor[] = actorManager.findActorsOnCell( pos, actorManager.getCreatures() );
+							if (actors.length > 0) {
+								applyEffects(owner, wearer, actors);
+							}
+						}
+					));
+				break;
 			// TODO
-			//	case TargetSelectionMethod.SELECTED_ACTOR : return selectActor(wearer, actorManager); break;
 			//	case TargetSelectionMethod.WEARER_RANGE : return selectCloseEnemies(wearer, actorManager); break;
 				case TargetSelectionMethod.SELECTED_RANGE :
-					log("Left-click a target tile for the fireball,\nor right-click to cancel.", "red");
+					log("Left-click a target tile,\nor right-click to cancel.", "red");
 					var theRange = this.range;
 					EventBus.getInstance().publishEvent(new Event<TilePickerListener>(EventType.PICK_TILE,
 						function(pos: Yendor.Position) {
@@ -93,6 +103,10 @@ module Game {
 			}
 		}
 	}
+
+	/********************************************************************************
+	 * Group: effects
+	 ********************************************************************************/
 
 	/*
 		Interface: Effect
@@ -136,6 +150,23 @@ module Game {
 			return false;
 		}
 	}
+
+	export class AiChangeEffect implements Effect {
+		constructor( private _newAi: TemporaryAi, private _message?: string ) {}
+
+		applyTo(actor: Actor): boolean {
+			this._newAi.applyTo(actor);
+			if ( this._message ) {
+				log(this._message);
+			}
+			return true;
+		}
+
+	}
+
+	/********************************************************************************
+	 * Group: items
+	 ********************************************************************************/
 
 	/*
 		Class: Pickable
@@ -219,6 +250,15 @@ module Game {
 				new TargetSelector( TargetSelectionMethod.SELECTED_RANGE, range));
 			fireball.blocks = false;
 			return fireball;
+		}
+
+		static createConfusionScroll(x: number, y: number, range: number, nbTurns: number): Actor {
+			var confusionScroll = new Actor(x, y, "#", "scroll of confusion", "rgb(255,255,63)");
+			confusionScroll.pickable = new Pickable( new AiChangeEffect(new ConfusedMonsterAi(nbTurns),
+				"The eyes of the creature look vacant,\nas he starts to stumble around!"),
+				new TargetSelector( TargetSelectionMethod.SELECTED_ACTOR, range));
+			confusionScroll.blocks = false;
+			return confusionScroll;
 		}
 	}
 }
