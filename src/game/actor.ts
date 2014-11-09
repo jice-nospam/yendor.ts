@@ -1,5 +1,3 @@
-/// <reference path="item.ts" />
-/// <reference path="creature.ts" />
 /*
 	Section: actors
 */

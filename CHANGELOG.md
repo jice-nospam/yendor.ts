@@ -4,6 +4,7 @@
 
 * GenRogue :
 	- scroll of fireball
+	- scroll of confusion
 
 # 0.0.2 / 15-oct-2014
 

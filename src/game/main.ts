@@ -3,9 +3,12 @@
 /// <reference path="base.ts" />
 /// <reference path="eventbus.ts" />
 /// <reference path="actor.ts" />
+/// <reference path="item.ts" />
+/// <reference path="creature.ts" />
 /// <reference path="map.ts" />
 /// <reference path="gui.ts" />
 var	root: Yendor.Console;
+var rng: Yendor.Random = new Yendor.ComplementaryMultiplyWithCarryRandom();
 module Game {
 
 	/*
@@ -18,7 +21,6 @@ module Game {
 		corpses: Actor[] = [];
 		items: Actor[] = [];
 		map: Map;
-		rng: Yendor.Random = new Yendor.ComplementaryMultiplyWithCarryRandom();
 		status : GameStatus = GameStatus.STARTUP;
 		guis: Gui[] = [];
 

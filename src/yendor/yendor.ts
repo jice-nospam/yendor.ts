@@ -1,6 +1,7 @@
 /// <reference path="../decl/jquery.d.ts" />
 /// <reference path="console.ts" />
 /// <reference path="console_pixi.ts" />
+/// <reference path="console_div.ts" />
 /// <reference path="rng.ts" />
 /// <reference path="bsp.ts" />
 /// <reference path="fov.ts" />
