@@ -131,23 +131,27 @@ module Game {
 				return false;
 			}
 			if ( this._amount > 0 ) {
-				// healing effect
-				var healPointsCount: number = actor.destructible.heal( this._amount );
-				if ( healPointsCount > 0 && this._message ) {
-					// TODO message formatting utility
-					log(this._message);
-				}
-				return true;
+				return this.applyHealingEffectTo(actor);
 			} else {
-				// wounding effect
-				if ( this._message && actor.destructible.defense < -this._amount ) {
-					log(this._message);
-				}
-				if ( actor.destructible.takeDamage(actor, -this._amount) ) {
-					return true;
-				}
+				return this.applyWoundingEffectTo(actor);
 			}
 			return false;
+		}
+
+		private applyHealingEffectTo(actor: Actor): boolean {
+			var healPointsCount: number = actor.destructible.heal( this._amount );
+			if ( healPointsCount > 0 && this._message ) {
+				// TODO message formatting utility
+				log(this._message);
+			}
+			return true;
+		}
+
+		private applyWoundingEffectTo(actor: Actor) : boolean {
+			if ( this._message && actor.destructible.defense < -this._amount ) {
+				log(this._message);
+			}
+			return actor.destructible.takeDamage(actor, -this._amount) > 0;
 		}
 	}
 
@@ -201,10 +205,7 @@ module Game {
 
 			Parameters:
 			owner - the actor owning this Pickable (the item)
-			weare - the container
-
-			Returns:
-			true if the action succeeded
+			wearer - the container
 		*/
 		use(owner: Actor, wearer: Actor, actorManager: ActorManager) {
 			if ( this._targetSelector ) {
