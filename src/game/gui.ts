@@ -193,7 +193,7 @@ module Game {
 	/*
 		Class: TilePicker
 		A background Gui that sleeps until it receives a PICK_TILE event containing a TilePickerListener.
-		It then listens to mouse move events until the player left-clicks a tile.
+		It then listens to mouse events until the player left-clicks a tile.
 		Then it calls the TilePickerListener with the selected tile position.
 	*/
 	export class TilePicker extends Gui implements EventListener {
@@ -209,31 +209,44 @@ module Game {
 
 		processEvent( event: Event<any> ) {
 			if (!this.isVisible() && event.type === EventType.PICK_TILE ) {
-				this.listener = event.data;
-				EventBus.getInstance().registerListener(this, EventType.MOUSE_MOVE);
-				EventBus.getInstance().registerListener(this, EventType.MOUSE_CLICK);
-				this.show();
-				this.tileIsValid = false;
+				this.activate(event.data);
 			} else if (this.isVisible() && event.type === EventType.MOUSE_MOVE) {
-				this.tilePos = event.data;
-				this.tileIsValid = this.map.isInFov(this.tilePos.x, this.tilePos.y);
+				this.updateMousePosition(event.data);
 			} else if (this.isVisible() && event.type === EventType.MOUSE_CLICK) {
 				if ( event.data === MouseButton.LEFT ) {
 					if (! this.tileIsValid ) {
+						// the tile is not in FOV. do nothing
 						return;
 					} else if (this.listener) {
 						this.listener(this.tilePos);
 					}
 				}
-				EventBus.getInstance().unregisterListener(this, EventType.MOUSE_MOVE);
-				EventBus.getInstance().unregisterListener(this, EventType.MOUSE_CLICK);
-				this.hide();
+				this.deactivate();
 			}
 		}
 
 		render(map: Map, actorManager: ActorManager, console: Yendor.Console) {
 			console.setChar( this.tilePos.x, this.tilePos.y, this.tileIsValid ? "+" : "x" );
 			console.fore[this.tilePos.x][this.tilePos.y] = this.tileIsValid ? "green" : "red";
+		}
+
+		private activate(listener: TilePickerListener) {
+			this.listener = listener;
+			EventBus.getInstance().registerListener(this, EventType.MOUSE_MOVE);
+			EventBus.getInstance().registerListener(this, EventType.MOUSE_CLICK);
+			this.show();
+			this.tileIsValid = false;
+		}
+
+		private updateMousePosition(mousePos: Yendor.Position) {
+			this.tilePos = mousePos;
+			this.tileIsValid = this.map.isInFov(this.tilePos.x, this.tilePos.y);
+		}
+
+		private deactivate() {
+			EventBus.getInstance().unregisterListener(this, EventType.MOUSE_MOVE);
+			EventBus.getInstance().unregisterListener(this, EventType.MOUSE_CLICK);
+			this.hide();
 		}
 	}
 }
