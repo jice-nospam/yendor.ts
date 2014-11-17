@@ -1,3 +1,4 @@
+/// <reference path="persistence.ts" />
 module Game {
 
 	export class Tile {
@@ -132,11 +133,18 @@ module Game {
 		}
 	}
 
-	export class Map {
+	export class Map implements Persistent {
 		private tiles: Tile[][];
 		private map: Yendor.Fov;
 		private _currentScentValue: number = Constants.SCENT_THRESHOLD;
-		constructor(private _width: number, private _height: number) {
+		private _width: number;
+		private _height: number;
+
+		constructor() {}
+
+		init(_width: number, _height: number) {
+			this._width = _width;
+			this._height = _height;
 			this.tiles = [];
 			this.map = new Yendor.Fov(_width, _height);
 			for (var x = 0; x < this._width; x++) {
@@ -227,6 +235,24 @@ module Game {
 					}
 				}
 			}
+		}
+
+		// Persistent interface
+		load(jsonData: any): boolean {
+			this._width = jsonData._width;
+			this._height = jsonData._height;
+			this.map = new Yendor.Fov(this._width, this._height);
+			this.tiles = [];
+			for (var x = 0; x < this._width; x++) {
+				this.tiles[x] = [];
+				for (var y = 0; y < this._height; y++) {
+					this.tiles[x][y] = new Tile();
+					this.tiles[x][y].explored = jsonData.tiles[x][y].explored;
+					this.tiles[x][y].scentAmount = jsonData.tiles[x][y].scentAmount;
+					this.map.setCell(x, y, jsonData.map._walkable[x][y], jsonData.map._transparent[x][y]);
+				}
+			}
+			return true;
 		}
 	}
 }

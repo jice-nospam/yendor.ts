@@ -11,6 +11,7 @@ var	root: Yendor.Console;
 var rng: Yendor.Random = new Yendor.ComplementaryMultiplyWithCarryRandom();
 module Game {
 
+	var VERSION: string = "0.3";
 	/*
 		Class: Engine
 		Handles frame rendering and world updating.
@@ -29,14 +30,19 @@ module Game {
 		*/
 		constructor() {
 			this.player = new Game.Player(Constants.CONSOLE_WIDTH / 2, Constants.CONSOLE_HEIGHT / 2, "@", "player", "#fff");
-			this.map = new Map( Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT );
+			this.map = new Map();
 			EventBus.getInstance().init(this, this.map);
 			this.actors.push(this.player);
-			var dungeonBuilder: BspDungeonBuilder = new BspDungeonBuilder();
-			dungeonBuilder.build(this.map, this);
+
+			var savedVersion = localStorage.getItem("version");
+			if ( savedVersion === VERSION ) {
+				this.loadGame();
+			} else {
+				this.createNewGame();
+			}
+
 			EventBus.getInstance().registerListener(this, EventType.CHANGE_STATUS);
 			EventBus.getInstance().registerListener(this, EventType.REMOVE_ACTOR);
-
 			var statusPanel: Gui = new StatusPanel( Constants.CONSOLE_WIDTH, Constants.STATUS_PANEL_HEIGHT );
 			statusPanel.show();
 			this.addGui(statusPanel, "statusPanel", 0, Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT);
@@ -46,6 +52,23 @@ module Game {
 
 			var tilePicker: Gui = new TilePicker(this.map);
 			this.addGui(tilePicker, "tilePicker");
+		}
+
+		createNewGame() {
+			this.map.init( Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT );
+			var dungeonBuilder: BspDungeonBuilder = new BspDungeonBuilder();
+			dungeonBuilder.build(this.map, this);
+		}
+
+		loadGame() {
+			this.player.load( JSON.parse(localStorage.getItem("player")) );
+			this.map.load( JSON.parse(localStorage.getItem("map")) );
+		}
+
+		saveGame() {
+			localStorage.setItem("version", VERSION);
+			localStorage.setItem("map", JSON.stringify(this.map));
+			localStorage.setItem("player", JSON.stringify(this.player));
 		}
 
 		/*
@@ -232,6 +255,16 @@ module Game {
 		}
 
 		/*
+			Function: handleNewTurn
+			Triggered when a new game turn starts. Updates all the world actors.
+		*/
+		handleNewTurn() {
+			this.updateActors();
+			this.status = GameStatus.IDLE;
+			this.saveGame();
+		}
+
+		/*
 			Function: handleKeypress
 			Triggered when the player presses a key. Updates the game world and possibly starts a new turn for NPCs.
 
@@ -242,8 +275,7 @@ module Game {
 			EventBus.getInstance().publishEvent(new Event<KeyboardEvent>(EventType.KEY_PRESSED, event));
 			this.player.ai.update(this.player, this.map, this);
 			if ( this.status === GameStatus.NEW_TURN )  {
-				this.updateActors();
-				this.status = GameStatus.IDLE;
+				this.handleNewTurn();
 			}
 		}
 

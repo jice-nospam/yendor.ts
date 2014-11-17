@@ -216,7 +216,7 @@ module Game {
 	 * Group: actors
 	 ********************************************************************************/
 
-	export class Actor extends Yendor.Position {
+	export class Actor extends Yendor.Position implements Persistent {
 		private _destructible: Destructible;
 		private _attacker: Attacker;
 		private _ai: Ai;
@@ -265,6 +265,11 @@ module Game {
 		render() {
 			root.setChar( this.x, this.y, this._ch );
 			root.fore[this.x][this.y] = this._col;
+		}
+
+		// Persistent interface
+		load(jsonData: any): boolean {
+			return true;
 		}
 	}
 }

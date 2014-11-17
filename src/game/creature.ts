@@ -459,7 +459,7 @@ module Game {
 		}
 	}
 
-	export class Player extends Actor {
+	export class Player extends Actor implements Persistent {
 		constructor(_x: number, _y: number, _ch: string,
 			_name: string, _col: Yendor.Color) {
 			super(_x, _y, _ch, _name, _col);
@@ -467,6 +467,13 @@ module Game {
 			this.attacker = new Attacker(5);
 			this.destructible = new PlayerDestructible(30, 2, "your cadaver");
 			this.container = new Container(26);
+		}
+
+		load( jsonData: any ): boolean {
+			this.x = jsonData._x;
+			this.y = jsonData._y;
+			this.destructible.hp = jsonData._destructible._hp;
+			return true;
 		}
 	}
 }
