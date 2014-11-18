@@ -2,6 +2,8 @@
 	Section: Console
 */
 module Yendor {
+	"use strict";
+
 	/*
 		Interface: Color
 		Typesafe string color wrapper. 
@@ -126,6 +128,8 @@ module Yendor {
 		Stores the position of a cell in the console (column, row)
 	*/
 	export class Position {
+		private _x: number;
+		private _y: number;
 		/*
 			Constructor: constructor
 
@@ -133,7 +137,10 @@ module Yendor {
 			_x : the column
 			_y : the row
 		*/
-		constructor( private _x: number = 0, private _y: number = 0 ) {}
+		constructor(_x: number = 0, _y: number = 0) {
+			this._x = _x;
+			this._y = _y;
+		}
 
 		/*
 			Property: x
@@ -172,6 +179,8 @@ module Yendor {
 		An offscreen console that cannot be rendered on screen, but can be blit on other consoles.
 	*/
 	export class Console {
+		private _width: number;
+		private _height: number;
 		/*
 			Property: text
 			Array of <height> strings storing the characters. The character at coordinate x,y is text[y][x].
@@ -199,8 +208,10 @@ module Yendor {
 			foreground - *optional* (default : white) default foreground color
 			background - *optional* (default : black) default background color
 		*/
-		constructor( private _width: number, private _height: number,
+		constructor(_width: number, _height: number,
 			foreground: Color = "white", background: Color = "black" ) {
+			this._width = _width;
+			this._height = _height;
 			this.text = [];
 			this.clearText();
 			this.fore = this.newColorTable();

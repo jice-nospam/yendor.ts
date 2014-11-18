@@ -4,6 +4,8 @@
 	Section: DivConsole
 */
 module Yendor {
+	"use strict";
+
 	/*
 		Class: DivConsole
 		A console that can be rendered as divs (one per row) filled with spans.

@@ -4,6 +4,8 @@
 	Section: Binary space partition tree.
 */
 module Yendor {
+	"use strict";
+
 	export enum BSPTraversalOrder {PRE_ORDER, IN_ORDER, POST_ORDER, LEVEL_ORDER, INVERTED_LEVEL_ORDER}
 
 	/*
@@ -257,21 +259,6 @@ module Yendor {
 		 	return callback(this, userData);
 		}
 
-		private buildLevelTraversalNodeArray() : BSPNode[] {
-			var nodesToTraverse: BSPNode[] = [];
-			var nodes: BSPNode[] = [];
-			nodes.push(this);
-			while ( nodes.length > 0 ) {
-				var node: BSPNode = nodes.shift();
-				nodesToTraverse.push(node);
-				if ( node.leftChild ) {
-					nodes.push(node.leftChild);
-					nodes.push(node.rightChild);
-				}
-			}
-			return nodesToTraverse;
-		}
-
 		/*
 			Function: traverseLevelOrder
 			Traverse the tree level by level (root, then root children, then level 2 children and so on).
@@ -310,6 +297,21 @@ module Yendor {
 				}
 			}
 			return BSPTraversalAction.CONTINUE;
+		}
+
+		private buildLevelTraversalNodeArray() : BSPNode[] {
+			var nodesToTraverse: BSPNode[] = [];
+			var nodes: BSPNode[] = [];
+			nodes.push(this);
+			while ( nodes.length > 0 ) {
+				var node: BSPNode = nodes.shift();
+				nodesToTraverse.push(node);
+				if ( node.leftChild ) {
+					nodes.push(node.leftChild);
+					nodes.push(node.rightChild);
+				}
+			}
+			return nodesToTraverse;
 		}
 	}
 }

@@ -2,6 +2,8 @@
 	Section: items
 */
 module Game {
+	"use strict";
+
 	/********************************************************************************
 	 * Group: target selection
 	 ********************************************************************************/
@@ -28,7 +30,10 @@ module Game {
 		Class: TargetSelector
 		Various ways to select actors
 	*/
-	export class TargetSelector {
+	export class TargetSelector implements Persistent {
+		className: string;
+		private _method: TargetSelectionMethod;
+		private _range: number;
 		/*
 			Constructor: constructor
 
@@ -36,7 +41,11 @@ module Game {
 			_method - the target selection method
 			_range - for methods requiring a range
 		*/
-		constructor(private _method: TargetSelectionMethod, private _range: number = 0) {}
+		constructor(_method: TargetSelectionMethod, _range: number = 0) {
+			this.className = "TargetSelector";
+			this._method = _method;
+			this._range = _range;
+		}
 
 		/*
 			Property: method
@@ -84,7 +93,7 @@ module Game {
 					));
 				break;
 			// TODO
-			//	case TargetSelectionMethod.WEARER_RANGE : return selectCloseEnemies(wearer, actorManager); break;
+			// case TargetSelectionMethod.WEARER_RANGE : return selectCloseEnemies(wearer, actorManager); break;
 				case TargetSelectionMethod.SELECTED_RANGE :
 					log("Left-click a target tile,\nor right-click to cancel.", "red");
 					var theRange = this.range;
@@ -102,6 +111,13 @@ module Game {
 				applyEffects(owner, wearer, selectedTargets);
 			}
 		}
+
+		// persistent interface
+		load(jsonData: any): boolean {
+			this._range = jsonData._range;
+			this._method = TargetSelectionMethod[<string>(jsonData._method)];
+			return true;
+		}
 	}
 
 	/********************************************************************************
@@ -112,7 +128,7 @@ module Game {
 		Interface: Effect
 		Some effect that can be applied to actors. The effect might be triggered by using an item or casting a spell.
 	*/
-	export interface Effect {
+	export interface Effect extends Persistent {
 		/*
 			Function: applyTo
 			Apply an effect to an actor
@@ -124,7 +140,14 @@ module Game {
 	}
 
 	export class InstantHealthEffect implements Effect {
-		constructor( private _amount: number, private _message?: string) {}
+		className: string;
+		private _amount: number;
+		private _message: string;
+		constructor( _amount: number, _message?: string) {
+			this.className = "InstantHealthEffect";
+			this._amount = _amount;
+			this._message = _message;
+		}
 
 		applyTo(actor: Actor): boolean {
 			if (! actor.destructible ) {
@@ -136,6 +159,13 @@ module Game {
 				return this.applyWoundingEffectTo(actor);
 			}
 			return false;
+		}
+
+		// persistent interface
+		load(jsonData: any): boolean {
+			this._amount = jsonData._amount;
+			this._message = jsonData._message;
+			return true;
 		}
 
 		private applyHealingEffectTo(actor: Actor): boolean {
@@ -156,7 +186,14 @@ module Game {
 	}
 
 	export class AiChangeEffect implements Effect {
-		constructor( private _newAi: TemporaryAi, private _message?: string ) {}
+		className: string;
+		private _newAi: TemporaryAi;
+		private _message: string;
+		constructor( _newAi: TemporaryAi, _message?: string ) {
+			this.className = "AiChangeEffect";
+			this._newAi = _newAi;
+			this._message = _message;
+		}
 
 		applyTo(actor: Actor): boolean {
 			this._newAi.applyTo(actor);
@@ -166,6 +203,13 @@ module Game {
 			return true;
 		}
 
+		// persistent interface
+		load(jsonData: any): boolean {
+			this._newAi = Object.create(window[jsonData._newAi.className].prototype);
+			this._newAi.load(jsonData._newAi);
+			this._message = jsonData._message;
+			return true;
+		}
 	}
 
 	/********************************************************************************
@@ -176,55 +220,10 @@ module Game {
 		Class: Pickable
 		An actor that can be picked by a creature
 	*/
-	export class Pickable {
-		constructor( private _effect: Effect, private _targetSelector?: TargetSelector) {}
-		/*
-			Function: pick
-			Put this actor in a container actor
-
-			Parameters:
-			owner - the actor owning this Pickable (the item)
-			wearer - the container
-
-			Returns:
-			true if the operation succeeded
-		*/
-		pick(owner: Actor, wearer: Actor): boolean {
-			if ( wearer.container && wearer.container.add(owner)) {
-				// tells the engine to remove this actor from main list
-				EventBus.getInstance().publishEvent(new Event<Actor>(EventType.REMOVE_ACTOR, owner));
-				return true;
-			}
-			// wearer is not a container or is full
-			return false;
-		}
-
-		/*
-			Function: use
-			Consume this item, destroying it
-
-			Parameters:
-			owner - the actor owning this Pickable (the item)
-			wearer - the container
-		*/
-		use(owner: Actor, wearer: Actor, actorManager: ActorManager) {
-			if ( this._targetSelector ) {
-				this._targetSelector.selectTargets(owner, wearer, actorManager, this.applyEffectToActorList.bind(this));
-			}
-		}
-
-		private applyEffectToActorList(owner: Actor, wearer: Actor, actors: Actor[]) {
-			var success: boolean = false;
-
-			for (var i = 0; i < actors.length; ++i) {
-				if (this._effect.applyTo(actors[i])) {
-					success = true;
-				}
-			}
-			if ( success && wearer.container ) {
-				wearer.container.remove( owner );
-			}
-		}
+	export class Pickable implements Persistent {
+		className: string;
+		private _effect: Effect;
+		private _targetSelector: TargetSelector
 
 		/*
 			Some factory helpers
@@ -260,6 +259,72 @@ module Game {
 				new TargetSelector( TargetSelectionMethod.SELECTED_ACTOR, range));
 			confusionScroll.blocks = false;
 			return confusionScroll;
+		}
+
+		constructor( _effect: Effect, _targetSelector?: TargetSelector) {
+			this.className = "Pickable";
+			this._effect = _effect;
+			this._targetSelector = _targetSelector;
+		}
+		/*
+			Function: pick
+			Put this actor in a container actor
+
+			Parameters:
+			owner - the actor owning this Pickable (the item)
+			wearer - the container
+
+			Returns:
+			true if the operation succeeded
+		*/
+		pick(owner: Actor, wearer: Actor): boolean {
+			if ( wearer.container && wearer.container.add(owner)) {
+				// tells the engine to remove this actor from main list
+				EventBus.getInstance().publishEvent(new Event<Actor>(EventType.REMOVE_ACTOR, owner));
+				return true;
+			}
+			// wearer is not a container or is full
+			return false;
+		}
+
+		/*
+			Function: use
+			Consume this item, destroying it
+
+			Parameters:
+			owner - the actor owning this Pickable (the item)
+			wearer - the container
+		*/
+		use(owner: Actor, wearer: Actor, actorManager: ActorManager) {
+			if ( this._targetSelector ) {
+				this._targetSelector.selectTargets(owner, wearer, actorManager, this.applyEffectToActorList.bind(this));
+			}
+		}
+
+		// persistent interface
+		load(jsonData: any): boolean {
+			if ( jsonData._effect ) {
+				this._effect = Object.create(window[jsonData._effect.className].prototype);
+				this._effect.load(jsonData._effect);
+			}
+			if ( jsonData._targetSelector ) {
+				this._targetSelector = new TargetSelector(TargetSelectionMethod.WEARER, 0);
+				this._targetSelector.load(jsonData._targetSelector);
+			}
+			return true;
+		}
+
+		private applyEffectToActorList(owner: Actor, wearer: Actor, actors: Actor[]) {
+			var success: boolean = false;
+
+			for (var i = 0; i < actors.length; ++i) {
+				if (this._effect.applyTo(actors[i])) {
+					success = true;
+				}
+			}
+			if ( success && wearer.container ) {
+				wearer.container.remove( owner );
+			}
 		}
 	}
 }

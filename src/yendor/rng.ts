@@ -2,6 +2,8 @@
 	Section: Random number generator
 */
 module Yendor {
+	"use strict";
+
 	/*
 		Interface: Random
 		Base for all RNG implementations.
@@ -72,7 +74,7 @@ module Yendor {
 			var x: number;
 			this.cur = (this.cur + 1) % 4096;
 			t = 18782 * this.Q[this.cur] + this.c;
-			this.c = Math.floor(t / (2 ^ 32));
+			this.c = Math.floor(t / Math.pow(2, 32));
 			x = (t + this.c) % 0x100000000;
 			if (x < this.c) {
 				x++;

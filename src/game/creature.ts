@@ -4,7 +4,7 @@
 	Section: creatures
 */
 module Game {
-
+	"use strict";
 	/********************************************************************************
 	 * Group: articifial intelligence
 	 ********************************************************************************/
@@ -13,7 +13,13 @@ module Game {
 		Class: Ai
 		Owned by self-updating actors
 	*/
-	export class Ai {
+	export class Ai implements Persistent {
+		className: string;
+
+		constructor() {
+			this.className = "Ai";
+		}
+
 		update(owner: Actor, map: Map, actorManager: ActorManager) {}
 
 		/*
@@ -30,7 +36,7 @@ module Game {
 			Returns:
 			true if the owner actually moved to the new cell
 		*/
-		moveOrAttack(owner: Actor, x: number, y: number, map: Map, actorManager: ActorManager): boolean {
+		protected moveOrAttack(owner: Actor, x: number, y: number, map: Map, actorManager: ActorManager): boolean {
 			// cannot move or attack a wall! 
 			if ( map.isWall(x, y)) {
 				return false;
@@ -52,6 +58,10 @@ module Game {
 			}
 			return true;
 		}
+
+		load(jsonData: any): boolean {
+			return true;
+		}
 	}
 
 	/*
@@ -64,6 +74,7 @@ module Game {
 		private keyChar: string;
 		constructor() {
 			super();
+			this.className = "PlayerAi";
 			EventBus.getInstance().registerListener(this, EventType.KEY_PRESSED);
 		}
 
@@ -161,6 +172,38 @@ module Game {
 			}
 		}
 
+		/*
+			Function: moveOrAttack
+			Try to move the player to a new map call. if there's a living creature on this map cell, attack it.
+
+			Parameters:
+			owner - the actor owning this Attacker (the player)
+			x - the destination cell x coordinate
+			y - the destination cell y coordinate
+			map - the game map, used to check for wall collisions
+			actorManager - used to check for living actors
+
+			Returns:
+			true if the player actually moved to the new cell
+		*/
+		protected moveOrAttack(owner: Actor, x: number, y: number, map: Map, actorManager: ActorManager): boolean {
+			if ( !super.moveOrAttack(owner, x, y, map, actorManager) ) {
+				return false;
+			}
+			var cellPos: Yendor.Position = new Yendor.Position(x, y);
+			// no living actor. Log exising corpses and items
+			actorManager.findActorsOnCell(cellPos, actorManager.getCorpses()).forEach(function(actor: Actor) {
+				log("There's a " + actor.name + " here");
+			});
+			actorManager.findActorsOnCell(cellPos, actorManager.getItems()).forEach(function(actor: Actor) {
+				log("There's a " + actor.name + " here");
+			});
+			// move the player
+			owner.x = x;
+			owner.y = y;
+			return true;
+		}
+
 		private handleActionKey(owner: Actor, map: Map, actorManager: ActorManager) {
 			if ( this.keyChar === "g" ) {
 				this.pickupItem(owner, map, actorManager);
@@ -170,7 +213,7 @@ module Game {
 		private pickupItem(owner: Actor, map: Map, actorManager: ActorManager) {
 			var found: boolean = false;
 			EventBus.getInstance().publishEvent(new Event<GameStatus>(EventType.CHANGE_STATUS, GameStatus.NEW_TURN));
-			actorManager.getItems().some(function(item) {
+			actorManager.getItems().some(function(item: Actor) {
 				if ( item.pickable && item.x === owner.x && item.y === owner.y ) {
 					found = true;
 					if ( item.pickable.pick(item, owner)) {
@@ -187,38 +230,6 @@ module Game {
 				log("There's nothing to pick here.");
 			}
 		}
-
-		/*
-			Function: moveOrAttack
-			Try to move the player to a new map call. if there's a living creature on this map cell, attack it.
-
-			Parameters:
-			owner - the actor owning this Attacker (the player)
-			x - the destination cell x coordinate
-			y - the destination cell y coordinate
-			map - the game map, used to check for wall collisions
-			actorManager - used to check for living actors
-
-			Returns:
-			true if the player actually moved to the new cell
-		*/
-		moveOrAttack(owner: Actor, x: number, y: number, map: Map, actorManager: ActorManager): boolean {
-			if ( !super.moveOrAttack(owner, x, y, map, actorManager) ) {
-				return false;
-			}
-			var cellPos: Yendor.Position = new Yendor.Position(x, y);
-			// no living actor. Log exising corpses and items
-			actorManager.findActorsOnCell(cellPos, actorManager.getCorpses()).forEach(function(actor) {
-				log("There's a " + actor.name + " here");
-			});
-			actorManager.findActorsOnCell(cellPos, actorManager.getItems()).forEach(function(actor) {
-				log("There's a " + actor.name + " here");
-			});
-			// move the player
-			owner.x = x;
-			owner.y = y;
-			return true;
-		}
 	}
 
 	/*
@@ -227,6 +238,15 @@ module Game {
 		else moves towards him using scent tracking.
 	*/
 	export class MonsterAi extends Ai {
+		// static arrays to help scan adjacent cells
+		private static TDX: number[] = [-1, 0, 1, -1, 1, -1, 0, 1];
+		private static TDY: number[] = [-1, -1, -1, 0, 0, 1, 1, 1];
+
+		constructor() {
+			super();
+			this.className = "MonsterAi";
+		}
+
 		/*
 			Function: update
 
@@ -306,9 +326,6 @@ module Game {
 			}
 		}
 
-		private static TDX: number[] = [-1, 0, 1, -1, 1, -1, 0, 1];
-		private static TDY: number[] = [-1, -1, -1, 0, 0, 1, 1, 1];
-
 		/*
 			Function: findHighestScentCellIndex
 			Find the adjacent cell with the highest scent value
@@ -370,10 +387,13 @@ module Game {
 		Stores the old Ai to be able to restore it.
 	*/
 	export class TemporaryAi extends Ai {
+		private _nbTurns: number;
 		private oldAi: Ai;
 
-		constructor(private _nbTurns: number) {
+		constructor(_nbTurns: number) {
 			super();
+			this.className = "TemporaryAi";
+			this._nbTurns = _nbTurns;
 		}
 
 		update(owner: Actor, map: Map, actorManager: ActorManager) {
@@ -387,6 +407,16 @@ module Game {
 			this.oldAi = actor.ai;
 			actor.ai = this;
 		}
+
+		// persistent interface
+		load(jsonData: any): boolean {
+			this._nbTurns = jsonData._nbTurns;
+			if ( jsonData.oldAi ) {
+				this.oldAi = Object.create(window[jsonData.oldAi.className].prototype);
+				this.oldAi.load(jsonData.oldAi);
+			}
+			return true;
+		}
 	}
 
 
@@ -396,6 +426,11 @@ module Game {
 		then attacks any creature at melee range.
 	*/
 	export class ConfusedMonsterAi extends TemporaryAi {
+
+		constructor(_nbTurns: number) {
+			super(_nbTurns);
+			this.className = "ConfusedMonsterAi";
+		}
 		/*
 			Function: update
 
@@ -441,6 +476,11 @@ module Game {
 		Contains an overloaded die function that logs the monsters death
 	*/
 	export class MonsterDestructible extends Destructible {
+		constructor(_maxHp: number, _defense: number, _corpseName: string) {
+			super(_maxHp, _defense, _corpseName);
+			this.className = "MonsterDestructible";
+		}
+
 		die(owner: Actor) {
 			log(owner.name + " is dead");
 			super.die(owner);
@@ -452,6 +492,11 @@ module Game {
 		Contains an overloaded die function to notify the Engine about the player's death
 	*/
 	export class PlayerDestructible extends Destructible {
+		constructor(_maxHp: number, _defense: number, _corpseName: string) {
+			super(_maxHp, _defense, _corpseName);
+			this.className = "PlayerDestructible";
+		}
+
 		die(owner: Actor) {
 			log("You died!", "red");
 			super.die(owner);
@@ -463,6 +508,7 @@ module Game {
 		constructor(_x: number, _y: number, _ch: string,
 			_name: string, _col: Yendor.Color) {
 			super(_x, _y, _ch, _name, _col);
+			this.className = "Player";
 			this.ai = new PlayerAi();
 			this.attacker = new Attacker(5);
 			this.destructible = new PlayerDestructible(30, 2, "your cadaver");

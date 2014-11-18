@@ -10,6 +10,7 @@
 var	root: Yendor.Console;
 var rng: Yendor.Random = new Yendor.ComplementaryMultiplyWithCarryRandom();
 module Game {
+	"use strict";
 
 	var VERSION: string = "0.3";
 	/*
@@ -125,7 +126,7 @@ module Game {
 			var bestDistance: number = 1E8;
 			var closestActor: Actor = undefined;
 			var player: Actor = this.getPlayer();
-			actors.forEach(function(actor) {
+			actors.forEach(function(actor: Actor) {
 				if ( actor !== player ) {
 					var distance: number = Yendor.Position.distance(pos, actor);
 					if ( distance < bestDistance && (distance < range || range === 0) ) {
@@ -200,6 +201,63 @@ module Game {
 			}
 		}
 
+		/*
+			Function: handleKeypress
+			Triggered when the player presses a key. Updates the game world and possibly starts a new turn for NPCs.
+
+			Parameters:
+			event - the KeyboardEvent
+		*/
+		handleKeypress(event: KeyboardEvent) {
+			EventBus.getInstance().publishEvent(new Event<KeyboardEvent>(EventType.KEY_PRESSED, event));
+			this.player.ai.update(this.player, this.map, this);
+			if ( this.status === GameStatus.NEW_TURN )  {
+				this.handleNewTurn();
+			}
+		}
+
+		/*
+			Function: handleNewFrame
+			Render a new frame. Frame rate is not tied to game turns to allow animations between turns.
+			This function is called by the browser before a screen repaint.
+			The number of callbacks is usually 60 times per second, but will generally match the display refresh rate 
+			in most web browsers as per W3C recommendation. The callback rate may be reduced to a lower rate when running in background tabs.
+
+			Parameters:
+			time - elapsed time since the last frame in milliseconds
+		*/
+		handleNewFrame (time: number) {
+			if ( this.status === GameStatus.STARTUP ) {
+				this.player.ai.update(this.player, this.map, this);
+				this.status = GameStatus.IDLE;
+			}
+			this.render();
+			root.render();
+		}
+
+		/*
+			Function: handleMouseMove
+			Triggered by mouse motion events.
+
+			Parameters:
+			event - the JQueryMouseEventObject
+		*/
+		handleMouseMove(event: JQueryMouseEventObject) {
+			var pos: Yendor.Position = root.getPositionFromPixels( event.pageX, event.pageY );
+			EventBus.getInstance().publishEvent(new Event<Yendor.Position>( EventType.MOUSE_MOVE, pos));
+		}
+
+		/*
+			Function: handleMouseClick
+			Triggered by mouse button click events.
+
+			Parameters:
+			event - the JQueryMouseEventObject
+		*/
+		handleMouseClick(event: JQueryMouseEventObject) {
+			EventBus.getInstance().publishEvent(new Event<MouseButton>( EventType.MOUSE_CLICK, <MouseButton>event.which));
+		}
+
 		private removeItem(item: Actor) {
 			var idx: number = this.items.indexOf(item);
 			if ( idx !== -1 ) {
@@ -258,68 +316,10 @@ module Game {
 			Function: handleNewTurn
 			Triggered when a new game turn starts. Updates all the world actors.
 		*/
-		handleNewTurn() {
+		private handleNewTurn() {
 			this.updateActors();
 			this.status = GameStatus.IDLE;
 			this.saveGame();
-		}
-
-		/*
-			Function: handleKeypress
-			Triggered when the player presses a key. Updates the game world and possibly starts a new turn for NPCs.
-
-			Parameters:
-			event - the KeyboardEvent
-		*/
-		handleKeypress(event: KeyboardEvent) {
-			EventBus.getInstance().publishEvent(new Event<KeyboardEvent>(EventType.KEY_PRESSED, event));
-			this.player.ai.update(this.player, this.map, this);
-			if ( this.status === GameStatus.NEW_TURN )  {
-				this.handleNewTurn();
-			}
-		}
-
-		/*
-			Function: handleNewFrame
-			Render a new frame. Frame rate is not tied to game turns to allow animations between turns.
-			This function is called by the browser before a screen repaint.
-			The number of callbacks is usually 60 times per second, but will generally match the display refresh rate 
-			in most web browsers as per W3C recommendation. The callback rate may be reduced to a lower rate when running in background tabs.
-
-			Parameters:
-			time - elapsed time since the last frame in milliseconds
-		*/
-		handleNewFrame (time: number) {
-			if ( this.status === GameStatus.STARTUP ) {
-				this.player.ai.update(this.player, this.map, this);
-				this.status = GameStatus.IDLE;
-			}
-			this.render();
-			root.render();
-		}
-
-		/*
-			Function: handleMouseMove
-			Triggered by mouse motion events.
-
-			Parameters:
-			event - the JQueryMouseEventObject
-		*/
-		handleMouseMove(event: JQueryMouseEventObject) {
-			var pos: Yendor.Position = root.getPositionFromPixels( event.pageX, event.pageY );
-			EventBus.getInstance().publishEvent(new Event<Yendor.Position>( EventType.MOUSE_MOVE, pos));
-		}
-
-		/*
-			Function: handleMouseClick
-			Triggered by mouse button click events.
-
-			Parameters:
-			event - the JQueryMouseEventObject
-		*/
-		handleMouseClick(event: JQueryMouseEventObject) {
-			var pos: Yendor.Position = root.getPositionFromPixels( event.pageX, event.pageY );
-			EventBus.getInstance().publishEvent(new Event<MouseButton>( EventType.MOUSE_CLICK, <MouseButton>event.which));
 		}
 	}
 

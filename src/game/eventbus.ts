@@ -1,4 +1,6 @@
 module Game {
+	"use strict";
+
 	export enum MouseButton {
 		LEFT = 1,
 		MIDDLE = 2,
@@ -34,9 +36,14 @@ module Game {
 	}
 
 	export class Event<T> {
+		private _type: EventType;
+		private _data: T;
 		private _actorManager: ActorManager;
 		private _map : Map;
-		constructor( private _type: EventType, private _data?: T ) {}
+		constructor(_type: EventType, _data?: T) {
+			this._type = _type;
+			this._data = _data;
+		}
 		get type() { return this._type; }
 		get data() { return this._data; }
 		get actorManager() {return this._actorManager; }
@@ -51,17 +58,19 @@ module Game {
 		processEvent( ev: Event<any> );
 	}
 	export class EventBus {
+		private static instance: EventBus = new EventBus();
+
 		private listeners: Array<EventListener[]> = [];
 		private actorManager: ActorManager;
 		private map: Map;
-		private static instance: EventBus = new EventBus();
+
+		static getInstance() { return EventBus.instance; }
 
 		init(actorManager: ActorManager, map: Map) {
 			this.map = map;
 			this.actorManager = actorManager;
 		}
 
-		static getInstance() { return EventBus.instance; }
 
 		registerListener(listener: EventListener, type: EventType) {
 			if (!this.listeners[type]) {

@@ -6,7 +6,9 @@
 /// <reference path="bsp.ts" />
 /// <reference path="fov.ts" />
 module Yendor {
-	export var VERSION = "0.0.2";
+	"use strict";
+
+	export var VERSION = "0.0.3";
 	var frameLoop : (callback: (elapsedTime: number) => void) => void;
 	/*
 		Function: init
@@ -26,7 +28,7 @@ module Yendor {
 			(<any>window).mozRequestAnimationFrame ||
 			(<any>window).oRequestAnimationFrame ||
 			window.msRequestAnimationFrame ||
-			function(callback) {
+			function(callback: (elapsedTime: number) => void) {
 				window.setTimeout(callback, 1000 / 60, new Date().getTime());
 			};
 		})();

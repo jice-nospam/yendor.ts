@@ -1,5 +1,6 @@
 /// <reference path="persistence.ts" />
 module Game {
+	"use strict";
 
 	export class Tile {
 		explored: boolean = false;
@@ -22,6 +23,19 @@ module Game {
 				for (var tiley: number = y1; tiley <= y2; tiley++) {
 					map.setFloor(tilex, tiley);
 				}
+			}
+		}
+
+		createRoom( map: Map, actorManager: ActorManager, first: boolean, x1: number, y1: number, x2: number, y2: number ) {
+			this.dig( map, x1, y1, x2, y2 );
+			if ( first ) {
+				// put the player in the first room
+				actorManager.getPlayer().x = Math.floor((x1 + x2) / 2);
+				actorManager.getPlayer().y = Math.floor((y1 + y2) / 2);
+			} else {
+				var rng: Yendor.Random = new Yendor.ComplementaryMultiplyWithCarryRandom();
+				this.createMonsters(x1, y1, x2, y2, rng, map, actorManager);
+				this.createItems(x1, y1, x2, y2, rng, map, actorManager);
 			}
 		}
 
@@ -54,19 +68,6 @@ module Game {
 				item = Pickable.createConfusionScroll(x, y, 5, 12);
 			}
 			return item;
-		}
-
-		createRoom( map: Map, actorManager: ActorManager, first: boolean, x1: number, y1: number, x2: number, y2: number ) {
-			this.dig( map, x1, y1, x2, y2 );
-			if ( first ) {
-				// put the player in the first room
-				actorManager.getPlayer().x = Math.floor((x1 + x2) / 2);
-				actorManager.getPlayer().y = Math.floor((y1 + y2) / 2);
-			} else {
-				var rng: Yendor.Random = new Yendor.ComplementaryMultiplyWithCarryRandom();
-				this.createMonsters(x1, y1, x2, y2, rng, map, actorManager);
-				this.createItems(x1, y1, x2, y2, rng, map, actorManager);
-			}
 		}
 
 		private createMonsters(x1: number, y1: number, x2: number, y2: number, rng: Yendor.Random, map: Map, actorManager: ActorManager) {
@@ -134,13 +135,16 @@ module Game {
 	}
 
 	export class Map implements Persistent {
+		className: string;
 		private tiles: Tile[][];
 		private map: Yendor.Fov;
 		private _currentScentValue: number = Constants.SCENT_THRESHOLD;
 		private _width: number;
 		private _height: number;
 
-		constructor() {}
+		constructor() {
+			this.className = "Map";
+		}
 
 		init(_width: number, _height: number) {
 			this._width = _width;
@@ -199,23 +203,6 @@ module Game {
 			this.updateScentField(x, y);
 		}
 
-		private updateScentField(xPlayer: number, yPlayer: number) {
-			for (var x: number = 0; x < this._width; x++) {
-		        for (var y: number = 0; y < this._height; y++) {
-		            if (this.isInFov(x, y)) {
-		                var oldScent: number = this.getScent(x, y);
-		                var dx: number = x - xPlayer;
-		                var dy: number = y - yPlayer;
-		                var distance: number = Math.floor(Math.sqrt(dx * dx + dy * dy));
-		                var newScent: number = this._currentScentValue - distance;
-		                if ( newScent > oldScent ) {
-		                    this.tiles[x][y].scentAmount = newScent;
-		                }
-		            }
-		        }
-		    }
-		}
-
 		setFloor(x: number, y: number) {
 			this.map.setCell(x, y, true, true);
 		}
@@ -253,6 +240,23 @@ module Game {
 				}
 			}
 			return true;
+		}
+
+		private updateScentField(xPlayer: number, yPlayer: number) {
+			for (var x: number = 0; x < this._width; x++) {
+		        for (var y: number = 0; y < this._height; y++) {
+		            if (this.isInFov(x, y)) {
+		                var oldScent: number = this.getScent(x, y);
+		                var dx: number = x - xPlayer;
+		                var dy: number = y - yPlayer;
+		                var distance: number = Math.floor(Math.sqrt(dx * dx + dy * dy));
+		                var newScent: number = this._currentScentValue - distance;
+		                if ( newScent > oldScent ) {
+		                    this.tiles[x][y].scentAmount = newScent;
+		                }
+		            }
+		        }
+		    }
 		}
 	}
 }
