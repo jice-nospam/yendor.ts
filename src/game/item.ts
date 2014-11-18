@@ -205,7 +205,7 @@ module Game {
 
 		// persistent interface
 		load(jsonData: any): boolean {
-			this._newAi = Object.create(window[jsonData._newAi.className].prototype);
+			this._newAi = Object.create(window["Game"][jsonData._newAi.className].prototype);
 			this._newAi.load(jsonData._newAi);
 			this._message = jsonData._message;
 			return true;
@@ -304,7 +304,7 @@ module Game {
 		// persistent interface
 		load(jsonData: any): boolean {
 			if ( jsonData._effect ) {
-				this._effect = Object.create(window[jsonData._effect.className].prototype);
+				this._effect = Object.create(window["Game"][jsonData._effect.className].prototype);
 				this._effect.load(jsonData._effect);
 			}
 			if ( jsonData._targetSelector ) {

@@ -30,10 +30,8 @@ module Game {
 			Constructor: constructor
 		*/
 		constructor() {
-			this.player = new Game.Player(Constants.CONSOLE_WIDTH / 2, Constants.CONSOLE_HEIGHT / 2, "@", "player", "#fff");
 			this.map = new Map();
 			EventBus.getInstance().init(this, this.map);
-			this.actors.push(this.player);
 
 			var savedVersion = localStorage.getItem("version");
 			if ( savedVersion === VERSION ) {
@@ -55,21 +53,38 @@ module Game {
 			this.addGui(tilePicker, "tilePicker");
 		}
 
-		createNewGame() {
+		private createNewGame() {
+			this.player = new Game.Player(Constants.CONSOLE_WIDTH / 2, Constants.CONSOLE_HEIGHT / 2, "@", "player", "#fff");
+			this.actors.push(this.player);
 			this.map.init( Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT );
 			var dungeonBuilder: BspDungeonBuilder = new BspDungeonBuilder();
 			dungeonBuilder.build(this.map, this);
 		}
 
-		loadGame() {
-			this.player.load( JSON.parse(localStorage.getItem("player")) );
+		private loadGame() {
 			this.map.load( JSON.parse(localStorage.getItem("map")) );
+			this.loadActors("actors", this.actors);
+			this.player = this.actors[0];
+			this.loadActors("items", this.items);
+			this.loadActors("corpses", this.corpses);
 		}
 
-		saveGame() {
+		private loadActors(localStorageKey: string, actorList: Actor[]) {
+			var actorsData = JSON.parse(localStorage.getItem(localStorageKey));
+			for (var i: number = 0; i < actorsData.length; i++) {
+				var actorData: any = actorsData[i];
+				var actor: Actor = Object.create(window["Game"][actorData.className].prototype);
+				actor.load(actorData);
+				actorList.push(actor);
+			}
+		}
+
+		private saveGame() {
 			localStorage.setItem("version", VERSION);
 			localStorage.setItem("map", JSON.stringify(this.map));
-			localStorage.setItem("player", JSON.stringify(this.player));
+			localStorage.setItem("actors", JSON.stringify(this.actors));
+			localStorage.setItem("items", JSON.stringify(this.items));
+			localStorage.setItem("corpses", JSON.stringify(this.corpses));
 		}
 
 		/*
@@ -338,13 +353,18 @@ module Game {
 		It creates the root console, register the keyboard and mouse event callbacks, and starts the frame rendering loop.
 	*/
 	$(function() {
-		Yendor.init();
-		root = new Yendor.PixiConsole( Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT, "#ffffff", "#000000", "#console", "terminal.png" );
+		try {
+			Yendor.init();
+			root = new Yendor.PixiConsole( Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT, "#ffffff", "#000000", "#console", "terminal.png" );
 
-		var engine = new Engine();
-		$(document).keydown(engine.handleKeypress.bind(engine));
-		$(document).mousemove(engine.handleMouseMove.bind(engine));
-		$(document).click(engine.handleMouseClick.bind(engine));
-		Yendor.loop(engine.handleNewFrame.bind(engine));
+			var engine = new Engine();
+			$(document).keydown(engine.handleKeypress.bind(engine));
+			$(document).mousemove(engine.handleMouseMove.bind(engine));
+			$(document).click(engine.handleMouseClick.bind(engine));
+			Yendor.loop(engine.handleNewFrame.bind(engine));
+		} catch (e) {
+			console.log("ERROR in " + e.fileName + ":" + e.lineNumber + " : " + e.message);
+			console.log(e.stack);
+		}
 	});
 }

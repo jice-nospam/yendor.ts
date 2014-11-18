@@ -15,7 +15,7 @@ It comes with a simple generic roguelike game to extend.
 
 ## pre-requisites
 * install [node.js](http://nodejs.org/)
-* install [TypeScript](http://www.typescriptlang.org/) 
+* install [TypeScript](http://www.typescriptlang.org/) (version 1.3+ required)
 
 `npm install -g typescript`
 
