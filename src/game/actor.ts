@@ -251,7 +251,7 @@ module Game {
 			this._capacity = jsonData._capacity;
 			for (var i: number = 0; i < jsonData.actors.length; i++) {
 				var actorData: any = jsonData.actors[i];
-				var actor: Actor = Object.create(window[actorData.className].prototype);
+				var actor: Actor = Object.create(window["Game"][actorData.className].prototype);
 				actor.load(actorData);
 				this.actors.push(actor);
 			}
@@ -340,7 +340,7 @@ module Game {
 				this._attacker.load(jsonData._attacker);
 			}
 			if ( jsonData._ai ) {
-				this._ai = new MonsterAi();
+				this._ai = Object.create(window["Game"][jsonData._ai.className].prototype);
 				this._ai.load(jsonData._ai);
 			}
 			if ( jsonData._pickable ) {
