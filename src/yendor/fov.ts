@@ -5,6 +5,8 @@
 	Section: Field of view
 */
 module Yendor {
+	"use strict";
+
 	/*
 		Class: Fov
 		Stores the map properties and compute the field of view from a point.

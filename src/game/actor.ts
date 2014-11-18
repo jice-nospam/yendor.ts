@@ -2,6 +2,8 @@
 	Section: actors
 */
 module Game {
+	"use strict";
+
 	export interface ActorManager {
 		getPlayer() : Actor;
 		addCreature( actor: Actor );
@@ -22,8 +24,12 @@ module Game {
 		Class: Destructible
 		Something that can take damages and heal/repair.
 	*/
-	export class Destructible {
+	export class Destructible implements Persistent {
+		className: string;
+		private _maxHp: number;
+		private _defense: number;
 		private _hp: number;
+		private _corpseName: string;
 		/*
 			Constructor: constructor
 
@@ -32,8 +38,12 @@ module Game {
 			_defense - when attacked, how much hit points are deflected
 			_corpseName - new name of the actor when its health points reach 0
 		*/
-		constructor(private _maxHp: number, private _defense: number, private _corpseName: string) {
+		constructor(_maxHp: number, _defense: number, _corpseName: string) {
+			this.className = "Destructible";
 			this._hp = _maxHp;
+			this._maxHp = _maxHp;
+			this._defense = _defense;
+			this._corpseName = _corpseName;
 		}
 
 		get hp() { return this._hp; }
@@ -105,20 +115,34 @@ module Game {
 			owner.name = this._corpseName;
 			owner.blocks = false;
 		}
+
+		// Persistent interface
+		load(jsonData: any): boolean {
+			this._hp = jsonData._hp;
+			this._maxHp = jsonData._maxHp;
+			this._defense = jsonData._defense;
+			this._corpseName = jsonData._corpseName;
+			return true;
+		}
 	}
 
 	/*
 		Class: Attacker
 		An actor that can deal damages to another one
 	*/
-	export class Attacker {
+	export class Attacker implements Persistent {
+		className: string;
+		private _power: number;
 		/*
 			Constructor: constructor
 
 			Parameters:
 			_power : amount of damages given
 		*/
-		constructor( private _power: number) {}
+		constructor(_power: number) {
+			this.className = "Attacker";
+			this._power = _power;
+		}
 
 		/*
 			Property: power
@@ -149,6 +173,12 @@ module Game {
 				}
 			}
 		}
+
+		// Persistent interface
+		load(jsonData: any): boolean {
+			this._power = jsonData._power;
+			return true;
+		}
 	}
 
 	/********************************************************************************
@@ -160,19 +190,24 @@ module Game {
 	 	- creatures with inventory
 	 	- chests, barrels, ...
 	 */
-	 export class Container {
+	 export class Container implements Persistent {
+	 	className: string;
+	 	private _capacity: number;
 	 	private actors: Actor[] = [];
 
 	 	/*
 	 		Constructor: constructor
 
 	 		Parameters:
-	 		_capaticty - this container's maximum number of items
+	 		_capacity - this container's maximum number of items
 	 	*/
-	 	constructor( private _capaticty: number) {}
+	 	constructor(_capacity: number) {
+	 		this.className = "Container";
+	 		this._capacity = _capacity;
+	 	}
 
-	 	get capacity(): number { return this._capaticty; }
-	 	set capacity(newValue: number) {this._capaticty = newValue; }
+	 	get capacity(): number { return this._capacity; }
+	 	set capacity(newValue: number) {this._capacity = newValue; }
 	 	size(): number { return this.actors.length; }
 
 	 	get(index: number) : Actor {
@@ -190,7 +225,7 @@ module Game {
 	 		false if the operation failed because the container is full
 	 	*/
 	 	add(actor: Actor) {
-	 		if ( this.actors.length >= this._capaticty ) {
+	 		if ( this.actors.length >= this._capacity ) {
 	 			return false;
 	 		}
 	 		this.actors.push( actor );
@@ -210,6 +245,18 @@ module Game {
 	 			this.actors.splice(idx, 1);
 	 		}
 	 	}
+
+		// Persistent interface
+		load(jsonData: any): boolean {
+			this._capacity = jsonData._capacity;
+			for (var i: number = 0; i < jsonData.actors.length; i++) {
+				var actorData: any = jsonData.actors[i];
+				var actor: Actor = Object.create(window[actorData.className].prototype);
+				actor.load(actorData);
+				this.actors.push(actor);
+			}
+			return true;
+		}
 	}
 
 	/********************************************************************************
@@ -217,6 +264,10 @@ module Game {
 	 ********************************************************************************/
 
 	export class Actor extends Yendor.Position implements Persistent {
+		className: string;
+		private _ch: string;
+		private _name: string;
+		private _col: Yendor.Color;
 		private _destructible: Destructible;
 		private _attacker: Attacker;
 		private _ai: Ai;
@@ -224,8 +275,13 @@ module Game {
 		private _pickable: Pickable;
 		private _container: Container;
 
-		constructor(_x: number, _y: number, private _ch: string,
-			private _name: string, private _col: Yendor.Color) { super(_x, _y); }
+		constructor(_x: number, _y: number, _ch: string, _name: string, _col: Yendor.Color) {
+			super(_x, _y);
+			this.className = "Actor";
+			this._ch = _ch;
+			this._name = _name;
+			this._col = _col;
+		}
 
 		get ch() { return this._ch; }
 		set ch(newValue: string) { this._ch = newValue[0]; }
@@ -267,8 +323,34 @@ module Game {
 			root.fore[this.x][this.y] = this._col;
 		}
 
-		// Persistent interface
+		// persistent interface
 		load(jsonData: any): boolean {
+			this.x = jsonData._x;
+			this.y = jsonData._y;
+			this._ch = jsonData._ch;
+			this._name = jsonData._name;
+			this._col = jsonData._col;
+			this._blocks = jsonData._blocks;
+			if ( jsonData._destructible ) {
+				this._destructible = new Destructible(0, 0, "");
+				this._destructible.load(jsonData._destructible);
+			}
+			if ( jsonData._attacker ) {
+				this._attacker = new Attacker(0);
+				this._attacker.load(jsonData._attacker);
+			}
+			if ( jsonData._ai ) {
+				this._ai = new MonsterAi();
+				this._ai.load(jsonData._ai);
+			}
+			if ( jsonData._pickable ) {
+				this._pickable = new Pickable(undefined);
+				this._pickable.load(jsonData._pickable);
+			}
+			if ( jsonData._container ) {
+				this._container = new Container(0);
+				this._container.load(jsonData._container);
+			}
 			return true;
 		}
 	}

@@ -3,16 +3,21 @@
 	Section: GUI
 */
 module Game {
+	"use strict";
+
 	/********************************************************************************
 	 * Group: generic GUI stuff
 	 ********************************************************************************/
 	export class Gui extends Yendor.Position {
-		private _pos: Yendor.Position = new Yendor.Position();
+		private _width: number;
+		private _height: number
 		private _console: Yendor.Console;
 		private _visible: boolean = false;
 
-		constructor(private _width: number, private _height: number) {
+		constructor(_width: number, _height: number) {
 			super();
+			this._width = _width;
+			this._height = _height;
 			this._console = new Yendor.Console(_width, _height );
 		}
 
@@ -44,7 +49,12 @@ module Game {
 	 * Group: status panel
 	 ********************************************************************************/
 	export class Message {
-		constructor(private _color: Yendor.Color, private _text: string) {}
+		private _color: Yendor.Color;
+		private _text: string
+		constructor(_color: Yendor.Color, _text: string) {
+			this._color = _color;
+			this._text = _text;
+		}
 
 		get text() { return this._text; }
 		get color() { return this._color; }
@@ -96,6 +106,17 @@ module Game {
 			}
 		}
 
+		render(map: Map, actorManager: ActorManager, destination: Yendor.Console) {
+			this.console.clearBack("black");
+			this.console.clearText();
+			var player: Actor = actorManager.getPlayer();
+			this.renderBar(1, 1, Constants.STAT_BAR_WIDTH, "HP", player.destructible.hp,
+				player.destructible.maxHp, Constants.HEALTH_BAR_BACKGROUND, Constants.HEALTH_BAR_FOREGROUND);
+			this.console.print(0, 0, this.mouseLookText);
+			this.renderMessages();
+			super.render(map, actorManager, destination);
+		}
+
 		private handleMouseLook( actors: Actor[] ) {
 			var len: number = actors.length;
 			this.mouseLookText = len === 0 ? "" : actors[0].name;
@@ -112,17 +133,6 @@ module Game {
 			}
 		}
 
-		render(map: Map, actorManager: ActorManager, destination: Yendor.Console) {
-			this.console.clearBack("black");
-			this.console.clearText();
-			var player: Actor = actorManager.getPlayer();
-			this.renderBar(1, 1, Constants.STAT_BAR_WIDTH, "HP", player.destructible.hp,
-				player.destructible.maxHp, Constants.HEALTH_BAR_BACKGROUND, Constants.HEALTH_BAR_FOREGROUND);
-			this.console.print(0, 0, this.mouseLookText);
-			this.renderMessages();
-			super.render(map, actorManager, destination);
-		}
-
 		private renderBar(x: number, y: number, width: number, name: string, value: number,
 			maxValue: number, foreColor: Yendor.Color, backColor: Yendor.Color) {
 			this.console.clearBack(backColor, x, y, width, 1);
@@ -131,7 +141,7 @@ module Game {
 				this.console.clearBack(foreColor, x, y, barWidth, 1);
 			}
 			var label: string = name + " : " + value + "/" + maxValue;
-			this.console.print(x + ((width - label.length) >> 1), y, label);
+			this.console.print(x + Math.floor(( width - label.length) / 2), y, label);
 		}
 	}
 
@@ -140,8 +150,10 @@ module Game {
 	 ********************************************************************************/
 	export class InventoryPanel extends Gui implements EventListener {
 		static TITLE: string = "=== inventory - ESC to close ===";
-		constructor(width: number, height: number, private actor: Actor) {
+		private actor: Actor;
+		constructor(width: number, height: number, actor: Actor) {
 			super(width, height);
+			this.actor = actor;
 			EventBus.getInstance().registerListener(this, EventType.KEY_PRESSED);
 		}
 

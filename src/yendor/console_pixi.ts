@@ -5,6 +5,8 @@
 	Section: PixiConsole
 */
 module Yendor {
+	"use strict";
+
 	/*
 		Class: PixiConsole
 		A console that can be rendered as WebGL or canvas using pixi.js.

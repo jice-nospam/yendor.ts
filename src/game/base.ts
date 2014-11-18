@@ -1,4 +1,6 @@
 module Game {
+    "use strict";
+
 	export module Constants {
 		// console
 		export var CONSOLE_WIDTH: number = 80;
