@@ -38,7 +38,7 @@ module Game {
 			_defense - when attacked, how much hit points are deflected
 			_corpseName - new name of the actor when its health points reach 0
 		*/
-		constructor(_maxHp: number, _defense: number, _corpseName: string) {
+		constructor(_maxHp: number = 0, _defense: number = 0, _corpseName: string = "") {
 			this.className = "Destructible";
 			this._hp = _maxHp;
 			this._maxHp = _maxHp;
@@ -118,6 +118,7 @@ module Game {
 
 		// Persistent interface
 		load(jsonData: any): boolean {
+			this.constructor.apply(this, []);
 			this._hp = jsonData._hp;
 			this._maxHp = jsonData._maxHp;
 			this._defense = jsonData._defense;
@@ -139,7 +140,7 @@ module Game {
 			Parameters:
 			_power : amount of damages given
 		*/
-		constructor(_power: number) {
+		constructor(_power: number = 0) {
 			this.className = "Attacker";
 			this._power = _power;
 		}
@@ -176,6 +177,7 @@ module Game {
 
 		// Persistent interface
 		load(jsonData: any): boolean {
+			this.constructor.apply(this, []);
 			this._power = jsonData._power;
 			return true;
 		}
@@ -201,7 +203,7 @@ module Game {
 	 		Parameters:
 	 		_capacity - this container's maximum number of items
 	 	*/
-	 	constructor(_capacity: number) {
+	 	constructor(_capacity: number = 0) {
 	 		this.className = "Container";
 	 		this._capacity = _capacity;
 	 	}
@@ -248,6 +250,7 @@ module Game {
 
 		// Persistent interface
 		load(jsonData: any): boolean {
+			this.constructor.apply(this, []);
 			this._capacity = jsonData._capacity;
 			for (var i: number = 0; i < jsonData.actors.length; i++) {
 				var actorData: any = jsonData.actors[i];
@@ -275,9 +278,13 @@ module Game {
 		private _pickable: Pickable;
 		private _container: Container;
 
-		constructor(_x: number, _y: number, _ch: string, _name: string, _col: Yendor.Color) {
-			super(_x, _y);
+		constructor() {
+			super();
 			this.className = "Actor";
+		}
+
+		init(_x: number = 0, _y: number = 0, _ch: string = "", _name: string = "", _col: Yendor.Color = "") {
+			this.moveTo(_x, _y);
 			this._ch = _ch;
 			this._name = _name;
 			this._col = _col;
@@ -325,6 +332,7 @@ module Game {
 
 		// persistent interface
 		load(jsonData: any): boolean {
+			this.constructor.apply(this, []);
 			this.x = jsonData._x;
 			this.y = jsonData._y;
 			this._ch = jsonData._ch;
@@ -332,11 +340,11 @@ module Game {
 			this._col = jsonData._col;
 			this._blocks = jsonData._blocks;
 			if ( jsonData._destructible ) {
-				this._destructible = new Destructible(0, 0, "");
+				this._destructible = Object.create(window["Game"][jsonData._destructible.className].prototype);
 				this._destructible.load(jsonData._destructible);
 			}
 			if ( jsonData._attacker ) {
-				this._attacker = new Attacker(0);
+				this._attacker = Object.create(window["Game"][jsonData._attacker.className].prototype);
 				this._attacker.load(jsonData._attacker);
 			}
 			if ( jsonData._ai ) {
@@ -344,11 +352,11 @@ module Game {
 				this._ai.load(jsonData._ai);
 			}
 			if ( jsonData._pickable ) {
-				this._pickable = new Pickable(undefined);
+				this._pickable = Object.create(window["Game"][jsonData._pickable.className].prototype);
 				this._pickable.load(jsonData._pickable);
 			}
 			if ( jsonData._container ) {
-				this._container = new Container(0);
+				this._container = Object.create(window["Game"][jsonData._container.className].prototype);
 				this._container.load(jsonData._container);
 			}
 			return true;

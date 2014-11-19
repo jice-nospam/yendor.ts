@@ -41,7 +41,7 @@ module Game {
 			_method - the target selection method
 			_range - for methods requiring a range
 		*/
-		constructor(_method: TargetSelectionMethod, _range: number = 0) {
+		constructor(_method: TargetSelectionMethod = undefined, _range: number = 0) {
 			this.className = "TargetSelector";
 			this._method = _method;
 			this._range = _range;
@@ -114,6 +114,7 @@ module Game {
 
 		// persistent interface
 		load(jsonData: any): boolean {
+			this.constructor.apply(this, []);
 			this._range = jsonData._range;
 			this._method = TargetSelectionMethod[<string>(jsonData._method)];
 			return true;
@@ -143,7 +144,7 @@ module Game {
 		className: string;
 		private _amount: number;
 		private _message: string;
-		constructor( _amount: number, _message?: string) {
+		constructor( _amount: number = 0, _message?: string) {
 			this.className = "InstantHealthEffect";
 			this._amount = _amount;
 			this._message = _message;
@@ -163,6 +164,7 @@ module Game {
 
 		// persistent interface
 		load(jsonData: any): boolean {
+			this.constructor.apply(this, []);
 			this._amount = jsonData._amount;
 			this._message = jsonData._message;
 			return true;
@@ -189,7 +191,7 @@ module Game {
 		className: string;
 		private _newAi: TemporaryAi;
 		private _message: string;
-		constructor( _newAi: TemporaryAi, _message?: string ) {
+		constructor( _newAi: TemporaryAi = undefined, _message?: string ) {
 			this.className = "AiChangeEffect";
 			this._newAi = _newAi;
 			this._message = _message;
@@ -205,6 +207,7 @@ module Game {
 
 		// persistent interface
 		load(jsonData: any): boolean {
+			this.constructor.apply(this, []);
 			this._newAi = Object.create(window["Game"][jsonData._newAi.className].prototype);
 			this._newAi.load(jsonData._newAi);
 			this._message = jsonData._message;
@@ -229,7 +232,8 @@ module Game {
 			Some factory helpers
 		*/
 		static createHealthPotion(x: number, y: number, amount: number): Actor {
-			var healthPotion = new Actor(x, y, "!", "health potion", "purple");
+			var healthPotion = new Actor();
+			healthPotion.init(x, y, "!", "health potion", "purple");
 			healthPotion.pickable = new Pickable(new InstantHealthEffect(amount, "You drink the health potion"),
 				new TargetSelector( TargetSelectionMethod.WEARER ));
 			healthPotion.blocks = false;
@@ -237,7 +241,8 @@ module Game {
 		}
 
 		static createLightningBoltScroll(x: number, y: number, range: number, damages: number): Actor {
-			var lightningBolt = new Actor(x, y, "#", "scroll of lightning bolt", "rgb(255,255,63)");
+			var lightningBolt = new Actor();
+			lightningBolt.init(x, y, "#", "scroll of lightning bolt", "rgb(255,255,63)");
 			lightningBolt.pickable = new Pickable( new InstantHealthEffect(-damages, "A lightning bolt hits with a loud thunder!"),
 				new TargetSelector( TargetSelectionMethod.WEARER_CLOSEST_ENEMY, range));
 			lightningBolt.blocks = false;
@@ -245,7 +250,8 @@ module Game {
 		}
 
 		static createFireballScroll(x: number, y: number, range: number, damages: number): Actor {
-			var fireball = new Actor(x, y, "#", "scroll of fireball", "rgb(255,255,63)");
+			var fireball = new Actor();
+			fireball.init(x, y, "#", "scroll of fireball", "rgb(255,255,63)");
 			fireball.pickable = new Pickable( new InstantHealthEffect(-damages, "A fireball burns all nearby creatures!"),
 				new TargetSelector( TargetSelectionMethod.SELECTED_RANGE, range));
 			fireball.blocks = false;
@@ -253,7 +259,8 @@ module Game {
 		}
 
 		static createConfusionScroll(x: number, y: number, range: number, nbTurns: number): Actor {
-			var confusionScroll = new Actor(x, y, "#", "scroll of confusion", "rgb(255,255,63)");
+			var confusionScroll = new Actor();
+			confusionScroll.init(x, y, "#", "scroll of confusion", "rgb(255,255,63)");
 			confusionScroll.pickable = new Pickable( new AiChangeEffect(new ConfusedMonsterAi(nbTurns),
 				"The eyes of the creature look vacant,\nas he starts to stumble around!"),
 				new TargetSelector( TargetSelectionMethod.SELECTED_ACTOR, range));
@@ -261,7 +268,7 @@ module Game {
 			return confusionScroll;
 		}
 
-		constructor( _effect: Effect, _targetSelector?: TargetSelector) {
+		constructor( _effect: Effect = undefined, _targetSelector?: TargetSelector) {
 			this.className = "Pickable";
 			this._effect = _effect;
 			this._targetSelector = _targetSelector;
@@ -303,12 +310,13 @@ module Game {
 
 		// persistent interface
 		load(jsonData: any): boolean {
+			this.constructor.apply(this, []);
 			if ( jsonData._effect ) {
 				this._effect = Object.create(window["Game"][jsonData._effect.className].prototype);
 				this._effect.load(jsonData._effect);
 			}
 			if ( jsonData._targetSelector ) {
-				this._targetSelector = new TargetSelector(TargetSelectionMethod.WEARER, 0);
+				this._targetSelector = Object.create(window["Game"][jsonData._targetSelector.className].prototype);
 				this._targetSelector.load(jsonData._targetSelector);
 			}
 			return true;

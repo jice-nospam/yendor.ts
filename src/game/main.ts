@@ -54,7 +54,8 @@ module Game {
 		}
 
 		private createNewGame() {
-			this.player = new Game.Player(Constants.CONSOLE_WIDTH / 2, Constants.CONSOLE_HEIGHT / 2, "@", "player", "#fff");
+			this.player = new Game.Player();
+			this.player.init(Constants.CONSOLE_WIDTH / 2, Constants.CONSOLE_HEIGHT / 2, "@", "player", "#fff");
 			this.actors.push(this.player);
 			this.map.init( Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT );
 			var dungeonBuilder: BspDungeonBuilder = new BspDungeonBuilder();
@@ -224,6 +225,10 @@ module Game {
 			event - the KeyboardEvent
 		*/
 		handleKeypress(event: KeyboardEvent) {
+			if (event.key === "MozPrintableKey") {
+				// fix for old firefox versions
+				event.key = String.fromCharCode(event.keyCode).toLowerCase();
+			}
 			EventBus.getInstance().publishEvent(new Event<KeyboardEvent>(EventType.KEY_PRESSED, event));
 			this.player.ai.update(this.player, this.map, this);
 			if ( this.status === GameStatus.NEW_TURN )  {
@@ -282,7 +287,6 @@ module Game {
 
 		private renderActors(actors: Actor[]) {
 			var nbActors: number = actors.length;
-			if ( nbActors === 0 ) { return; }
 			for (var i: number = 0; i < nbActors; i++) {
 				var actor: Actor = actors[i];
 				if ( this.map.isInFov( actor.x, actor.y)) {
