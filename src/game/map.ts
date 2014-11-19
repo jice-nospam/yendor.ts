@@ -41,13 +41,15 @@ module Game {
 
 		private createMonster(x: number, y: number, rng: Yendor.Random) {
 			if ( rng.getNumber(0, 100) < 80 ) {
-				var orc: Actor = new Actor(x, y, "o", "orc", "rgb(63,127,63)");
+				var orc: Actor = new Actor();
+				orc.init(x, y, "o", "orc", "rgb(63,127,63)");
 				orc.destructible = new MonsterDestructible(10, 0, "dead orc");
 				orc.attacker = new Attacker(3);
 				orc.ai = new MonsterAi();
 				return orc;
 			} else {
-				var troll: Actor =  new Actor(x, y, "T", "troll", "rgb(0,127,0)");
+				var troll: Actor =  new Actor();
+				troll.init(x, y, "T", "troll", "rgb(0,127,0)");
 				troll.destructible = new MonsterDestructible(16, 1, "troll carcass");
 				troll.attacker = new Attacker(4);
 				troll.ai = new MonsterAi();

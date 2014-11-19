@@ -60,6 +60,7 @@ module Game {
 		}
 
 		load(jsonData: any): boolean {
+			this.constructor.apply(this, []);
 			return true;
 		}
 	}
@@ -173,8 +174,9 @@ module Game {
 		}
 
 		load(jsonData: any): boolean {
+			this.constructor.apply(this, []);
+			super.load(jsonData);
 			this.first = true;
-			this.constructor();
 			return true;
 		}
 
@@ -385,6 +387,12 @@ module Game {
 				this.move(owner, MonsterAi.TDX[bestCellIndex], MonsterAi.TDY[bestCellIndex], map, actorManager);
 			}
 		}
+
+		load(jsonData: any): boolean {
+			this.constructor.apply(this, []);
+			super.load(jsonData);
+			return true;
+		}
 	}
 
 	/*
@@ -416,6 +424,8 @@ module Game {
 
 		// persistent interface
 		load(jsonData: any): boolean {
+			this.constructor.apply(this, []);
+			super.load(jsonData);
 			this._nbTurns = jsonData._nbTurns;
 			if ( jsonData.oldAi ) {
 				this.oldAi = Object.create(window["Game"][jsonData.oldAi.className].prototype);
@@ -471,6 +481,13 @@ module Game {
 				owner.y += dy;
 			}
 		}
+
+		// persistent interface
+		load(jsonData: any): boolean {
+			this.constructor.apply(this, []);
+			super.load(jsonData);
+			return true;
+		}
 	}
 
 
@@ -482,7 +499,7 @@ module Game {
 		Contains an overloaded die function that logs the monsters death
 	*/
 	export class MonsterDestructible extends Destructible {
-		constructor(_maxHp: number, _defense: number, _corpseName: string) {
+		constructor(_maxHp: number = 0, _defense: number =0, _corpseName: string = "") {
 			super(_maxHp, _defense, _corpseName);
 			this.className = "MonsterDestructible";
 		}
@@ -491,6 +508,13 @@ module Game {
 			log(owner.name + " is dead");
 			super.die(owner);
 		}
+
+		// persistent interface
+		load(jsonData: any): boolean {
+			this.constructor.apply(this, []);
+			super.load(jsonData);
+			return true;
+		}
 	}
 
 	/*
@@ -498,7 +522,7 @@ module Game {
 		Contains an overloaded die function to notify the Engine about the player's death
 	*/
 	export class PlayerDestructible extends Destructible {
-		constructor(_maxHp: number, _defense: number, _corpseName: string) {
+		constructor(_maxHp: number = 0, _defense: number = 0, _corpseName: string = "") {
 			super(_maxHp, _defense, _corpseName);
 			this.className = "PlayerDestructible";
 		}
@@ -508,17 +532,33 @@ module Game {
 			super.die(owner);
 			EventBus.getInstance().publishEvent(new Event<GameStatus>( EventType.CHANGE_STATUS, GameStatus.DEFEAT ));
 		}
+
+		// persistent interface
+		load(jsonData: any): boolean {
+			this.constructor.apply(this, []);
+			super.load(jsonData);
+			return true;
+		}
 	}
 
 	export class Player extends Actor {
-		constructor(_x: number, _y: number, _ch: string,
-			_name: string, _col: Yendor.Color) {
-			super(_x, _y, _ch, _name, _col);
-			this.className = "Player";
+		constructor() {
+			super();
+			this.className = "Player";			
+		}
+		init(_x: number, _y: number, _ch: string, _name: string, _col: Yendor.Color) {
+			super.init(_x, _y, _ch, _name, _col);
 			this.ai = new PlayerAi();
 			this.attacker = new Attacker(5);
 			this.destructible = new PlayerDestructible(30, 2, "your cadaver");
 			this.container = new Container(26);
+		}
+
+		// persistent interface
+		load(jsonData: any): boolean {
+			this.constructor.apply(this, []);
+			super.load(jsonData);
+			return true;
 		}
 	}
 }

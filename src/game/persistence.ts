@@ -4,7 +4,7 @@
 
 module Game {
 	"use strict";
-	
+
 	/*
 		Interface: Persistent
 		Anything that can be saved and restored from the browser local database.
