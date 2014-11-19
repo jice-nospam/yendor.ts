@@ -24,14 +24,15 @@ module Game {
 		items: Actor[] = [];
 		map: Map;
 		status : GameStatus = GameStatus.STARTUP;
-		guis: Gui[] = [];
+		guis: { [index: string]: Gui; } = {};
 
 		/*
 			Constructor: constructor
 		*/
 		constructor() {
 			this.map = new Map();
-			EventBus.getInstance().init(this, this.map);
+			this.initEventBus();
+			this.createGui();
 
 			var savedVersion = localStorage.getItem("version");
 			if ( savedVersion === VERSION ) {
@@ -39,9 +40,15 @@ module Game {
 			} else {
 				this.createNewGame();
 			}
+		}
 
+		private initEventBus() {
+			EventBus.getInstance().init(this, this.map);
 			EventBus.getInstance().registerListener(this, EventType.CHANGE_STATUS);
 			EventBus.getInstance().registerListener(this, EventType.REMOVE_ACTOR);
+		}
+
+		private createGui() {
 			var statusPanel: Gui = new StatusPanel( Constants.CONSOLE_WIDTH, Constants.STATUS_PANEL_HEIGHT );
 			statusPanel.show();
 			this.addGui(statusPanel, "statusPanel", 0, Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT);
@@ -68,6 +75,7 @@ module Game {
 			this.player = this.actors[0];
 			this.loadActors("items", this.items);
 			this.loadActors("corpses", this.corpses);
+			this.guis["statusPanel"].load();
 		}
 
 		private loadActors(localStorageKey: string, actorList: Actor[]) {
@@ -86,6 +94,7 @@ module Game {
 			localStorage.setItem("actors", JSON.stringify(this.actors));
 			localStorage.setItem("items", JSON.stringify(this.items));
 			localStorage.setItem("corpses", JSON.stringify(this.corpses));
+			this.guis["statusPanel"].save();
 		}
 
 		private deleteSavedGame() {
@@ -94,6 +103,7 @@ module Game {
 			localStorage.removeItem("actors");
 			localStorage.removeItem("items");
 			localStorage.removeItem("corpses");
+			localStorage.removeItem("statusPanel");
 		}
 
 		/*
@@ -128,12 +138,12 @@ module Game {
 		*/
 		addGui(gui: Gui, name: string, x: number = 0, y: number = 0) {
 			gui.moveTo(x, y);
-			this.guis.push(gui);
+			this.guis[name] = gui;
 		}
 
 		renderGui(rootConsole: Yendor.Console) {
-			for (var i: number = 0; i < this.guis.length; i++) {
-				var gui: Gui = this.guis[i];
+			for (var guiName in this.guis) {
+				var gui: Gui = this.guis[guiName];
 				if ( gui.isVisible()) {
 					gui.render(this.map, this, rootConsole);
 				}
