@@ -88,6 +88,14 @@ module Game {
 			localStorage.setItem("corpses", JSON.stringify(this.corpses));
 		}
 
+		private deleteSavedGame() {
+			localStorage.removeItem("version");
+			localStorage.removeItem("map");
+			localStorage.removeItem("actors");
+			localStorage.removeItem("items");
+			localStorage.removeItem("corpses");
+		}
+
 		/*
 			ActorManager interface
 		*/
@@ -338,7 +346,11 @@ module Game {
 		private handleNewTurn() {
 			this.updateActors();
 			this.status = GameStatus.IDLE;
-			this.saveGame();
+			if (!this.player.destructible.isDead()) {
+				this.saveGame();
+			} else {
+				this.deleteSavedGame();
+			}
 		}
 	}
 
