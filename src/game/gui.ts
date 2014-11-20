@@ -80,10 +80,10 @@ module Game {
 		}
 
 		save() {
-			localStorage.setItem("statusPanel", JSON.stringify(this.messages));
+			localStorage.setItem(Constants.STATUS_PANEL_ID, JSON.stringify(this.messages));
 		}
 		load() {
-			var jsonData: any = JSON.parse(localStorage.getItem("statusPanel"));
+			var jsonData: any = JSON.parse(localStorage.getItem(Constants.STATUS_PANEL_ID));
 			for ( var i = 0; i < jsonData.length; i++ ) {
 				var msg = new Message(jsonData[i]._color, jsonData[i]._text);
 				this.messages.push(msg);

@@ -254,7 +254,7 @@ module Game {
 			this._capacity = jsonData._capacity;
 			for (var i: number = 0; i < jsonData.actors.length; i++) {
 				var actorData: any = jsonData.actors[i];
-				var actor: Actor = Object.create(window["Game"][actorData.className].prototype);
+				var actor: Actor = Object.create(window[Constants.MAIN_MODULE_NAME][actorData.className].prototype);
 				actor.load(actorData);
 				this.actors.push(actor);
 			}
@@ -340,23 +340,23 @@ module Game {
 			this._col = jsonData._col;
 			this._blocks = jsonData._blocks;
 			if ( jsonData._destructible ) {
-				this._destructible = Object.create(window["Game"][jsonData._destructible.className].prototype);
+				this._destructible = Object.create(window[Constants.MAIN_MODULE_NAME][jsonData._destructible.className].prototype);
 				this._destructible.load(jsonData._destructible);
 			}
 			if ( jsonData._attacker ) {
-				this._attacker = Object.create(window["Game"][jsonData._attacker.className].prototype);
+				this._attacker = Object.create(window[Constants.MAIN_MODULE_NAME][jsonData._attacker.className].prototype);
 				this._attacker.load(jsonData._attacker);
 			}
 			if ( jsonData._ai ) {
-				this._ai = Object.create(window["Game"][jsonData._ai.className].prototype);
+				this._ai = Object.create(window[Constants.MAIN_MODULE_NAME][jsonData._ai.className].prototype);
 				this._ai.load(jsonData._ai);
 			}
 			if ( jsonData._pickable ) {
-				this._pickable = Object.create(window["Game"][jsonData._pickable.className].prototype);
+				this._pickable = Object.create(window[Constants.MAIN_MODULE_NAME][jsonData._pickable.className].prototype);
 				this._pickable.load(jsonData._pickable);
 			}
 			if ( jsonData._container ) {
-				this._container = Object.create(window["Game"][jsonData._container.className].prototype);
+				this._container = Object.create(window[Constants.MAIN_MODULE_NAME][jsonData._container.className].prototype);
 				this._container.load(jsonData._container);
 			}
 			return true;

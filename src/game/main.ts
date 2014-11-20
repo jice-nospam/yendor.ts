@@ -8,7 +8,7 @@
 /// <reference path="map.ts" />
 /// <reference path="gui.ts" />
 var	root: Yendor.Console;
-var rng: Yendor.Random = new Yendor.ComplementaryMultiplyWithCarryRandom();
+var rng: Yendor.Random;
 module Game {
 	"use strict";
 
@@ -34,7 +34,7 @@ module Game {
 			this.initEventBus();
 			this.createGui();
 
-			var savedVersion = localStorage.getItem("version");
+			var savedVersion = localStorage.getItem(Constants.PERSISTENCE_VERSION_KEY);
 			if ( savedVersion === VERSION ) {
 				this.loadGame();
 			} else {
@@ -51,13 +51,13 @@ module Game {
 		private createGui() {
 			var statusPanel: Gui = new StatusPanel( Constants.CONSOLE_WIDTH, Constants.STATUS_PANEL_HEIGHT );
 			statusPanel.show();
-			this.addGui(statusPanel, "statusPanel", 0, Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT);
+			this.addGui(statusPanel, Constants.STATUS_PANEL_ID, 0, Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT);
 
 			var inventoryPanel: Gui = new InventoryPanel( Constants.INVENTORY_PANEL_WIDTH, Constants.INVENTORY_PANEL_HEIGHT, this.player );
-			this.addGui(inventoryPanel, "inventoryPanel", Math.floor(Constants.CONSOLE_WIDTH / 2 - Constants.INVENTORY_PANEL_WIDTH / 2), 0);
+			this.addGui(inventoryPanel, Constants.INVENTORY_ID, Math.floor(Constants.CONSOLE_WIDTH / 2 - Constants.INVENTORY_PANEL_WIDTH / 2), 0);
 
 			var tilePicker: Gui = new TilePicker(this.map);
-			this.addGui(tilePicker, "tilePicker");
+			this.addGui(tilePicker, Constants.TILE_PICKER_ID);
 		}
 
 		private createNewGame() {
@@ -70,40 +70,40 @@ module Game {
 		}
 
 		private loadGame() {
-			this.map.load( JSON.parse(localStorage.getItem("map")) );
-			this.loadActors("actors", this.actors);
+			this.map.load( JSON.parse(localStorage.getItem(Constants.PERSISTENCE_MAP_KEY)) );
+			this.loadActors(Constants.PERSISTENCE_ACTORS_KEY, this.actors);
 			this.player = this.actors[0];
-			this.loadActors("items", this.items);
-			this.loadActors("corpses", this.corpses);
-			this.guis["statusPanel"].load();
+			this.loadActors(Constants.PERSISTENCE_ITEMS_KEY, this.items);
+			this.loadActors(Constants.PERSISTENCE_CORPSES_KEY, this.corpses);
+			this.guis[Constants.STATUS_PANEL_ID].load();
 		}
 
 		private loadActors(localStorageKey: string, actorList: Actor[]) {
 			var actorsData = JSON.parse(localStorage.getItem(localStorageKey));
 			for (var i: number = 0; i < actorsData.length; i++) {
 				var actorData: any = actorsData[i];
-				var actor: Actor = Object.create(window["Game"][actorData.className].prototype);
+				var actor: Actor = Object.create(window[Constants.MAIN_MODULE_NAME][actorData.className].prototype);
 				actor.load(actorData);
 				actorList.push(actor);
 			}
 		}
 
 		private saveGame() {
-			localStorage.setItem("version", VERSION);
-			localStorage.setItem("map", JSON.stringify(this.map));
-			localStorage.setItem("actors", JSON.stringify(this.actors));
-			localStorage.setItem("items", JSON.stringify(this.items));
-			localStorage.setItem("corpses", JSON.stringify(this.corpses));
-			this.guis["statusPanel"].save();
+			localStorage.setItem(Constants.PERSISTENCE_VERSION_KEY, VERSION);
+			localStorage.setItem(Constants.PERSISTENCE_MAP_KEY, JSON.stringify(this.map));
+			localStorage.setItem(Constants.PERSISTENCE_ACTORS_KEY, JSON.stringify(this.actors));
+			localStorage.setItem(Constants.PERSISTENCE_ITEMS_KEY, JSON.stringify(this.items));
+			localStorage.setItem(Constants.PERSISTENCE_CORPSES_KEY, JSON.stringify(this.corpses));
+			this.guis[Constants.STATUS_PANEL_ID].save();
 		}
 
 		private deleteSavedGame() {
-			localStorage.removeItem("version");
-			localStorage.removeItem("map");
-			localStorage.removeItem("actors");
-			localStorage.removeItem("items");
-			localStorage.removeItem("corpses");
-			localStorage.removeItem("statusPanel");
+			localStorage.removeItem(Constants.PERSISTENCE_VERSION_KEY);
+			localStorage.removeItem(Constants.PERSISTENCE_MAP_KEY);
+			localStorage.removeItem(Constants.PERSISTENCE_ACTORS_KEY);
+			localStorage.removeItem(Constants.PERSISTENCE_ITEMS_KEY);
+			localStorage.removeItem(Constants.PERSISTENCE_CORPSES_KEY);
+			localStorage.removeItem(Constants.STATUS_PANEL_ID);
 		}
 
 		/*
@@ -143,9 +143,11 @@ module Game {
 
 		renderGui(rootConsole: Yendor.Console) {
 			for (var guiName in this.guis) {
-				var gui: Gui = this.guis[guiName];
-				if ( gui.isVisible()) {
-					gui.render(this.map, this, rootConsole);
+				if ( this.guis.hasOwnProperty(guiName) ) {
+					var gui: Gui = this.guis[guiName];
+					if ( gui.isVisible()) {
+						gui.render(this.map, this, rootConsole);
+					}
 				}
 			}
 		}
@@ -381,6 +383,7 @@ module Game {
 	$(function() {
 		try {
 			Yendor.init();
+			rng = new Yendor.ComplementaryMultiplyWithCarryRandom();
 			root = new Yendor.PixiConsole( Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT, "#ffffff", "#000000", "#console", "terminal.png" );
 
 			var engine = new Engine();

@@ -208,7 +208,7 @@ module Game {
 		// persistent interface
 		load(jsonData: any): boolean {
 			this.constructor.apply(this, []);
-			this._newAi = Object.create(window["Game"][jsonData._newAi.className].prototype);
+			this._newAi = Object.create(window[Constants.MAIN_MODULE_NAME][jsonData._newAi.className].prototype);
 			this._newAi.load(jsonData._newAi);
 			this._message = jsonData._message;
 			return true;
@@ -312,11 +312,11 @@ module Game {
 		load(jsonData: any): boolean {
 			this.constructor.apply(this, []);
 			if ( jsonData._effect ) {
-				this._effect = Object.create(window["Game"][jsonData._effect.className].prototype);
+				this._effect = Object.create(window[Constants.MAIN_MODULE_NAME][jsonData._effect.className].prototype);
 				this._effect.load(jsonData._effect);
 			}
 			if ( jsonData._targetSelector ) {
-				this._targetSelector = Object.create(window["Game"][jsonData._targetSelector.className].prototype);
+				this._targetSelector = Object.create(window[Constants.MAIN_MODULE_NAME][jsonData._targetSelector.className].prototype);
 				this._targetSelector.load(jsonData._targetSelector);
 			}
 			return true;

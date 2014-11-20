@@ -10,6 +10,7 @@ module Game {
 		Anything that can be saved and restored from the browser local database.
 	*/
 	export interface Persistent {
+
 		className: string;
 		/*
 			Function: load

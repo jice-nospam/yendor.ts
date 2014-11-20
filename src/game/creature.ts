@@ -428,7 +428,7 @@ module Game {
 			super.load(jsonData);
 			this._nbTurns = jsonData._nbTurns;
 			if ( jsonData.oldAi ) {
-				this.oldAi = Object.create(window["Game"][jsonData.oldAi.className].prototype);
+				this.oldAi = Object.create(window[Constants.MAIN_MODULE_NAME][jsonData.oldAi.className].prototype);
 				this.oldAi.load(jsonData.oldAi);
 			}
 			return true;
@@ -499,7 +499,7 @@ module Game {
 		Contains an overloaded die function that logs the monsters death
 	*/
 	export class MonsterDestructible extends Destructible {
-		constructor(_maxHp: number = 0, _defense: number =0, _corpseName: string = "") {
+		constructor(_maxHp: number = 0, _defense: number = 0, _corpseName: string = "") {
 			super(_maxHp, _defense, _corpseName);
 			this.className = "MonsterDestructible";
 		}
@@ -544,7 +544,7 @@ module Game {
 	export class Player extends Actor {
 		constructor() {
 			super();
-			this.className = "Player";			
+			this.className = "Player";
 		}
 		init(_x: number, _y: number, _ch: string, _name: string, _col: Yendor.Color) {
 			super.init(_x, _y, _ch, _name, _col);
