@@ -2,6 +2,7 @@ module Game {
     "use strict";
 
 	export module Constants {
+        export var MAIN_MODULE_NAME = "Game";
 		// console
 		export var CONSOLE_WIDTH: number = 80;
 		export var CONSOLE_HEIGHT: number = 34;
@@ -15,6 +16,9 @@ module Game {
         export var FOV_RADIUS: number = 10;
 
         // gui
+        export var STATUS_PANEL_ID: string = "statusPanel";
+        export var INVENTORY_ID: string = "inventory";
+        export var TILE_PICKER_ID: string = "tilePicker";
 		export var LOG_DARKEN_COEF: number = 0.9;
 		export var STATUS_PANEL_HEIGHT: number = 7;
 		export var STAT_BAR_WIDTH: number = 20;
@@ -31,6 +35,13 @@ module Game {
 
 		// AI
 		export var SCENT_THRESHOLD: number = 10;
+
+        // persistence local storage keys
+        export var PERSISTENCE_VERSION_KEY: string = "version";
+        export var PERSISTENCE_MAP_KEY: string = "map";
+        export var PERSISTENCE_ACTORS_KEY: string = "actors";
+        export var PERSISTENCE_ITEMS_KEY: string = "items";
+        export var PERSISTENCE_CORPSES_KEY: string = "corpses";
 
 	}
 	export enum GameStatus {
