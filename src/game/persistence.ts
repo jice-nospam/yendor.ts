@@ -28,6 +28,7 @@ module Game {
 		loadFromKey(key: string, object?: any): any;
 		loadFromData(jsonData: any, object?: any): any;
 		saveToKey(key: string, object: any);
+		deleteKey(key: string);
 	}
 
 	/*
@@ -46,6 +47,10 @@ module Game {
 			} else {
 				localStorage.setItem(key, typeof object === "string" ? object : JSON.stringify(object));
 			}
+		}
+
+		deleteKey(key: string) {
+			localStorage.removeItem(key);
 		}
 
 		loadFromKey(localStorageKey: string, object?: any): any {
