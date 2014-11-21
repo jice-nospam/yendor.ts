@@ -65,7 +65,6 @@ module Game {
 		Handles player input. Determin in a new game turn must be started.
 	*/
 	export class PlayerAi extends Ai implements EventListener {
-		private first: boolean = true;
 		private keyCode: number = 0;
 		private keyChar: string;
 		constructor() {
@@ -157,10 +156,6 @@ module Game {
 					// the player actually move. Recompute the field of view
 					map.computeFov(owner.x, owner.y, Constants.FOV_RADIUS);
 				}
-			} else if (this.first) {
-				// first game frame : compute the field of view
-				map.computeFov(owner.x, owner.y, Constants.FOV_RADIUS);
-				this.first = false;
 			}
 			this.keyCode = undefined;
 			this.keyChar = undefined;

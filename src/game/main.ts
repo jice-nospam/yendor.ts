@@ -41,6 +41,7 @@ module Game {
 			} else {
 				this.createNewGame();
 			}
+			this.map.computeFov(this.player.x, this.player.y, Constants.FOV_RADIUS);
 		}
 
 		private initEventBus() {
