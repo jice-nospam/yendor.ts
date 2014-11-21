@@ -35,8 +35,8 @@ module Game {
 			this.initEventBus();
 			this.createGui();
 
-			var savedVersion = this.persister.loadFromKey(Constants.PERSISTENCE_VERSION_KEY);
-			if ( savedVersion === VERSION ) {
+			var savedVersion = this.persister.getDataFromKey(Constants.PERSISTENCE_VERSION_KEY);
+			if ( savedVersion && savedVersion.toString() === VERSION ) {
 				this.loadGame();
 			} else {
 				this.createNewGame();
@@ -72,20 +72,11 @@ module Game {
 
 		private loadGame() {
 			this.persister.loadFromKey(Constants.PERSISTENCE_MAP_KEY, this.map);
-			this.loadActors(Constants.PERSISTENCE_ACTORS_KEY, this.actors);
+			this.actors = this.persister.loadFromKey(Constants.PERSISTENCE_ACTORS_KEY);
 			this.player = this.actors[0];
-			this.loadActors(Constants.PERSISTENCE_ITEMS_KEY, this.items);
-			this.loadActors(Constants.PERSISTENCE_CORPSES_KEY, this.corpses);
+			this.items = this.persister.loadFromKey(Constants.PERSISTENCE_ITEMS_KEY);
+			this.corpses = this.persister.loadFromKey(Constants.PERSISTENCE_CORPSES_KEY);
 			this.persister.loadFromKey(Constants.STATUS_PANEL_ID, this.guis[Constants.STATUS_PANEL_ID]);
-		}
-
-		private loadActors(key: string, actorList: Actor[]) {
-			var actorsData = this.persister.getDataFromKey(key);
-			for (var i: number = 0; i < actorsData.length; i++) {
-				var actorData: any = actorsData[i];
-				var actor: Actor = this.persister.loadFromData(actorData);
-				actorList.push(actor);
-			}
 		}
 
 		private saveGame() {
