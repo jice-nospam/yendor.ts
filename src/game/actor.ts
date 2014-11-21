@@ -115,16 +115,6 @@ module Game {
 			owner.name = this._corpseName;
 			owner.blocks = false;
 		}
-
-		// Persistent interface
-		load(jsonData: any): boolean {
-			this.constructor.apply(this, []);
-			this._hp = jsonData._hp;
-			this._maxHp = jsonData._maxHp;
-			this._defense = jsonData._defense;
-			this._corpseName = jsonData._corpseName;
-			return true;
-		}
 	}
 
 	/*
@@ -174,13 +164,6 @@ module Game {
 				}
 			}
 		}
-
-		// Persistent interface
-		load(jsonData: any): boolean {
-			this.constructor.apply(this, []);
-			this._power = jsonData._power;
-			return true;
-		}
 	}
 
 	/********************************************************************************
@@ -193,7 +176,7 @@ module Game {
 	 	- chests, barrels, ...
 	 */
 	 export class Container implements Persistent {
-	 	className: string;
+		className: string;
 	 	private _capacity: number;
 	 	private actors: Actor[] = [];
 
@@ -204,7 +187,7 @@ module Game {
 	 		_capacity - this container's maximum number of items
 	 	*/
 	 	constructor(_capacity: number = 0) {
-	 		this.className = "Container";
+			this.className = "Container";
 	 		this._capacity = _capacity;
 	 	}
 
@@ -247,19 +230,6 @@ module Game {
 	 			this.actors.splice(idx, 1);
 	 		}
 	 	}
-
-		// Persistent interface
-		load(jsonData: any): boolean {
-			this.constructor.apply(this, []);
-			this._capacity = jsonData._capacity;
-			for (var i: number = 0; i < jsonData.actors.length; i++) {
-				var actorData: any = jsonData.actors[i];
-				var actor: Actor = Object.create(window[Constants.MAIN_MODULE_NAME][actorData.className].prototype);
-				actor.load(actorData);
-				this.actors.push(actor);
-			}
-			return true;
-		}
 	}
 
 	/********************************************************************************
@@ -328,38 +298,6 @@ module Game {
 		render() {
 			root.setChar( this.x, this.y, this._ch );
 			root.fore[this.x][this.y] = this._col;
-		}
-
-		// persistent interface
-		load(jsonData: any): boolean {
-			this.constructor.apply(this, []);
-			this.x = jsonData._x;
-			this.y = jsonData._y;
-			this._ch = jsonData._ch;
-			this._name = jsonData._name;
-			this._col = jsonData._col;
-			this._blocks = jsonData._blocks;
-			if ( jsonData._destructible ) {
-				this._destructible = Object.create(window[Constants.MAIN_MODULE_NAME][jsonData._destructible.className].prototype);
-				this._destructible.load(jsonData._destructible);
-			}
-			if ( jsonData._attacker ) {
-				this._attacker = Object.create(window[Constants.MAIN_MODULE_NAME][jsonData._attacker.className].prototype);
-				this._attacker.load(jsonData._attacker);
-			}
-			if ( jsonData._ai ) {
-				this._ai = Object.create(window[Constants.MAIN_MODULE_NAME][jsonData._ai.className].prototype);
-				this._ai.load(jsonData._ai);
-			}
-			if ( jsonData._pickable ) {
-				this._pickable = Object.create(window[Constants.MAIN_MODULE_NAME][jsonData._pickable.className].prototype);
-				this._pickable.load(jsonData._pickable);
-			}
-			if ( jsonData._container ) {
-				this._container = Object.create(window[Constants.MAIN_MODULE_NAME][jsonData._container.className].prototype);
-				this._container.load(jsonData._container);
-			}
-			return true;
 		}
 	}
 }

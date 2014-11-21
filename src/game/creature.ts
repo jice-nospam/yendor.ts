@@ -58,11 +58,6 @@ module Game {
 			}
 			return true;
 		}
-
-		load(jsonData: any): boolean {
-			this.constructor.apply(this, []);
-			return true;
-		}
 	}
 
 	/*
@@ -167,17 +162,12 @@ module Game {
 				map.computeFov(owner.x, owner.y, Constants.FOV_RADIUS);
 				this.first = false;
 			}
+			this.keyCode = undefined;
+			this.keyChar = undefined;
 			if ( newTurn ) {
 				// the player moved or try to move. New game turn
 				EventBus.getInstance().publishEvent(new Event<GameStatus>(EventType.CHANGE_STATUS, GameStatus.NEW_TURN));
 			}
-		}
-
-		load(jsonData: any): boolean {
-			this.constructor.apply(this, []);
-			super.load(jsonData);
-			this.first = true;
-			return true;
 		}
 
 		/*
@@ -387,12 +377,6 @@ module Game {
 				this.move(owner, MonsterAi.TDX[bestCellIndex], MonsterAi.TDY[bestCellIndex], map, actorManager);
 			}
 		}
-
-		load(jsonData: any): boolean {
-			this.constructor.apply(this, []);
-			super.load(jsonData);
-			return true;
-		}
 	}
 
 	/*
@@ -420,18 +404,6 @@ module Game {
 		applyTo(actor: Actor) {
 			this.oldAi = actor.ai;
 			actor.ai = this;
-		}
-
-		// persistent interface
-		load(jsonData: any): boolean {
-			this.constructor.apply(this, []);
-			super.load(jsonData);
-			this._nbTurns = jsonData._nbTurns;
-			if ( jsonData.oldAi ) {
-				this.oldAi = Object.create(window[Constants.MAIN_MODULE_NAME][jsonData.oldAi.className].prototype);
-				this.oldAi.load(jsonData.oldAi);
-			}
-			return true;
 		}
 	}
 
@@ -481,13 +453,6 @@ module Game {
 				owner.y += dy;
 			}
 		}
-
-		// persistent interface
-		load(jsonData: any): boolean {
-			this.constructor.apply(this, []);
-			super.load(jsonData);
-			return true;
-		}
 	}
 
 
@@ -508,13 +473,6 @@ module Game {
 			log(owner.name + " is dead");
 			super.die(owner);
 		}
-
-		// persistent interface
-		load(jsonData: any): boolean {
-			this.constructor.apply(this, []);
-			super.load(jsonData);
-			return true;
-		}
 	}
 
 	/*
@@ -532,13 +490,6 @@ module Game {
 			super.die(owner);
 			EventBus.getInstance().publishEvent(new Event<GameStatus>( EventType.CHANGE_STATUS, GameStatus.DEFEAT ));
 		}
-
-		// persistent interface
-		load(jsonData: any): boolean {
-			this.constructor.apply(this, []);
-			super.load(jsonData);
-			return true;
-		}
 	}
 
 	export class Player extends Actor {
@@ -552,13 +503,6 @@ module Game {
 			this.attacker = new Attacker(5);
 			this.destructible = new PlayerDestructible(30, 2, "your cadaver");
 			this.container = new Container(26);
-		}
-
-		// persistent interface
-		load(jsonData: any): boolean {
-			this.constructor.apply(this, []);
-			super.load(jsonData);
-			return true;
 		}
 	}
 }
