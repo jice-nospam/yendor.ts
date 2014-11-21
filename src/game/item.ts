@@ -111,14 +111,6 @@ module Game {
 				applyEffects(owner, wearer, selectedTargets);
 			}
 		}
-
-		// persistent interface
-		load(jsonData: any): boolean {
-			this.constructor.apply(this, []);
-			this._range = jsonData._range;
-			this._method = TargetSelectionMethod[<string>(jsonData._method)];
-			return true;
-		}
 	}
 
 	/********************************************************************************
@@ -162,14 +154,6 @@ module Game {
 			return false;
 		}
 
-		// persistent interface
-		load(jsonData: any): boolean {
-			this.constructor.apply(this, []);
-			this._amount = jsonData._amount;
-			this._message = jsonData._message;
-			return true;
-		}
-
 		private applyHealingEffectTo(actor: Actor): boolean {
 			var healPointsCount: number = actor.destructible.heal( this._amount );
 			if ( healPointsCount > 0 && this._message ) {
@@ -202,15 +186,6 @@ module Game {
 			if ( this._message ) {
 				log(this._message);
 			}
-			return true;
-		}
-
-		// persistent interface
-		load(jsonData: any): boolean {
-			this.constructor.apply(this, []);
-			this._newAi = Object.create(window[Constants.MAIN_MODULE_NAME][jsonData._newAi.className].prototype);
-			this._newAi.load(jsonData._newAi);
-			this._message = jsonData._message;
 			return true;
 		}
 	}
@@ -306,20 +281,6 @@ module Game {
 			if ( this._targetSelector ) {
 				this._targetSelector.selectTargets(owner, wearer, actorManager, this.applyEffectToActorList.bind(this));
 			}
-		}
-
-		// persistent interface
-		load(jsonData: any): boolean {
-			this.constructor.apply(this, []);
-			if ( jsonData._effect ) {
-				this._effect = Object.create(window[Constants.MAIN_MODULE_NAME][jsonData._effect.className].prototype);
-				this._effect.load(jsonData._effect);
-			}
-			if ( jsonData._targetSelector ) {
-				this._targetSelector = Object.create(window[Constants.MAIN_MODULE_NAME][jsonData._targetSelector.className].prototype);
-				this._targetSelector.load(jsonData._targetSelector);
-			}
-			return true;
 		}
 
 		private applyEffectToActorList(owner: Actor, wearer: Actor, actors: Actor[]) {

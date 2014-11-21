@@ -24,6 +24,7 @@ module Game {
 		items: Actor[] = [];
 		map: Map;
 		status : GameStatus = GameStatus.STARTUP;
+		persister: Persister = new LocalStoragePersister();
 		guis: { [index: string]: Gui; } = {};
 
 		/*
@@ -70,31 +71,30 @@ module Game {
 		}
 
 		private loadGame() {
-			this.map.load( JSON.parse(localStorage.getItem(Constants.PERSISTENCE_MAP_KEY)) );
+			this.persister.loadFromKey(Constants.PERSISTENCE_MAP_KEY, this.map);
 			this.loadActors(Constants.PERSISTENCE_ACTORS_KEY, this.actors);
 			this.player = this.actors[0];
 			this.loadActors(Constants.PERSISTENCE_ITEMS_KEY, this.items);
 			this.loadActors(Constants.PERSISTENCE_CORPSES_KEY, this.corpses);
-			this.guis[Constants.STATUS_PANEL_ID].load();
+			this.persister.loadFromKey(Constants.STATUS_PANEL_ID, this.guis[Constants.STATUS_PANEL_ID]);
 		}
 
-		private loadActors(localStorageKey: string, actorList: Actor[]) {
-			var actorsData = JSON.parse(localStorage.getItem(localStorageKey));
+		private loadActors(key: string, actorList: Actor[]) {
+			var actorsData = this.persister.getDataFromKey(key);
 			for (var i: number = 0; i < actorsData.length; i++) {
 				var actorData: any = actorsData[i];
-				var actor: Actor = Object.create(window[Constants.MAIN_MODULE_NAME][actorData.className].prototype);
-				actor.load(actorData);
+				var actor: Actor = this.persister.loadFromData(actorData);
 				actorList.push(actor);
 			}
 		}
 
 		private saveGame() {
-			localStorage.setItem(Constants.PERSISTENCE_VERSION_KEY, VERSION);
-			localStorage.setItem(Constants.PERSISTENCE_MAP_KEY, JSON.stringify(this.map));
-			localStorage.setItem(Constants.PERSISTENCE_ACTORS_KEY, JSON.stringify(this.actors));
-			localStorage.setItem(Constants.PERSISTENCE_ITEMS_KEY, JSON.stringify(this.items));
-			localStorage.setItem(Constants.PERSISTENCE_CORPSES_KEY, JSON.stringify(this.corpses));
-			this.guis[Constants.STATUS_PANEL_ID].save();
+			this.persister.saveToKey(Constants.PERSISTENCE_VERSION_KEY, VERSION);
+			this.persister.saveToKey(Constants.PERSISTENCE_MAP_KEY, this.map);
+			this.persister.saveToKey(Constants.PERSISTENCE_ACTORS_KEY, this.actors);
+			this.persister.saveToKey(Constants.PERSISTENCE_ITEMS_KEY, this.items);
+			this.persister.saveToKey(Constants.PERSISTENCE_CORPSES_KEY, this.corpses);
+			this.persister.saveToKey(Constants.STATUS_PANEL_ID, this.guis[Constants.STATUS_PANEL_ID]);
 		}
 
 		private deleteSavedGame() {

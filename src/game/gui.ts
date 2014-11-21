@@ -38,10 +38,6 @@ module Game {
 		render(map: Map, actorManager: ActorManager, destination: Yendor.Console) {
 			this._console.blit(destination, this.x, this.y);
 		}
-
-		// to be overridden when needed
-		save() {}
-		load() {}
 	}
 
 	export interface GuiManager {
@@ -79,11 +75,10 @@ module Game {
 			EventBus.getInstance().registerListener(this, EventType.MOUSE_MOVE);
 		}
 
-		save() {
-			localStorage.setItem(Constants.STATUS_PANEL_ID, JSON.stringify(this.messages));
+		save(key: string) {
+			localStorage.setItem(key, JSON.stringify(this.messages));
 		}
-		load() {
-			var jsonData: any = JSON.parse(localStorage.getItem(Constants.STATUS_PANEL_ID));
+		load(jsonData: any): any {
 			for ( var i = 0; i < jsonData.length; i++ ) {
 				var msg = new Message(jsonData[i]._color, jsonData[i]._text);
 				this.messages.push(msg);
