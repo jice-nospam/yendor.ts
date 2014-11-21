@@ -35,7 +35,7 @@ module Game {
 			this.initEventBus();
 			this.createGui();
 
-			var savedVersion = localStorage.getItem(Constants.PERSISTENCE_VERSION_KEY);
+			var savedVersion = this.persister.loadFromKey(Constants.PERSISTENCE_VERSION_KEY);
 			if ( savedVersion === VERSION ) {
 				this.loadGame();
 			} else {
@@ -98,12 +98,12 @@ module Game {
 		}
 
 		private deleteSavedGame() {
-			localStorage.removeItem(Constants.PERSISTENCE_VERSION_KEY);
-			localStorage.removeItem(Constants.PERSISTENCE_MAP_KEY);
-			localStorage.removeItem(Constants.PERSISTENCE_ACTORS_KEY);
-			localStorage.removeItem(Constants.PERSISTENCE_ITEMS_KEY);
-			localStorage.removeItem(Constants.PERSISTENCE_CORPSES_KEY);
-			localStorage.removeItem(Constants.STATUS_PANEL_ID);
+			this.persister.deleteKey(Constants.PERSISTENCE_VERSION_KEY);
+			this.persister.deleteKey(Constants.PERSISTENCE_MAP_KEY);
+			this.persister.deleteKey(Constants.PERSISTENCE_ACTORS_KEY);
+			this.persister.deleteKey(Constants.PERSISTENCE_ITEMS_KEY);
+			this.persister.deleteKey(Constants.PERSISTENCE_CORPSES_KEY);
+			this.persister.deleteKey(Constants.STATUS_PANEL_ID);
 		}
 
 		/*
