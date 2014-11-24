@@ -71,12 +71,21 @@ module Game {
 
 	/*
 		Class: LocalStoragePersister
-		Implements Persister useing the browser's HTML5 local storage
+		Implements Persister useing the browser's HTML5 local storage.
+		Note : in internet explorer, this only work with http://... URL. Local storage
+		will be disabled if you open the game with a file://... URL.
 	*/
 	export class LocalStoragePersister implements Persister {
+		private localStorage : any;
+		constructor() {
+			this.localStorage = localStorage || window.localStorage;
+		}
 		private getDataFromKey(key: string): any {
+			if (! this.localStorage) {
+				return undefined;
+			}
 			// TODO use a JSON reviver to skip intermediate jsonData step
-			var jsonString: string = localStorage.getItem(key);
+			var jsonString: string = this.localStorage.getItem(key);
 			if ( ! jsonString ) {
 				return undefined;
 			}
@@ -84,10 +93,13 @@ module Game {
 		}
 
 		saveToKey(key: string, object: any) {
+			if (! this.localStorage) {
+				return;
+			}
 			if ( object.save ) {
 				object.save(key);
 			} else {
-				localStorage.setItem(key,
+				this.localStorage.setItem(key,
 					typeof object === "string" ? object : JSON.stringify(object, this.jsonReplacer));
 			}
 		}
@@ -101,7 +113,10 @@ module Game {
 		}
 
 		deleteKey(key: string) {
-			localStorage.removeItem(key);
+			if (! this.localStorage) {
+				return;
+			}
+			this.localStorage.removeItem(key);
 		}
 
 		loadFromKey(localStorageKey: string, object?: any): any {
