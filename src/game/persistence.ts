@@ -65,8 +65,17 @@ module Game {
 			if ( object.save ) {
 				object.save(key);
 			} else {
-				localStorage.setItem(key, typeof object === "string" ? object : JSON.stringify(object));
+				localStorage.setItem(key,
+					typeof object === "string" ? object : JSON.stringify(object, this.jsonReplacer));
 			}
+		}
+
+		private jsonReplacer(key: string, value: any) {
+			// don't stingify fields starting with __
+			if ( key.indexOf("__") === 0 ) {
+				return undefined;
+			}
+			return value;
 		}
 
 		deleteKey(key: string) {
@@ -82,30 +91,39 @@ module Game {
 		}
 
 		private loadFromData(jsonData: any, object?: any): any {
-			if (! object ) {
-				if (! jsonData.className ) {
-					if ( jsonData.length !== undefined ) {
-						// array
-						object = [];
-					} else {
-						throw new Error("Missing className in json data :" + jsonData);
-					}
-				} else {
-					object = Object.create(window[Constants.MAIN_MODULE_NAME][jsonData.className].prototype);
-					object.constructor.apply(object, []);
-				}
+			if ( jsonData instanceof Array ) {
+				return this.loadArrayFromData(jsonData);
+			} else if ( typeof jsonData === "object" ) {
+				return this.loadObjectFromData(jsonData, object);
+			}
+			// basic field, number, string, boolean, ...
+			return jsonData;
+		}
+
+		private loadArrayFromData(jsonData: any): Array<any> {
+			var array = [];
+			for (var i = 0; i < jsonData.length; i++) {
+				array[i] = this.loadFromData(jsonData[i]);
+			}
+			return array;
+		}
+
+		private loadObjectFromData(jsonData: any, object?: any): any {
+			if (! jsonData.className ) {
+				throw new Error("Missing object className in json data :" + jsonData);
+			}
+			if (! object) {
+				object = Object.create(window[Constants.MAIN_MODULE_NAME][jsonData.className].prototype);
+				object.constructor.apply(object, []);
 			}
 			if ( object.load ) {
+				// use custom loading method
 				object.load(jsonData);
 			} else {
+				// use generic loading method
 				for (var field in jsonData) {
 					if ( jsonData.hasOwnProperty(field)) {
-						var fieldJsonData: any = jsonData[field];
-						if ( fieldJsonData.className ) {
-							object[field] = this.loadFromData(fieldJsonData);
-						} else {
-							object[field] = fieldJsonData;
-						}
+						object[field] = this.loadFromData(jsonData[field]);
 					}
 				}
 			}

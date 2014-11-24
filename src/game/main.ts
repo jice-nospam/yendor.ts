@@ -33,14 +33,15 @@ module Game {
 		constructor() {
 			this.map = new Map();
 			this.initEventBus();
-			this.createGui();
 
 			var savedVersion = this.persister.getDataFromKey(Constants.PERSISTENCE_VERSION_KEY);
 			if ( savedVersion && savedVersion.toString() === VERSION ) {
 				this.loadGame();
 			} else {
 				this.createNewGame();
+				this.createStatusPanel();
 			}
+			this.createOtherGui();
 			this.map.computeFov(this.player.x, this.player.y, Constants.FOV_RADIUS);
 		}
 
@@ -50,11 +51,13 @@ module Game {
 			EventBus.getInstance().registerListener(this, EventType.REMOVE_ACTOR);
 		}
 
-		private createGui() {
+		private createStatusPanel() {
 			var statusPanel: Gui = new StatusPanel( Constants.CONSOLE_WIDTH, Constants.STATUS_PANEL_HEIGHT );
 			statusPanel.show();
 			this.addGui(statusPanel, Constants.STATUS_PANEL_ID, 0, Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT);
+		}
 
+		private createOtherGui() {
 			var inventoryPanel: Gui = new InventoryPanel( Constants.INVENTORY_PANEL_WIDTH, Constants.INVENTORY_PANEL_HEIGHT, this.player );
 			this.addGui(inventoryPanel, Constants.INVENTORY_ID, Math.floor(Constants.CONSOLE_WIDTH / 2 - Constants.INVENTORY_PANEL_WIDTH / 2), 0);
 
@@ -63,7 +66,7 @@ module Game {
 		}
 
 		private createNewGame() {
-			this.player = new Game.Player();
+			this.player = new Player();
 			this.player.init(Constants.CONSOLE_WIDTH / 2, Constants.CONSOLE_HEIGHT / 2, "@", "player", "#fff");
 			this.actors.push(this.player);
 			this.map.init( Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT );
@@ -77,7 +80,9 @@ module Game {
 			this.player = this.actors[0];
 			this.items = this.persister.loadFromKey(Constants.PERSISTENCE_ITEMS_KEY);
 			this.corpses = this.persister.loadFromKey(Constants.PERSISTENCE_CORPSES_KEY);
-			this.persister.loadFromKey(Constants.STATUS_PANEL_ID, this.guis[Constants.STATUS_PANEL_ID]);
+			var statusPanel: Gui = this.persister.loadFromKey(Constants.STATUS_PANEL_ID);
+			statusPanel.show();
+			this.addGui(statusPanel, Constants.STATUS_PANEL_ID, 0, Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT);
 		}
 
 		private saveGame() {

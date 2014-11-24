@@ -11,14 +11,14 @@ module Game {
 	export class Gui extends Yendor.Position {
 		private _width: number;
 		private _height: number
-		private _console: Yendor.Console;
+		private __console: Yendor.Console;
 		private _visible: boolean = false;
 
 		constructor(_width: number, _height: number) {
 			super();
 			this._width = _width;
 			this._height = _height;
-			this._console = new Yendor.Console(_width, _height );
+			this.__console = new Yendor.Console(_width, _height );
 		}
 
 		get width() { return this._width; }
@@ -29,14 +29,14 @@ module Game {
 		show() { this._visible = true; }
 		hide() { this._visible = false; }
 
-		get console() { return this._console; }
+		get console() { return this.__console; }
 
 		/*
 			Function: render
 			To be overloaded by extending classes.
 		*/
 		render(map: Map, actorManager: ActorManager, destination: Yendor.Console) {
-			this._console.blit(destination, this.x, this.y);
+			this.__console.blit(destination, this.x, this.y);
 		}
 	}
 
@@ -48,10 +48,12 @@ module Game {
 	/********************************************************************************
 	 * Group: status panel
 	 ********************************************************************************/
-	export class Message {
+	export class Message implements Persistent {
+		className : string;
 		private _color: Yendor.Color;
 		private _text: string
 		constructor(_color: Yendor.Color, _text: string) {
+			this.className = "Message";
 			this._color = _color;
 			this._text = _text;
 		}
@@ -63,26 +65,18 @@ module Game {
 		}
 	}
 
-	export class StatusPanel extends Gui implements EventListener {
+	export class StatusPanel extends Gui implements EventListener, Persistent {
 		private static MESSAGE_X = Constants.STAT_BAR_WIDTH + 2;
+		className: string;
 		private messageHeight : number;
 		private messages: Message[] = [];
 		private mouseLookText: string = "";
 		constructor(width: number, height: number) {
 			super(width, height);
+			this.className = "StatusPanel";
 			this.messageHeight = height - 1;
 			EventBus.getInstance().registerListener(this, EventType.LOG_MESSAGE);
 			EventBus.getInstance().registerListener(this, EventType.MOUSE_MOVE);
-		}
-
-		save(key: string) {
-			localStorage.setItem(key, JSON.stringify(this.messages));
-		}
-		load(jsonData: any): any {
-			for ( var i = 0; i < jsonData.length; i++ ) {
-				var msg = new Message(jsonData[i]._color, jsonData[i]._text);
-				this.messages.push(msg);
-			}
 		}
 
 		processEvent( event: Event<any> ) {
