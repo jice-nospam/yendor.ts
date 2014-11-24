@@ -280,6 +280,10 @@ module Game {
 		use(owner: Actor, wearer: Actor, actorManager: ActorManager) {
 			if ( this._targetSelector ) {
 				this._targetSelector.selectTargets(owner, wearer, actorManager, this.applyEffectToActorList.bind(this));
+				if ( this._targetSelector.method !== TargetSelectionMethod.SELECTED_RANGE
+					&& this._targetSelector.method !== TargetSelectionMethod.SELECTED_ACTOR ) {
+					EventBus.getInstance().publishEvent(new Event<GameStatus>(EventType.CHANGE_STATUS, GameStatus.NEW_TURN));
+				}
 			}
 		}
 

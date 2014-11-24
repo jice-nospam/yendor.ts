@@ -8,7 +8,7 @@ module Game {
 	/*
 		Interface: Persistent
 		Anything that can be saved and restored.
-		Must have a 0 parameter constructor that initialize the className field.
+		Must have a 0 parameter constructor that initializes the className field.
 	*/
 	export interface Persistent {
 		/*
@@ -41,18 +41,40 @@ module Game {
 		Can save/load objects from a repository
 	*/
 	export interface Persister {
-		getDataFromKey(key: string): any;
+		/*
+			Function: loadFromKey
+			Retrieve an object from a given database key.
+
+			Parameters :
+			key - the database key
+			object - if not provided, the persister must create the object
+		*/
 		loadFromKey(key: string, object?: any): any;
+		/*
+			Function: saveToKey
+			Save an object into a database and associate it with given key
+
+			Parameters :
+			key - the database key you can use to get the object back with loadFromKey
+			object - the object to save
+		*/
 		saveToKey(key: string, object: any);
+		/*
+			Function: deleteKey
+			Delete the object associated with a key in the database
+
+			Parameters:
+			key - the database key
+		*/
 		deleteKey(key: string);
 	}
 
 	/*
 		Class: LocalStoragePersister
-		save/load objects from the browser HTML5 local storage
+		Implements Persister useing the browser's HTML5 local storage
 	*/
 	export class LocalStoragePersister implements Persister {
-		getDataFromKey(key: string): any {
+		private getDataFromKey(key: string): any {
 			// TODO use a JSON reviver to skip intermediate jsonData step
 			var jsonString: string = localStorage.getItem(key);
 			if ( ! jsonString ) {

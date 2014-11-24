@@ -34,7 +34,7 @@ module Game {
 			this.map = new Map();
 			this.initEventBus();
 
-			var savedVersion = this.persister.getDataFromKey(Constants.PERSISTENCE_VERSION_KEY);
+			var savedVersion = this.persister.loadFromKey(Constants.PERSISTENCE_VERSION_KEY);
 			if ( savedVersion && savedVersion.toString() === VERSION ) {
 				this.loadGame();
 			} else {
@@ -55,6 +55,11 @@ module Game {
 			var statusPanel: Gui = new StatusPanel( Constants.CONSOLE_WIDTH, Constants.STATUS_PANEL_HEIGHT );
 			statusPanel.show();
 			this.addGui(statusPanel, Constants.STATUS_PANEL_ID, 0, Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT);
+		}
+
+		private loadStatusPanel() {
+			this.createStatusPanel();
+			this.persister.loadFromKey(Constants.STATUS_PANEL_ID, this.guis[Constants.STATUS_PANEL_ID]);
 		}
 
 		private createOtherGui() {
@@ -80,10 +85,7 @@ module Game {
 			this.player = this.actors[0];
 			this.items = this.persister.loadFromKey(Constants.PERSISTENCE_ITEMS_KEY);
 			this.corpses = this.persister.loadFromKey(Constants.PERSISTENCE_CORPSES_KEY);
-			var statusPanel: Gui = new StatusPanel( Constants.CONSOLE_WIDTH, Constants.STATUS_PANEL_HEIGHT );
-			this.persister.loadFromKey(Constants.STATUS_PANEL_ID, statusPanel);
-			statusPanel.show();
-			this.addGui(statusPanel, Constants.STATUS_PANEL_ID, 0, Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT);
+			this.loadStatusPanel();
 		}
 
 		private saveGame() {
@@ -294,6 +296,9 @@ module Game {
 		*/
 		handleMouseClick(event: JQueryMouseEventObject) {
 			EventBus.getInstance().publishEvent(new Event<MouseButton>( EventType.MOUSE_CLICK, <MouseButton>event.which));
+			if ( this.status === GameStatus.NEW_TURN )  {
+				this.handleNewTurn();
+			}
 		}
 
 		private removeItem(item: Actor) {

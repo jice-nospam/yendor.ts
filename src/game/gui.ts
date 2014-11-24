@@ -174,7 +174,6 @@ module Game {
 						if (item.pickable) {
 							this.hide();
 							item.pickable.use(item, this.actor, event.actorManager);
-							EventBus.getInstance().publishEvent(new Event<GameStatus>(EventType.CHANGE_STATUS, GameStatus.NEW_TURN));
 						}
 					}
 				}
@@ -235,6 +234,7 @@ module Game {
 						return;
 					} else if (this.listener) {
 						this.listener(this.tilePos);
+						EventBus.getInstance().publishEvent(new Event<GameStatus>(EventType.CHANGE_STATUS, GameStatus.NEW_TURN));
 					}
 				}
 				this.deactivate();
