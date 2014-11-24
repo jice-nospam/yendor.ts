@@ -80,7 +80,8 @@ module Game {
 			this.player = this.actors[0];
 			this.items = this.persister.loadFromKey(Constants.PERSISTENCE_ITEMS_KEY);
 			this.corpses = this.persister.loadFromKey(Constants.PERSISTENCE_CORPSES_KEY);
-			var statusPanel: Gui = this.persister.loadFromKey(Constants.STATUS_PANEL_ID);
+			var statusPanel: Gui = new StatusPanel( Constants.CONSOLE_WIDTH, Constants.STATUS_PANEL_HEIGHT );
+			this.persister.loadFromKey(Constants.STATUS_PANEL_ID, statusPanel);
 			statusPanel.show();
 			this.addGui(statusPanel, Constants.STATUS_PANEL_ID, 0, Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT);
 		}

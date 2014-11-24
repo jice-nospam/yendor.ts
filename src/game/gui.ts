@@ -162,7 +162,7 @@ module Game {
 		}
 
 		processEvent( event: Event<any> ) {
-			if ( ! this.isVisible() && event.data.key === "i" ) {
+			if ( ! this.isVisible() && event.data.keyCode === KeyEvent.DOM_VK_I ) {
 				this.show();
 			} else if (this.isVisible()) {
 				if ( event.data.keyCode === KeyEvent.DOM_VK_ESCAPE ) {
@@ -242,8 +242,10 @@ module Game {
 		}
 
 		render(map: Map, actorManager: ActorManager, console: Yendor.Console) {
-			console.setChar( this.tilePos.x, this.tilePos.y, this.tileIsValid ? "+" : "x" );
-			console.fore[this.tilePos.x][this.tilePos.y] = this.tileIsValid ? "green" : "red";
+			if ( this.tilePos && console.contains(this.tilePos) ) {
+				console.setChar( this.tilePos.x, this.tilePos.y, this.tileIsValid ? "+" : "x" );
+				console.fore[this.tilePos.x][this.tilePos.y] = this.tileIsValid ? "green" : "red";
+			}
 		}
 
 		private activate(listener: TilePickerListener) {

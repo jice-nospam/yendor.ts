@@ -233,6 +233,14 @@ module Yendor {
 		get width(): number { return this._width; }
 
 		/*
+			Function: contains
+			Check if a position is inside the console
+		*/
+		contains(pos: Position): boolean {
+			return pos.x >= 0 && pos.y >= 0 && pos.x < this._width && pos.y < this._height;
+		}
+
+		/*
 			Function: render
 			To be implemented by non offscreen consoles extending this class.
 		*/
