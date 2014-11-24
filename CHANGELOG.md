@@ -5,6 +5,7 @@
 * GenRogue :
 	- scroll of fireball
 	- scroll of confusion
+	- persistence (game state saved in the browser's local storage)
 
 # 0.0.2 / 15-oct-2014
 
