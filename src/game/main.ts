@@ -250,7 +250,9 @@ module Game {
 				event.key = String.fromCharCode(event.keyCode).toLowerCase();
 			}
 			EventBus.getInstance().publishEvent(new Event<KeyboardEvent>(EventType.KEY_PRESSED, event));
-			this.player.ai.update(this.player, this.map, this);
+			if (! Gui.getActiveModal() ) {
+				this.player.ai.update(this.player, this.map, this);
+			}
 			if ( this.status === GameStatus.NEW_TURN )  {
 				this.handleNewTurn();
 			}
