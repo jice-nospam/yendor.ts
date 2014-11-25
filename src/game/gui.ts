@@ -9,10 +9,15 @@ module Game {
 	 * Group: generic GUI stuff
 	 ********************************************************************************/
 	export class Gui extends Yendor.Position {
+		private static activeModal: Gui;
+
 		private _width: number;
 		private _height: number
 		private __console: Yendor.Console;
 		private _visible: boolean = false;
+		private modal: boolean = false;
+
+		static getActiveModal(): Gui { return Gui.activeModal; }
 
 		constructor(_width: number, _height: number) {
 			super();
@@ -25,9 +30,24 @@ module Game {
 		get height() { return this._height; }
 
 		isVisible() {return this._visible; }
+		isModal() { return this.modal; }
+		protected setModal() { this.modal = true; }
 		set visible(newValue: boolean) { this._visible = newValue; }
-		show() { this._visible = true; }
-		hide() { this._visible = false; }
+		show() {
+			if ( this.modal ) {
+				if ( Gui.activeModal ) {
+					Gui.activeModal.hide();
+				}
+				Gui.activeModal = this;
+			}
+			this._visible = true;
+		}
+		hide() {
+			if ( this.modal ) {
+				Gui.activeModal = undefined;
+			}
+			this._visible = false;
+		}
 
 		get console() { return this.__console; }
 
@@ -157,6 +177,7 @@ module Game {
 		private actor: Actor;
 		constructor(width: number, height: number, actor: Actor) {
 			super(width, height);
+			this.setModal();
 			this.actor = actor;
 			EventBus.getInstance().registerListener(this, EventType.KEY_PRESSED);
 		}
@@ -219,6 +240,7 @@ module Game {
 		constructor(map: Map) {
 			super(Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT);
 			this.map = map;
+			this.setModal();
 			EventBus.getInstance().registerListener(this, EventType.PICK_TILE);
 		}
 
