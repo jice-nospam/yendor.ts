@@ -61,7 +61,7 @@ module Game {
 	}
 
 	export interface GuiManager {
-		addGui(gui: Gui, name: string, x: number, y: number);
+		addGui(gui: Gui, name: string, x?: number, y?: number);
 		renderGui(rootConsole: Yendor.Console);
 	}
 
@@ -189,7 +189,7 @@ module Game {
 				if ( event.data.keyCode === KeyEvent.DOM_VK_ESCAPE ) {
 					this.hide();
 				} else {
-					var index = event.data.key.charCodeAt(0) - "a".charCodeAt(0);
+					var index = event.data.keyCode - KeyEvent.DOM_VK_A;
 					if ( index >= 0 && index < this.actor.container.size() ) {
 						var item: Actor = this.actor.container.get(index);
 						if (item.pickable) {
@@ -216,7 +216,6 @@ module Game {
 			super.render(map, actorManager, destination);
 		}
 	}
-
 
 	/********************************************************************************
 	 * Group: tilePicker
@@ -287,6 +286,111 @@ module Game {
 			EventBus.getInstance().unregisterListener(this, EventType.MOUSE_MOVE);
 			EventBus.getInstance().unregisterListener(this, EventType.MOUSE_CLICK);
 			this.hide();
+		}
+	}
+
+	/********************************************************************************
+	 * Group: menu
+	 ********************************************************************************/
+
+	/*
+		Interface: MenuItem
+		An entry in the menu.
+	*/
+	export interface MenuItem {
+		label: string;
+		eventType?: EventType;
+		disabled?: boolean;
+	}
+
+	/*
+		Class: Menu
+		A generic popup menu
+	*/
+	export class Menu extends Gui implements EventListener {
+		items: MenuItem[];
+		activeItemIndex: number;
+
+		constructor(items: MenuItem[] = [], x: number = -1, y: number = -1) {
+			var maxWidth: number = 0;
+			this.items = items;
+			for ( var i = 0; i < items.length; i++ ) {
+				if (maxWidth < items[i].label.length + 2) {
+					maxWidth = items[i].label.length + 2;
+				}
+			}
+			super(maxWidth, items.length + 2);
+			this.console.clearBack(Constants.MENU_BACKGROUND);
+			this.setModal();
+			for ( var j = 0; j < items.length; j++ ) {
+				var itemx: number = Math.floor(this.width / 2 - items[j].label.length / 2);
+				this.console.print(itemx, j + 1, items[j].label);
+			}
+			if ( x === -1 ) {
+				x = Math.floor(Constants.CONSOLE_WIDTH / 2 - this.width / 2);
+			}
+			if ( y === -1 ) {
+				y = Math.floor(Constants.CONSOLE_HEIGHT / 2 - this.height / 2);
+			}
+			this.moveTo(x, y);
+		}
+
+		show() {
+			super.show();
+			EventBus.getInstance().registerListener(this, EventType.MOUSE_MOVE);
+			EventBus.getInstance().registerListener(this, EventType.MOUSE_CLICK);
+		}
+
+		hide() {
+			super.hide();
+			EventBus.getInstance().unregisterListener(this, EventType.MOUSE_MOVE);
+			EventBus.getInstance().unregisterListener(this, EventType.MOUSE_CLICK);
+		}
+
+		render(map: Map, actorManager: ActorManager, destination: Yendor.Console) {
+			this.console.clearBack(Constants.MENU_BACKGROUND);
+			for ( var i = 0; i < this.items.length; i++ ) {
+				if (this.items[i].disabled) {
+					this.console.clearFore(Constants.MENU_FOREGROUND_DISABLED, 0, i + 1, -1, 1);
+				} else if ( i === this.activeItemIndex ) {
+					this.console.clearFore(Constants.MENU_FOREGROUND_ACTIVE, 0, i + 1, -1, 1);
+					this.console.clearBack(Constants.MENU_BACKGROUND_ACTIVE, 0, i + 1, -1, 1);
+				} else {
+					this.console.clearFore(Constants.MENU_FOREGROUND, 0, i + 1, -1, 1);
+				}
+			}
+			super.render(map, actorManager, destination);
+		}
+
+		processEvent( event: Event<any> ) {
+			if (event.type === EventType.MOUSE_MOVE) {
+				this.updateMousePosition(event.data);
+			} else if (event.type === EventType.MOUSE_CLICK) {
+				if ( event.data === MouseButton.LEFT ) {
+					this.handleMouseClick();
+				}
+			}
+		}
+
+		private handleMouseClick() {
+			if ( this.activeItemIndex !== undefined ) {
+				var item: MenuItem = this.items[this.activeItemIndex];
+				if (! item.disabled ) {
+					this.hide();
+					if ( item.eventType ) {
+						EventBus.getInstance().publishEvent(new Event<MenuItem>(item.eventType, item));
+					}
+				}
+			}
+		}
+
+		private updateMousePosition(mousePos: Yendor.Position) {
+			if (mousePos.x >= this.x && mousePos.x < this.x + this.width
+				&& mousePos.y >= this.y + 1 && mousePos.y < this.y + this.height - 1) {
+				this.activeItemIndex = mousePos.y - this.y - 1;
+			} else {
+				this.activeItemIndex = undefined;
+			}
 		}
 	}
 }

@@ -14,6 +14,11 @@ module Game {
 		export var LIGHT_GROUND: Yendor.Color = "rgb(200,180,50)";
         export var CORPSE_COLOR: Yendor.Color = "rgb(191,0,0)";
         export var FOV_RADIUS: number = 10;
+        export var MENU_BACKGROUND: Yendor.Color = "#272822";
+        export var MENU_BACKGROUND_ACTIVE: Yendor.Color = "#383830";
+        export var MENU_FOREGROUND: Yendor.Color = "#FD971F";
+        export var MENU_FOREGROUND_ACTIVE: Yendor.Color = "#FFDF90";
+        export var MENU_FOREGROUND_DISABLED: Yendor.Color = "#5C714B";
 
         // gui
         export var STATUS_PANEL_ID: string = "statusPanel";

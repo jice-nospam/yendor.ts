@@ -33,13 +33,13 @@ module Game {
 		constructor() {
 			this.map = new Map();
 			this.initEventBus();
+			this.createStatusPanel();
 
 			var savedVersion = this.persister.loadFromKey(Constants.PERSISTENCE_VERSION_KEY);
 			if ( savedVersion && savedVersion.toString() === VERSION ) {
 				this.loadGame();
 			} else {
 				this.createNewGame();
-				this.createStatusPanel();
 			}
 			this.createOtherGui();
 			this.map.computeFov(this.player.x, this.player.y, Constants.FOV_RADIUS);
@@ -55,11 +55,6 @@ module Game {
 			var statusPanel: Gui = new StatusPanel( Constants.CONSOLE_WIDTH, Constants.STATUS_PANEL_HEIGHT );
 			statusPanel.show();
 			this.addGui(statusPanel, Constants.STATUS_PANEL_ID, 0, Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT);
-		}
-
-		private loadStatusPanel() {
-			this.createStatusPanel();
-			this.persister.loadFromKey(Constants.STATUS_PANEL_ID, this.guis[Constants.STATUS_PANEL_ID]);
 		}
 
 		private createOtherGui() {
@@ -85,7 +80,7 @@ module Game {
 			this.player = this.actors[0];
 			this.items = this.persister.loadFromKey(Constants.PERSISTENCE_ITEMS_KEY);
 			this.corpses = this.persister.loadFromKey(Constants.PERSISTENCE_CORPSES_KEY);
-			this.loadStatusPanel();
+			this.persister.loadFromKey(Constants.STATUS_PANEL_ID, this.guis[Constants.STATUS_PANEL_ID]);
 		}
 
 		private saveGame() {
@@ -136,8 +131,10 @@ module Game {
 		/*
 			GuiManager interface
 		*/
-		addGui(gui: Gui, name: string, x: number = 0, y: number = 0) {
-			gui.moveTo(x, y);
+		addGui(gui: Gui, name: string, x?: number, y?: number) {
+			if ( x && y ) {
+				gui.moveTo(x, y);
+			}
 			this.guis[name] = gui;
 		}
 
@@ -247,7 +244,9 @@ module Game {
 		handleKeypress(event: KeyboardEvent) {
 			if (event.key === "MozPrintableKey") {
 				// fix for old firefox versions
-				event.key = String.fromCharCode(event.keyCode).toLowerCase();
+				if ( event.keyCode >= KeyEvent.DOM_VK_A && event.keyCode <= KeyEvent.DOM_VK_Z ) {
+					event.key = String.fromCharCode(event.keyCode).toLowerCase();
+				}
 			}
 			EventBus.getInstance().publishEvent(new Event<KeyboardEvent>(EventType.KEY_PRESSED, event));
 			if (! Gui.getActiveModal() ) {
