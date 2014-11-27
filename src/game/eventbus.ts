@@ -8,30 +8,20 @@ module Game {
 	}
 
 	export enum EventType {
-		/*
-			change game status. Associated data : GameStatus
-		*/
+		// change game status. Associated data : GameStatus
 		CHANGE_STATUS,
-		/*
-			key press event. Associated data : KeyboardEvent
-		*/
+		// key press event. Associated data : KeyboardEvent
 		KEY_PRESSED,
-		/*
-			sends a message to the log. Associated data : Message containing the text and the color
-		*/
+		// sends a message to the log. Associated data : Message containing the text and the color
 		LOG_MESSAGE,
-		/*
-			mouse movement. Associated data : Yendor.Position with mouse coordinates on the root console
-		*/
+		// mouse movement. Associated data : Yendor.Position with mouse coordinates on the root console
 		MOUSE_MOVE,
-		/*
-			mouse button press event. Associated data : MouseButton
-		*/
+		// mouse button press event. Associated data : MouseButton
 		MOUSE_CLICK,
-		/*
-			open the tile picker. Associated data : the reply event
-		*/
+		// open the tile picker. Associated data : the reply event
 		PICK_TILE,
+		// open the inventory
+		OPEN_INVENTORY,
 		REMOVE_ACTOR,
 	}
 

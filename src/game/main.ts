@@ -250,11 +250,22 @@ module Game {
 			}
 			EventBus.getInstance().publishEvent(new Event<KeyboardEvent>(EventType.KEY_PRESSED, event));
 			if (! Gui.getActiveModal() ) {
-				this.player.ai.update(this.player, this.map, this);
+				if ( !this.handleGlobalShortcuts(event) ) {
+					this.player.ai.update(this.player, this.map, this);
+				}
 			}
 			if ( this.status === GameStatus.NEW_TURN )  {
 				this.handleNewTurn();
 			}
+		}
+
+		private handleGlobalShortcuts(event: KeyboardEvent): boolean {
+			if ( event.keyCode === KeyEvent.DOM_VK_I ) {
+				// i : open inventory
+				EventBus.getInstance().publishEvent(new Event<void>(EventType.OPEN_INVENTORY));
+				return true;
+			}
+			return false;
 		}
 
 		/*

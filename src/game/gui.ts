@@ -179,15 +179,17 @@ module Game {
 			super(width, height);
 			this.setModal();
 			this.actor = actor;
-			EventBus.getInstance().registerListener(this, EventType.KEY_PRESSED);
+			EventBus.getInstance().registerListener(this, EventType.OPEN_INVENTORY);
 		}
 
 		processEvent( event: Event<any> ) {
-			if ( ! this.isVisible() && event.data.keyCode === KeyEvent.DOM_VK_I ) {
+			if ( ! this.isVisible() && event.type === EventType.OPEN_INVENTORY ) {
 				this.show();
+				EventBus.getInstance().registerListener(this, EventType.KEY_PRESSED);
 			} else if (this.isVisible()) {
 				if ( event.data.keyCode === KeyEvent.DOM_VK_ESCAPE ) {
 					this.hide();
+					EventBus.getInstance().unregisterListener(this, EventType.KEY_PRESSED);
 				} else {
 					var index = event.data.keyCode - KeyEvent.DOM_VK_A;
 					if ( index >= 0 && index < this.actor.container.size() ) {
