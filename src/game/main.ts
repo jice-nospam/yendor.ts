@@ -19,11 +19,11 @@ module Game {
 	*/
 	class Engine implements ActorManager, EventListener, GuiManager {
 		player: Player;
-		actors: Actor[] = [];
-		corpses: Actor[] = [];
-		items: Actor[] = [];
+		actors: Actor[];
+		corpses: Actor[];
+		items: Actor[];
 		map: Map;
-		status : GameStatus = GameStatus.STARTUP;
+		status : GameStatus;
 		persister: Persister = new LocalStoragePersister();
 		guis: { [index: string]: Gui; } = {};
 
@@ -31,6 +31,7 @@ module Game {
 			Constructor: constructor
 		*/
 		constructor() {
+			this.resetGame();
 			this.map = new Map();
 			this.initEventBus();
 			this.createStatusPanel();
@@ -49,6 +50,7 @@ module Game {
 			EventBus.getInstance().init(this, this.map);
 			EventBus.getInstance().registerListener(this, EventType.CHANGE_STATUS);
 			EventBus.getInstance().registerListener(this, EventType.REMOVE_ACTOR);
+			EventBus.getInstance().registerListener(this, EventType.NEW_GAME);
 		}
 
 		private createStatusPanel() {
@@ -58,11 +60,21 @@ module Game {
 		}
 
 		private createOtherGui() {
-			var inventoryPanel: Gui = new InventoryPanel( Constants.INVENTORY_PANEL_WIDTH, Constants.INVENTORY_PANEL_HEIGHT, this.player );
+			var inventoryPanel: Gui = new InventoryPanel( Constants.INVENTORY_PANEL_WIDTH, Constants.INVENTORY_PANEL_HEIGHT, this );
 			this.addGui(inventoryPanel, Constants.INVENTORY_ID, Math.floor(Constants.CONSOLE_WIDTH / 2 - Constants.INVENTORY_PANEL_WIDTH / 2), 0);
 
 			var tilePicker: Gui = new TilePicker(this.map);
 			this.addGui(tilePicker, Constants.TILE_PICKER_ID);
+
+			var mainMenu: Menu = new MainMenu();
+			this.addGui(mainMenu, Constants.MAIN_MENU_ID);
+		}
+
+		private resetGame() {
+			this.actors = [];
+			this.corpses = [];
+			this.items = [];
+			this.status = GameStatus.STARTUP;
 		}
 
 		private createNewGame() {
@@ -231,6 +243,11 @@ module Game {
 			} else if ( event.type === EventType.REMOVE_ACTOR ) {
 				var item: Actor = event.data;
 				this.removeItem(item);
+			} else if ( event.type === EventType.NEW_GAME ) {
+				this.resetGame();
+				this.createNewGame();
+				this.guis[ Constants.STATUS_PANEL_ID ].clear();
+				this.map.computeFov(this.player.x, this.player.y, Constants.FOV_RADIUS);
 			}
 		}
 
@@ -248,11 +265,13 @@ module Game {
 					event.key = String.fromCharCode(event.keyCode).toLowerCase();
 				}
 			}
-			EventBus.getInstance().publishEvent(new Event<KeyboardEvent>(EventType.KEY_PRESSED, event));
 			if (! Gui.getActiveModal() ) {
 				if ( !this.handleGlobalShortcuts(event) ) {
+					EventBus.getInstance().publishEvent(new Event<KeyboardEvent>(EventType.KEY_PRESSED, event));
 					this.player.ai.update(this.player, this.map, this);
 				}
+			} else {
+				EventBus.getInstance().publishEvent(new Event<KeyboardEvent>(EventType.KEY_PRESSED, event));
 			}
 			if ( this.status === GameStatus.NEW_TURN )  {
 				this.handleNewTurn();
@@ -260,7 +279,10 @@ module Game {
 		}
 
 		private handleGlobalShortcuts(event: KeyboardEvent): boolean {
-			if ( event.keyCode === KeyEvent.DOM_VK_I ) {
+			if ( event.keyCode === KeyEvent.DOM_VK_ESCAPE ) {
+				this.guis[ Constants.MAIN_MENU_ID ].show();
+				return true;
+			} else if ( event.keyCode === KeyEvent.DOM_VK_I ) {
 				// i : open inventory
 				EventBus.getInstance().publishEvent(new Event<void>(EventType.OPEN_INVENTORY));
 				return true;
