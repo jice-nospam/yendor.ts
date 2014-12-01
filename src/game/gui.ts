@@ -212,15 +212,17 @@ module Game {
 		}
 
 		render(map: Map, actorManager: ActorManager, destination: Yendor.Console) {
-			this.console.clearBack("maroon");
+			this.console.clearBack(Constants.INVENTORY_BACKGROUND);
 			this.console.clearText();
+			this.x = Math.floor( destination.width / 2 - this.width / 2 );
+			this.y = Math.floor( destination.height / 2 - this.height / 2 );
 			var shortcut: number = "a".charCodeAt(0);
 			var y: number = 1;
 			this.console.print(Math.floor(this.width / 2 - InventoryPanel.TITLE.length / 2), 0, InventoryPanel.TITLE);
 			var player: Actor = this.actorManager.getPlayer();
 			for ( var i: number = 0; i < player.container.size(); ++i) {
 				var item: Actor = player.container.get(i);
-				this.console.print(2, y, "(" + String.fromCharCode(shortcut) + ") " + item.name);
+				this.console.print(2, y, "(" + String.fromCharCode(shortcut) + ") " + item.name, Constants.INVENTORY_FOREGROUND);
 				y++;
 				shortcut++;
 			}

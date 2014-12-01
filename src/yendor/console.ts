@@ -209,7 +209,7 @@ module Yendor {
 			background - *optional* (default : black) default background color
 		*/
 		constructor(_width: number, _height: number,
-			foreground: Color = "white", background: Color = "black" ) {
+			foreground: Color = "white", background: Color = "#000000" ) {
 			this._width = _width;
 			this._height = _height;
 			this.text = [];
@@ -284,7 +284,7 @@ module Yendor {
 			text - the string to print
 			color - *optional* (default white)
 		*/
-		print(x: number, y: number, text: string, color: Color = "white") {
+		print(x: number, y: number, text: string, color: Color = "#FFFFFF") {
 			var begin = 0;
 			var end = text.length;
 			if ( x + end > this.width ) {
