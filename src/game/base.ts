@@ -24,6 +24,7 @@ module Game {
         export var STATUS_PANEL_ID: string = "statusPanel";
         export var INVENTORY_ID: string = "inventory";
         export var TILE_PICKER_ID: string = "tilePicker";
+        export var MAIN_MENU_ID: string = "mainMenu";
 		export var LOG_DARKEN_COEF: number = 0.9;
 		export var STATUS_PANEL_HEIGHT: number = 7;
 		export var STAT_BAR_WIDTH: number = 20;

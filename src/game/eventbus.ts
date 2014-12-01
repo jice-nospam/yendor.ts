@@ -23,6 +23,8 @@ module Game {
 		// open the inventory
 		OPEN_INVENTORY,
 		REMOVE_ACTOR,
+		// starts a new game
+		NEW_GAME,
 	}
 
 	export class Event<T> {

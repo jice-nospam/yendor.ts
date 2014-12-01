@@ -13,7 +13,7 @@ module Game {
 
 		private _width: number;
 		private _height: number
-		private __console: Yendor.Console;
+		protected __console: Yendor.Console;
 		private _visible: boolean = false;
 		private modal: boolean = false;
 
@@ -50,6 +50,8 @@ module Game {
 		}
 
 		get console() { return this.__console; }
+
+		clear() {}
 
 		/*
 			Function: render
@@ -141,6 +143,11 @@ module Game {
 			super.render(map, actorManager, destination);
 		}
 
+		clear() {
+			this.messages = [];
+			this.mouseLookText = "";
+		}
+
 		private handleMouseLook( actors: Actor[] ) {
 			var len: number = actors.length;
 			this.mouseLookText = len === 0 ? "" : actors[0].name;
@@ -174,11 +181,11 @@ module Game {
 	 ********************************************************************************/
 	export class InventoryPanel extends Gui implements EventListener {
 		static TITLE: string = "=== inventory - ESC to close ===";
-		private actor: Actor;
-		constructor(width: number, height: number, actor: Actor) {
+		private actorManager: ActorManager;
+		constructor(width: number, height: number, actorManager: ActorManager) {
 			super(width, height);
 			this.setModal();
-			this.actor = actor;
+			this.actorManager = actorManager;
 			EventBus.getInstance().registerListener(this, EventType.OPEN_INVENTORY);
 		}
 
@@ -192,11 +199,12 @@ module Game {
 					EventBus.getInstance().unregisterListener(this, EventType.KEY_PRESSED);
 				} else {
 					var index = event.data.keyCode - KeyEvent.DOM_VK_A;
-					if ( index >= 0 && index < this.actor.container.size() ) {
-						var item: Actor = this.actor.container.get(index);
+					var player: Actor = this.actorManager.getPlayer();
+					if ( index >= 0 && index < player.container.size() ) {
+						var item: Actor = player.container.get(index);
 						if (item.pickable) {
 							this.hide();
-							item.pickable.use(item, this.actor, event.actorManager);
+							item.pickable.use(item, player, event.actorManager);
 						}
 					}
 				}
@@ -209,8 +217,9 @@ module Game {
 			var shortcut: number = "a".charCodeAt(0);
 			var y: number = 1;
 			this.console.print(Math.floor(this.width / 2 - InventoryPanel.TITLE.length / 2), 0, InventoryPanel.TITLE);
-			for ( var i: number = 0; i < this.actor.container.size(); ++i) {
-				var item: Actor = this.actor.container.get(i);
+			var player: Actor = this.actorManager.getPlayer();
+			for ( var i: number = 0; i < player.container.size(); ++i) {
+				var item: Actor = player.container.get(i);
 				this.console.print(2, y, "(" + String.fromCharCode(shortcut) + ") " + item.name);
 				y++;
 				shortcut++;
@@ -314,20 +323,32 @@ module Game {
 		activeItemIndex: number;
 
 		constructor(items: MenuItem[] = [], x: number = -1, y: number = -1) {
-			var maxWidth: number = 0;
 			this.items = items;
-			for ( var i = 0; i < items.length; i++ ) {
-				if (maxWidth < items[i].label.length + 2) {
-					maxWidth = items[i].label.length + 2;
+			var maxWidth = this.computeWidth();
+			super(maxWidth, items.length + 2);
+			this.setModal();
+			this.setPosition(x, y);
+		}
+
+		private computeWidth(): number {
+			var maxWidth: number = 2;
+			for ( var i = 0; i < this.items.length; i++ ) {
+				if (maxWidth < this.items[i].label.length + 2) {
+					maxWidth = this.items[i].label.length + 2;
 				}
 			}
-			super(maxWidth, items.length + 2);
+			return maxWidth;
+		}
+
+		private drawMenu() {
 			this.console.clearBack(Constants.MENU_BACKGROUND);
-			this.setModal();
-			for ( var j = 0; j < items.length; j++ ) {
-				var itemx: number = Math.floor(this.width / 2 - items[j].label.length / 2);
-				this.console.print(itemx, j + 1, items[j].label);
+			for ( var j = 0; j < this.items.length; j++ ) {
+				var itemx: number = Math.floor(this.width / 2 - this.items[j].label.length / 2);
+				this.console.print(itemx, j + 1, this.items[j].label);
 			}
+		}
+
+		private setPosition(x: number, y: number) {
 			if ( x === -1 ) {
 				x = Math.floor(Constants.CONSOLE_WIDTH / 2 - this.width / 2);
 			}
@@ -337,16 +358,27 @@ module Game {
 			this.moveTo(x, y);
 		}
 
+		private resizeConsole() {
+			var maxWidth = this.computeWidth();
+			if ( this.console.width !== maxWidth || this.console.height !== this.items.length + 2 ) {
+				this.__console = new Yendor.Console(maxWidth, this.items.length + 2);
+			}
+		}
+
 		show() {
+			this.resizeConsole();
+			this.drawMenu();
 			super.show();
 			EventBus.getInstance().registerListener(this, EventType.MOUSE_MOVE);
 			EventBus.getInstance().registerListener(this, EventType.MOUSE_CLICK);
+			EventBus.getInstance().registerListener(this, EventType.KEY_PRESSED);
 		}
 
 		hide() {
 			super.hide();
 			EventBus.getInstance().unregisterListener(this, EventType.MOUSE_MOVE);
 			EventBus.getInstance().unregisterListener(this, EventType.MOUSE_CLICK);
+			EventBus.getInstance().unregisterListener(this, EventType.KEY_PRESSED);
 		}
 
 		render(map: Map, actorManager: ActorManager, destination: Yendor.Console) {
@@ -371,6 +403,8 @@ module Game {
 				if ( event.data === MouseButton.LEFT ) {
 					this.handleMouseClick();
 				}
+			} else if (event.type === EventType.KEY_PRESSED && event.data.keyCode === KeyEvent.DOM_VK_ESCAPE) {
+				this.hide();
 			}
 		}
 
@@ -383,6 +417,9 @@ module Game {
 						EventBus.getInstance().publishEvent(new Event<MenuItem>(item.eventType, item));
 					}
 				}
+			} else {
+				// close the menu if user clicks out of it
+				this.hide();
 			}
 		}
 
@@ -393,6 +430,15 @@ module Game {
 			} else {
 				this.activeItemIndex = undefined;
 			}
+		}
+	}
+
+	export class MainMenu extends Menu {
+		constructor() {
+			super([
+				{label: "Resume game"},
+				{label: "New game", eventType: EventType.NEW_GAME}
+			]);
 		}
 	}
 }
