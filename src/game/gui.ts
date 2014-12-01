@@ -182,6 +182,8 @@ module Game {
 	export class InventoryPanel extends Gui implements EventListener {
 		static TITLE: string = "=== inventory - ESC to close ===";
 		private actorManager: ActorManager;
+		private selectedItem: number;
+
 		constructor(width: number, height: number, actorManager: ActorManager) {
 			super(width, height);
 			this.setModal();
@@ -190,24 +192,54 @@ module Game {
 		}
 
 		processEvent( event: Event<any> ) {
-			if ( ! this.isVisible() && event.type === EventType.OPEN_INVENTORY ) {
-				this.show();
-				EventBus.getInstance().registerListener(this, EventType.KEY_PRESSED);
-			} else if (this.isVisible()) {
+			if ( event.type === EventType.OPEN_INVENTORY ) {
+				this.activate();
+			} else if ( event.type === EventType.KEY_PRESSED ) {
 				if ( event.data.keyCode === KeyEvent.DOM_VK_ESCAPE ) {
-					this.hide();
-					EventBus.getInstance().unregisterListener(this, EventType.KEY_PRESSED);
+					this.deactivate();
 				} else {
 					var index = event.data.keyCode - KeyEvent.DOM_VK_A;
-					var player: Actor = this.actorManager.getPlayer();
-					if ( index >= 0 && index < player.container.size() ) {
-						var item: Actor = player.container.get(index);
-						if (item.pickable) {
-							this.hide();
-							item.pickable.use(item, player, event.actorManager);
-						}
-					}
+					this.useItem(index);
 				}
+			} else if (event.type === EventType.MOUSE_MOVE) {
+				this.selectItemAtPos(event.data);
+			} else if (event.type === EventType.MOUSE_CLICK && event.data === MouseButton.LEFT ) {
+				if ( this.selectedItem !== undefined ) {
+					this.useItem(this.selectedItem);
+				}
+			}
+		}
+
+		private useItem(index: number) {
+			var player: Actor = this.actorManager.getPlayer();
+			if ( index >= 0 && index < player.container.size() ) {
+				var item: Actor = player.container.get(index);
+				if (item.pickable) {
+					this.hide();
+					item.pickable.use(item, player, this.actorManager);
+				}
+			}
+		}
+
+		private activate() {
+			this.show();
+			EventBus.getInstance().registerListener(this, EventType.KEY_PRESSED);
+			EventBus.getInstance().registerListener(this, EventType.MOUSE_MOVE);
+			EventBus.getInstance().registerListener(this, EventType.MOUSE_CLICK);
+		}
+
+		private deactivate() {
+			this.hide();
+			EventBus.getInstance().unregisterListener(this, EventType.KEY_PRESSED);
+			EventBus.getInstance().unregisterListener(this, EventType.MOUSE_MOVE);
+			EventBus.getInstance().unregisterListener(this, EventType.MOUSE_CLICK);
+		}
+
+		private selectItemAtPos(pos: Yendor.Position) {
+			this.selectedItem = pos.y - (this.y + 1);
+			var player: Actor = this.actorManager.getPlayer();
+			if ( this.selectedItem < 0 || this.selectedItem > player.container.size() ) {
+				this.selectedItem = undefined;
 			}
 		}
 
@@ -222,7 +254,11 @@ module Game {
 			var player: Actor = this.actorManager.getPlayer();
 			for ( var i: number = 0; i < player.container.size(); ++i) {
 				var item: Actor = player.container.get(i);
-				this.console.print(2, y, "(" + String.fromCharCode(shortcut) + ") " + item.name, Constants.INVENTORY_FOREGROUND);
+				this.console.print(2, y, "(" + String.fromCharCode(shortcut) + ") " + item.name, Constants.INVENTORY_FOREGROUND );
+				if (i === this.selectedItem) {
+					this.console.clearBack(Constants.INVENTORY_BACKGROUND_ACTIVE, 0, y, -1, 1);
+					this.console.clearFore(Constants.INVENTORY_FOREGROUND_ACTIVE, 0, y, -1, 1);
+				}
 				y++;
 				shortcut++;
 			}
@@ -257,11 +293,11 @@ module Game {
 		}
 
 		processEvent( event: Event<any> ) {
-			if (!this.isVisible() && event.type === EventType.PICK_TILE ) {
+			if (event.type === EventType.PICK_TILE ) {
 				this.activate(event.data);
-			} else if (this.isVisible() && event.type === EventType.MOUSE_MOVE) {
+			} else if (event.type === EventType.MOUSE_MOVE) {
 				this.updateMousePosition(event.data);
-			} else if (this.isVisible() && event.type === EventType.MOUSE_CLICK) {
+			} else if (event.type === EventType.MOUSE_CLICK) {
 				if ( event.data === MouseButton.LEFT ) {
 					if (! this.tileIsValid ) {
 						// the tile is not in FOV. do nothing
