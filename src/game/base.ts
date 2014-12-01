@@ -8,17 +8,23 @@ module Game {
 		export var CONSOLE_HEIGHT: number = 34;
 
 		// rendering
-		export var DARK_WALL: Yendor.Color = "rgb(0,0,100)";
-		export var LIGHT_WALL: Yendor.Color = "rgb(130,110,50)";
-		export var DARK_GROUND: Yendor.Color = "rgb(50,50,150)";
-		export var LIGHT_GROUND: Yendor.Color = "rgb(200,180,50)";
-        export var CORPSE_COLOR: Yendor.Color = "rgb(191,0,0)";
+		export var DARK_WALL: Yendor.Color = "#000064";
+		export var LIGHT_WALL: Yendor.Color = "#826E32";
+		export var DARK_GROUND: Yendor.Color = "#323296";
+		export var LIGHT_GROUND: Yendor.Color = "#C8B432";
+        export var CORPSE_COLOR: Yendor.Color = "#BF0000";
         export var FOV_RADIUS: number = 10;
         export var MENU_BACKGROUND: Yendor.Color = "#272822";
         export var MENU_BACKGROUND_ACTIVE: Yendor.Color = "#383830";
         export var MENU_FOREGROUND: Yendor.Color = "#FD971F";
         export var MENU_FOREGROUND_ACTIVE: Yendor.Color = "#FFDF90";
         export var MENU_FOREGROUND_DISABLED: Yendor.Color = "#5C714B";
+        export var HEALTH_BAR_BACKGROUND: Yendor.Color = "#FF3F3F";
+        export var HEALTH_BAR_FOREGROUND: Yendor.Color = "#7F3F3F";
+        export var INVENTORY_BACKGROUND: Yendor.Color = "#272822";
+        export var INVENTORY_BACKGROUND_ACTIVE: Yendor.Color = "#383830";
+        export var INVENTORY_FOREGROUND: Yendor.Color = "#FD971F";
+        export var INVENTORY_FOREGROUND_ACTIVE: Yendor.Color = "#FFDF90";
 
         // gui
         export var STATUS_PANEL_ID: string = "statusPanel";
@@ -28,8 +34,6 @@ module Game {
 		export var LOG_DARKEN_COEF: number = 0.9;
 		export var STATUS_PANEL_HEIGHT: number = 7;
 		export var STAT_BAR_WIDTH: number = 20;
-		export var HEALTH_BAR_BACKGROUND: Yendor.Color = "rgb(255,63,63)";
-		export var HEALTH_BAR_FOREGROUND: Yendor.Color = "rgb(127,0,0)";
         export var INVENTORY_PANEL_WIDTH: number = 50;
         export var INVENTORY_PANEL_HEIGHT: number = 28;
 
