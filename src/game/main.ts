@@ -144,7 +144,7 @@ module Game {
 			GuiManager interface
 		*/
 		addGui(gui: Gui, name: string, x?: number, y?: number) {
-			if ( x && y ) {
+			if ( x !== undefined && y !== undefined ) {
 				gui.moveTo(x, y);
 			}
 			this.guis[name] = gui;
