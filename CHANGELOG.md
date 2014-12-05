@@ -1,4 +1,4 @@
-# 0.0.3 / TBD
+# 0.0.3 / 12-dec-2014
 * Yendor toolkit
 	- mush faster console implementation using pixi.js
 
