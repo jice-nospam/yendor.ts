@@ -86,11 +86,11 @@ module Yendor {
 			var div = $(this.divSelector)[0];
 			var canvas_width = this.width * this.charWidth;
             var canvas_height = this.height * this.charHeight;
-			
+
 			div.innerHTML = "<canvas id='" + PixiConsole.CANVAS_ID
                 + "' width='" + canvas_width
                 + "' height='" + canvas_height + "'></canvas>";
-				
+
 			this.canvas = <HTMLCanvasElement>$(PixiConsole.CANVAS_SELECTOR)[0];
 			this.stage = new PIXI.Stage(this.defaultBackgroundColor);
 			this.renderer = PIXI.autoDetectRenderer(canvas_width, canvas_height, {
@@ -117,7 +117,6 @@ module Yendor {
 			for ( var x = 0; x < this.width; x++) {
 				this.backCells[x] = [];
 				for ( var y = 0; y < this.height; y++) {
-					var rect = new PIXI.Rectangle(0, 0, this.charWidth, this.charHeight);
 					var cell = new PIXI.Sprite(this.chars[PixiConsole.ASCII_FULL]);
 					cell.position.x = x * this.charWidth;
 					cell.position.y = y * this.charHeight;
@@ -135,7 +134,6 @@ module Yendor {
 			for ( var x = 0; x < this.width; x++) {
 				this.foreCells[x] = [];
 				for ( var y = 0; y < this.height; y++) {
-					var rect = new PIXI.Rectangle(0, 0, this.charWidth, this.charHeight);
 					var cell = new PIXI.Sprite(this.chars[PixiConsole.ASCII_SPACE]);
 					cell.position.x = x * this.charWidth;
 					cell.position.y = y * this.charHeight;
