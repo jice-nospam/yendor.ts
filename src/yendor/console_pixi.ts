@@ -84,12 +84,16 @@ module Yendor {
 
 		private initCanvas() {
 			var div = $(this.divSelector)[0];
+			var canvas_width = this.width * this.charWidth;
+            var canvas_height = this.height * this.charHeight;
+			
 			div.innerHTML = "<canvas id='" + PixiConsole.CANVAS_ID
-				+ "' width='" + this.width * this.charWidth
-				+ "' height='" + this.height * this.charHeight + "'></canvas>";
+                + "' width='" + canvas_width
+                + "' height='" + canvas_height + "'></canvas>";
+				
 			this.canvas = <HTMLCanvasElement>$(PixiConsole.CANVAS_SELECTOR)[0];
 			this.stage = new PIXI.Stage(this.defaultBackgroundColor);
-			this.renderer = PIXI.autoDetectRenderer(640, 480, {
+			this.renderer = PIXI.autoDetectRenderer(canvas_width, canvas_height, {
 				antialias: false,
 				clearBeforeRender: false,
 				preserveDrawingBuffer: false,
