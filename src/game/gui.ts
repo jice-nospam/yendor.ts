@@ -193,10 +193,10 @@ module Game {
 
 		processEvent( event: Event<any> ) {
 			if ( event.type === EventType.OPEN_INVENTORY ) {
-				this.activate();
+				this.show();
 			} else if ( event.type === EventType.KEY_PRESSED ) {
 				if ( event.data.keyCode === KeyEvent.DOM_VK_ESCAPE ) {
-					this.deactivate();
+					this.hide();
 				} else {
 					var index = event.data.keyCode - KeyEvent.DOM_VK_A;
 					this.useItem(index);
@@ -221,15 +221,15 @@ module Game {
 			}
 		}
 
-		private activate() {
-			this.show();
+		show() {
+			super.show();
 			EventBus.getInstance().registerListener(this, EventType.KEY_PRESSED);
 			EventBus.getInstance().registerListener(this, EventType.MOUSE_MOVE);
 			EventBus.getInstance().registerListener(this, EventType.MOUSE_CLICK);
 		}
 
-		private deactivate() {
-			this.hide();
+		hide() {
+			super.hide();
 			EventBus.getInstance().unregisterListener(this, EventType.KEY_PRESSED);
 			EventBus.getInstance().unregisterListener(this, EventType.MOUSE_MOVE);
 			EventBus.getInstance().unregisterListener(this, EventType.MOUSE_CLICK);
