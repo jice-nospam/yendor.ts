@@ -6,6 +6,8 @@ module Game {
 
 	export interface ActorManager {
 		getPlayer() : Actor;
+		getStairsUp() : Actor;
+		getStairsDown() : Actor;
 		addCreature( actor: Actor );
 		addItem( actor: Actor );
 		getCreatures() : Actor[];
@@ -241,12 +243,15 @@ module Game {
 		private _ch: string;
 		private _name: string;
 		private _col: Yendor.Color;
+
 		private _destructible: Destructible;
 		private _attacker: Attacker;
 		private _ai: Ai;
-		private _blocks: boolean = true;
 		private _pickable: Pickable;
 		private _container: Container;
+
+		private _blocks: boolean = false;
+		private _fovOnly: boolean = true;
 
 		constructor() {
 			super();
@@ -273,6 +278,11 @@ module Game {
 			return this._blocks;
 		}
 		set blocks(newValue: boolean) { this._blocks = newValue; }
+
+		isFovOnly(): boolean {
+			return this._fovOnly;
+		}
+		set fovOnly(newValue: boolean) { this._fovOnly = newValue; }
 
 		get destructible() { return this._destructible; }
 		set destructible(newValue: Destructible) { this._destructible = newValue; }

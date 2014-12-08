@@ -211,7 +211,6 @@ module Game {
 			healthPotion.init(x, y, "!", "health potion", "purple");
 			healthPotion.pickable = new Pickable(new InstantHealthEffect(amount, "You drink the health potion"),
 				new TargetSelector( TargetSelectionMethod.WEARER ));
-			healthPotion.blocks = false;
 			return healthPotion;
 		}
 
@@ -220,7 +219,6 @@ module Game {
 			lightningBolt.init(x, y, "#", "scroll of lightning bolt", "rgb(255,255,63)");
 			lightningBolt.pickable = new Pickable( new InstantHealthEffect(-damages, "A lightning bolt hits with a loud thunder!"),
 				new TargetSelector( TargetSelectionMethod.WEARER_CLOSEST_ENEMY, range));
-			lightningBolt.blocks = false;
 			return lightningBolt;
 		}
 
@@ -229,7 +227,6 @@ module Game {
 			fireball.init(x, y, "#", "scroll of fireball", "rgb(255,255,63)");
 			fireball.pickable = new Pickable( new InstantHealthEffect(-damages, "A fireball burns all nearby creatures!"),
 				new TargetSelector( TargetSelectionMethod.SELECTED_RANGE, range));
-			fireball.blocks = false;
 			return fireball;
 		}
 
@@ -239,7 +236,6 @@ module Game {
 			confusionScroll.pickable = new Pickable( new AiChangeEffect(new ConfusedMonsterAi(nbTurns),
 				"The eyes of the creature look vacant,\nas he starts to stumble around!"),
 				new TargetSelector( TargetSelectionMethod.SELECTED_ACTOR, range));
-			confusionScroll.blocks = false;
 			return confusionScroll;
 		}
 

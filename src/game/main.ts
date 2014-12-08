@@ -12,13 +12,15 @@ var rng: Yendor.Random;
 module Game {
 	"use strict";
 
-	var VERSION: string = "0.3";
+	var VERSION: string = "0.4";
 	/*
 		Class: Engine
 		Handles frame rendering and world updating.
 	*/
 	class Engine implements ActorManager, EventListener, GuiManager {
 		player: Player;
+		stairsUp: Actor;
+		stairsDown: Actor;
 		actors: Actor[];
 		corpses: Actor[];
 		items: Actor[];
@@ -78,6 +80,14 @@ module Game {
 		}
 
 		private createNewGame() {
+			this.stairsUp = new Actor();
+			this.stairsUp.init(0, 0, ">", "stairs up", "#FFFFFF");
+			this.stairsUp.fovOnly = false;
+			this.items.push(this.stairsUp);
+			this.stairsDown = new Actor();
+			this.stairsDown.init(0, 0, ">", "stairs down", "#FFFFFF");
+			this.stairsDown.fovOnly = false;
+			this.items.push(this.stairsDown);
 			this.player = new Player();
 			this.player.init(Constants.CONSOLE_WIDTH / 2, Constants.CONSOLE_HEIGHT / 2, "@", "player", "#fff");
 			this.actors.push(this.player);
@@ -91,6 +101,8 @@ module Game {
 			this.actors = this.persister.loadFromKey(Constants.PERSISTENCE_ACTORS_KEY);
 			this.player = this.actors[0];
 			this.items = this.persister.loadFromKey(Constants.PERSISTENCE_ITEMS_KEY);
+			this.stairsUp = this.items[0];
+			this.stairsDown = this.items[1];
 			this.corpses = this.persister.loadFromKey(Constants.PERSISTENCE_CORPSES_KEY);
 			this.persister.loadFromKey(Constants.STATUS_PANEL_ID, this.guis[Constants.STATUS_PANEL_ID]);
 		}
@@ -138,6 +150,14 @@ module Game {
 
 		getCorpses(): Actor[] {
 			return this.corpses;
+		}
+
+		getStairsUp(): Actor {
+			return this.stairsUp;
+		}
+
+		getStairsDown(): Actor {
+			return this.stairsDown;
 		}
 
 		/*
@@ -342,11 +362,16 @@ module Game {
 			}
 		}
 
+		private shouldRenderActor(actor: Actor): boolean {
+			return this.map.isInFov( actor.x, actor.y)
+				|| (!actor.isFovOnly() && this.map.isExplored( actor.x, actor.y));
+		}
+
 		private renderActors(actors: Actor[]) {
 			var nbActors: number = actors.length;
 			for (var i: number = 0; i < nbActors; i++) {
 				var actor: Actor = actors[i];
-				if ( this.map.isInFov( actor.x, actor.y)) {
+				if ( this.shouldRenderActor(actor) ) {
 					actor.render();
 				}
 			}
