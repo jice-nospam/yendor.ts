@@ -38,7 +38,7 @@ module Game {
 		*/
 		protected moveOrAttack(owner: Actor, x: number, y: number, map: Map, actorManager: ActorManager): boolean {
 			// cannot move or attack a wall! 
-			if ( !map.canWalk(x, y, actorManager)) {
+			if ( map.isWall(x, y)) {
 				return false;
 			}
 			// check for living creatures on the destination cell
@@ -55,6 +55,10 @@ module Game {
 					owner.attacker.attack( owner, actor );
 					return false;
 				}
+			}
+			// check for unpassable items
+			if ( !map.canWalk(x, y, actorManager)) {
+				return false;
 			}
 			return true;
 		}
@@ -200,6 +204,18 @@ module Game {
 		private handleActionKey(owner: Actor, map: Map, actorManager: ActorManager) {
 			if ( this.keyChar === "g" ) {
 				this.pickupItem(owner, map, actorManager);
+			} else if ( this.keyChar === ">") {
+				if ( actorManager.getStairsDown().x === owner.x && actorManager.getStairsDown().y === owner.y ) {
+					EventBus.getInstance().publishEvent(new Event<void>(EventType.NEXT_LEVEL) );
+				} else {
+					log("There are no stairs going down here.");
+				}
+			} else if ( this.keyChar === "<") {
+				if ( actorManager.getStairsUp().x === owner.x && actorManager.getStairsUp().y === owner.y ) {
+					EventBus.getInstance().publishEvent(new Event<void>(EventType.PREV_LEVEL) );
+				} else {
+					log("There are no stairs going up here.");
+				}
 			}
 		}
 

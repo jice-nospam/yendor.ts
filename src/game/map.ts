@@ -51,6 +51,7 @@ module Game {
 				orc.destructible = new MonsterDestructible(10, 0, "dead orc");
 				orc.attacker = new Attacker(3);
 				orc.ai = new MonsterAi();
+				orc.blocks = true;
 				return orc;
 			} else {
 				var troll: Actor =  new Actor();
@@ -58,6 +59,7 @@ module Game {
 				troll.destructible = new MonsterDestructible(16, 1, "troll carcass");
 				troll.attacker = new Attacker(4);
 				troll.ai = new MonsterAi();
+				troll.blocks = true;
 				return troll;
 			}
 		}
@@ -179,6 +181,7 @@ module Game {
 				return false;
 			}
 			var actorsOnCell: Actor[] = actorManager.findActorsOnCell(new Yendor.Position(x, y), actorManager.getItems());
+			actorsOnCell = actorsOnCell.concat(actorManager.findActorsOnCell(new Yendor.Position(x, y), actorManager.getCreatures()));
 			for ( var i: number = 0; i < actorsOnCell.length; i++) {
 				var actor: Actor = actorsOnCell[i];
 				if ( actor.isBlocking() ) {
@@ -198,6 +201,11 @@ module Game {
 				return true;
 			}
 			return false;
+		}
+
+		shouldRenderActor(actor: Actor): boolean {
+			return this.isInFov( actor.x, actor.y)
+				|| (!actor.isFovOnly() && this.isExplored( actor.x, actor.y));
 		}
 
 		getScent(x: number, y: number): number {

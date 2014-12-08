@@ -8,3 +8,5 @@ To compile it, run `jake` then open game/index.html in your browser.
 * NUMPAD 5 : wait a turn
 * g : pick an item up
 * i : open inventory
+* > : go down the stairs
+* < : go up the stairs

@@ -12,6 +12,12 @@ var rng: Yendor.Random;
 module Game {
 	"use strict";
 
+	/*
+		Property: VERSION
+		This is mainly the savegame format version. To be incremented when the format changes
+		to keep the game from trying to load data with an old format.
+		This should be a numeric value (x.y.z not supported).
+	*/
 	var VERSION: string = "0.4";
 	/*
 		Class: Engine
@@ -53,6 +59,8 @@ module Game {
 			EventBus.getInstance().registerListener(this, EventType.CHANGE_STATUS);
 			EventBus.getInstance().registerListener(this, EventType.REMOVE_ACTOR);
 			EventBus.getInstance().registerListener(this, EventType.NEW_GAME);
+			EventBus.getInstance().registerListener(this, EventType.NEXT_LEVEL);
+			EventBus.getInstance().registerListener(this, EventType.PREV_LEVEL);
 		}
 
 		private createStatusPanel() {
@@ -79,18 +87,30 @@ module Game {
 			this.status = GameStatus.STARTUP;
 		}
 
-		private createNewGame() {
+		/*
+			Function: createStairs
+			Create the actors for up and down stairs. The position is not important, actors will be placed by the dungeon builder.
+		*/
+		private createStairs() {
 			this.stairsUp = new Actor();
-			this.stairsUp.init(0, 0, ">", "stairs up", "#FFFFFF");
+			this.stairsUp.init(0, 0, "<", "stairs up", "#FFFFFF");
 			this.stairsUp.fovOnly = false;
 			this.items.push(this.stairsUp);
 			this.stairsDown = new Actor();
 			this.stairsDown.init(0, 0, ">", "stairs down", "#FFFFFF");
 			this.stairsDown.fovOnly = false;
 			this.items.push(this.stairsDown);
+		}
+
+		private createPlayer() {
 			this.player = new Player();
-			this.player.init(Constants.CONSOLE_WIDTH / 2, Constants.CONSOLE_HEIGHT / 2, "@", "player", "#fff");
+			this.player.init(Constants.CONSOLE_WIDTH / 2, Constants.CONSOLE_HEIGHT / 2, "@", "player", "#FFFFFF");
 			this.actors.push(this.player);
+		}
+
+		private createNewGame() {
+			this.createStairs();
+			this.createPlayer();
 			this.map.init( Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT );
 			var dungeonBuilder: BspDungeonBuilder = new BspDungeonBuilder();
 			dungeonBuilder.build(this.map, this);
@@ -123,6 +143,28 @@ module Game {
 			this.persister.deleteKey(Constants.PERSISTENCE_ITEMS_KEY);
 			this.persister.deleteKey(Constants.PERSISTENCE_CORPSES_KEY);
 			this.persister.deleteKey(Constants.STATUS_PANEL_ID);
+		}
+
+		private newLevel() {
+			this.resetGame();
+			this.createNewGame();
+			this.map.computeFov(this.player.x, this.player.y, Constants.FOV_RADIUS);
+		}
+
+		/*
+			Function: gotoNextLevel
+			Go down one level
+		*/
+		private gotoNextLevel() {
+			this.newLevel();
+		}
+
+		/*
+			Function: gotoPrevLevel
+			Go up one level
+		*/
+		private gotoPrevLevel() {
+			log("The stairs have collapsed. You can't go up anymore...");
 		}
 
 		/*
@@ -258,16 +300,25 @@ module Game {
 				event - the CHANGE_STATUS event
 		*/
 		processEvent(event: Event<any>) {
-			if ( event.type === EventType.CHANGE_STATUS ) {
-				this.status = event.data;
-			} else if ( event.type === EventType.REMOVE_ACTOR ) {
-				var item: Actor = event.data;
-				this.removeItem(item);
-			} else if ( event.type === EventType.NEW_GAME ) {
-				this.resetGame();
-				this.createNewGame();
-				this.guis[ Constants.STATUS_PANEL_ID ].clear();
-				this.map.computeFov(this.player.x, this.player.y, Constants.FOV_RADIUS);
+			switch ( event.type ) {
+				case EventType.CHANGE_STATUS :
+					this.status = event.data;
+					break;
+				case EventType.REMOVE_ACTOR :
+					var item: Actor = event.data;
+					this.removeItem(item);
+					break;
+				case  EventType.NEW_GAME :
+					this.guis[ Constants.STATUS_PANEL_ID ].clear();
+					this.newLevel();
+					break;
+				case EventType.NEXT_LEVEL :
+					this.gotoNextLevel();
+					break;
+				case EventType.PREV_LEVEL :
+					this.gotoPrevLevel();
+					break;
+				default: break;
 			}
 		}
 
@@ -300,6 +351,7 @@ module Game {
 
 		private handleGlobalShortcuts(event: KeyboardEvent): boolean {
 			if ( event.keyCode === KeyEvent.DOM_VK_ESCAPE ) {
+				// ESC : open game menu
 				this.guis[ Constants.MAIN_MENU_ID ].show();
 				return true;
 			} else if ( event.keyCode === KeyEvent.DOM_VK_I ) {
@@ -362,16 +414,11 @@ module Game {
 			}
 		}
 
-		private shouldRenderActor(actor: Actor): boolean {
-			return this.map.isInFov( actor.x, actor.y)
-				|| (!actor.isFovOnly() && this.map.isExplored( actor.x, actor.y));
-		}
-
 		private renderActors(actors: Actor[]) {
 			var nbActors: number = actors.length;
 			for (var i: number = 0; i < nbActors; i++) {
 				var actor: Actor = actors[i];
-				if ( this.shouldRenderActor(actor) ) {
+				if ( this.map.shouldRenderActor(actor) ) {
 					actor.render();
 				}
 			}
