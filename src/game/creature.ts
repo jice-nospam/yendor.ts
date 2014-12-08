@@ -38,7 +38,7 @@ module Game {
 		*/
 		protected moveOrAttack(owner: Actor, x: number, y: number, map: Map, actorManager: ActorManager): boolean {
 			// cannot move or attack a wall! 
-			if ( map.isWall(x, y)) {
+			if ( !map.canWalk(x, y, actorManager)) {
 				return false;
 			}
 			// check for living creatures on the destination cell

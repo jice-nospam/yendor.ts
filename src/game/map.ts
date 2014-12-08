@@ -29,13 +29,18 @@ module Game {
 		createRoom( map: Map, actorManager: ActorManager, first: boolean, x1: number, y1: number, x2: number, y2: number ) {
 			this.dig( map, x1, y1, x2, y2 );
 			if ( first ) {
-				// put the player in the first room
+				// put the player and stairs up in the first room
 				actorManager.getPlayer().x = Math.floor((x1 + x2) / 2);
 				actorManager.getPlayer().y = Math.floor((y1 + y2) / 2);
+				actorManager.getStairsUp().x = actorManager.getPlayer().x;
+				actorManager.getStairsUp().y = actorManager.getPlayer().y;
 			} else {
 				var rng: Yendor.Random = new Yendor.ComplementaryMultiplyWithCarryRandom();
 				this.createMonsters(x1, y1, x2, y2, rng, map, actorManager);
 				this.createItems(x1, y1, x2, y2, rng, map, actorManager);
+				// stairs down will be in the last room
+				actorManager.getStairsDown().x = Math.floor((x1 + x2) / 2);
+				actorManager.getStairsDown().y = Math.floor((y1 + y2) / 2);
 			}
 		}
 
@@ -173,7 +178,7 @@ module Game {
 			if ( this.isWall(x, y) ) {
 				return false;
 			}
-			var actorsOnCell: Actor[] = actorManager.findActorsOnCell(new Yendor.Position(x, y), actorManager.getCreatures());
+			var actorsOnCell: Actor[] = actorManager.findActorsOnCell(new Yendor.Position(x, y), actorManager.getItems());
 			for ( var i: number = 0; i < actorsOnCell.length; i++) {
 				var actor: Actor = actorsOnCell[i];
 				if ( actor.isBlocking() ) {
