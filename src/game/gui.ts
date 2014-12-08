@@ -109,11 +109,11 @@ module Game {
 				break;
 				case EventType.MOUSE_MOVE :
 					var pos: Yendor.Position = event.data;
-					if ( event.map.isInFov(pos.x, pos.y) ) {
+					if ( event.map.isExplored(pos.x, pos.y) ) {
 						var actorsOnCell: Actor[] = event.actorManager.findActorsOnCell(pos, event.actorManager.getCreatures());
 						actorsOnCell = actorsOnCell.concat(event.actorManager.findActorsOnCell(pos, event.actorManager.getItems()));
 						actorsOnCell = actorsOnCell.concat(event.actorManager.findActorsOnCell(pos, event.actorManager.getCorpses()));
-						this.handleMouseLook( actorsOnCell );
+						this.handleMouseLook( event.map, actorsOnCell );
 					}
 				break;
 			}
@@ -148,12 +148,17 @@ module Game {
 			this.mouseLookText = "";
 		}
 
-		private handleMouseLook( actors: Actor[] ) {
+		private handleMouseLook( map: Map, actors: Actor[] ) {
 			var len: number = actors.length;
-			this.mouseLookText = len === 0 ? "" : actors[0].name;
-			for ( var i: number = 1; i < len; ++i) {
+			this.mouseLookText = "";
+			for ( var i: number = 0; i < len; ++i) {
 				var actor: Actor = actors[i];
-				this.mouseLookText += "," + actor.name;
+				if (map.shouldRenderActor(actor)) {
+					if ( i > 0 ) {
+						this.mouseLookText += ",";
+					}
+					this.mouseLookText += actor.name;
+				}
 			}
 		}
 

@@ -25,6 +25,10 @@ module Game {
 		REMOVE_ACTOR,
 		// starts a new game
 		NEW_GAME,
+		// go to next dungeon level
+		NEXT_LEVEL,
+		// go to previous dungeon level
+		PREV_LEVEL,
 	}
 
 	export class Event<T> {
