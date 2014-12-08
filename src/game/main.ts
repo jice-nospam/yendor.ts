@@ -156,7 +156,17 @@ module Game {
 			Go down one level
 		*/
 		private gotoNextLevel() {
-			this.newLevel();
+			this.resetGame();
+			this.createStairs();
+			// don't reset the player
+			this.actors.push(this.player);
+			this.player.destructible.heal(this.player.destructible.maxHp / 2);
+			log("You take a moment to rest, and recover your strength.", "orange");
+			log("After a rare moment of peace, you descend deeper\ninto the heart of the dungeon...", "red");
+			this.map.init( Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT );
+			var dungeonBuilder: BspDungeonBuilder = new BspDungeonBuilder();
+			dungeonBuilder.build(this.map, this);
+			this.map.computeFov(this.player.x, this.player.y, Constants.FOV_RADIUS);
 		}
 
 		/*
@@ -313,9 +323,11 @@ module Game {
 					this.newLevel();
 					break;
 				case EventType.NEXT_LEVEL :
+					this.status = GameStatus.NEW_TURN;
 					this.gotoNextLevel();
 					break;
 				case EventType.PREV_LEVEL :
+					this.status = GameStatus.NEW_TURN;
 					this.gotoPrevLevel();
 					break;
 				default: break;
