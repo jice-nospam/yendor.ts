@@ -18,7 +18,7 @@ module Game {
 		to keep the game from trying to load data with an old format.
 		This should be a numeric value (x.y.z not supported).
 	*/
-	var VERSION: string = "0.4";
+	var VERSION: string = "0.5";
 	/*
 		Class: Engine
 		Handles frame rendering and world updating.
@@ -61,6 +61,7 @@ module Game {
 			EventBus.getInstance().registerListener(this, EventType.NEW_GAME);
 			EventBus.getInstance().registerListener(this, EventType.NEXT_LEVEL);
 			EventBus.getInstance().registerListener(this, EventType.PREV_LEVEL);
+			EventBus.getInstance().registerListener(this, EventType.GAIN_XP);
 		}
 
 		private createStatusPanel() {
@@ -119,7 +120,7 @@ module Game {
 		private loadGame() {
 			this.persister.loadFromKey(Constants.PERSISTENCE_MAP_KEY, this.map);
 			this.actors = this.persister.loadFromKey(Constants.PERSISTENCE_ACTORS_KEY);
-			this.player = this.actors[0];
+			this.player = <Player>this.actors[0];
 			this.items = this.persister.loadFromKey(Constants.PERSISTENCE_ITEMS_KEY);
 			this.stairsUp = this.items[0];
 			this.stairsDown = this.items[1];
@@ -329,6 +330,9 @@ module Game {
 				case EventType.PREV_LEVEL :
 					this.status = GameStatus.NEW_TURN;
 					this.gotoPrevLevel();
+					break;
+				case EventType.GAIN_XP :
+					this.player.addXp(event.data);
 					break;
 				default: break;
 			}

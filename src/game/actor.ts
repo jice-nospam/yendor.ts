@@ -32,6 +32,7 @@ module Game {
 		private _defense: number;
 		private _hp: number;
 		private _corpseName: string;
+		private _xp: number = 0;
 		/*
 			Constructor: constructor
 
@@ -50,6 +51,9 @@ module Game {
 
 		get hp() { return this._hp; }
 		set hp(newValue: number) { this._hp = newValue; }
+
+		get xp() { return this._xp; }
+		set xp(newValue: number) { this._xp = newValue; }
 
 		get maxHp() { return this._maxHp; }
 

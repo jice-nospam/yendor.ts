@@ -52,6 +52,7 @@ module Game {
 				orc.attacker = new Attacker(3);
 				orc.ai = new MonsterAi();
 				orc.blocks = true;
+				orc.destructible.xp = Constants.ORC_XP;
 				return orc;
 			} else {
 				var troll: Actor =  new Actor();
@@ -60,6 +61,7 @@ module Game {
 				troll.attacker = new Attacker(4);
 				troll.ai = new MonsterAi();
 				troll.blocks = true;
+				troll.destructible.xp = Constants.TROLL_XP;
 				return troll;
 			}
 		}

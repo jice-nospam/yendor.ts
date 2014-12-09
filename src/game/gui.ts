@@ -135,9 +135,11 @@ module Game {
 		render(map: Map, actorManager: ActorManager, destination: Yendor.Console) {
 			this.console.clearBack("black");
 			this.console.clearText();
-			var player: Actor = actorManager.getPlayer();
+			var player: Player = <Player>actorManager.getPlayer();
 			this.renderBar(1, 1, Constants.STAT_BAR_WIDTH, "HP", player.destructible.hp,
 				player.destructible.maxHp, Constants.HEALTH_BAR_BACKGROUND, Constants.HEALTH_BAR_FOREGROUND);
+			this.renderBar(1, 5, Constants.STAT_BAR_WIDTH, "XP(" + player.xpLevel + ")", player.destructible.xp,
+				player.getNextLevelXp(), Constants.XP_BAR_BACKGROUND, Constants.XP_BAR_FOREGROUND);
 			this.console.print(0, 0, this.mouseLookText);
 			this.renderMessages();
 			super.render(map, actorManager, destination);

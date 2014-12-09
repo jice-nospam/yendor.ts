@@ -29,6 +29,8 @@ module Game {
 		NEXT_LEVEL,
 		// go to previous dungeon level
 		PREV_LEVEL,
+		// player gains xp
+		GAIN_XP,
 	}
 
 	export class Event<T> {

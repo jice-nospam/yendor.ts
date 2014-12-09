@@ -85,12 +85,11 @@ module Game {
 			event - the KEY_PRESSED <Event>
 		*/
 		processEvent(event: Event<any>) {
+			this.keyCode = 0;
+			this.keyChar = undefined;
 			if ( event.type === EventType.KEY_PRESSED ) {
 				this.keyCode = event.data.keyCode;
 				this.keyChar = event.data.key;
-			} else {
-				this.keyCode = 0;
-				this.keyChar = undefined;
 			}
 		}
 
@@ -481,7 +480,8 @@ module Game {
 		}
 
 		die(owner: Actor) {
-			log(owner.name + " is dead");
+			log(owner.name + " is dead. You gain " + this.xp + " xp.");
+			EventBus.getInstance().publishEvent(new Event<number>( EventType.GAIN_XP, this.xp ));
 			super.die(owner);
 		}
 	}
@@ -504,16 +504,32 @@ module Game {
 	}
 
 	export class Player extends Actor {
+		private _xpLevel = 0;
 		constructor() {
 			super();
 			this.className = "Player";
 		}
+
+		get xpLevel() { return this._xpLevel; }
+
 		init(_x: number, _y: number, _ch: string, _name: string, _col: Yendor.Color) {
 			super.init(_x, _y, _ch, _name, _col);
 			this.ai = new PlayerAi();
 			this.attacker = new Attacker(5);
 			this.destructible = new PlayerDestructible(30, 2, "your cadaver");
 			this.container = new Container(26);
+		}
+		getNextLevelXp(): number {
+			return Constants.XP_BASE_LEVEL + this._xpLevel * Constants.XP_NEW_LEVEL;
+		}
+		addXp(amount: number) {
+			this.destructible.xp += amount;
+			var nextLevelXp = this.getNextLevelXp();
+			if ( this.destructible.xp >= nextLevelXp ) {
+				this._xpLevel ++;
+				this.destructible.xp -= nextLevelXp;
+				log("Your battle skills grow stronger! You reached level " + this.xpLevel, "#FF0000");
+			}
 		}
 	}
 }
