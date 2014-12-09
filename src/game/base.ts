@@ -21,6 +21,8 @@ module Game {
         export var MENU_FOREGROUND_DISABLED: Yendor.Color = "#5C714B";
         export var HEALTH_BAR_BACKGROUND: Yendor.Color = "#FF3F3F";
         export var HEALTH_BAR_FOREGROUND: Yendor.Color = "#7F3F3F";
+        export var XP_BAR_BACKGROUND: Yendor.Color = "#9F3FFF";
+        export var XP_BAR_FOREGROUND: Yendor.Color = "#3F007F";
         export var INVENTORY_BACKGROUND: Yendor.Color = "#272822";
         export var INVENTORY_BACKGROUND_ACTIVE: Yendor.Color = "#383830";
         export var INVENTORY_FOREGROUND: Yendor.Color = "#FD971F";
@@ -43,8 +45,12 @@ module Game {
 		export var ROOM_MAX_SIZE: number = 8;
 		export var ROOM_MIN_SIZE: number = 4;
 
-		// AI
+		// gameplay
 		export var SCENT_THRESHOLD: number = 10;
+        export var ORC_XP = 35;
+        export var TROLL_XP = 100;
+        export var XP_BASE_LEVEL = 200;
+        export var XP_NEW_LEVEL = 150;
 
         // persistence local storage keys
         export var PERSISTENCE_VERSION_KEY: string = "version";
