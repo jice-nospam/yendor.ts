@@ -23,13 +23,7 @@ module Game {
 		Class: Engine
 		Handles frame rendering and world updating.
 	*/
-	class Engine implements ActorManager, EventListener, GuiManager {
-		player: Player;
-		stairsUp: Actor;
-		stairsDown: Actor;
-		actors: Actor[];
-		corpses: Actor[];
-		items: Actor[];
+	class Engine implements EventListener, GuiManager {
 		map: Map;
 		status : GameStatus;
 		persister: Persister = new LocalStoragePersister();
@@ -51,11 +45,11 @@ module Game {
 				this.createNewGame();
 			}
 			this.createOtherGui();
-			this.map.computeFov(this.player.x, this.player.y, Constants.FOV_RADIUS);
+			this.map.computeFov(ActorManager.instance.getPlayer().x, ActorManager.instance.getPlayer().y, Constants.FOV_RADIUS);
 		}
 
 		private initEventBus() {
-			EventBus.instance.init(this, this.map);
+			EventBus.instance.init(this.map);
 			EventBus.instance.registerListener(this, EventType.CHANGE_STATUS);
 			EventBus.instance.registerListener(this, EventType.REMOVE_ACTOR);
 			EventBus.instance.registerListener(this, EventType.NEW_GAME);
@@ -71,7 +65,7 @@ module Game {
 		}
 
 		private createOtherGui() {
-			var inventoryPanel: Gui = new InventoryPanel( Constants.INVENTORY_PANEL_WIDTH, Constants.INVENTORY_PANEL_HEIGHT, this );
+			var inventoryPanel: Gui = new InventoryPanel( Constants.INVENTORY_PANEL_WIDTH, Constants.INVENTORY_PANEL_HEIGHT );
 			this.addGui(inventoryPanel, Constants.INVENTORY_ID, Math.floor(Constants.CONSOLE_WIDTH / 2 - Constants.INVENTORY_PANEL_WIDTH / 2), 0);
 
 			var tilePicker: Gui = new TilePicker(this.map);
@@ -82,74 +76,46 @@ module Game {
 		}
 
 		private resetGame() {
-			this.actors = [];
-			this.corpses = [];
-			this.items = [];
+			ActorManager.instance.clear();
 			this.status = GameStatus.STARTUP;
 		}
 
-		/*
-			Function: createStairs
-			Create the actors for up and down stairs. The position is not important, actors will be placed by the dungeon builder.
-		*/
-		private createStairs() {
-			this.stairsUp = new Actor();
-			this.stairsUp.init(0, 0, "<", "stairs up", "#FFFFFF");
-			this.stairsUp.fovOnly = false;
-			this.items.push(this.stairsUp);
-			this.stairsDown = new Actor();
-			this.stairsDown.init(0, 0, ">", "stairs down", "#FFFFFF");
-			this.stairsDown.fovOnly = false;
-			this.items.push(this.stairsDown);
-		}
-
-		private createPlayer() {
-			this.player = new Player();
-			this.player.init(Constants.CONSOLE_WIDTH / 2, Constants.CONSOLE_HEIGHT / 2, "@", "player", "#FFFFFF");
-			this.actors.push(this.player);
-		}
-
 		private createNewGame() {
-			this.createStairs();
-			this.createPlayer();
+			ActorManager.instance.createStairs();
+			ActorManager.instance.createPlayer();
 			this.map.init( Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT );
 			var dungeonBuilder: BspDungeonBuilder = new BspDungeonBuilder();
-			dungeonBuilder.build(this.map, this);
+			dungeonBuilder.build(this.map);
 		}
 
 		private loadGame() {
 			this.persister.loadFromKey(Constants.PERSISTENCE_MAP_KEY, this.map);
-			this.actors = this.persister.loadFromKey(Constants.PERSISTENCE_ACTORS_KEY);
-			this.player = <Player>this.actors[0];
-			this.items = this.persister.loadFromKey(Constants.PERSISTENCE_ITEMS_KEY);
-			this.stairsUp = this.items[0];
-			this.stairsDown = this.items[1];
-			this.corpses = this.persister.loadFromKey(Constants.PERSISTENCE_CORPSES_KEY);
+			ActorManager.instance.load(this.persister);
 			this.persister.loadFromKey(Constants.STATUS_PANEL_ID, this.guis[Constants.STATUS_PANEL_ID]);
 		}
 
 		private saveGame() {
 			this.persister.saveToKey(Constants.PERSISTENCE_VERSION_KEY, VERSION);
 			this.persister.saveToKey(Constants.PERSISTENCE_MAP_KEY, this.map);
-			this.persister.saveToKey(Constants.PERSISTENCE_ACTORS_KEY, this.actors);
-			this.persister.saveToKey(Constants.PERSISTENCE_ITEMS_KEY, this.items);
-			this.persister.saveToKey(Constants.PERSISTENCE_CORPSES_KEY, this.corpses);
+			ActorManager.instance.save(this.persister);
 			this.persister.saveToKey(Constants.STATUS_PANEL_ID, this.guis[Constants.STATUS_PANEL_ID]);
 		}
 
 		private deleteSavedGame() {
 			this.persister.deleteKey(Constants.PERSISTENCE_VERSION_KEY);
 			this.persister.deleteKey(Constants.PERSISTENCE_MAP_KEY);
-			this.persister.deleteKey(Constants.PERSISTENCE_ACTORS_KEY);
-			this.persister.deleteKey(Constants.PERSISTENCE_ITEMS_KEY);
-			this.persister.deleteKey(Constants.PERSISTENCE_CORPSES_KEY);
+			ActorManager.instance.deleteSavedGame(this.persister);
 			this.persister.deleteKey(Constants.STATUS_PANEL_ID);
+		}
+
+		private computePlayerFov() {
+			this.map.computeFov(ActorManager.instance.getPlayer().x, ActorManager.instance.getPlayer().y, Constants.FOV_RADIUS);
 		}
 
 		private newLevel() {
 			this.resetGame();
 			this.createNewGame();
-			this.map.computeFov(this.player.x, this.player.y, Constants.FOV_RADIUS);
+			this.computePlayerFov();
 		}
 
 		/*
@@ -158,16 +124,17 @@ module Game {
 		*/
 		private gotoNextLevel() {
 			this.resetGame();
-			this.createStairs();
+			ActorManager.instance.createStairs();
 			// don't reset the player
-			this.actors.push(this.player);
-			this.player.destructible.heal(this.player.destructible.maxHp / 2);
+			var player: Actor = ActorManager.instance.getPlayer();
+			ActorManager.instance.addCreature(player);
+			player.destructible.heal(player.destructible.maxHp / 2);
 			log("You take a moment to rest, and recover your strength.", "orange");
 			log("After a rare moment of peace, you descend deeper\ninto the heart of the dungeon...", "red");
 			this.map.init( Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT );
 			var dungeonBuilder: BspDungeonBuilder = new BspDungeonBuilder();
-			dungeonBuilder.build(this.map, this);
-			this.map.computeFov(this.player.x, this.player.y, Constants.FOV_RADIUS);
+			dungeonBuilder.build(this.map);
+			this.computePlayerFov();
 		}
 
 		/*
@@ -176,41 +143,6 @@ module Game {
 		*/
 		private gotoPrevLevel() {
 			log("The stairs have collapsed. You can't go up anymore...");
-		}
-
-		/*
-			ActorManager interface
-		*/
-		getPlayer() : Actor {
-			return this.player;
-		}
-
-		addCreature( actor: Actor ) {
-			this.actors.push(actor);
-		}
-
-		addItem( actor: Actor ) {
-			this.items.push(actor);
-		}
-
-		getCreatures(): Actor[] {
-			return this.actors;
-		}
-
-		getItems(): Actor[] {
-			return this.items;
-		}
-
-		getCorpses(): Actor[] {
-			return this.corpses;
-		}
-
-		getStairsUp(): Actor {
-			return this.stairsUp;
-		}
-
-		getStairsDown(): Actor {
-			return this.stairsDown;
 		}
 
 		/*
@@ -228,79 +160,10 @@ module Game {
 				if ( this.guis.hasOwnProperty(guiName) ) {
 					var gui: Gui = this.guis[guiName];
 					if ( gui.isVisible()) {
-						gui.render(this.map, this, rootConsole);
+						gui.render(this.map, rootConsole);
 					}
 				}
 			}
-		}
-
-		/*
-			Function: findClosestActor
-
-			In the `actors` array, find the closest actor (except the player) from position `pos` within `range`.
-			If range is 0, no range limitation.
-		*/
-		findClosestActor( pos: Yendor.Position, range: number, actors: Actor[] ) : Actor {
-			var bestDistance: number = 1E8;
-			var closestActor: Actor = undefined;
-			var player: Actor = this.getPlayer();
-			actors.forEach(function(actor: Actor) {
-				if ( actor !== player ) {
-					var distance: number = Yendor.Position.distance(pos, actor);
-					if ( distance < bestDistance && (distance < range || range === 0) ) {
-						bestDistance = distance;
-						closestActor = actor;
-					}
-				}
-			});
-			return closestActor;
-		}
-
-		/*
-			Function: findActorsOnCell
-
-			Parameters:
-			pos - a position on the map
-			actors - the list of actors to scan (either actors, corpses or items)
-
-			Returns:
-			an array containing all the living actors on the cell
-
-		*/
-		findActorsOnCell( pos: Yendor.Position, actors: Actor[]) : Actor[] {
-			var actorsOnCell: Actor[] = [];
-			var nbActors: number = actors.length;
-			for (var i: number = 0; i < nbActors; i++) {
-				var actor: Actor = actors[i];
-				if ( actor.x === pos.x && actor.y === pos.y ) {
-					actorsOnCell.push(actor);
-				}
-			}
-			return actorsOnCell;
-		}
-
-		/*
-			Function: findActorsInRange
-			Returns all actor near a position
-
-			Parameters:
-			pos - a position on the map
-			range - maximum distance from position
-			actors - actor array to look up
-
-			Returns:
-			an actor array containing all actor within range
-		*/
-		findActorsInRange( pos: Yendor.Position, range: number, actors: Actor[]): Actor[] {
-			var actorsInRange: Actor[] = [];
-			var nbActors: number = actors.length;
-			for (var i: number = 0; i < nbActors; i++) {
-				var actor: Actor = actors[i];
-				if (Yendor.Position.distance(pos, actor) <= range ) {
-					actorsInRange.push( actor );
-				}
-			}
-			return actorsInRange;
 		}
 
 		/*
@@ -317,7 +180,7 @@ module Game {
 					break;
 				case EventType.REMOVE_ACTOR :
 					var item: Actor = event.data;
-					this.removeItem(item);
+					ActorManager.instance.removeItem(item);
 					break;
 				case  EventType.NEW_GAME :
 					this.guis[ Constants.STATUS_PANEL_ID ].clear();
@@ -332,7 +195,7 @@ module Game {
 					this.gotoPrevLevel();
 					break;
 				case EventType.GAIN_XP :
-					this.player.addXp(event.data);
+					ActorManager.instance.getPlayer().addXp(event.data);
 					break;
 				default: break;
 			}
@@ -355,7 +218,7 @@ module Game {
 			if (! Gui.getActiveModal() ) {
 				if ( !this.handleGlobalShortcuts(event) ) {
 					EventBus.instance.publishEvent(new Event<KeyboardEvent>(EventType.KEY_PRESSED, event));
-					this.player.ai.update(this.player, this.map, this);
+					ActorManager.instance.getPlayer().ai.update(ActorManager.instance.getPlayer(), this.map);
 				}
 			} else {
 				EventBus.instance.publishEvent(new Event<KeyboardEvent>(EventType.KEY_PRESSED, event));
@@ -390,7 +253,7 @@ module Game {
 		*/
 		handleNewFrame (time: number) {
 			if ( this.status === GameStatus.STARTUP ) {
-				this.player.ai.update(this.player, this.map, this);
+				ActorManager.instance.getPlayer().ai.update(ActorManager.instance.getPlayer(), this.map);
 				this.status = GameStatus.IDLE;
 			}
 			this.render();
@@ -423,23 +286,6 @@ module Game {
 			}
 		}
 
-		private removeItem(item: Actor) {
-			var idx: number = this.items.indexOf(item);
-			if ( idx !== -1 ) {
-				this.items.splice(idx, 1);
-			}
-		}
-
-		private renderActors(actors: Actor[]) {
-			var nbActors: number = actors.length;
-			for (var i: number = 0; i < nbActors; i++) {
-				var actor: Actor = actors[i];
-				if ( this.map.shouldRenderActor(actor) ) {
-					actor.render();
-				}
-			}
-		}
-
 		/*
 			Function: render
 			The actual frame rendering. Render objects in this order:
@@ -451,39 +297,20 @@ module Game {
 		private render() {
 			root.clearText();
 			this.map.render();
-			this.renderActors(this.corpses);
-			this.renderActors(this.items);
-			this.renderActors(this.actors);
+			ActorManager.instance.renderActors(this.map);
 			this.renderGui(root);
 		}
 
-		/*
-			Function: updateActors
-			Triggers actors' A.I. during a new game turn.
-			Moves the dead actors from the actor list to the corpse list.
-		*/
-		private updateActors() {
-			var nbActors: number = this.actors.length;
-			for (var i = 1; i < nbActors; i++) {
-				var actor: Actor = this.actors[i];
-				actor.update( this.map, this );
-				if ( actor.destructible && actor.destructible.isDead() ) {
-					this.actors.splice(i, 1);
-					i--;
-					nbActors--;
-					this.corpses.push(actor);
-				}
-			}
-		}
+
 
 		/*
 			Function: handleNewTurn
 			Triggered when a new game turn starts. Updates all the world actors.
 		*/
 		private handleNewTurn() {
-			this.updateActors();
+			ActorManager.instance.updateActors(this.map);
 			this.status = GameStatus.IDLE;
-			if (!this.player.destructible.isDead()) {
+			if (!ActorManager.instance.isPlayerDead()) {
 				this.saveGame();
 			} else {
 				this.deleteSavedGame();

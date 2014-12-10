@@ -4,18 +4,210 @@
 module Game {
 	"use strict";
 
-	export interface ActorManager {
-		getPlayer() : Actor;
-		getStairsUp() : Actor;
-		getStairsDown() : Actor;
-		addCreature( actor: Actor );
-		addItem( actor: Actor );
-		getCreatures() : Actor[];
-		getCorpses() : Actor[];
-		getItems() : Actor[];
-		findActorsOnCell( pos: Yendor.Position, actors: Actor[]): Actor[];
-		findClosestActor( pos: Yendor.Position, range: number, actors: Actor[] ) : Actor;
-		findActorsInRange( pos: Yendor.Position, range: number, actors: Actor[]): Actor[];
+	export class ActorManager {
+		private static _instance: ActorManager = new ActorManager();
+		static get instance() { return ActorManager._instance; }
+
+		private player: Player;
+		private stairsUp: Actor;
+		private stairsDown: Actor;
+		private actors: Actor[];
+		private corpses: Actor[];
+		private items: Actor[];
+
+		getPlayer() : Player {
+			return this.player;
+		}
+
+		addCreature( actor: Actor ) {
+			this.actors.push(actor);
+		}
+
+		addItem( actor: Actor ) {
+			this.items.push(actor);
+		}
+
+		getCreatures(): Actor[] {
+			return this.actors;
+		}
+
+		getItems(): Actor[] {
+			return this.items;
+		}
+
+		getCorpses(): Actor[] {
+			return this.corpses;
+		}
+
+		getStairsUp(): Actor {
+			return this.stairsUp;
+		}
+
+		getStairsDown(): Actor {
+			return this.stairsDown;
+		}
+
+		clear() {
+			this.actors = [];
+			this.corpses = [];
+			this.items = [];
+		}
+
+		private renderActorList(actors: Actor[], map: Map) {
+			var nbActors: number = actors.length;
+			for (var i: number = 0; i < nbActors; i++) {
+				var actor: Actor = actors[i];
+				if ( map.shouldRenderActor(actor) ) {
+					actor.render();
+				}
+			}
+		}
+
+		renderActors(map: Map) {
+			this.renderActorList(this.corpses, map);
+			this.renderActorList(this.items, map);
+			this.renderActorList(this.actors, map);
+		}
+
+		isPlayerDead(): boolean {
+			return this.player.destructible.isDead();
+		}
+
+		/*
+			Function: updateActors
+			Triggers actors' A.I. during a new game turn.
+			Moves the dead actors from the actor list to the corpse list.
+		*/
+		updateActors(map: Map) {
+			var nbActors: number = this.actors.length;
+			for (var i = 1; i < nbActors; i++) {
+				var actor: Actor = this.actors[i];
+				actor.update( map );
+				if ( actor.destructible && actor.destructible.isDead() ) {
+					this.actors.splice(i, 1);
+					i--;
+					nbActors--;
+					this.corpses.push(actor);
+				}
+			}
+		}
+
+		removeItem(item: Actor) {
+			var idx: number = this.items.indexOf(item);
+			if ( idx !== -1 ) {
+				this.items.splice(idx, 1);
+			}
+		}
+
+		/*
+			Function: createStairs
+			Create the actors for up and down stairs. The position is not important, actors will be placed by the dungeon builder.
+		*/
+		createStairs() {
+			this.stairsUp = new Actor();
+			this.stairsUp.init(0, 0, "<", "stairs up", "#FFFFFF");
+			this.stairsUp.fovOnly = false;
+			this.items.push(this.stairsUp);
+			this.stairsDown = new Actor();
+			this.stairsDown.init(0, 0, ">", "stairs down", "#FFFFFF");
+			this.stairsDown.fovOnly = false;
+			this.items.push(this.stairsDown);
+		}
+
+		createPlayer() {
+			this.player = new Player();
+			this.player.init(0, 0, "@", "player", "#FFFFFF");
+			this.actors.push(this.player);
+		}
+
+		load(persister: Persister) {
+			this.actors = persister.loadFromKey(Constants.PERSISTENCE_ACTORS_KEY);
+			this.player = <Player>this.actors[0];
+			this.items = persister.loadFromKey(Constants.PERSISTENCE_ITEMS_KEY);
+			this.stairsUp = this.items[0];
+			this.stairsDown = this.items[1];
+			this.corpses = persister.loadFromKey(Constants.PERSISTENCE_CORPSES_KEY);
+		}
+
+		save(persister: Persister) {
+			persister.saveToKey(Constants.PERSISTENCE_ACTORS_KEY, this.actors);
+			persister.saveToKey(Constants.PERSISTENCE_ITEMS_KEY, this.items);
+			persister.saveToKey(Constants.PERSISTENCE_CORPSES_KEY, this.corpses);
+		}
+
+		deleteSavedGame(persister: Persister) {
+			persister.deleteKey(Constants.PERSISTENCE_ACTORS_KEY);
+			persister.deleteKey(Constants.PERSISTENCE_ITEMS_KEY);
+			persister.deleteKey(Constants.PERSISTENCE_CORPSES_KEY);
+		}
+		/*
+			Function: findClosestActor
+
+			In the `actors` array, find the closest actor (except the player) from position `pos` within `range`.
+			If range is 0, no range limitation.
+		*/
+		findClosestActor( pos: Yendor.Position, range: number, actors: Actor[] ) : Actor {
+			var bestDistance: number = 1E8;
+			var closestActor: Actor = undefined;
+			var player: Actor = this.getPlayer();
+			actors.forEach(function(actor: Actor) {
+				if ( actor !== player ) {
+					var distance: number = Yendor.Position.distance(pos, actor);
+					if ( distance < bestDistance && (distance < range || range === 0) ) {
+						bestDistance = distance;
+						closestActor = actor;
+					}
+				}
+			});
+			return closestActor;
+		}
+
+		/*
+			Function: findActorsOnCell
+
+			Parameters:
+			pos - a position on the map
+			actors - the list of actors to scan (either actors, corpses or items)
+
+			Returns:
+			an array containing all the living actors on the cell
+
+		*/
+		findActorsOnCell( pos: Yendor.Position, actors: Actor[]) : Actor[] {
+			var actorsOnCell: Actor[] = [];
+			var nbActors: number = actors.length;
+			for (var i: number = 0; i < nbActors; i++) {
+				var actor: Actor = actors[i];
+				if ( actor.x === pos.x && actor.y === pos.y ) {
+					actorsOnCell.push(actor);
+				}
+			}
+			return actorsOnCell;
+		}
+
+		/*
+			Function: findActorsInRange
+			Returns all actor near a position
+
+			Parameters:
+			pos - a position on the map
+			range - maximum distance from position
+			actors - actor array to look up
+
+			Returns:
+			an actor array containing all actor within range
+		*/
+		findActorsInRange( pos: Yendor.Position, range: number, actors: Actor[]): Actor[] {
+			var actorsInRange: Actor[] = [];
+			var nbActors: number = actors.length;
+			for (var i: number = 0; i < nbActors; i++) {
+				var actor: Actor = actors[i];
+				if (Yendor.Position.distance(pos, actor) <= range ) {
+					actorsInRange.push( actor );
+				}
+			}
+			return actorsInRange;
+		}
 	}
 
 	/********************************************************************************
@@ -303,9 +495,9 @@ module Game {
 		get container() {return this._container; }
 		set container(newValue: Container) {this._container = newValue; }
 
-		update(map: Map, actorManager: ActorManager) {
+		update(map: Map) {
 			if ( this._ai ) {
-				this._ai.update(this, map, actorManager);
+				this._ai.update(this, map);
 			}
 		}
 
