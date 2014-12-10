@@ -26,21 +26,24 @@ module Game {
 			}
 		}
 
-		createRoom( map: Map, actorManager: ActorManager, first: boolean, x1: number, y1: number, x2: number, y2: number ) {
+		createRoom( map: Map, first: boolean, x1: number, y1: number, x2: number, y2: number ) {
 			this.dig( map, x1, y1, x2, y2 );
 			if ( first ) {
 				// put the player and stairs up in the first room
-				actorManager.getPlayer().x = Math.floor((x1 + x2) / 2);
-				actorManager.getPlayer().y = Math.floor((y1 + y2) / 2);
-				actorManager.getStairsUp().x = actorManager.getPlayer().x;
-				actorManager.getStairsUp().y = actorManager.getPlayer().y;
+				var player: Actor = ActorManager.instance.getPlayer();
+				var stairsUp: Actor = ActorManager.instance.getStairsUp();
+				player.x = Math.floor((x1 + x2) / 2);
+				player.y = Math.floor((y1 + y2) / 2);
+				stairsUp.x = player.x;
+				stairsUp.y = player.y;
 			} else {
 				var rng: Yendor.Random = new Yendor.ComplementaryMultiplyWithCarryRandom();
-				this.createMonsters(x1, y1, x2, y2, rng, map, actorManager);
-				this.createItems(x1, y1, x2, y2, rng, map, actorManager);
+				this.createMonsters(x1, y1, x2, y2, rng, map);
+				this.createItems(x1, y1, x2, y2, rng, map);
 				// stairs down will be in the last room
-				actorManager.getStairsDown().x = Math.floor((x1 + x2) / 2);
-				actorManager.getStairsDown().y = Math.floor((y1 + y2) / 2);
+				var stairsDown: Actor = ActorManager.instance.getStairsDown();
+				stairsDown.x = Math.floor((x1 + x2) / 2);
+				stairsDown.y = Math.floor((y1 + y2) / 2);
 			}
 		}
 
@@ -81,25 +84,25 @@ module Game {
 			return item;
 		}
 
-		private createMonsters(x1: number, y1: number, x2: number, y2: number, rng: Yendor.Random, map: Map, actorManager: ActorManager) {
+		private createMonsters(x1: number, y1: number, x2: number, y2: number, rng: Yendor.Random, map: Map) {
 			var monsterCount = rng.getNumber(0, Constants.MAX_MONSTERS_PER_ROOM);
 			while ( monsterCount > 0 ) {
 				var x = rng.getNumber(x1, x2);
 				var y = rng.getNumber(y1, y2);
-				if ( map.canWalk(x, y, actorManager)) {
-					actorManager.addCreature(this.createMonster(x, y, rng));
+				if ( map.canWalk(x, y)) {
+					ActorManager.instance.addCreature(this.createMonster(x, y, rng));
 				}
 				monsterCount --;
 			}
 		}
 
-		private createItems(x1: number, y1: number, x2: number, y2: number, rng: Yendor.Random, map: Map, actorManager: ActorManager) {
+		private createItems(x1: number, y1: number, x2: number, y2: number, rng: Yendor.Random, map: Map) {
 			var itemCount = rng.getNumber(0, Constants.MAX_ITEMS_PER_ROOM);
 			while ( itemCount > 0 ) {
 				var x = rng.getNumber(x1, x2);
 				var y = rng.getNumber(y1, y2);
-				if ( map.canWalk(x, y, actorManager)) {
-					actorManager.addItem(this.createItem(x, y, rng));
+				if ( map.canWalk(x, y)) {
+					ActorManager.instance.addItem(this.createItem(x, y, rng));
 				}
 				itemCount --;
 			}
@@ -115,7 +118,6 @@ module Game {
 			= function(node: Yendor.BSPNode, userData: any) {
 			var dungeonBuilder: BspDungeonBuilder = userData[0];
 			var map: Map = userData[1];
-			var actorManager: ActorManager = userData[2];
 			if ( node.isLeaf() ) {
 				var x, y, w, h: number;
 				var rng: Yendor.Random = new Yendor.ComplementaryMultiplyWithCarryRandom();
@@ -123,7 +125,7 @@ module Game {
 				h = rng.getNumber(Constants.ROOM_MIN_SIZE, node.h);
 				x = rng.getNumber(node.x, node.x + node.w - w);
 				y = rng.getNumber(node.y, node.y + node.h - h);
-				dungeonBuilder.createRoom( map, actorManager, dungeonBuilder.roomNum === 0, x, y, x + w - 1, y + h - 1 );
+				dungeonBuilder.createRoom( map, dungeonBuilder.roomNum === 0, x, y, x + w - 1, y + h - 1 );
 				if ( dungeonBuilder.roomNum !== 0 ) {
 					// build a corridor from previous room
 					dungeonBuilder.dig(map, dungeonBuilder.lastx, dungeonBuilder.lasty,
@@ -138,10 +140,10 @@ module Game {
 			return Yendor.BSPTraversalAction.CONTINUE;
 		};
 
-		build(map : Map, actorManager: ActorManager) {
+		build(map : Map) {
 			var bsp: Yendor.BSPNode = new Yendor.BSPNode( 0, 0, map.width, map.height );
 			bsp.splitRecursive(undefined, 8, Constants.ROOM_MIN_SIZE, 1.5 );
-			bsp.traverseInvertedLevelOrder( this.visitNode, [this, map, actorManager] );
+			bsp.traverseInvertedLevelOrder( this.visitNode, [this, map] );
 		}
 	}
 
@@ -178,12 +180,13 @@ module Game {
 			return !this.map.isWalkable(x, y);
 		}
 
-		canWalk(x: number, y: number, actorManager: ActorManager): boolean {
+		canWalk(x: number, y: number): boolean {
 			if ( this.isWall(x, y) ) {
 				return false;
 			}
-			var actorsOnCell: Actor[] = actorManager.findActorsOnCell(new Yendor.Position(x, y), actorManager.getItems());
-			actorsOnCell = actorsOnCell.concat(actorManager.findActorsOnCell(new Yendor.Position(x, y), actorManager.getCreatures()));
+			var actorsOnCell: Actor[] = ActorManager.instance.findActorsOnCell(new Yendor.Position(x, y), ActorManager.instance.getItems());
+			actorsOnCell = actorsOnCell.concat(ActorManager.instance.findActorsOnCell(
+				new Yendor.Position(x, y), ActorManager.instance.getCreatures()));
 			for ( var i: number = 0; i < actorsOnCell.length; i++) {
 				var actor: Actor = actorsOnCell[i];
 				if ( actor.isBlocking() ) {

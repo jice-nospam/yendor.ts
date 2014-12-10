@@ -57,7 +57,7 @@ module Game {
 			Function: render
 			To be overloaded by extending classes.
 		*/
-		render(map: Map, actorManager: ActorManager, destination: Yendor.Console) {
+		render(map: Map, destination: Yendor.Console) {
 			this.__console.blit(destination, this.x, this.y);
 		}
 	}
@@ -110,9 +110,9 @@ module Game {
 				case EventType.MOUSE_MOVE :
 					var pos: Yendor.Position = event.data;
 					if ( event.map.isExplored(pos.x, pos.y) ) {
-						var actorsOnCell: Actor[] = event.actorManager.findActorsOnCell(pos, event.actorManager.getCreatures());
-						actorsOnCell = actorsOnCell.concat(event.actorManager.findActorsOnCell(pos, event.actorManager.getItems()));
-						actorsOnCell = actorsOnCell.concat(event.actorManager.findActorsOnCell(pos, event.actorManager.getCorpses()));
+						var actorsOnCell: Actor[] = ActorManager.instance.findActorsOnCell(pos, ActorManager.instance.getCreatures());
+						actorsOnCell = actorsOnCell.concat(ActorManager.instance.findActorsOnCell(pos, ActorManager.instance.getItems()));
+						actorsOnCell = actorsOnCell.concat(ActorManager.instance.findActorsOnCell(pos, ActorManager.instance.getCorpses()));
 						this.handleMouseLook( event.map, actorsOnCell );
 					}
 				break;
@@ -132,17 +132,17 @@ module Game {
 			}
 		}
 
-		render(map: Map, actorManager: ActorManager, destination: Yendor.Console) {
+		render(map: Map, destination: Yendor.Console) {
 			this.console.clearBack("black");
 			this.console.clearText();
-			var player: Player = <Player>actorManager.getPlayer();
+			var player: Player = ActorManager.instance.getPlayer();
 			this.renderBar(1, 1, Constants.STAT_BAR_WIDTH, "HP", player.destructible.hp,
 				player.destructible.maxHp, Constants.HEALTH_BAR_BACKGROUND, Constants.HEALTH_BAR_FOREGROUND);
 			this.renderBar(1, 5, Constants.STAT_BAR_WIDTH, "XP(" + player.xpLevel + ")", player.destructible.xp,
 				player.getNextLevelXp(), Constants.XP_BAR_BACKGROUND, Constants.XP_BAR_FOREGROUND);
 			this.console.print(0, 0, this.mouseLookText);
 			this.renderMessages();
-			super.render(map, actorManager, destination);
+			super.render(map, destination);
 		}
 
 		clear() {
@@ -188,13 +188,11 @@ module Game {
 	 ********************************************************************************/
 	export class InventoryPanel extends Gui implements EventListener {
 		static TITLE: string = "=== inventory - ESC to close ===";
-		private actorManager: ActorManager;
 		private selectedItem: number;
 
-		constructor(width: number, height: number, actorManager: ActorManager) {
+		constructor(width: number, height: number) {
 			super(width, height);
 			this.setModal();
-			this.actorManager = actorManager;
 			EventBus.instance.registerListener(this, EventType.OPEN_INVENTORY);
 		}
 
@@ -218,12 +216,12 @@ module Game {
 		}
 
 		private useItem(index: number) {
-			var player: Actor = this.actorManager.getPlayer();
+			var player: Actor = ActorManager.instance.getPlayer();
 			if ( index >= 0 && index < player.container.size() ) {
 				var item: Actor = player.container.get(index);
 				if (item.pickable) {
 					this.hide();
-					item.pickable.use(item, player, this.actorManager);
+					item.pickable.use(item, player);
 				}
 			}
 		}
@@ -244,13 +242,13 @@ module Game {
 
 		private selectItemAtPos(pos: Yendor.Position) {
 			this.selectedItem = pos.y - (this.y + 1);
-			var player: Actor = this.actorManager.getPlayer();
+			var player: Actor = ActorManager.instance.getPlayer();
 			if ( this.selectedItem < 0 || this.selectedItem > player.container.size() ) {
 				this.selectedItem = undefined;
 			}
 		}
 
-		render(map: Map, actorManager: ActorManager, destination: Yendor.Console) {
+		render(map: Map, destination: Yendor.Console) {
 			this.console.clearBack(Constants.INVENTORY_BACKGROUND);
 			this.console.clearText();
 			this.x = Math.floor( destination.width / 2 - this.width / 2 );
@@ -258,7 +256,7 @@ module Game {
 			var shortcut: number = "a".charCodeAt(0);
 			var y: number = 1;
 			this.console.print(Math.floor(this.width / 2 - InventoryPanel.TITLE.length / 2), 0, InventoryPanel.TITLE);
-			var player: Actor = this.actorManager.getPlayer();
+			var player: Actor = ActorManager.instance.getPlayer();
 			for ( var i: number = 0; i < player.container.size(); ++i) {
 				var item: Actor = player.container.get(i);
 				this.console.print(2, y, "(" + String.fromCharCode(shortcut) + ") " + item.name, Constants.INVENTORY_FOREGROUND );
@@ -269,7 +267,7 @@ module Game {
 				y++;
 				shortcut++;
 			}
-			super.render(map, actorManager, destination);
+			super.render(map, destination);
 		}
 	}
 
@@ -318,7 +316,7 @@ module Game {
 			}
 		}
 
-		render(map: Map, actorManager: ActorManager, console: Yendor.Console) {
+		render(map: Map, console: Yendor.Console) {
 			if ( this.tilePos && console.contains(this.tilePos) ) {
 				console.setChar( this.tilePos.x, this.tilePos.y, this.tileIsValid ? "+" : "x" );
 				console.fore[this.tilePos.x][this.tilePos.y] = this.tileIsValid ? "green" : "red";
@@ -426,7 +424,7 @@ module Game {
 			EventBus.instance.unregisterListener(this, EventType.KEY_PRESSED);
 		}
 
-		render(map: Map, actorManager: ActorManager, destination: Yendor.Console) {
+		render(map: Map, destination: Yendor.Console) {
 			this.console.clearBack(Constants.MENU_BACKGROUND);
 			for ( var i = 0; i < this.items.length; i++ ) {
 				if (this.items[i].disabled) {
@@ -438,7 +436,7 @@ module Game {
 					this.console.clearFore(Constants.MENU_FOREGROUND, 0, i + 1, -1, 1);
 				}
 			}
-			super.render(map, actorManager, destination);
+			super.render(map, destination);
 		}
 
 		processEvent( event: Event<any> ) {

@@ -20,7 +20,7 @@ module Game {
 			this.className = "Ai";
 		}
 
-		update(owner: Actor, map: Map, actorManager: ActorManager) {}
+		update(owner: Actor, map: Map) {}
 
 		/*
 			Function: moveOrAttack
@@ -31,20 +31,19 @@ module Game {
 			x - the destination cell x coordinate
 			y - the destination cell y coordinate
 			map - the game map, used to check for wall collisions
-			actorManager - used to check for living actors
 
 			Returns:
 			true if the owner actually moved to the new cell
 		*/
-		protected moveOrAttack(owner: Actor, x: number, y: number, map: Map, actorManager: ActorManager): boolean {
+		protected moveOrAttack(owner: Actor, x: number, y: number, map: Map): boolean {
 			// cannot move or attack a wall! 
 			if ( map.isWall(x, y)) {
 				return false;
 			}
 			// check for living creatures on the destination cell
 			var cellPos: Yendor.Position = new Yendor.Position(x, y);
-			var actors: Actor[] = actorManager.findActorsOnCell(cellPos, actorManager.getCreatures());
-			var player = actorManager.getPlayer();
+			var actors: Actor[] = ActorManager.instance.findActorsOnCell(cellPos, ActorManager.instance.getCreatures());
+			var player = ActorManager.instance.getPlayer();
 			if ( player !== owner && <Yendor.Position>player === cellPos ) {
 				actors.push(player);
 			}
@@ -57,7 +56,7 @@ module Game {
 				}
 			}
 			// check for unpassable items
-			if ( !map.canWalk(x, y, actorManager)) {
+			if ( !map.canWalk(x, y)) {
 				return false;
 			}
 			return true;
@@ -99,9 +98,8 @@ module Game {
 
 			Parameters:
 			owner - the actor owning this PlayerAi (obviously, the player)
-			actorManager - the main actor manager used to check it there are monsters nearby.
 		*/
-		update(owner: Actor, map: Map, actorManager: ActorManager) {
+		update(owner: Actor, map: Map) {
 			// don't update a dead actor
 			if ( owner.destructible && owner.destructible.isDead()) {
 				return;
@@ -150,12 +148,12 @@ module Game {
 					// wait for a turn
 					newTurn = true;
 				break;
-				default : this.handleActionKey(owner, map, actorManager); break;
+				default : this.handleActionKey(owner, map); break;
 			}
 			if ( dx !== 0 || dy !== 0 )  {
 				newTurn = true;
 				// move to the target cell or attack if there's a creature
-				if ( this.moveOrAttack(owner, owner.x + dx, owner.y + dy, map, actorManager) ) {
+				if ( this.moveOrAttack(owner, owner.x + dx, owner.y + dy, map) ) {
 					// the player actually move. Recompute the field of view
 					map.computeFov(owner.x, owner.y, Constants.FOV_RADIUS);
 				}
@@ -177,21 +175,20 @@ module Game {
 			x - the destination cell x coordinate
 			y - the destination cell y coordinate
 			map - the game map, used to check for wall collisions
-			actorManager - used to check for living actors
 
 			Returns:
 			true if the player actually moved to the new cell
 		*/
-		protected moveOrAttack(owner: Actor, x: number, y: number, map: Map, actorManager: ActorManager): boolean {
-			if ( !super.moveOrAttack(owner, x, y, map, actorManager) ) {
+		protected moveOrAttack(owner: Actor, x: number, y: number, map: Map): boolean {
+			if ( !super.moveOrAttack(owner, x, y, map) ) {
 				return false;
 			}
 			var cellPos: Yendor.Position = new Yendor.Position(x, y);
 			// no living actor. Log exising corpses and items
-			actorManager.findActorsOnCell(cellPos, actorManager.getCorpses()).forEach(function(actor: Actor) {
+			ActorManager.instance.findActorsOnCell(cellPos, ActorManager.instance.getCorpses()).forEach(function(actor: Actor) {
 				log("There's a " + actor.name + " here");
 			});
-			actorManager.findActorsOnCell(cellPos, actorManager.getItems()).forEach(function(actor: Actor) {
+			ActorManager.instance.findActorsOnCell(cellPos, ActorManager.instance.getItems()).forEach(function(actor: Actor) {
 				log("There's a " + actor.name + " here");
 			});
 			// move the player
@@ -200,17 +197,19 @@ module Game {
 			return true;
 		}
 
-		private handleActionKey(owner: Actor, map: Map, actorManager: ActorManager) {
+		private handleActionKey(owner: Actor, map: Map) {
 			if ( this.keyChar === "g" ) {
-				this.pickupItem(owner, map, actorManager);
+				this.pickupItem(owner, map);
 			} else if ( this.keyChar === ">") {
-				if ( actorManager.getStairsDown().x === owner.x && actorManager.getStairsDown().y === owner.y ) {
+				var stairsDown: Actor = ActorManager.instance.getStairsDown();
+				if ( stairsDown.x === owner.x && stairsDown.y === owner.y ) {
 					EventBus.instance.publishEvent(new Event<void>(EventType.NEXT_LEVEL) );
 				} else {
 					log("There are no stairs going down here.");
 				}
 			} else if ( this.keyChar === "<") {
-				if ( actorManager.getStairsUp().x === owner.x && actorManager.getStairsUp().y === owner.y ) {
+				var stairsUp: Actor = ActorManager.instance.getStairsUp();
+				if ( stairsUp.x === owner.x && stairsUp.y === owner.y ) {
 					EventBus.instance.publishEvent(new Event<void>(EventType.PREV_LEVEL) );
 				} else {
 					log("There are no stairs going up here.");
@@ -218,10 +217,10 @@ module Game {
 			}
 		}
 
-		private pickupItem(owner: Actor, map: Map, actorManager: ActorManager) {
+		private pickupItem(owner: Actor, map: Map) {
 			var found: boolean = false;
 			EventBus.instance.publishEvent(new Event<GameStatus>(EventType.CHANGE_STATUS, GameStatus.NEW_TURN));
-			actorManager.getItems().some(function(item: Actor) {
+			ActorManager.instance.getItems().some(function(item: Actor) {
 				if ( item.pickable && item.x === owner.x && item.y === owner.y ) {
 					found = true;
 					if ( item.pickable.pick(item, owner)) {
@@ -261,16 +260,15 @@ module Game {
 			Parameters:
 			owner - the actor owning this MonsterAi (the monster)
 			map - the game map (used to check player line of sight)
-			actorManager - used to get the player actor
 		*/
-		update(owner: Actor, map: Map, actorManager: ActorManager) {
+		update(owner: Actor, map: Map) {
 			// don't update a dead monster
 			if ( owner.destructible && owner.destructible.isDead()) {
 				return;
 			}
 			// attack the player when at melee range, else try to track his scent
-			this.moveOrAttack(owner, actorManager.getPlayer().x, actorManager.getPlayer().y,
-				map, actorManager);
+			var player: Actor = ActorManager.instance.getPlayer();
+			this.moveOrAttack(owner, player.x, player.y, map);
 		}
 
 		/*
@@ -282,9 +280,8 @@ module Game {
 			x - the destination cell x coordinate
 			y - the destination cell y coordinate
 			map - the game map. Used to check if player is in sight
-			actorManager - used to get the player actor
 		*/
-		moveOrAttack(owner: Actor, x: number, y: number, map: Map, actorManager: ActorManager): boolean {
+		moveOrAttack(owner: Actor, x: number, y: number, map: Map): boolean {
 			var dx: number = x - owner.x;
 			var dy: number = y - owner.y;
 			// compute distance from player
@@ -292,16 +289,16 @@ module Game {
 			if ( distance < 2 ) {
 				// at melee range. Attack !
 				if ( owner.attacker ) {
-					owner.attacker.attack(owner, actorManager.getPlayer());
+					owner.attacker.attack(owner, ActorManager.instance.getPlayer());
 				}
 			} else if ( map.isInFov(owner.x, owner.y) ) {
 				// not at melee range, but in sight. Move towards him
 				dx = dx / distance;
 				dy = dy / distance;
-				this.move(owner, dx, dy, map, actorManager);
+				this.move(owner, dx, dy, map);
 			} else {
 				// player not in range. Use scent tracking
-				this.trackScent(owner, map, actorManager);
+				this.trackScent(owner, map);
 			}
 			return true;
 		}
@@ -315,20 +312,19 @@ module Game {
 			dx - horizontal direction
 			dy - vertical direction
 			map - the game map (to check if a cell is walkable)
-			actorManager - to check blocking actors
 		*/
-		private move(owner: Actor, dx: number, dy: number, map: Map, actorManager: ActorManager) {
+		private move(owner: Actor, dx: number, dy: number, map: Map) {
 			// compute the unitary move vector
 			var stepdx: number = dx > 0 ? 1 : (dx < 0 ? -1 : 0);
 			var stepdy: number = dy > 0 ? 1 : (dy < 0 ? -1 : 0);
-			if ( map.canWalk(owner.x + stepdx, owner.y + stepdy, actorManager)) {
+			if ( map.canWalk(owner.x + stepdx, owner.y + stepdy)) {
 				// can walk
 				owner.x += stepdx;
 				owner.y += stepdy;
-			} else if ( map.canWalk(owner.x + stepdx, owner.y, actorManager)) {
+			} else if ( map.canWalk(owner.x + stepdx, owner.y)) {
 				// horizontal slide
 				owner.x += stepdx;
-			} else if ( map.canWalk(owner.x, owner.y + stepdy, actorManager)) {
+			} else if ( map.canWalk(owner.x, owner.y + stepdy)) {
 				// vertical slide
 				owner.y += stepdy;
 			}
@@ -379,12 +375,12 @@ module Game {
 			Function: trackScent
 			Move towards the adjacent cell with the highest scent value
 		*/
-		private trackScent(owner: Actor, map: Map, actorManager: ActorManager) {
+		private trackScent(owner: Actor, map: Map) {
 			// get the adjacent cell with the highest scent value
 			var bestCellIndex: number = this.findHighestScentCellIndex(owner, map);
 			if ( bestCellIndex !== -1 ) {
 				// found. try to move 
-				this.move(owner, MonsterAi.TDX[bestCellIndex], MonsterAi.TDY[bestCellIndex], map, actorManager);
+				this.move(owner, MonsterAi.TDX[bestCellIndex], MonsterAi.TDY[bestCellIndex], map);
 			}
 		}
 	}
@@ -404,7 +400,7 @@ module Game {
 			this._nbTurns = _nbTurns;
 		}
 
-		update(owner: Actor, map: Map, actorManager: ActorManager) {
+		update(owner: Actor, map: Map) {
 			this._nbTurns--;
 			if ( this._nbTurns === 0 ) {
 				owner.ai = this.oldAi;
@@ -435,15 +431,14 @@ module Game {
 			Parameters:
 			owner - the actor owning this MonsterAi (the monster)
 			map - the game map (used to check player line of sight)
-			actorManager - used to get the player actor
 		*/
-		update(owner: Actor, map: Map, actorManager: ActorManager) {
+		update(owner: Actor, map: Map) {
 			// don't update a dead monster
 			if ( owner.destructible && owner.destructible.isDead()) {
 				return;
 			}
-			this.moveRandomly(owner, map, actorManager);
-			super.update(owner, map, actorManager);
+			this.moveRandomly(owner, map);
+			super.update(owner, map);
 		}
 
 		/*
@@ -453,12 +448,11 @@ module Game {
 			Parameters:
 			owner - the actor owning this MonsterAi (the monster)
 			map - the game map. Used to check if player is in sight
-			actorManager - used to get the player actor
 		*/
-		private moveRandomly(owner: Actor, map: Map, actorManager: ActorManager) {
+		private moveRandomly(owner: Actor, map: Map) {
 			var dx: number = rng.getNumber(-1, 1);
 			var dy: number = rng.getNumber(-1, 1);
-			if (dx !== 0 && dy !== 0 && super.moveOrAttack(owner, owner.x + dx, owner.y + dy, map, actorManager)) {
+			if (dx !== 0 && dy !== 0 && super.moveOrAttack(owner, owner.x + dx, owner.y + dy, map)) {
 				owner.x += dx;
 				owner.y += dy;
 			}

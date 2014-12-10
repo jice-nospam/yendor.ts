@@ -66,17 +66,16 @@ module Game {
 			Parameters:
 			owner - the actor owning the effect (the magic item or the scroll)
 			wearer - the actor using the item
-			actorManager -
 		*/
-		selectTargets(owner: Actor, wearer: Actor, actorManager: ActorManager,
-			applyEffects: (owner: Actor, wearer: Actor, actors: Actor[]) => void) {
+		selectTargets(owner: Actor, wearer: Actor, applyEffects: (owner: Actor, wearer: Actor, actors: Actor[]) => void) {
 			var selectedTargets: Actor[] = [];
+			var creatures: Actor[] = ActorManager.instance.getCreatures();
 			switch (this._method) {
 				case TargetSelectionMethod.WEARER :
 					selectedTargets.push(wearer);
 				break;
 				case TargetSelectionMethod.WEARER_CLOSEST_ENEMY :
-					var actor = actorManager.findClosestActor(wearer, this.range, actorManager.getCreatures());
+					var actor = ActorManager.instance.findClosestActor(wearer, this.range, creatures);
 					if ( actor ) {
 						selectedTargets.push(actor);
 					}
@@ -85,7 +84,7 @@ module Game {
 					log("Left-click a target creature,\nor right-click to cancel.", "red");
 					EventBus.instance.publishEvent(new Event<TilePickerListener>(EventType.PICK_TILE,
 						function(pos: Yendor.Position) {
-							var actors: Actor[] = actorManager.findActorsOnCell( pos, actorManager.getCreatures() );
+							var actors: Actor[] = ActorManager.instance.findActorsOnCell( pos, creatures);
 							if (actors.length > 0) {
 								applyEffects(owner, wearer, actors);
 							}
@@ -99,7 +98,7 @@ module Game {
 					var theRange = this.range;
 					EventBus.instance.publishEvent(new Event<TilePickerListener>(EventType.PICK_TILE,
 						function(pos: Yendor.Position) {
-							var actors: Actor[] = actorManager.findActorsInRange( pos, theRange, actorManager.getCreatures() );
+							var actors: Actor[] = ActorManager.instance.findActorsInRange( pos, theRange, creatures );
 							if (actors.length > 0) {
 								applyEffects(owner, wearer, actors);
 							}
@@ -273,9 +272,9 @@ module Game {
 			owner - the actor owning this Pickable (the item)
 			wearer - the container
 		*/
-		use(owner: Actor, wearer: Actor, actorManager: ActorManager) {
+		use(owner: Actor, wearer: Actor) {
 			if ( this._targetSelector ) {
-				this._targetSelector.selectTargets(owner, wearer, actorManager, this.applyEffectToActorList.bind(this));
+				this._targetSelector.selectTargets(owner, wearer, this.applyEffectToActorList.bind(this));
 				if ( this._targetSelector.method !== TargetSelectionMethod.SELECTED_RANGE
 					&& this._targetSelector.method !== TargetSelectionMethod.SELECTED_ACTOR ) {
 					EventBus.instance.publishEvent(new Event<GameStatus>(EventType.CHANGE_STATUS, GameStatus.NEW_TURN));
