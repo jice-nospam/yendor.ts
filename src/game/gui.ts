@@ -97,8 +97,8 @@ module Game {
 			super(width, height);
 			this.className = "StatusPanel";
 			this.messageHeight = height - 1;
-			EventBus.getInstance().registerListener(this, EventType.LOG_MESSAGE);
-			EventBus.getInstance().registerListener(this, EventType.MOUSE_MOVE);
+			EventBus.instance.registerListener(this, EventType.LOG_MESSAGE);
+			EventBus.instance.registerListener(this, EventType.MOUSE_MOVE);
 		}
 
 		processEvent( event: Event<any> ) {
@@ -195,7 +195,7 @@ module Game {
 			super(width, height);
 			this.setModal();
 			this.actorManager = actorManager;
-			EventBus.getInstance().registerListener(this, EventType.OPEN_INVENTORY);
+			EventBus.instance.registerListener(this, EventType.OPEN_INVENTORY);
 		}
 
 		processEvent( event: Event<any> ) {
@@ -230,16 +230,16 @@ module Game {
 
 		show() {
 			super.show();
-			EventBus.getInstance().registerListener(this, EventType.KEY_PRESSED);
-			EventBus.getInstance().registerListener(this, EventType.MOUSE_MOVE);
-			EventBus.getInstance().registerListener(this, EventType.MOUSE_CLICK);
+			EventBus.instance.registerListener(this, EventType.KEY_PRESSED);
+			EventBus.instance.registerListener(this, EventType.MOUSE_MOVE);
+			EventBus.instance.registerListener(this, EventType.MOUSE_CLICK);
 		}
 
 		hide() {
 			super.hide();
-			EventBus.getInstance().unregisterListener(this, EventType.KEY_PRESSED);
-			EventBus.getInstance().unregisterListener(this, EventType.MOUSE_MOVE);
-			EventBus.getInstance().unregisterListener(this, EventType.MOUSE_CLICK);
+			EventBus.instance.unregisterListener(this, EventType.KEY_PRESSED);
+			EventBus.instance.unregisterListener(this, EventType.MOUSE_MOVE);
+			EventBus.instance.unregisterListener(this, EventType.MOUSE_CLICK);
 		}
 
 		private selectItemAtPos(pos: Yendor.Position) {
@@ -296,7 +296,7 @@ module Game {
 			super(Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT);
 			this.map = map;
 			this.setModal();
-			EventBus.getInstance().registerListener(this, EventType.PICK_TILE);
+			EventBus.instance.registerListener(this, EventType.PICK_TILE);
 		}
 
 		processEvent( event: Event<any> ) {
@@ -311,7 +311,7 @@ module Game {
 						return;
 					} else if (this.listener) {
 						this.listener(this.tilePos);
-						EventBus.getInstance().publishEvent(new Event<GameStatus>(EventType.CHANGE_STATUS, GameStatus.NEW_TURN));
+						EventBus.instance.publishEvent(new Event<GameStatus>(EventType.CHANGE_STATUS, GameStatus.NEW_TURN));
 					}
 				}
 				this.deactivate();
@@ -327,8 +327,8 @@ module Game {
 
 		private activate(listener: TilePickerListener) {
 			this.listener = listener;
-			EventBus.getInstance().registerListener(this, EventType.MOUSE_MOVE);
-			EventBus.getInstance().registerListener(this, EventType.MOUSE_CLICK);
+			EventBus.instance.registerListener(this, EventType.MOUSE_MOVE);
+			EventBus.instance.registerListener(this, EventType.MOUSE_CLICK);
 			this.show();
 			this.tileIsValid = false;
 		}
@@ -339,8 +339,8 @@ module Game {
 		}
 
 		private deactivate() {
-			EventBus.getInstance().unregisterListener(this, EventType.MOUSE_MOVE);
-			EventBus.getInstance().unregisterListener(this, EventType.MOUSE_CLICK);
+			EventBus.instance.unregisterListener(this, EventType.MOUSE_MOVE);
+			EventBus.instance.unregisterListener(this, EventType.MOUSE_CLICK);
 			this.hide();
 		}
 	}
@@ -414,16 +414,16 @@ module Game {
 			this.resizeConsole();
 			this.drawMenu();
 			super.show();
-			EventBus.getInstance().registerListener(this, EventType.MOUSE_MOVE);
-			EventBus.getInstance().registerListener(this, EventType.MOUSE_CLICK);
-			EventBus.getInstance().registerListener(this, EventType.KEY_PRESSED);
+			EventBus.instance.registerListener(this, EventType.MOUSE_MOVE);
+			EventBus.instance.registerListener(this, EventType.MOUSE_CLICK);
+			EventBus.instance.registerListener(this, EventType.KEY_PRESSED);
 		}
 
 		hide() {
 			super.hide();
-			EventBus.getInstance().unregisterListener(this, EventType.MOUSE_MOVE);
-			EventBus.getInstance().unregisterListener(this, EventType.MOUSE_CLICK);
-			EventBus.getInstance().unregisterListener(this, EventType.KEY_PRESSED);
+			EventBus.instance.unregisterListener(this, EventType.MOUSE_MOVE);
+			EventBus.instance.unregisterListener(this, EventType.MOUSE_CLICK);
+			EventBus.instance.unregisterListener(this, EventType.KEY_PRESSED);
 		}
 
 		render(map: Map, actorManager: ActorManager, destination: Yendor.Console) {
@@ -459,7 +459,7 @@ module Game {
 				if (! item.disabled ) {
 					this.hide();
 					if ( item.eventType ) {
-						EventBus.getInstance().publishEvent(new Event<MenuItem>(item.eventType, item));
+						EventBus.instance.publishEvent(new Event<MenuItem>(item.eventType, item));
 					}
 				}
 			} else {
@@ -484,6 +484,14 @@ module Game {
 				{label: "Resume game"},
 				{label: "New game", eventType: EventType.NEW_GAME}
 			]);
+			EventBus.instance.registerListener(this, EventType.OPEN_MAIN_MENU);
+		}
+		processEvent( event: Event<any> ) {
+			if ( event.type === EventType.OPEN_MAIN_MENU ) {
+				this.show();
+			} else {
+				super.processEvent(event);
+			}
 		}
 	}
 }

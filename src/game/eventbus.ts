@@ -18,10 +18,12 @@ module Game {
 		MOUSE_MOVE,
 		// mouse button press event. Associated data : MouseButton
 		MOUSE_CLICK,
-		// open the tile picker. Associated data : the reply event
+		// open the tile picker. Associated data : TilePickerListener
 		PICK_TILE,
 		// open the inventory
 		OPEN_INVENTORY,
+		// open the main menu
+		OPEN_MAIN_MENU,
 		REMOVE_ACTOR,
 		// starts a new game
 		NEW_GAME,
@@ -29,7 +31,7 @@ module Game {
 		NEXT_LEVEL,
 		// go to previous dungeon level
 		PREV_LEVEL,
-		// player gains xp
+		// player gains xp. Associated data : number (xp amount)
 		GAIN_XP,
 	}
 
@@ -56,19 +58,17 @@ module Game {
 		processEvent( ev: Event<any> );
 	}
 	export class EventBus {
-		private static instance: EventBus = new EventBus();
+		private static _instance: EventBus = new EventBus();
+		static get instance() { return EventBus._instance; }
 
 		private listeners: Array<EventListener[]> = [];
 		private actorManager: ActorManager;
 		private map: Map;
 
-		static getInstance() { return EventBus.instance; }
-
 		init(actorManager: ActorManager, map: Map) {
 			this.map = map;
 			this.actorManager = actorManager;
 		}
-
 
 		registerListener(listener: EventListener, type: EventType) {
 			if (!this.listeners[type]) {
