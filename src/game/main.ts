@@ -55,13 +55,13 @@ module Game {
 		}
 
 		private initEventBus() {
-			EventBus.getInstance().init(this, this.map);
-			EventBus.getInstance().registerListener(this, EventType.CHANGE_STATUS);
-			EventBus.getInstance().registerListener(this, EventType.REMOVE_ACTOR);
-			EventBus.getInstance().registerListener(this, EventType.NEW_GAME);
-			EventBus.getInstance().registerListener(this, EventType.NEXT_LEVEL);
-			EventBus.getInstance().registerListener(this, EventType.PREV_LEVEL);
-			EventBus.getInstance().registerListener(this, EventType.GAIN_XP);
+			EventBus.instance.init(this, this.map);
+			EventBus.instance.registerListener(this, EventType.CHANGE_STATUS);
+			EventBus.instance.registerListener(this, EventType.REMOVE_ACTOR);
+			EventBus.instance.registerListener(this, EventType.NEW_GAME);
+			EventBus.instance.registerListener(this, EventType.NEXT_LEVEL);
+			EventBus.instance.registerListener(this, EventType.PREV_LEVEL);
+			EventBus.instance.registerListener(this, EventType.GAIN_XP);
 		}
 
 		private createStatusPanel() {
@@ -354,11 +354,11 @@ module Game {
 			}
 			if (! Gui.getActiveModal() ) {
 				if ( !this.handleGlobalShortcuts(event) ) {
-					EventBus.getInstance().publishEvent(new Event<KeyboardEvent>(EventType.KEY_PRESSED, event));
+					EventBus.instance.publishEvent(new Event<KeyboardEvent>(EventType.KEY_PRESSED, event));
 					this.player.ai.update(this.player, this.map, this);
 				}
 			} else {
-				EventBus.getInstance().publishEvent(new Event<KeyboardEvent>(EventType.KEY_PRESSED, event));
+				EventBus.instance.publishEvent(new Event<KeyboardEvent>(EventType.KEY_PRESSED, event));
 			}
 			if ( this.status === GameStatus.NEW_TURN )  {
 				this.handleNewTurn();
@@ -368,11 +368,11 @@ module Game {
 		private handleGlobalShortcuts(event: KeyboardEvent): boolean {
 			if ( event.keyCode === KeyEvent.DOM_VK_ESCAPE ) {
 				// ESC : open game menu
-				this.guis[ Constants.MAIN_MENU_ID ].show();
+				EventBus.instance.publishEvent(new Event<void>(EventType.OPEN_MAIN_MENU));
 				return true;
 			} else if ( event.keyCode === KeyEvent.DOM_VK_I ) {
 				// i : open inventory
-				EventBus.getInstance().publishEvent(new Event<void>(EventType.OPEN_INVENTORY));
+				EventBus.instance.publishEvent(new Event<void>(EventType.OPEN_INVENTORY));
 				return true;
 			}
 			return false;
@@ -406,7 +406,7 @@ module Game {
 		*/
 		handleMouseMove(event: JQueryMouseEventObject) {
 			var pos: Yendor.Position = root.getPositionFromPixels( event.pageX, event.pageY );
-			EventBus.getInstance().publishEvent(new Event<Yendor.Position>( EventType.MOUSE_MOVE, pos));
+			EventBus.instance.publishEvent(new Event<Yendor.Position>( EventType.MOUSE_MOVE, pos));
 		}
 
 		/*
@@ -417,7 +417,7 @@ module Game {
 			event - the JQueryMouseEventObject
 		*/
 		handleMouseClick(event: JQueryMouseEventObject) {
-			EventBus.getInstance().publishEvent(new Event<MouseButton>( EventType.MOUSE_CLICK, <MouseButton>event.which));
+			EventBus.instance.publishEvent(new Event<MouseButton>( EventType.MOUSE_CLICK, <MouseButton>event.which));
 			if ( this.status === GameStatus.NEW_TURN )  {
 				this.handleNewTurn();
 			}
@@ -498,7 +498,7 @@ module Game {
 		Utility to send a LOG_MESSAGE event on the event bus.
 	*/
 	log = function(text: string, color: Yendor.Color = "white") {
-		EventBus.getInstance().publishEvent(new Event<Message>(EventType.LOG_MESSAGE, new Message(color, text)));
+		EventBus.instance.publishEvent(new Event<Message>(EventType.LOG_MESSAGE, new Message(color, text)));
 	};
 
 	/*

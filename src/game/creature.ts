@@ -74,7 +74,7 @@ module Game {
 		constructor() {
 			super();
 			this.className = "PlayerAi";
-			EventBus.getInstance().registerListener(this, EventType.KEY_PRESSED);
+			EventBus.instance.registerListener(this, EventType.KEY_PRESSED);
 		}
 
 		/*
@@ -164,7 +164,7 @@ module Game {
 			this.keyChar = undefined;
 			if ( newTurn ) {
 				// the player moved or try to move. New game turn
-				EventBus.getInstance().publishEvent(new Event<GameStatus>(EventType.CHANGE_STATUS, GameStatus.NEW_TURN));
+				EventBus.instance.publishEvent(new Event<GameStatus>(EventType.CHANGE_STATUS, GameStatus.NEW_TURN));
 			}
 		}
 
@@ -205,13 +205,13 @@ module Game {
 				this.pickupItem(owner, map, actorManager);
 			} else if ( this.keyChar === ">") {
 				if ( actorManager.getStairsDown().x === owner.x && actorManager.getStairsDown().y === owner.y ) {
-					EventBus.getInstance().publishEvent(new Event<void>(EventType.NEXT_LEVEL) );
+					EventBus.instance.publishEvent(new Event<void>(EventType.NEXT_LEVEL) );
 				} else {
 					log("There are no stairs going down here.");
 				}
 			} else if ( this.keyChar === "<") {
 				if ( actorManager.getStairsUp().x === owner.x && actorManager.getStairsUp().y === owner.y ) {
-					EventBus.getInstance().publishEvent(new Event<void>(EventType.PREV_LEVEL) );
+					EventBus.instance.publishEvent(new Event<void>(EventType.PREV_LEVEL) );
 				} else {
 					log("There are no stairs going up here.");
 				}
@@ -220,7 +220,7 @@ module Game {
 
 		private pickupItem(owner: Actor, map: Map, actorManager: ActorManager) {
 			var found: boolean = false;
-			EventBus.getInstance().publishEvent(new Event<GameStatus>(EventType.CHANGE_STATUS, GameStatus.NEW_TURN));
+			EventBus.instance.publishEvent(new Event<GameStatus>(EventType.CHANGE_STATUS, GameStatus.NEW_TURN));
 			actorManager.getItems().some(function(item: Actor) {
 				if ( item.pickable && item.x === owner.x && item.y === owner.y ) {
 					found = true;
@@ -481,7 +481,7 @@ module Game {
 
 		die(owner: Actor) {
 			log(owner.name + " is dead. You gain " + this.xp + " xp.");
-			EventBus.getInstance().publishEvent(new Event<number>( EventType.GAIN_XP, this.xp ));
+			EventBus.instance.publishEvent(new Event<number>( EventType.GAIN_XP, this.xp ));
 			super.die(owner);
 		}
 	}
@@ -499,7 +499,7 @@ module Game {
 		die(owner: Actor) {
 			log("You died!", "red");
 			super.die(owner);
-			EventBus.getInstance().publishEvent(new Event<GameStatus>( EventType.CHANGE_STATUS, GameStatus.DEFEAT ));
+			EventBus.instance.publishEvent(new Event<GameStatus>( EventType.CHANGE_STATUS, GameStatus.DEFEAT ));
 		}
 	}
 

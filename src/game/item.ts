@@ -83,7 +83,7 @@ module Game {
 				break;
 				case TargetSelectionMethod.SELECTED_ACTOR :
 					log("Left-click a target creature,\nor right-click to cancel.", "red");
-					EventBus.getInstance().publishEvent(new Event<TilePickerListener>(EventType.PICK_TILE,
+					EventBus.instance.publishEvent(new Event<TilePickerListener>(EventType.PICK_TILE,
 						function(pos: Yendor.Position) {
 							var actors: Actor[] = actorManager.findActorsOnCell( pos, actorManager.getCreatures() );
 							if (actors.length > 0) {
@@ -97,7 +97,7 @@ module Game {
 				case TargetSelectionMethod.SELECTED_RANGE :
 					log("Left-click a target tile,\nor right-click to cancel.", "red");
 					var theRange = this.range;
-					EventBus.getInstance().publishEvent(new Event<TilePickerListener>(EventType.PICK_TILE,
+					EventBus.instance.publishEvent(new Event<TilePickerListener>(EventType.PICK_TILE,
 						function(pos: Yendor.Position) {
 							var actors: Actor[] = actorManager.findActorsInRange( pos, theRange, actorManager.getCreatures() );
 							if (actors.length > 0) {
@@ -234,7 +234,7 @@ module Game {
 			var confusionScroll = new Actor();
 			confusionScroll.init(x, y, "#", "scroll of confusion", "rgb(255,255,63)");
 			confusionScroll.pickable = new Pickable( new AiChangeEffect(new ConfusedMonsterAi(nbTurns),
-				"The eyes of the creature look vacant,\nas he starts to stumble around!"),
+				"The eyes of the creature look vacant,\nas it starts to stumble around!"),
 				new TargetSelector( TargetSelectionMethod.SELECTED_ACTOR, range));
 			return confusionScroll;
 		}
@@ -258,7 +258,7 @@ module Game {
 		pick(owner: Actor, wearer: Actor): boolean {
 			if ( wearer.container && wearer.container.add(owner)) {
 				// tells the engine to remove this actor from main list
-				EventBus.getInstance().publishEvent(new Event<Actor>(EventType.REMOVE_ACTOR, owner));
+				EventBus.instance.publishEvent(new Event<Actor>(EventType.REMOVE_ACTOR, owner));
 				return true;
 			}
 			// wearer is not a container or is full
@@ -278,7 +278,7 @@ module Game {
 				this._targetSelector.selectTargets(owner, wearer, actorManager, this.applyEffectToActorList.bind(this));
 				if ( this._targetSelector.method !== TargetSelectionMethod.SELECTED_RANGE
 					&& this._targetSelector.method !== TargetSelectionMethod.SELECTED_ACTOR ) {
-					EventBus.getInstance().publishEvent(new Event<GameStatus>(EventType.CHANGE_STATUS, GameStatus.NEW_TURN));
+					EventBus.instance.publishEvent(new Event<GameStatus>(EventType.CHANGE_STATUS, GameStatus.NEW_TURN));
 				}
 			}
 		}
