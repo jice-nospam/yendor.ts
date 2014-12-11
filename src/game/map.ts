@@ -8,7 +8,12 @@ module Game {
 	}
 
 	export class AbstractDungeonBuilder {
-		dig( map: Map, x1: number, y1: number, x2: number, y2: number ) {
+		private dungeonLevel: number;
+		constructor(dungeonLevel: number) {
+			this.dungeonLevel = dungeonLevel;
+		}
+
+		protected dig( map: Map, x1: number, y1: number, x2: number, y2: number ) {
 			if ( x2 < x1 ) {
 				var tmp: number = x2;
 				x2 = x1;
@@ -26,7 +31,7 @@ module Game {
 			}
 		}
 
-		createRoom( map: Map, first: boolean, x1: number, y1: number, x2: number, y2: number ) {
+		protected createRoom( map: Map, first: boolean, x1: number, y1: number, x2: number, y2: number ) {
 			this.dig( map, x1, y1, x2, y2 );
 			if ( first ) {
 				// put the player and stairs up in the first room
@@ -48,7 +53,7 @@ module Game {
 		}
 
 		private createMonster(x: number, y: number, rng: Yendor.Random) {
-			var monster = getRandomChance(rng, {orc: 80, troll: 20});
+			var monster = getRandomChance(rng, {"orc": 80, "troll": 20});
 			if ( monster === "orc" ) {
 				return Actor.createOrc(x, y);
 			} else if ( monster === "troll" ) {
@@ -98,9 +103,13 @@ module Game {
 	}
 
 	export class BspDungeonBuilder extends AbstractDungeonBuilder {
-		roomNum: number = 0;
-		lastx: number;
-		lasty: number;
+		private roomNum: number = 0;
+		private lastx: number;
+		private lasty: number;
+		constructor(dungeonLevel: number) {
+			super(dungeonLevel);
+		}
+
 		private visitNode: (node: Yendor.BSPNode, userData: any) => Yendor.BSPTraversalAction
 			= function(node: Yendor.BSPNode, userData: any) {
 			var dungeonBuilder: BspDungeonBuilder = userData[0];
