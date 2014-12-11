@@ -18,16 +18,17 @@ module Game {
 		to keep the game from trying to load data with an old format.
 		This should be a numeric value (x.y.z not supported).
 	*/
-	var VERSION: string = "0.5";
+	var VERSION: string = "0.6";
 	/*
 		Class: Engine
 		Handles frame rendering and world updating.
 	*/
 	class Engine implements EventListener, GuiManager {
-		map: Map;
-		status : GameStatus;
-		persister: Persister = new LocalStoragePersister();
-		guis: { [index: string]: Gui; } = {};
+		private map: Map;
+		private status : GameStatus;
+		private persister: Persister = new LocalStoragePersister();
+		private guis: { [index: string]: Gui; } = {};
+		private dungeonLevel: number = 1;
 
 		/*
 			Constructor: constructor
@@ -84,17 +85,19 @@ module Game {
 			ActorManager.instance.createStairs();
 			ActorManager.instance.createPlayer();
 			this.map.init( Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT );
-			var dungeonBuilder: BspDungeonBuilder = new BspDungeonBuilder();
+			var dungeonBuilder: BspDungeonBuilder = new BspDungeonBuilder(this.dungeonLevel);
 			dungeonBuilder.build(this.map);
 		}
 
 		private loadGame() {
+			this.dungeonLevel = this.persister.loadFromKey(Constants.PERSISTENCE_DUNGEON_LEVEL);
 			this.persister.loadFromKey(Constants.PERSISTENCE_MAP_KEY, this.map);
 			ActorManager.instance.load(this.persister);
 			this.persister.loadFromKey(Constants.STATUS_PANEL_ID, this.guis[Constants.STATUS_PANEL_ID]);
 		}
 
 		private saveGame() {
+			this.persister.saveToKey(Constants.PERSISTENCE_DUNGEON_LEVEL, this.dungeonLevel);
 			this.persister.saveToKey(Constants.PERSISTENCE_VERSION_KEY, VERSION);
 			this.persister.saveToKey(Constants.PERSISTENCE_MAP_KEY, this.map);
 			ActorManager.instance.save(this.persister);
@@ -102,6 +105,7 @@ module Game {
 		}
 
 		private deleteSavedGame() {
+			this.persister.deleteKey(Constants.PERSISTENCE_DUNGEON_LEVEL);
 			this.persister.deleteKey(Constants.PERSISTENCE_VERSION_KEY);
 			this.persister.deleteKey(Constants.PERSISTENCE_MAP_KEY);
 			ActorManager.instance.deleteSavedGame(this.persister);
@@ -123,6 +127,7 @@ module Game {
 			Go down one level
 		*/
 		private gotoNextLevel() {
+			this.dungeonLevel ++;
 			this.resetGame();
 			ActorManager.instance.createStairs();
 			// don't reset the player
@@ -130,9 +135,10 @@ module Game {
 			ActorManager.instance.addCreature(player);
 			player.destructible.heal(player.destructible.maxHp / 2);
 			log("You take a moment to rest, and recover your strength.", "orange");
-			log("After a rare moment of peace, you descend deeper\ninto the heart of the dungeon...", "red");
+			log("After a rare moment of peace, you descend deeper\ninto the heart of the dungeon...", "orange");
+			log("Level..." + this.dungeonLevel, "red");
 			this.map.init( Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT );
-			var dungeonBuilder: BspDungeonBuilder = new BspDungeonBuilder();
+			var dungeonBuilder: BspDungeonBuilder = new BspDungeonBuilder(this.dungeonLevel);
 			dungeonBuilder.build(this.map);
 			this.computePlayerFov();
 		}
@@ -184,6 +190,7 @@ module Game {
 					break;
 				case  EventType.NEW_GAME :
 					this.guis[ Constants.STATUS_PANEL_ID ].clear();
+					this.dungeonLevel = 1;
 					this.newLevel();
 					break;
 				case EventType.NEXT_LEVEL :

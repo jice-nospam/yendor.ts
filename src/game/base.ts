@@ -54,6 +54,7 @@ module Game {
 
         // persistence local storage keys
         export var PERSISTENCE_VERSION_KEY: string = "version";
+        export var PERSISTENCE_DUNGEON_LEVEL: string = "dungeonLevel";
         export var PERSISTENCE_MAP_KEY: string = "map";
         export var PERSISTENCE_ACTORS_KEY: string = "actors";
         export var PERSISTENCE_ITEMS_KEY: string = "items";
@@ -203,6 +204,7 @@ module Game {
 
     /*
         Function: getRandomChance
+        Choose one option from list of chances, returning its index
 
     */
     export var getRandomChance = function(rng: Yendor.Random, chances: { [index: string]: number }) {
@@ -212,11 +214,14 @@ module Game {
                 chancesSum += chances[key];
             }
         }
+        // the dice will land on some number between 1 and the sum of the chances
         var dice: number = rng.getNumber(0, chancesSum);
         var currentChanceSum = 0;
         for (var key2 in chances) {
             if ( chances.hasOwnProperty(key2) ) {
+                // go through all chances, keeping the sum so far
                 currentChanceSum += chances[key2];
+                // see if the dice landed in the part that corresponds to this choice
                 if ( dice <= currentChanceSum ) {
                     return key2;
                 }
