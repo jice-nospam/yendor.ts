@@ -193,5 +193,36 @@ module Game {
     };
 
 	// utilities
-	export var log: (text: string, color?: Yendor.Color) => void;
+    /*
+        Function: log
+        Add a log to the status panel by sending a LOG_MESSAGE event on the event bus.
+    */
+    export var log = function(text: string, color: Yendor.Color = "white") {
+        EventBus.instance.publishEvent(new Event<Message>(EventType.LOG_MESSAGE, new Message(color, text)));
+    };
+
+    /*
+        Function: getRandomChance
+
+    */
+    export var getRandomChance = function(rng: Yendor.Random, chances: { [index: string]: number }) {
+        var chancesSum: number = 0;
+        for (var key in chances) {
+            if ( chances.hasOwnProperty(key) ) {
+                chancesSum += chances[key];
+            }
+        }
+        var dice: number = rng.getNumber(0, chancesSum);
+        var currentChanceSum = 0;
+        for (var key2 in chances) {
+            if ( chances.hasOwnProperty(key2) ) {
+                currentChanceSum += chances[key2];
+                if ( dice <= currentChanceSum ) {
+                    return key2;
+                }
+            }
+        }
+        return undefined;
+    };
+
 }
