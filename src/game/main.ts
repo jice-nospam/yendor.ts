@@ -45,7 +45,7 @@ module Game {
 				this.createNewGame();
 			}
 			this.createOtherGui();
-			this.map.computeFov(ActorManager.instance.getPlayer().x, ActorManager.instance.getPlayer().y, Constants.FOV_RADIUS);
+			this.computePlayerFov();
 		}
 
 		private initEventBus() {

@@ -48,38 +48,26 @@ module Game {
 		}
 
 		private createMonster(x: number, y: number, rng: Yendor.Random) {
+			var monster: Actor;
 			if ( rng.getNumber(0, 100) < 80 ) {
-				var orc: Actor = new Actor();
-				orc.init(x, y, "o", "orc", "rgb(63,127,63)");
-				orc.destructible = new MonsterDestructible(10, 0, "dead orc");
-				orc.attacker = new Attacker(3);
-				orc.ai = new MonsterAi();
-				orc.blocks = true;
-				orc.destructible.xp = Constants.ORC_XP;
-				return orc;
+				monster = Actor.createOrc(x, y);
 			} else {
-				var troll: Actor =  new Actor();
-				troll.init(x, y, "T", "troll", "rgb(0,127,0)");
-				troll.destructible = new MonsterDestructible(16, 1, "troll carcass");
-				troll.attacker = new Attacker(4);
-				troll.ai = new MonsterAi();
-				troll.blocks = true;
-				troll.destructible.xp = Constants.TROLL_XP;
-				return troll;
+				monster = Actor.createTroll(x, y);
 			}
+			return monster;
 		}
 
 		private createItem(x: number, y: number, rng: Yendor.Random) {
 			var dice = rng.getNumber(0, 100);
 			var item: Actor;
 			if ( dice < 70 ) {
-				item = Pickable.createHealthPotion(x, y, 4);
+				item = Actor.createHealthPotion(x, y, 4);
 			} else if ( dice < 80 ) {
-				item = Pickable.createLightningBoltScroll(x, y, 5, 20);
+				item = Actor.createLightningBoltScroll(x, y, 5, 20);
 			} else if ( dice < 90 ) {
-				item = Pickable.createFireballScroll(x, y, 3, 12);
+				item = Actor.createFireballScroll(x, y, 3, 12);
 			} else {
-				item = Pickable.createConfusionScroll(x, y, 5, 12);
+				item = Actor.createConfusionScroll(x, y, 5, 12);
 			}
 			return item;
 		}
