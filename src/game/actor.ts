@@ -505,5 +505,66 @@ module Game {
 			root.setChar( this.x, this.y, this._ch );
 			root.fore[this.x][this.y] = this._col;
 		}
+
+		/*
+			item factories
+		*/
+		static createHealthPotion(x: number, y: number, amount: number): Actor {
+			var healthPotion = new Actor();
+			healthPotion.init(x, y, "!", "health potion", "purple");
+			healthPotion.pickable = new Pickable(new InstantHealthEffect(amount, "You drink the health potion"),
+				new TargetSelector( TargetSelectionMethod.WEARER ));
+			return healthPotion;
+		}
+
+		static createLightningBoltScroll(x: number, y: number, range: number, damages: number): Actor {
+			var lightningBolt = new Actor();
+			lightningBolt.init(x, y, "#", "scroll of lightning bolt", "rgb(255,255,63)");
+			lightningBolt.pickable = new Pickable( new InstantHealthEffect(-damages, "A lightning bolt hits with a loud thunder!"),
+				new TargetSelector( TargetSelectionMethod.WEARER_CLOSEST_ENEMY, range));
+			return lightningBolt;
+		}
+
+		static createFireballScroll(x: number, y: number, range: number, damages: number): Actor {
+			var fireball = new Actor();
+			fireball.init(x, y, "#", "scroll of fireball", "rgb(255,255,63)");
+			fireball.pickable = new Pickable( new InstantHealthEffect(-damages, "A fireball burns all nearby creatures!"),
+				new TargetSelector( TargetSelectionMethod.SELECTED_RANGE, range));
+			return fireball;
+		}
+
+		static createConfusionScroll(x: number, y: number, range: number, nbTurns: number): Actor {
+			var confusionScroll = new Actor();
+			confusionScroll.init(x, y, "#", "scroll of confusion", "rgb(255,255,63)");
+			confusionScroll.pickable = new Pickable( new AiChangeEffect(new ConfusedMonsterAi(nbTurns),
+				"The eyes of the creature look vacant,\nas it starts to stumble around!"),
+				new TargetSelector( TargetSelectionMethod.SELECTED_ACTOR, range));
+			return confusionScroll;
+		}
+
+		/*
+			creature factories
+		*/
+		static createOrc(x: number, y: number): Actor {
+			var orc: Actor = new Actor();
+			orc.init(x, y, "o", "orc", "rgb(63,127,63)");
+			orc.destructible = new MonsterDestructible(10, 0, "dead orc");
+			orc.attacker = new Attacker(3);
+			orc.ai = new MonsterAi();
+			orc.blocks = true;
+			orc.destructible.xp = Constants.ORC_XP;
+			return orc;
+		}
+
+		static createTroll(x: number, y: number): Actor {
+			var troll: Actor =  new Actor();
+			troll.init(x, y, "T", "troll", "rgb(0,127,0)");
+			troll.destructible = new MonsterDestructible(16, 1, "troll carcass");
+			troll.attacker = new Attacker(4);
+			troll.ai = new MonsterAi();
+			troll.blocks = true;
+			troll.destructible.xp = Constants.TROLL_XP;
+			return troll;
+		}
 	}
 }
