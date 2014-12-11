@@ -109,7 +109,7 @@ module Game {
 				break;
 				case EventType.MOUSE_MOVE :
 					var pos: Yendor.Position = event.data;
-					if ( event.map.isExplored(pos.x, pos.y) ) {
+					if ( event.map.contains(pos.x, pos.y) && event.map.isExplored(pos.x, pos.y) ) {
 						var actorsOnCell: Actor[] = ActorManager.instance.findActorsOnCell(pos, ActorManager.instance.getCreatures());
 						actorsOnCell = actorsOnCell.concat(ActorManager.instance.findActorsOnCell(pos, ActorManager.instance.getItems()));
 						actorsOnCell = actorsOnCell.concat(ActorManager.instance.findActorsOnCell(pos, ActorManager.instance.getCorpses()));

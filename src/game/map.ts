@@ -183,6 +183,10 @@ module Game {
 			return true;
 		}
 
+		contains(x: number, y: number): boolean {
+			return x >= 0 && y >= 0 && x < this.width && y < this.height;
+		}
+
 		isExplored(x: number, y: number): boolean {
 			return this.tiles[x][y].explored;
 		}
