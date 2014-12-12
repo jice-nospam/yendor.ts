@@ -163,7 +163,7 @@ module Game {
 		}
 
 		private applyWoundingEffectTo(actor: Actor) : boolean {
-			if ( this._message && actor.destructible.defense < -this._amount ) {
+			if ( this._message && actor.destructible.computeRealDefense(actor) < -this._amount ) {
 				log(this._message);
 			}
 			return actor.destructible.takeDamage(actor, -this._amount) > 0;
@@ -255,6 +255,7 @@ module Game {
 				owner.equipment.unequip(owner, wearer);
 			}
 			log("You drop the " + owner.name);
+			EventBus.instance.publishEvent(new Event<GameStatus>(EventType.CHANGE_STATUS, GameStatus.NEW_TURN));
 		}
 
 		/*
@@ -275,6 +276,7 @@ module Game {
 			}
 			if ( owner.equipment ) {
 				owner.equipment.use(owner, wearer);
+				EventBus.instance.publishEvent(new Event<GameStatus>(EventType.CHANGE_STATUS, GameStatus.NEW_TURN));
 			}
 		}
 
@@ -300,15 +302,21 @@ module Game {
 		className: string;
 		private slot: string;
 		private equipped: boolean = false;
+		private powerBonus: number = 0;
+		private defenseBonus: number = 0;
 
-		constructor(slot: string) {
+		constructor(slot: string, powerBonus: number = 0, defenseBonus: number = 0) {
 			this.className = "Equipment";
 			this.slot = slot;
+			this.powerBonus = powerBonus;
+			this.defenseBonus = defenseBonus;
 		}
 
 		isEquipped(): boolean { return this.equipped; }
 
-		getSlot() { return this.slot; }
+		getSlot(): string { return this.slot; }
+		getPowerBonus(): number { return this.powerBonus; }
+		getDefenseBonus(): number { return this.defenseBonus; }
 
 		/*
 			Function: use

@@ -256,6 +256,21 @@ module Game {
 			return this._hp <= 0;
 		}
 
+		public computeRealDefense(owner: Actor): number {
+			var realDefense = this.defense;
+			if ( owner.container ) {
+				// add bonus from equipped items
+				var n: number = owner.container.size();
+				for ( var i: number = 0; i < n; i++) {
+					var item: Actor = owner.container.get(i);
+					if ( item.equipment && item.equipment.isEquipped() ) {
+						realDefense += item.equipment.getDefenseBonus();
+					}
+				}
+			}
+			return realDefense;
+		}
+
 		/*
 			Function: takeDamage
 			Deals damages to this actor. If health points reach 0, call the die function.
@@ -268,7 +283,7 @@ module Game {
 			the actual amount of damage taken
 		*/
 		takeDamage(owner: Actor, damage: number): number {
-			damage -= this._defense;
+			damage -= this.computeRealDefense(owner);
 			if ( damage > 0 ) {
 				this._hp -= damage;
 				if ( this.isDead() ) {
@@ -340,6 +355,21 @@ module Game {
 		get power() { return this._power; }
 		set power(newValue: number) { this._power = newValue; }
 
+		public computeRealPower(owner: Actor): number {
+			var realPower = this.power;
+			if ( owner.container ) {
+				// add bonus from equipped items
+				var n: number = owner.container.size();
+				for ( var i: number = 0; i < n; i++) {
+					var item: Actor = owner.container.get(i);
+					if ( item.equipment && item.equipment.isEquipped() ) {
+						realPower += item.equipment.getPowerBonus();
+					}
+				}
+			}
+			return realPower;
+		}
+
 		/*
 			Function: attack
 			Deal damages to another actor
@@ -350,13 +380,14 @@ module Game {
 		*/
 		attack(owner: Actor, target: Actor) {
 			if ( target.destructible && ! target.destructible.isDead() ) {
-				var damage = this._power - target.destructible.defense;
+				var realPower: number = this.computeRealPower(owner);
+				var damage = realPower - target.destructible.computeRealDefense(target);
 				if ( damage >= target.destructible.hp ) {
 					log( owner.name + " attacks " + target.name + " and kill it !", "orange");
-					target.destructible.takeDamage(target, this._power);
+					target.destructible.takeDamage(target, realPower);
 				} else if ( damage > 0 ) {
 					log( owner.name + " attacks " + target.name + " for " + damage + " hit points.", "orange");
-					target.destructible.takeDamage(target, this._power);
+					target.destructible.takeDamage(target, realPower);
 				} else {
 					log( owner.name + " attacks " + target.name + " but it has no effect!");
 				}
@@ -573,7 +604,7 @@ module Game {
 			var sword = new Actor();
 			sword.init(x, y, "/", "sword", "#F0F0F0");
 			sword.pickable = new Pickable();
-			sword.equipment = new Equipment("right hand");
+			sword.equipment = new Equipment("right hand", 3);
 			return sword;
 		}
 
@@ -581,7 +612,7 @@ module Game {
 			var shield = new Actor();
 			shield.init(x, y, "[", "shield", "#F0F0F0");
 			shield.pickable = new Pickable();
-			shield.equipment = new Equipment("right hand");
+			shield.equipment = new Equipment("left hand", 0, 1);
 			return shield;
 		}
 
@@ -592,7 +623,7 @@ module Game {
 			var orc: Actor = new Actor();
 			orc.init(x, y, "o", "orc", "#3F7F3F");
 			orc.destructible = new MonsterDestructible(10, 0, "dead orc");
-			orc.attacker = new Attacker(3);
+			orc.attacker = new Attacker(2);
 			orc.ai = new MonsterAi();
 			orc.blocks = true;
 			orc.destructible.xp = Constants.ORC_XP;
@@ -603,7 +634,7 @@ module Game {
 			var troll: Actor =  new Actor();
 			troll.init(x, y, "T", "troll", "#007F00");
 			troll.destructible = new MonsterDestructible(16, 1, "troll carcass");
-			troll.attacker = new Attacker(4);
+			troll.attacker = new Attacker(3);
 			troll.ai = new MonsterAi();
 			troll.blocks = true;
 			troll.destructible.xp = Constants.TROLL_XP;

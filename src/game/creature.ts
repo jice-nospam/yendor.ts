@@ -506,7 +506,7 @@ module Game {
 			super.init(_x, _y, _ch, _name, _col);
 			this.ai = new PlayerAi();
 			this.attacker = new Attacker(5);
-			this.destructible = new PlayerDestructible(30, 2, "your cadaver");
+			this.destructible = new PlayerDestructible(30, 0, "your cadaver");
 			this.container = new Container(26);
 		}
 		getNextLevelXp(): number {
