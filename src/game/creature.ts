@@ -223,11 +223,7 @@ module Game {
 			ActorManager.instance.getItems().some(function(item: Actor) {
 				if ( item.pickable && item.x === owner.x && item.y === owner.y ) {
 					found = true;
-					if ( item.pickable.pick(item, owner)) {
-						log("You pick the " + item.name + ".");
-					} else {
-						log("Your inventory is full.");
-					}
+					item.pickable.pick(item, owner);
 					return true;
 				} else {
 					return false;

@@ -259,12 +259,9 @@ module Game {
 		}
 
 		private dropItem(item: Actor) {
-			var player: Actor = ActorManager.instance.getPlayer();
-			player.container.remove(item);
-			item.x = player.x;
-			item.y = player.y;
-			ActorManager.instance.addItem(item);
-			log("You drop the " + item.name);
+			if ( item.pickable ) {
+				item.pickable.drop(item, ActorManager.instance.getPlayer());
+			}
 		}
 
 		/*
