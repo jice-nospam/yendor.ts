@@ -263,7 +263,8 @@ module Game {
 			var player: Actor = ActorManager.instance.getPlayer();
 			for ( var i: number = 0; i < player.container.size(); ++i) {
 				var item: Actor = player.container.get(i);
-				this.console.print(2, y, "(" + String.fromCharCode(shortcut) + ") " + item.name, Constants.INVENTORY_FOREGROUND );
+				var itemDescription = item.getDescription();
+				this.console.print(2, y, "(" + String.fromCharCode(shortcut) + ") " + itemDescription, Constants.INVENTORY_FOREGROUND );
 				if (i === this.selectedItem) {
 					this.console.clearBack(Constants.INVENTORY_BACKGROUND_ACTIVE, 0, y, -1, 1);
 					this.console.clearFore(Constants.INVENTORY_FOREGROUND_ACTIVE, 0, y, -1, 1);
