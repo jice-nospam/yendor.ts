@@ -88,7 +88,8 @@ module Game {
 				"lightningBoltScroll": this.getValueForDungeon([[3, 10]]),
 				"fireballScroll": 10,
 				"confusionScroll": 10,
-				"sword": 10
+				"sword": this.getValueForDungeon([[5, 4]]),
+				"shield": this.getValueForDungeon([[10, 8]])
 			});
 			if ( item === "healthPotion" ) {
 				return Actor.createHealthPotion(x, y, 4);
@@ -100,6 +101,8 @@ module Game {
 				return Actor.createConfusionScroll(x, y, 5, 12);
 			} else if ( item === "sword") {
 				return Actor.createSword(x, y);
+			} else if ( item === "shield") {
+				return Actor.createShield(x, y);
 			}
 			return undefined;
 		}
