@@ -298,6 +298,11 @@ module Game {
 		}
 
 		equip(owner: Actor, wearer: Actor) {
+			var previousEquipped = wearer.container.getFromSlot(this.slot);
+			if ( previousEquipped ) {
+				// first unequip previously equipped item
+				previousEquipped.equipment.unequip( previousEquipped, wearer );
+			}
 			this.equipped = true;
 			if ( wearer === ActorManager.instance.getPlayer()) {
 				log("Equipped " + owner.name + " on " + this.slot, "green" );

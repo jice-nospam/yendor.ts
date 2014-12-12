@@ -397,6 +397,17 @@ module Game {
 	 		return this.actors[index];
 	 	}
 
+	 	getFromSlot(slot: string): Actor {
+	 		var n: number = this.size();
+	 		for ( var i: number = 0; i < n; i++) {
+	 			var actor: Actor = this.get(i);
+	 			if ( actor.equipment && actor.equipment.isEquipped() && actor.equipment.getSlot() === slot ) {
+	 				return actor;
+	 			}
+	 		}
+	 		return undefined;
+	 	}
+
 	 	/*
 	 		Function: add
 	 		add a new actor in this container
@@ -525,7 +536,7 @@ module Game {
 		// potions
 		static createHealthPotion(x: number, y: number, amount: number): Actor {
 			var healthPotion = new Actor();
-			healthPotion.init(x, y, "!", "health potion", "purple");
+			healthPotion.init(x, y, "!", "health potion", "#800080");
 			healthPotion.pickable = new Pickable(new InstantHealthEffect(amount, "You drink the health potion"),
 				new TargetSelector( TargetSelectionMethod.WEARER ));
 			return healthPotion;
@@ -534,7 +545,7 @@ module Game {
 		// scrolls
 		static createLightningBoltScroll(x: number, y: number, range: number, damages: number): Actor {
 			var lightningBolt = new Actor();
-			lightningBolt.init(x, y, "#", "scroll of lightning bolt", "rgb(255,255,63)");
+			lightningBolt.init(x, y, "#", "scroll of lightning bolt", "#FFFF3F");
 			lightningBolt.pickable = new Pickable( new InstantHealthEffect(-damages, "A lightning bolt hits with a loud thunder!"),
 				new TargetSelector( TargetSelectionMethod.WEARER_CLOSEST_ENEMY, range));
 			return lightningBolt;
@@ -542,7 +553,7 @@ module Game {
 
 		static createFireballScroll(x: number, y: number, range: number, damages: number): Actor {
 			var fireball = new Actor();
-			fireball.init(x, y, "#", "scroll of fireball", "rgb(255,255,63)");
+			fireball.init(x, y, "#", "scroll of fireball", "#FFFF3F");
 			fireball.pickable = new Pickable( new InstantHealthEffect(-damages, "A fireball burns all nearby creatures!"),
 				new TargetSelector( TargetSelectionMethod.SELECTED_RANGE, range));
 			return fireball;
@@ -550,7 +561,7 @@ module Game {
 
 		static createConfusionScroll(x: number, y: number, range: number, nbTurns: number): Actor {
 			var confusionScroll = new Actor();
-			confusionScroll.init(x, y, "#", "scroll of confusion", "rgb(255,255,63)");
+			confusionScroll.init(x, y, "#", "scroll of confusion", "#FFFF3F");
 			confusionScroll.pickable = new Pickable( new AiChangeEffect(new ConfusedMonsterAi(nbTurns),
 				"The eyes of the creature look vacant,\nas it starts to stumble around!"),
 				new TargetSelector( TargetSelectionMethod.SELECTED_ACTOR, range));
@@ -560,10 +571,18 @@ module Game {
 		// weapons
 		static createSword(x: number, y: number): Actor {
 			var sword = new Actor();
-			sword.init(x, y, "/", "sword", "silver");
+			sword.init(x, y, "/", "sword", "#E0E0E0");
 			sword.pickable = new Pickable();
 			sword.equipment = new Equipment("right hand");
 			return sword;
+		}
+
+		static createShield(x: number, y: number): Actor {
+			var shield = new Actor();
+			shield.init(x, y, "[", "shield", "#E0E0E0");
+			shield.pickable = new Pickable();
+			shield.equipment = new Equipment("right hand");
+			return shield;
 		}
 
 		/*
@@ -571,7 +590,7 @@ module Game {
 		*/
 		static createOrc(x: number, y: number): Actor {
 			var orc: Actor = new Actor();
-			orc.init(x, y, "o", "orc", "rgb(63,127,63)");
+			orc.init(x, y, "o", "orc", "#3F7F3F");
 			orc.destructible = new MonsterDestructible(10, 0, "dead orc");
 			orc.attacker = new Attacker(3);
 			orc.ai = new MonsterAi();
@@ -582,7 +601,7 @@ module Game {
 
 		static createTroll(x: number, y: number): Actor {
 			var troll: Actor =  new Actor();
-			troll.init(x, y, "T", "troll", "rgb(0,127,0)");
+			troll.init(x, y, "T", "troll", "#007F00");
 			troll.destructible = new MonsterDestructible(16, 1, "troll carcass");
 			troll.attacker = new Attacker(4);
 			troll.ai = new MonsterAi();
