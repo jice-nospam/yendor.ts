@@ -571,7 +571,7 @@ module Game {
 		// weapons
 		static createSword(x: number, y: number): Actor {
 			var sword = new Actor();
-			sword.init(x, y, "/", "sword", "#E0E0E0");
+			sword.init(x, y, "/", "sword", "#F0F0F0");
 			sword.pickable = new Pickable();
 			sword.equipment = new Equipment("right hand");
 			return sword;
@@ -579,7 +579,7 @@ module Game {
 
 		static createShield(x: number, y: number): Actor {
 			var shield = new Actor();
-			shield.init(x, y, "[", "shield", "#E0E0E0");
+			shield.init(x, y, "[", "shield", "#F0F0F0");
 			shield.pickable = new Pickable();
 			shield.equipment = new Equipment("right hand");
 			return shield;

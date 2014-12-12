@@ -214,19 +214,47 @@ module Game {
 
 			Parameters:
 			owner - the actor owning this Pickable (the item)
-			wearer - the container
+			wearer - the container (the creature picking the item)
 
 			Returns:
 			true if the operation succeeded
 		*/
 		pick(owner: Actor, wearer: Actor): boolean {
 			if ( wearer.container && wearer.container.add(owner)) {
+				log("You pick the " + owner.name + ".");
+
+				if ( owner.equipment && !wearer.container.getFromSlot(owner.equipment.getSlot())) {
+					// equippable and slot is empty : auto-equip
+					owner.equipment.equip(owner, wearer);
+				}
+
 				// tells the engine to remove this actor from main list
 				EventBus.instance.publishEvent(new Event<Actor>(EventType.REMOVE_ACTOR, owner));
 				return true;
+			} else {
+				log("Your inventory is full.");
 			}
 			// wearer is not a container or is full
 			return false;
+		}
+
+		/*
+			Function: drop
+			Drop this actor on the ground.
+			
+			Parameters:
+			owner - the actor owning this Pickable (the item)
+			wearer - the container (the creature picking the item)
+		*/
+		drop(owner: Actor, wearer: Actor) {
+			wearer.container.remove(owner);
+			owner.x = wearer.x;
+			owner.y = wearer.y;
+			ActorManager.instance.addItem(owner);
+			if ( owner.equipment ) {
+				owner.equipment.unequip(owner, wearer);
+			}
+			log("You drop the " + owner.name);
 		}
 
 		/*
