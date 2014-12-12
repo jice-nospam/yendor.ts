@@ -11,7 +11,7 @@ module Yendor {
 		> var rng: Yendor.Random = new ComplementaryMultiplyWithCarryRandom();
 		> var n: number = rng.getNumber(0,100);
 	*/
-	export interface Random {
+	export class Random {
 		/*
 			Function: getNumber
 			Get a random number between two values.
@@ -23,7 +23,40 @@ module Yendor {
 			Returns:
 			A random number between min and max.
 		*/
-		getNumber(min: number, max: number): number;
+		getNumber(min: number, max: number): number { return 0; }
+
+	    /*
+	        Function: getRandomChance
+	        Choose one value from a list, taking chances into account.
+	        For example with hashmap {"orc":30, "troll":10}, the function returns "orc" with a probability 
+	        of 30/40 and "troll" with a probability of 10/40.
+
+	        Parameters:
+	        chances - hashmap { key => number of chances }
+
+	    */
+		getRandomChance(chances: { [index: string]: number }) {
+	        var chancesSum: number = 0;
+	        for (var key in chances) {
+	            if ( chances.hasOwnProperty(key) ) {
+	                chancesSum += chances[key];
+	            }
+	        }
+	        // the dice will land on some number between 1 and the sum of the chances
+	        var dice: number = this.getNumber(0, chancesSum);
+	        var currentChanceSum = 0;
+	        for (var key2 in chances) {
+	            if ( chances.hasOwnProperty(key2) ) {
+	                // go through all chances, keeping the sum so far
+	                currentChanceSum += chances[key2];
+	                // see if the dice landed in the part that corresponds to this choice
+	                if ( dice <= currentChanceSum ) {
+	                    return key2;
+	                }
+	            }
+	        }
+	        return undefined;
+	    }
 	}
 
 	/*
@@ -31,7 +64,7 @@ module Yendor {
 		Implements a RNG using <complementary multiply with carry 
 		at https://en.wikipedia.org/wiki/Multiply-with-carry> algorithm by George Marsaglia.
 	*/
-	export class ComplementaryMultiplyWithCarryRandom implements Random {
+	export class ComplementaryMultiplyWithCarryRandom extends Random {
 		private cur: number = 0;
 		private Q: number[];
 		private c: number;
@@ -43,6 +76,7 @@ module Yendor {
 			seed - *optional* use the same seed twice to get the same list of numbers. If not defined, a random seed is used.
 		*/
 		constructor(seed?: number) {
+			super();
 			if (! seed) {
 				seed = Math.floor(Math.random() * 0x7FFFFFFF);
 			}

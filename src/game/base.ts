@@ -201,33 +201,4 @@ module Game {
     export var log = function(text: string, color: Yendor.Color = "white") {
         EventBus.instance.publishEvent(new Event<Message>(EventType.LOG_MESSAGE, new Message(color, text)));
     };
-
-    /*
-        Function: getRandomChance
-        Choose one option from list of chances, returning its index
-
-    */
-    export var getRandomChance = function(rng: Yendor.Random, chances: { [index: string]: number }) {
-        var chancesSum: number = 0;
-        for (var key in chances) {
-            if ( chances.hasOwnProperty(key) ) {
-                chancesSum += chances[key];
-            }
-        }
-        // the dice will land on some number between 1 and the sum of the chances
-        var dice: number = rng.getNumber(0, chancesSum);
-        var currentChanceSum = 0;
-        for (var key2 in chances) {
-            if ( chances.hasOwnProperty(key2) ) {
-                // go through all chances, keeping the sum so far
-                currentChanceSum += chances[key2];
-                // see if the dice landed in the part that corresponds to this choice
-                if ( dice <= currentChanceSum ) {
-                    return key2;
-                }
-            }
-        }
-        return undefined;
-    };
-
 }

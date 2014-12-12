@@ -1,6 +1,7 @@
 /// <reference path="tsUnit.ts" />
 /// <reference path="../yendor/rng.ts" />
 module Tests {
+	"use strict";
 	export class RngTests extends tsUnit.TestClass {
 		private rng: Yendor.Random = new Yendor.ComplementaryMultiplyWithCarryRandom();
 
@@ -33,6 +34,15 @@ module Tests {
 			var b: number = rng.getNumber(0, 1000);
 
 			this.isTrue( a === b, a + "==" + b );
+		}
+
+		checkRandomChances() {
+			var a: string = this.rng.getRandomChance({"item_a": 50, "item_b": 50});
+			this.isTrue( a === "item_a" || a === "item_b", "a is 'item_a' or 'item_b'");
+			var b: string = this.rng.getRandomChance({"item_a": 0, "item_b": 50});
+			this.isTrue( b === "item_b" , "b is 'item_b'");
+			var c: string = this.rng.getRandomChance({"item_a": 10, "item_b": 0});
+			this.isTrue( c === "item_a" , "c is 'item_a'");
 		}
 	}
 }
