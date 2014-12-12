@@ -53,7 +53,7 @@ module Game {
 		}
 
 		private createMonster(x: number, y: number, rng: Yendor.Random) {
-			var monster = getRandomChance(rng, {"orc": 80, "troll": 20});
+			var monster = rng.getRandomChance({"orc": 80, "troll": 20});
 			if ( monster === "orc" ) {
 				return Actor.createOrc(x, y);
 			} else if ( monster === "troll" ) {
@@ -63,7 +63,7 @@ module Game {
 		}
 
 		private createItem(x: number, y: number, rng: Yendor.Random) {
-			var item = getRandomChance(rng, {"healthPotion": 70, "lightningBoltScroll": 10, "fireballScroll": 10, "confusionScroll": 10});
+			var item = rng.getRandomChance({"healthPotion": 70, "lightningBoltScroll": 10, "fireballScroll": 10, "confusionScroll": 10});
 			if ( item === "healthPotion" ) {
 				return Actor.createHealthPotion(x, y, 4);
 			} else if ( item === "lightningBoltScroll" ) {

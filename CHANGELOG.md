@@ -1,3 +1,10 @@
+# 0.1.0 / TDB
+* Yendor toolkit
+	- added Random.getRandomChance()
+
+* GenRogue
+	- multi-level dungeon
+
 # 0.0.3 / 06-dec-2014
 * Yendor toolkit
 	- mush faster console implementation using pixi.js
