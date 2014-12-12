@@ -5,7 +5,7 @@ module Yendor {
 	"use strict";
 
 	/*
-		Interface: Random
+		Class: Random
 		Base for all RNG implementations.
 
 		> var rng: Yendor.Random = new ComplementaryMultiplyWithCarryRandom();
@@ -35,7 +35,8 @@ module Yendor {
 	        chances - hashmap { key => number of chances }
 
 	    */
-		getRandomChance(chances: { [index: string]: number }) {
+	    // TODO when typescript 1.4 is out : getRandomChance(chances: { [index: string|number ]: number }) {
+		getRandomChance(chances: { [index: string ]: number }) {
 	        var chancesSum: number = 0;
 	        for (var key in chances) {
 	            if ( chances.hasOwnProperty(key) ) {

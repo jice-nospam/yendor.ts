@@ -52,8 +52,19 @@ module Game {
 			}
 		}
 
+		private getValueForDungeon(steps: number[][]): number {
+			var nbSteps = steps.length;
+			for (var step = nbSteps - 1; step >= 0; step --) {
+				if ( this.dungeonLevel >= steps[step][0] ) {
+					return steps[step][1];
+				}
+			}
+			return 0;
+		}
+
 		private createMonster(x: number, y: number, rng: Yendor.Random) {
-			var monster = rng.getRandomChance({"orc": 80, "troll": 20});
+			// no trolls before level 3. then probability 10/80 until level 5, 20/80 until level 7 and 30/80 beyond
+			var monster = rng.getRandomChance({"orc": 80, "troll": this.getValueForDungeon([[3, 10], [5, 20], [7, 30]]) });
 			if ( monster === "orc" ) {
 				return Actor.createOrc(x, y);
 			} else if ( monster === "troll" ) {
@@ -63,7 +74,8 @@ module Game {
 		}
 
 		private createItem(x: number, y: number, rng: Yendor.Random) {
-			var item = rng.getRandomChance({"healthPotion": 70, "lightningBoltScroll": 10, "fireballScroll": 10, "confusionScroll": 10});
+			var item = rng.getRandomChance({"healthPotion": 70, "lightningBoltScroll": this.getValueForDungeon([[3, 10]]),
+				"fireballScroll": 10, "confusionScroll": 10});
 			if ( item === "healthPotion" ) {
 				return Actor.createHealthPotion(x, y, 4);
 			} else if ( item === "lightningBoltScroll" ) {
