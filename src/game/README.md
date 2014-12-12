@@ -9,6 +9,7 @@ To compile it, run `jake` then open game/index.html in your browser.
 * NUMPAD / arrows : move or melee attack
 * NUMPAD 5 : wait a turn
 * g : pick an item up
-* i : open inventory
+* i : use an item from your inventory
+* d : drop an item from your inventory
 * > : go down the stairs
 * < : go up the stairs
