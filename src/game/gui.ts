@@ -186,9 +186,14 @@ module Game {
 	/********************************************************************************
 	 * Group: inventory
 	 ********************************************************************************/
+	export interface ItemListener {
+		(item: Actor): void;
+	}
+
 	export class InventoryPanel extends Gui implements EventListener {
 		static TITLE: string = "=== inventory - ESC to close ===";
 		private selectedItem: number;
+		private itemListener: ItemListener;
 
 		constructor(width: number, height: number) {
 			super(width, height);
@@ -198,31 +203,30 @@ module Game {
 
 		processEvent( event: Event<any> ) {
 			if ( event.type === EventType.OPEN_INVENTORY ) {
+				this.itemListener = <ItemListener>event.data;
 				this.show();
 			} else if ( event.type === EventType.KEY_PRESSED ) {
 				if ( event.data.keyCode === KeyEvent.DOM_VK_ESCAPE ) {
 					this.hide();
 				} else {
 					var index = event.data.keyCode - KeyEvent.DOM_VK_A;
-					this.useItem(index);
+					this.selectItem(index);
 				}
 			} else if (event.type === EventType.MOUSE_MOVE) {
 				this.selectItemAtPos(event.data);
 			} else if (event.type === EventType.MOUSE_CLICK && event.data === MouseButton.LEFT ) {
 				if ( this.selectedItem !== undefined ) {
-					this.useItem(this.selectedItem);
+					this.selectItem(this.selectedItem);
 				}
 			}
 		}
 
-		private useItem(index: number) {
+		private selectItem(index: number) {
 			var player: Actor = ActorManager.instance.getPlayer();
 			if ( index >= 0 && index < player.container.size() ) {
 				var item: Actor = player.container.get(index);
-				if (item.pickable) {
-					this.hide();
-					item.pickable.use(item, player);
-				}
+				this.itemListener(item);
+				this.hide();
 			}
 		}
 

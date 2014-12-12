@@ -241,11 +241,30 @@ module Game {
 				EventBus.instance.publishEvent(new Event<void>(EventType.OPEN_MAIN_MENU));
 				return true;
 			} else if ( event.keyCode === KeyEvent.DOM_VK_I ) {
-				// i : open inventory
-				EventBus.instance.publishEvent(new Event<void>(EventType.OPEN_INVENTORY));
+				// i : use item from inventory
+				EventBus.instance.publishEvent(new Event<ItemListener>(EventType.OPEN_INVENTORY, this.useItem.bind(this)));
+				return true;
+			} else if ( event.keyCode === KeyEvent.DOM_VK_D ) {
+				// d : drop item from inventory
+				EventBus.instance.publishEvent(new Event<ItemListener>(EventType.OPEN_INVENTORY, this.dropItem.bind(this)));
 				return true;
 			}
 			return false;
+		}
+
+		private useItem(item: Actor) {
+			if (item.pickable) {
+				item.pickable.use(item, ActorManager.instance.getPlayer());
+			}
+		}
+
+		private dropItem(item: Actor) {
+			var player: Actor = ActorManager.instance.getPlayer();
+			player.container.remove(item);
+			item.x = player.x;
+			item.y = player.y;
+			ActorManager.instance.addItem(item);
+			log("You drop the " + item.name);
 		}
 
 		/*

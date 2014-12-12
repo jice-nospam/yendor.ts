@@ -52,6 +52,12 @@ module Game {
 			}
 		}
 
+		/*
+			Function: getValueForDungeon
+			Get a value adapted to current dungeon level.
+			Parameters:
+			steps: array of (dungeon level, value) pairs 
+		*/
 		private getValueForDungeon(steps: number[][]): number {
 			var nbSteps = steps.length;
 			for (var step = nbSteps - 1; step >= 0; step --) {
