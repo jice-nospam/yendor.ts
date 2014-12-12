@@ -4,6 +4,8 @@
 
 * GenRogue
 	- multi-level dungeon
+	- can drop items with 'd'
+	- equipable items
 
 # 0.0.3 / 06-dec-2014
 * Yendor toolkit

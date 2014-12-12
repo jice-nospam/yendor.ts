@@ -445,6 +445,7 @@ module Game {
 		private _ai: Ai;
 		private _pickable: Pickable;
 		private _container: Container;
+		private _equipment: Equipment;
 
 		private _blocks: boolean = false;
 		private _fovOnly: boolean = true;
@@ -495,6 +496,17 @@ module Game {
 		get container() {return this._container; }
 		set container(newValue: Container) {this._container = newValue; }
 
+		get equipment() {return this._equipment; }
+		set equipment(newValue: Equipment) {this._equipment = newValue; }
+
+		getDescription(): string {
+			var desc = this.name;
+			if ( this._equipment && this._equipment.isEquipped()) {
+				desc += " (on " + this._equipment.getSlot() + ")";
+			}
+			return desc;
+		}
+
 		update(map: Map) {
 			if ( this._ai ) {
 				this._ai.update(this, map);
@@ -509,6 +521,8 @@ module Game {
 		/*
 			item factories
 		*/
+
+		// potions
 		static createHealthPotion(x: number, y: number, amount: number): Actor {
 			var healthPotion = new Actor();
 			healthPotion.init(x, y, "!", "health potion", "purple");
@@ -517,6 +531,7 @@ module Game {
 			return healthPotion;
 		}
 
+		// scrolls
 		static createLightningBoltScroll(x: number, y: number, range: number, damages: number): Actor {
 			var lightningBolt = new Actor();
 			lightningBolt.init(x, y, "#", "scroll of lightning bolt", "rgb(255,255,63)");
@@ -540,6 +555,15 @@ module Game {
 				"The eyes of the creature look vacant,\nas it starts to stumble around!"),
 				new TargetSelector( TargetSelectionMethod.SELECTED_ACTOR, range));
 			return confusionScroll;
+		}
+
+		// weapons
+		static createSword(x: number, y: number): Actor {
+			var sword = new Actor();
+			sword.init(x, y, "/", "sword", "silver");
+			sword.pickable = new Pickable();
+			sword.equipment = new Equipment("right hand");
+			return sword;
 		}
 
 		/*

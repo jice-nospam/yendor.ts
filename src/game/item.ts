@@ -202,7 +202,7 @@ module Game {
 		private _effect: Effect;
 		private _targetSelector: TargetSelector
 
-		constructor( _effect: Effect = undefined, _targetSelector?: TargetSelector) {
+		constructor( _effect?: Effect, _targetSelector?: TargetSelector) {
 			this.className = "Pickable";
 			this._effect = _effect;
 			this._targetSelector = _targetSelector;
@@ -245,6 +245,9 @@ module Game {
 					EventBus.instance.publishEvent(new Event<GameStatus>(EventType.CHANGE_STATUS, GameStatus.NEW_TURN));
 				}
 			}
+			if ( owner.equipment ) {
+				owner.equipment.use(owner, wearer);
+			}
 		}
 
 		private applyEffectToActorList(owner: Actor, wearer: Actor, actors: Actor[]) {
@@ -257,6 +260,54 @@ module Game {
 			}
 			if ( success && wearer.container ) {
 				wearer.container.remove( owner );
+			}
+		}
+	}
+
+	/*
+		Class: Equipment
+		An item that can be equiped
+	*/
+	export class Equipment implements Persistent {
+		className: string;
+		private slot: string;
+		private equipped: boolean = false;
+
+		constructor(slot: string) {
+			this.className = "Equipment";
+			this.slot = slot;
+		}
+
+		isEquipped(): boolean { return this.equipped; }
+
+		getSlot() { return this.slot; }
+
+		/*
+			Function: use
+			Use (equip or unequip) this item.
+			Parameters:
+			owner: the actor owning this Equipment (the item)
+			wearer: the container (the creature using this item)
+		*/
+		use(owner: Actor, wearer: Actor) {
+			if ( this.equipped ) {
+				this.unequip(owner, wearer);
+			} else {
+				this.equip(owner, wearer);
+			}
+		}
+
+		equip(owner: Actor, wearer: Actor) {
+			this.equipped = true;
+			if ( wearer === ActorManager.instance.getPlayer()) {
+				log("Equipped " + owner.name + " on " + this.slot, "green" );
+			}
+		}
+
+		unequip(owner: Actor, wearer: Actor) {
+			this.equipped = false;
+			if ( wearer === ActorManager.instance.getPlayer()) {
+				log("Unequipped " + owner.name + " from " + this.slot, "yellow" );
 			}
 		}
 	}
