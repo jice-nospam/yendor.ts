@@ -242,11 +242,13 @@ module Game {
 				return true;
 			} else if ( event.keyCode === KeyEvent.DOM_VK_I ) {
 				// i : use item from inventory
-				EventBus.instance.publishEvent(new Event<ItemListener>(EventType.OPEN_INVENTORY, this.useItem.bind(this)));
+				EventBus.instance.publishEvent(new Event<OpenInventoryEventData>(EventType.OPEN_INVENTORY,
+					{ title: "use an item", itemListener: this.useItem.bind(this) } ));
 				return true;
 			} else if ( event.keyCode === KeyEvent.DOM_VK_D ) {
 				// d : drop item from inventory
-				EventBus.instance.publishEvent(new Event<ItemListener>(EventType.OPEN_INVENTORY, this.dropItem.bind(this)));
+				EventBus.instance.publishEvent(new Event<OpenInventoryEventData>(EventType.OPEN_INVENTORY,
+					{ title: "drop an item", itemListener: this.dropItem.bind(this) } ));
 				return true;
 			}
 			return false;

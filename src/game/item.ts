@@ -341,14 +341,14 @@ module Game {
 			}
 			this.equipped = true;
 			if ( wearer === ActorManager.instance.getPlayer()) {
-				log("Equipped " + owner.name + " on " + this.slot, "green" );
+				log("Equipped " + owner.name + " on " + this.slot, "#FF0000" );
 			}
 		}
 
 		unequip(owner: Actor, wearer: Actor) {
 			this.equipped = false;
 			if ( wearer === ActorManager.instance.getPlayer()) {
-				log("Unequipped " + owner.name + " from " + this.slot, "yellow" );
+				log("Unequipped " + owner.name + " from " + this.slot, "#FFA500" );
 			}
 		}
 	}

@@ -189,9 +189,13 @@ module Game {
 	export interface ItemListener {
 		(item: Actor): void;
 	}
+	export interface OpenInventoryEventData {
+		title: string;
+		itemListener: ItemListener;
+	}
 
 	export class InventoryPanel extends Gui implements EventListener {
-		static TITLE: string = "=== inventory - ESC to close ===";
+		private title: string = "=== inventory - ESC to close ===";
 		private selectedItem: number;
 		private itemListener: ItemListener;
 
@@ -203,7 +207,9 @@ module Game {
 
 		processEvent( event: Event<any> ) {
 			if ( event.type === EventType.OPEN_INVENTORY ) {
-				this.itemListener = <ItemListener>event.data;
+				var data: OpenInventoryEventData = <OpenInventoryEventData>event.data;
+				this.itemListener = data.itemListener;
+				this.title = "=== " + data.title + " - ESC to close ===";
 				this.show();
 			} else if ( event.type === EventType.KEY_PRESSED ) {
 				if ( event.data.keyCode === KeyEvent.DOM_VK_ESCAPE ) {
@@ -259,7 +265,7 @@ module Game {
 			this.y = Math.floor( destination.height / 2 - this.height / 2 );
 			var shortcut: number = "a".charCodeAt(0);
 			var y: number = 1;
-			this.console.print(Math.floor(this.width / 2 - InventoryPanel.TITLE.length / 2), 0, InventoryPanel.TITLE);
+			this.console.print(Math.floor(this.width / 2 - this.title.length / 2), 0, this.title);
 			var player: Actor = ActorManager.instance.getPlayer();
 			for ( var i: number = 0; i < player.container.size(); ++i) {
 				var item: Actor = player.container.get(i);
