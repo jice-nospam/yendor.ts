@@ -650,7 +650,8 @@ module Game {
 		static createHealthPotion(x: number, y: number, amount: number): Actor {
 			var healthPotion = new Actor();
 			healthPotion.init(x, y, "!", "health potion", "#800080", true);
-			healthPotion.pickable = new Pickable(new InstantHealthEffect(amount, "[The actor1] drink[s] the health potion and regain " + amount + " hit points."),
+			healthPotion.pickable = new Pickable(new InstantHealthEffect(amount,
+				"[The actor1] drink[s] the health potion and regain[s] " + amount + " hit points."),
 				new TargetSelector( TargetSelectionMethod.WEARER ));
 			return healthPotion;
 		}
