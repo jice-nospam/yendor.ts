@@ -11,5 +11,6 @@ To compile it, run `jake` then open game/index.html in your browser.
 * g : pick an item up
 * i : use an item from your inventory
 * d : drop an item from your inventory
+* t : throw an item
 * > : go down the stairs
 * < : go up the stairs

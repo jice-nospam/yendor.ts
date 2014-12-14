@@ -201,4 +201,26 @@ module Game {
     export var log = function(text: string, color: Yendor.Color = "white") {
         EventBus.instance.publishEvent(new Event<Message>(EventType.LOG_MESSAGE, new Message(color, text)));
     };
+
+    /*
+        Function: transformMessage
+        Apply a generic message to an actor.
+    */
+    export var transformMessage = function(text: string, actor1: Actor, actor2?: Actor) {
+        var newText = text.replace("[The actor1's] ", actor1.getThenames());
+        newText = newText.replace(" [the actor1's] ", actor1.getthenames());
+        newText = newText.replace("[The actor1]", actor1.getThename());
+        newText = newText.replace(" [the actor1]", actor1.getthename());
+        newText = newText.replace(/\[s\]/g, actor1.getVerbEnd());
+        newText = newText.replace(/ \[it\] /g, actor1.getit());
+        if ( actor2 ) {
+            newText.replace("[The actor2's] ", actor2.getThenames());
+            newText = newText.replace(" [the actor2's] ", actor2.getthenames());
+            newText = newText.replace("[The actor2]", actor2.getThename());
+            newText = newText.replace(" [the actor2]", actor2.getthename());
+            newText = newText.replace(/\[s2\]/g, actor2.getVerbEnd());
+            newText = newText.replace(/ \[it2\] /g, actor2.getit());
+        }
+        return newText;
+    };
 }
