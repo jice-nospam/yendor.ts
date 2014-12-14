@@ -28,7 +28,7 @@ module Game {
 		private status : GameStatus;
 		private persister: Persister = new LocalStoragePersister();
 		private guis: { [index: string]: Gui; } = {};
-		private dungeonLevel: number = 5;
+		private dungeonLevel: number = 1;
 
 		/*
 			Constructor: constructor
