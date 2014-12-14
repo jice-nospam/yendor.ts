@@ -157,14 +157,14 @@ module Game {
 			var healPointsCount: number = actor.destructible.heal( this._amount );
 			if ( healPointsCount > 0 && this._message ) {
 				// TODO message formatting utility
-				log(this._message);
+				log(transformMessage(this._message, actor));
 			}
 			return true;
 		}
 
 		private applyWoundingEffectTo(actor: Actor) : boolean {
 			if ( this._message && actor.destructible.computeRealDefense(actor) < -this._amount ) {
-				log(this._message);
+				log(transformMessage(this._message, actor));
 			}
 			return actor.destructible.takeDamage(actor, -this._amount) > 0;
 		}
@@ -183,7 +183,7 @@ module Game {
 		applyTo(actor: Actor): boolean {
 			this._newAi.applyTo(actor);
 			if ( this._message ) {
-				log(this._message);
+				log(transformMessage(this._message, actor));
 			}
 			return true;
 		}
@@ -200,13 +200,17 @@ module Game {
 	export class Pickable implements Persistent {
 		className: string;
 		private _effect: Effect;
-		private _targetSelector: TargetSelector
+		private _targetSelector: TargetSelector;
+		private onUseMessage: string;
 
-		constructor( _effect?: Effect, _targetSelector?: TargetSelector) {
+		constructor( _effect?: Effect, _targetSelector?: TargetSelector, onUseMessage?: string) {
 			this.className = "Pickable";
 			this._effect = _effect;
 			this._targetSelector = _targetSelector;
+			this.onUseMessage = onUseMessage;
 		}
+
+		get effect() {return this._effect; }
 
 		/*
 			Function: pick
@@ -221,7 +225,7 @@ module Game {
 		*/
 		pick(owner: Actor, wearer: Actor): boolean {
 			if ( wearer.container && wearer.container.add(owner)) {
-				log("You pick the " + owner.name + ".");
+				log(transformMessage("[The actor1] pick[s] [the actor2].", wearer, owner));
 
 				if ( owner.equipment && !wearer.container.getFromSlot(owner.equipment.getSlot())) {
 					// equippable and slot is empty : auto-equip
@@ -231,7 +235,7 @@ module Game {
 				// tells the engine to remove this actor from main list
 				EventBus.instance.publishEvent(new Event<Actor>(EventType.REMOVE_ACTOR, owner));
 				return true;
-			} else {
+			} else if ( wearer === ActorManager.instance.getPlayer() ) {
 				log("Your inventory is full.");
 			}
 			// wearer is not a container or is full
@@ -245,16 +249,17 @@ module Game {
 			Parameters:
 			owner - the actor owning this Pickable (the item)
 			wearer - the container (the creature picking the item)
+			pos - coordinate if the position is not the wearer's position
 		*/
-		drop(owner: Actor, wearer: Actor) {
+		drop(owner: Actor, wearer: Actor, pos?: Yendor.Position, verb: string = "drop") {
 			wearer.container.remove(owner);
-			owner.x = wearer.x;
-			owner.y = wearer.y;
+			owner.x = pos ? pos.x : wearer.x;
+			owner.y = pos ? pos.y : wearer.y;
 			ActorManager.instance.addItem(owner);
 			if ( owner.equipment ) {
 				owner.equipment.unequip(owner, wearer);
 			}
-			log("You drop the " + owner.name);
+			log(wearer.getThename() + " " + verb + wearer.getVerbEnd() + owner.getthename());
 			EventBus.instance.publishEvent(new Event<GameStatus>(EventType.CHANGE_STATUS, GameStatus.NEW_TURN));
 		}
 
@@ -280,15 +285,39 @@ module Game {
 			}
 		}
 
-		private applyEffectToActorList(owner: Actor, wearer: Actor, actors: Actor[]) {
+		throw(owner: Actor, wearer: Actor) {
+			log("Left-click where to throw the " + owner.name
+				+ ",\nor right-click to cancel.", "red");
+			EventBus.instance.publishEvent(new Event<TilePickerListener>(EventType.PICK_TILE,
+				function(pos: Yendor.Position) {
+					if ( owner.pickable.effect || owner.attacker ) {
+						var actors: Actor[] = ActorManager.instance.findActorsOnCell( pos, ActorManager.instance.getCreatures());
+						if (actors.length > 0) {
+							if ( owner.pickable.effect ) {
+								owner.pickable.applyEffectToActorList(owner, undefined, actors);
+							}
+							if ( owner.attacker ) {
+								owner.attacker.attack(owner, actors[0]);
+							}
+						}
+					}
+					owner.pickable.drop(owner, ActorManager.instance.getPlayer(), pos, "throw");
+				}
+			));
+		}
+
+		applyEffectToActorList(owner: Actor, wearer: Actor, actors: Actor[]) {
 			var success: boolean = false;
+			if ( this.onUseMessage ) {
+				log(this.onUseMessage);
+			}
 
 			for (var i = 0; i < actors.length; ++i) {
 				if (this._effect.applyTo(actors[i])) {
 					success = true;
 				}
 			}
-			if ( success && wearer.container ) {
+			if ( success && wearer && wearer.container ) {
 				wearer.container.remove( owner );
 			}
 		}
@@ -341,14 +370,14 @@ module Game {
 			}
 			this.equipped = true;
 			if ( wearer === ActorManager.instance.getPlayer()) {
-				log("Equipped " + owner.name + " on " + this.slot, "#FF0000" );
+				log(wearer.getThename() + " equip" + wearer.getVerbEnd() + owner.getthename() + " on" + wearer.getits() + this.slot, "#FF0000" );
 			}
 		}
 
 		unequip(owner: Actor, wearer: Actor) {
 			this.equipped = false;
 			if ( wearer === ActorManager.instance.getPlayer()) {
-				log("Unequipped " + owner.name + " from " + this.slot, "#FFA500" );
+				log(wearer.getThename() + " unequip" + wearer.getVerbEnd() + owner.getthename() + " from" + wearer.getits() + this.slot, "#FFA500" );
 			}
 		}
 	}

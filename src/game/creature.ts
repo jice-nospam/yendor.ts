@@ -186,10 +186,10 @@ module Game {
 			var cellPos: Yendor.Position = new Yendor.Position(x, y);
 			// no living actor. Log exising corpses and items
 			ActorManager.instance.findActorsOnCell(cellPos, ActorManager.instance.getCorpses()).forEach(function(actor: Actor) {
-				log("There's a " + actor.name + " here");
+				log(actor.getTheresaname() + " here.");
 			});
 			ActorManager.instance.findActorsOnCell(cellPos, ActorManager.instance.getItems()).forEach(function(actor: Actor) {
-				log("There's a " + actor.name + " here");
+				log(actor.getTheresaname() + " here.");
 			});
 			// move the player
 			owner.x = x;
@@ -435,6 +435,9 @@ module Game {
 			}
 			this.moveRandomly(owner, map);
 			super.update(owner, map);
+			if ( owner === ActorManager.instance.getPlayer()) {
+				EventBus.instance.publishEvent(new Event<GameStatus>(EventType.CHANGE_STATUS, GameStatus.NEW_TURN));
+			}
 		}
 
 		/*
@@ -470,7 +473,7 @@ module Game {
 		}
 
 		die(owner: Actor) {
-			log(owner.name + " is dead. You gain " + this.xp + " xp.");
+			log(owner.getThename() + " is dead. You gain " + this.xp + " xp.");
 			EventBus.instance.publishEvent(new Event<number>( EventType.GAIN_XP, this.xp ));
 			super.die(owner);
 		}
@@ -520,6 +523,34 @@ module Game {
 				this.destructible.xp -= nextLevelXp;
 				log("Your battle skills grow stronger! You reached level " + this.xpLevel, "#FF0000");
 			}
+		}
+
+		getaname(): string {
+			return "you";
+		}
+		getAname(): string {
+			return "You";
+		}
+		getthename(): string {
+			return " you";
+		}
+		getThename(): string {
+			return "You";
+		}
+		getVerbEnd(): string {
+			return "";
+		}
+		getits(): string {
+			return " your ";
+		}
+		getThenames(): string {
+			return "Your ";
+		}
+		getthenames(): string {
+			return " your ";
+		}
+		getit(): string {
+			return " you ";
 		}
 	}
 }

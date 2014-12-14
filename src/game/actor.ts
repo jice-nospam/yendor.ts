@@ -104,19 +104,14 @@ module Game {
 			Create the actors for up and down stairs. The position is not important, actors will be placed by the dungeon builder.
 		*/
 		createStairs() {
-			this.stairsUp = new Actor();
-			this.stairsUp.init(0, 0, "<", "stairs up", "#FFFFFF");
-			this.stairsUp.fovOnly = false;
+			this.stairsUp = Actor.createStairs("<", "up");
+			this.stairsDown = Actor.createStairs(">", "down");
 			this.items.push(this.stairsUp);
-			this.stairsDown = new Actor();
-			this.stairsDown.init(0, 0, ">", "stairs down", "#FFFFFF");
-			this.stairsDown.fovOnly = false;
 			this.items.push(this.stairsDown);
 		}
 
 		createPlayer() {
-			this.player = new Player();
-			this.player.init(0, 0, "@", "player", "#FFFFFF");
+			this.player = Actor.createPlayer();
 			this.actors.push(this.player);
 		}
 
@@ -357,7 +352,7 @@ module Game {
 
 		public computeRealPower(owner: Actor): number {
 			var realPower = this.power;
-			if ( owner.container ) {
+			if ( owner && owner.container ) {
 				// add bonus from equipped items
 				var n: number = owner.container.size();
 				for ( var i: number = 0; i < n; i++) {
@@ -382,15 +377,19 @@ module Game {
 			if ( target.destructible && ! target.destructible.isDead() ) {
 				var realPower: number = this.computeRealPower(owner);
 				var damage = realPower - target.destructible.computeRealDefense(target);
+				var msg: string = "[The actor1] attack[s] [the actor2]";
+				var msgColor: string;
 				if ( damage >= target.destructible.hp ) {
-					log( owner.name + " attacks " + target.name + " and kill it !", "orange");
-					target.destructible.takeDamage(target, realPower);
+					msg += " and kill[s] [it2] !";
+					msgColor = "orange";
 				} else if ( damage > 0 ) {
-					log( owner.name + " attacks " + target.name + " for " + damage + " hit points.", "orange");
-					target.destructible.takeDamage(target, realPower);
+					msg += " for " + damage + " hit points.";
+					msgColor = "orange";
 				} else {
-					log( owner.name + " attacks " + target.name + " but it has no effect!");
+					msg += " but it has no effect!";
 				}
+				log(transformMessage(msg, owner, target), msgColor);
+				target.destructible.takeDamage(target, realPower);
 			}
 		}
 	}
@@ -491,17 +490,19 @@ module Game {
 
 		private _blocks: boolean = false;
 		private _fovOnly: boolean = true;
+		private _singular: boolean = true;
 
 		constructor() {
 			super();
 			this.className = "Actor";
 		}
 
-		init(_x: number = 0, _y: number = 0, _ch: string = "", _name: string = "", _col: Yendor.Color = "") {
+		init(_x: number = 0, _y: number = 0, _ch: string = "", _name: string = "", _col: Yendor.Color = "", singular: boolean = true) {
 			this.moveTo(_x, _y);
 			this._ch = _ch;
 			this._name = _name;
 			this._col = _col;
+			this._singular = singular;
 		}
 
 		get ch() { return this._ch; }
@@ -512,6 +513,10 @@ module Game {
 
 		get name() { return this._name; }
 		set name(newValue: string) { this._name = newValue; }
+
+		isSingular(): boolean {
+			return this._singular;
+		}
 
 		isBlocking(): boolean {
 			return this._blocks;
@@ -541,6 +546,83 @@ module Game {
 		get equipment() {return this._equipment; }
 		set equipment(newValue: Equipment) {this._equipment = newValue; }
 
+		/*
+			Function: getaname
+			Returns " a <name>" or " an <name>" or " <name>"
+		*/
+		getaname(): string {
+			if ( !this.isSingular() ) {
+				return " " + this.name;
+			}
+			var article: string = ("aeiou".indexOf(this.name[0]) !== -1 ? " an " : " a ");
+			return article + this.name;
+		}
+
+		/*
+			Function: getAname
+			Returns "A <name>" or "An <name>" or "<name>"
+		*/
+		getAname(): string {
+			if ( !this.isSingular() ) {
+				return this.name;
+			}
+			var article: string = ("aeiou".indexOf(this.name[0]) !== -1 ? "An " : "A ");
+			return article + this.name;
+		}
+
+		/*
+			Function: getAname
+			Returns "There's a <name>" or "There's an <name>" or "There are <name>"
+		*/
+		getTheresaname(): string {
+			var verb = this.isSingular() ? "'s" : " are";
+			return "There" + verb + this.getaname();
+		}
+
+		/*
+			Function: getAname
+			Returns " the <name>"
+		*/
+		getthename(): string {
+			return " the " + this.name;
+		}
+
+		/*
+			Function: getAname
+			Returns "The <name>"
+		*/
+		getThename(): string {
+			return "The " + this.name;
+		}
+
+		/*
+			Function: getAname
+			Returns "The <name>'s "
+		*/
+		getThenames(): string {
+			return this.getThename() + "'s ";
+		}
+
+		/*
+			Function: getAname
+			Returns " the <name>'s "
+		*/
+		getthenames(): string {
+			return this.getthename() + "'s ";
+		}
+
+		getits(): string {
+			return " its ";
+		}
+
+		getit(): string {
+			return " it ";
+		}
+
+		getVerbEnd(): string {
+			return this.isSingular() ? "s" : "";
+		}
+
 		getDescription(): string {
 			var desc = this.name;
 			if ( this._equipment && this._equipment.isEquipped()) {
@@ -567,8 +649,8 @@ module Game {
 		// potions
 		static createHealthPotion(x: number, y: number, amount: number): Actor {
 			var healthPotion = new Actor();
-			healthPotion.init(x, y, "!", "health potion", "#800080");
-			healthPotion.pickable = new Pickable(new InstantHealthEffect(amount, "You drink the health potion"),
+			healthPotion.init(x, y, "!", "health potion", "#800080", true);
+			healthPotion.pickable = new Pickable(new InstantHealthEffect(amount, "[The actor1] drink[s] the health potion and regain " + amount + " hit points."),
 				new TargetSelector( TargetSelectionMethod.WEARER ));
 			return healthPotion;
 		}
@@ -576,25 +658,28 @@ module Game {
 		// scrolls
 		static createLightningBoltScroll(x: number, y: number, range: number, damages: number): Actor {
 			var lightningBolt = new Actor();
-			lightningBolt.init(x, y, "#", "scroll of lightning bolt", "#FFFF3F");
-			lightningBolt.pickable = new Pickable( new InstantHealthEffect(-damages, "A lightning bolt hits with a loud thunder!"),
+			lightningBolt.init(x, y, "#", "scroll of lightning bolt", "#FFFF3F", true);
+			lightningBolt.pickable = new Pickable( new InstantHealthEffect(-damages,
+				"A lightning bolt strikes [the actor1] with a loud thunder!\nThe damage is " + damages + " hit points."),
 				new TargetSelector( TargetSelectionMethod.WEARER_CLOSEST_ENEMY, range));
 			return lightningBolt;
 		}
 
 		static createFireballScroll(x: number, y: number, range: number, damages: number): Actor {
 			var fireball = new Actor();
-			fireball.init(x, y, "#", "scroll of fireball", "#FFFF3F");
-			fireball.pickable = new Pickable( new InstantHealthEffect(-damages, "A fireball burns all nearby creatures!"),
-				new TargetSelector( TargetSelectionMethod.SELECTED_RANGE, range));
+			fireball.init(x, y, "#", "scroll of fireball", "#FFFF3F", true);
+			fireball.pickable = new Pickable( new InstantHealthEffect(-damages,
+				"[The actor1] get[s] burned for " + damages + " hit points."),
+				new TargetSelector( TargetSelectionMethod.SELECTED_RANGE, range),
+				"A fireball explodes, burning everything within " + range + " tiles.");
 			return fireball;
 		}
 
 		static createConfusionScroll(x: number, y: number, range: number, nbTurns: number): Actor {
 			var confusionScroll = new Actor();
-			confusionScroll.init(x, y, "#", "scroll of confusion", "#FFFF3F");
+			confusionScroll.init(x, y, "#", "scroll of confusion", "#FFFF3F", true);
 			confusionScroll.pickable = new Pickable( new AiChangeEffect(new ConfusedMonsterAi(nbTurns),
-				"The eyes of the creature look vacant,\nas it starts to stumble around!"),
+				"[The actor1's] eyes look vacant,\nas [it] start[s] to stumble around!"),
 				new TargetSelector( TargetSelectionMethod.SELECTED_ACTOR, range));
 			return confusionScroll;
 		}
@@ -602,18 +687,28 @@ module Game {
 		// weapons
 		static createSword(x: number, y: number): Actor {
 			var sword = new Actor();
-			sword.init(x, y, "/", "sword", "#F0F0F0");
+			sword.init(x, y, "/", "sword", "#F0F0F0", true);
 			sword.pickable = new Pickable();
 			sword.equipment = new Equipment("right hand", 3);
+			// needed to deal damages when the sword is thrown
+			sword.attacker = new Attacker(3);
 			return sword;
 		}
 
 		static createShield(x: number, y: number): Actor {
 			var shield = new Actor();
-			shield.init(x, y, "[", "shield", "#F0F0F0");
+			shield.init(x, y, "[", "shield", "#F0F0F0", true);
 			shield.pickable = new Pickable();
 			shield.equipment = new Equipment("left hand", 0, 1);
 			return shield;
+		}
+
+		// miscellaneous
+		static createStairs(character: string, direction: string): Actor {
+			var stairs: Actor = new Actor();
+			stairs.init(0, 0, character, "stairs " + direction, "#FFFFFF", false);
+			stairs.fovOnly = false;
+			return stairs;
 		}
 
 		/*
@@ -621,7 +716,7 @@ module Game {
 		*/
 		static createOrc(x: number, y: number): Actor {
 			var orc: Actor = new Actor();
-			orc.init(x, y, "o", "orc", "#3F7F3F");
+			orc.init(x, y, "o", "orc", "#3F7F3F", true);
 			orc.destructible = new MonsterDestructible(10, 0, "dead orc");
 			orc.attacker = new Attacker(2);
 			orc.ai = new MonsterAi();
@@ -632,13 +727,19 @@ module Game {
 
 		static createTroll(x: number, y: number): Actor {
 			var troll: Actor =  new Actor();
-			troll.init(x, y, "T", "troll", "#007F00");
+			troll.init(x, y, "T", "troll", "#007F00", true);
 			troll.destructible = new MonsterDestructible(16, 1, "troll carcass");
 			troll.attacker = new Attacker(3);
 			troll.ai = new MonsterAi();
 			troll.blocks = true;
 			troll.destructible.xp = Constants.TROLL_XP;
 			return troll;
+		}
+
+		static createPlayer(): Player {
+			var player = new Player();
+			player.init(0, 0, "@", "player", "#FFFFFF");
+			return player;
 		}
 	}
 }
