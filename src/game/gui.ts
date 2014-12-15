@@ -8,6 +8,51 @@ module Game {
 	/********************************************************************************
 	 * Group: generic GUI stuff
 	 ********************************************************************************/
+	export class GuiManager {
+		private static _instance: GuiManager = new GuiManager();
+		static get instance() { return GuiManager._instance; }
+
+		private guis: { [index: string]: Gui; } = {};
+		addGui(gui: Gui, name: string, x?: number, y?: number) {
+			if ( x !== undefined && y !== undefined ) {
+				gui.moveTo(x, y);
+			}
+			this.guis[name] = gui;
+		}
+
+		getGui(name: string): Gui {
+			return this.guis[name];
+		}
+
+		renderGui(rootConsole: Yendor.Console, map: Map) {
+			for (var guiName in this.guis) {
+				if ( this.guis.hasOwnProperty(guiName) ) {
+					var gui: Gui = this.guis[guiName];
+					if ( gui.isVisible()) {
+						gui.render(map, rootConsole);
+					}
+				}
+			}
+		}
+
+		createStatusPanel() {
+			var statusPanel: Gui = new StatusPanel( Constants.CONSOLE_WIDTH, Constants.STATUS_PANEL_HEIGHT );
+			statusPanel.show();
+			this.addGui(statusPanel, Constants.STATUS_PANEL_ID, 0, Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT);
+		}
+
+		createOtherGui(map: Map) {
+			var inventoryPanel: Gui = new InventoryPanel( Constants.INVENTORY_PANEL_WIDTH, Constants.INVENTORY_PANEL_HEIGHT );
+			this.addGui(inventoryPanel, Constants.INVENTORY_ID, Math.floor(Constants.CONSOLE_WIDTH / 2 - Constants.INVENTORY_PANEL_WIDTH / 2), 0);
+
+			var tilePicker: Gui = new TilePicker(map);
+			this.addGui(tilePicker, Constants.TILE_PICKER_ID);
+
+			var mainMenu: Menu = new MainMenu();
+			this.addGui(mainMenu, Constants.MAIN_MENU_ID);
+		}
+	}
+
 	export class Gui extends Yendor.Position {
 		private static activeModal: Gui;
 
@@ -60,11 +105,6 @@ module Game {
 		render(map: Map, destination: Yendor.Console) {
 			this.__console.blit(destination, this.x, this.y);
 		}
-	}
-
-	export interface GuiManager {
-		addGui(gui: Gui, name: string, x?: number, y?: number);
-		renderGui(rootConsole: Yendor.Console);
 	}
 
 	/********************************************************************************

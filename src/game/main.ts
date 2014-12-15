@@ -23,21 +23,17 @@ module Game {
 		Class: Engine
 		Handles frame rendering and world updating.
 	*/
-	class Engine implements EventListener, GuiManager {
+	class Engine implements EventListener {
 		private map: Map;
 		private status : GameStatus;
 		private persister: Persister = new LocalStoragePersister();
-		private guis: { [index: string]: Gui; } = {};
 		private dungeonLevel: number = 1;
 
-		/*
-			Constructor: constructor
-		*/
 		constructor() {
 			this.resetGame();
 			this.map = new Map();
 			this.initEventBus();
-			this.createStatusPanel();
+			GuiManager.instance.createStatusPanel();
 
 			var savedVersion = this.persister.loadFromKey(Constants.PERSISTENCE_VERSION_KEY);
 			if ( savedVersion && savedVersion.toString() === VERSION ) {
@@ -45,7 +41,7 @@ module Game {
 			} else {
 				this.createNewGame();
 			}
-			this.createOtherGui();
+			GuiManager.instance.createOtherGui(this.map);
 			this.computePlayerFov();
 		}
 
@@ -57,23 +53,6 @@ module Game {
 			EventBus.instance.registerListener(this, EventType.NEXT_LEVEL);
 			EventBus.instance.registerListener(this, EventType.PREV_LEVEL);
 			EventBus.instance.registerListener(this, EventType.GAIN_XP);
-		}
-
-		private createStatusPanel() {
-			var statusPanel: Gui = new StatusPanel( Constants.CONSOLE_WIDTH, Constants.STATUS_PANEL_HEIGHT );
-			statusPanel.show();
-			this.addGui(statusPanel, Constants.STATUS_PANEL_ID, 0, Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT);
-		}
-
-		private createOtherGui() {
-			var inventoryPanel: Gui = new InventoryPanel( Constants.INVENTORY_PANEL_WIDTH, Constants.INVENTORY_PANEL_HEIGHT );
-			this.addGui(inventoryPanel, Constants.INVENTORY_ID, Math.floor(Constants.CONSOLE_WIDTH / 2 - Constants.INVENTORY_PANEL_WIDTH / 2), 0);
-
-			var tilePicker: Gui = new TilePicker(this.map);
-			this.addGui(tilePicker, Constants.TILE_PICKER_ID);
-
-			var mainMenu: Menu = new MainMenu();
-			this.addGui(mainMenu, Constants.MAIN_MENU_ID);
 		}
 
 		private resetGame() {
@@ -93,7 +72,7 @@ module Game {
 			this.dungeonLevel = this.persister.loadFromKey(Constants.PERSISTENCE_DUNGEON_LEVEL);
 			this.persister.loadFromKey(Constants.PERSISTENCE_MAP_KEY, this.map);
 			ActorManager.instance.load(this.persister);
-			this.persister.loadFromKey(Constants.STATUS_PANEL_ID, this.guis[Constants.STATUS_PANEL_ID]);
+			this.persister.loadFromKey(Constants.STATUS_PANEL_ID, GuiManager.instance.getGui(Constants.STATUS_PANEL_ID));
 		}
 
 		private saveGame() {
@@ -101,7 +80,7 @@ module Game {
 			this.persister.saveToKey(Constants.PERSISTENCE_VERSION_KEY, VERSION);
 			this.persister.saveToKey(Constants.PERSISTENCE_MAP_KEY, this.map);
 			ActorManager.instance.save(this.persister);
-			this.persister.saveToKey(Constants.STATUS_PANEL_ID, this.guis[Constants.STATUS_PANEL_ID]);
+			this.persister.saveToKey(Constants.STATUS_PANEL_ID, GuiManager.instance.getGui(Constants.STATUS_PANEL_ID));
 		}
 
 		private deleteSavedGame() {
@@ -124,7 +103,7 @@ module Game {
 
 		/*
 			Function: gotoNextLevel
-			Go down one level
+			Go down one level in the dungeon
 		*/
 		private gotoNextLevel() {
 			this.dungeonLevel ++;
@@ -152,27 +131,6 @@ module Game {
 		}
 
 		/*
-			GuiManager interface
-		*/
-		addGui(gui: Gui, name: string, x?: number, y?: number) {
-			if ( x !== undefined && y !== undefined ) {
-				gui.moveTo(x, y);
-			}
-			this.guis[name] = gui;
-		}
-
-		renderGui(rootConsole: Yendor.Console) {
-			for (var guiName in this.guis) {
-				if ( this.guis.hasOwnProperty(guiName) ) {
-					var gui: Gui = this.guis[guiName];
-					if ( gui.isVisible()) {
-						gui.render(this.map, rootConsole);
-					}
-				}
-			}
-		}
-
-		/*
 			Function: processEvent
 			Handle <CHANGE_STATUS> events (see <EventListener>)
 
@@ -189,7 +147,7 @@ module Game {
 					ActorManager.instance.removeItem(item);
 					break;
 				case  EventType.NEW_GAME :
-					this.guis[ Constants.STATUS_PANEL_ID ].clear();
+					GuiManager.instance.getGui(Constants.STATUS_PANEL_ID ).clear();
 					this.dungeonLevel = 1;
 					this.newLevel();
 					break;
@@ -334,7 +292,7 @@ module Game {
 			root.clearText();
 			this.map.render();
 			ActorManager.instance.renderActors(this.map);
-			this.renderGui(root);
+			GuiManager.instance.renderGui(root, this.map);
 		}
 
 
