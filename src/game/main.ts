@@ -18,7 +18,7 @@ module Game {
 		to keep the game from trying to load data with an old format.
 		This should be a numeric value (x.y.z not supported).
 	*/
-	var VERSION: string = "0.6";
+	var VERSION: string = "0.7";
 	/*
 		Class: Engine
 		Handles frame rendering and world updating.
@@ -27,7 +27,7 @@ module Game {
 		private map: Map;
 		private status : GameStatus;
 		private persister: Persister = new LocalStoragePersister();
-		private dungeonLevel: number = 1;
+		private dungeonLevel: number = 5;
 
 		constructor() {
 			this.resetGame();

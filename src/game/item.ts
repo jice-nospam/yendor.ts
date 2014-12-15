@@ -19,10 +19,10 @@ module Game {
 		SELECTED_RANGE - all actors close to a manually selected position
 	*/
 	export enum TargetSelectionMethod {
-		WEARER,
-		WEARER_CLOSEST_ENEMY,
+		ACTOR_ON_CELL,
+		CLOSEST_ENEMY,
 		SELECTED_ACTOR,
-		WEARER_RANGE,
+		ACTORS_IN_RANGE,
 		SELECTED_RANGE
 	}
 
@@ -66,16 +66,23 @@ module Game {
 			Parameters:
 			owner - the actor owning the effect (the magic item or the scroll)
 			wearer - the actor using the item
+			cellPos - the cell where the effect applies (= the wearer position when used from inventory, or a different position when thrown)
+			applyEffectsFunc - function to call with the list of selected actors
 		*/
-		selectTargets(owner: Actor, wearer: Actor, applyEffects: (owner: Actor, wearer: Actor, actors: Actor[]) => void) {
+		selectTargets(owner: Actor, wearer: Actor, cellPos: Yendor.Position,
+			applyEffectsFunc: (owner: Actor, wearer: Actor, actors: Actor[]) => void) {
 			var selectedTargets: Actor[] = [];
 			var creatures: Actor[] = ActorManager.instance.getCreatures();
 			switch (this._method) {
-				case TargetSelectionMethod.WEARER :
-					selectedTargets.push(wearer);
+				case TargetSelectionMethod.ACTOR_ON_CELL :
+					if ( cellPos ) {
+						selectedTargets = ActorManager.instance.findActorsOnCell(cellPos, creatures);
+					} else {
+						selectedTargets.push(wearer);
+					}
 				break;
-				case TargetSelectionMethod.WEARER_CLOSEST_ENEMY :
-					var actor = ActorManager.instance.findClosestActor(wearer, this.range, creatures);
+				case TargetSelectionMethod.CLOSEST_ENEMY :
+					var actor = ActorManager.instance.findClosestActor(cellPos ? cellPos : wearer, this.range, creatures);
 					if ( actor ) {
 						selectedTargets.push(actor);
 					}
@@ -86,13 +93,14 @@ module Game {
 						function(pos: Yendor.Position) {
 							var actors: Actor[] = ActorManager.instance.findActorsOnCell( pos, creatures);
 							if (actors.length > 0) {
-								applyEffects(owner, wearer, actors);
+								applyEffectsFunc(owner, wearer, actors);
 							}
 						}
 					));
 				break;
-			// TODO
-			// case TargetSelectionMethod.WEARER_RANGE : return selectCloseEnemies(wearer, actorManager); break;
+				case TargetSelectionMethod.ACTORS_IN_RANGE :
+					selectedTargets = ActorManager.instance.findActorsInRange( cellPos ? cellPos : wearer, this.range, creatures );
+				break;
 				case TargetSelectionMethod.SELECTED_RANGE :
 					log("Left-click a target tile,\nor right-click to cancel.", "red");
 					var theRange = this.range;
@@ -100,14 +108,14 @@ module Game {
 						function(pos: Yendor.Position) {
 							var actors: Actor[] = ActorManager.instance.findActorsInRange( pos, theRange, creatures );
 							if (actors.length > 0) {
-								applyEffects(owner, wearer, actors);
+								applyEffectsFunc(owner, wearer, actors);
 							}
 						}
 					));
 				break;
 			}
 			if (selectedTargets.length > 0) {
-				applyEffects(owner, wearer, selectedTargets);
+				applyEffectsFunc(owner, wearer, selectedTargets);
 			}
 		}
 	}
@@ -133,19 +141,21 @@ module Game {
 
 	export class InstantHealthEffect implements Effect {
 		className: string;
-		private _amount: number;
-		private _message: string;
-		constructor( _amount: number = 0, _message?: string) {
+		private amount: number;
+		private successMessage: string;
+		private failureMessage: string;
+		constructor( amount: number = 0, successMessage?: string, failureMessage?: string) {
 			this.className = "InstantHealthEffect";
-			this._amount = _amount;
-			this._message = _message;
+			this.amount = amount;
+			this.successMessage = successMessage;
+			this.failureMessage = failureMessage;
 		}
 
 		applyTo(actor: Actor): boolean {
 			if (! actor.destructible ) {
 				return false;
 			}
-			if ( this._amount > 0 ) {
+			if ( this.amount > 0 ) {
 				return this.applyHealingEffectTo(actor);
 			} else {
 				return this.applyWoundingEffectTo(actor);
@@ -154,19 +164,23 @@ module Game {
 		}
 
 		private applyHealingEffectTo(actor: Actor): boolean {
-			var healPointsCount: number = actor.destructible.heal( this._amount );
-			if ( healPointsCount > 0 && this._message ) {
-				// TODO message formatting utility
-				log(transformMessage(this._message, actor));
+			var healPointsCount: number = actor.destructible.heal( this.amount );
+			if ( healPointsCount > 0 && this.successMessage ) {
+				log(transformMessage(this.successMessage, actor));
+			} else if ( healPointsCount <= 0 && this.failureMessage ) {
+				log(transformMessage(this.failureMessage, actor));
 			}
 			return true;
 		}
 
 		private applyWoundingEffectTo(actor: Actor) : boolean {
-			if ( this._message && actor.destructible.computeRealDefense(actor) < -this._amount ) {
-				log(transformMessage(this._message, actor));
+			var realDefense: number = actor.destructible.computeRealDefense(actor);
+			if ( realDefense < -this.amount && this.successMessage ) {
+				log(transformMessage(this.successMessage, actor));
+			} else if ( realDefense >= -this.amount && this.failureMessage ) {
+				log(transformMessage(this.failureMessage, actor));
 			}
-			return actor.destructible.takeDamage(actor, -this._amount) > 0;
+			return actor.destructible.takeDamage(actor, -this.amount) > 0;
 		}
 	}
 
@@ -192,25 +206,63 @@ module Game {
 	/********************************************************************************
 	 * Group: items
 	 ********************************************************************************/
+	export class Effector implements Persistent {
+		className: string;
+		private _effect: Effect;
+		private _targetSelector: TargetSelector;
+		private _message: string;
+		constructor(_effect?: Effect, _targetSelector?: TargetSelector, _message?: string) {
+			this.className = "Effector";
+			this._effect = _effect;
+			this._targetSelector = _targetSelector;
+			this._message = _message;
+		}
 
+		apply(owner: Actor, wearer: Actor, cellPos?: Yendor.Position) {
+			this._targetSelector.selectTargets(owner, wearer, cellPos, this.applyEffectToActorList.bind(this));
+			if ( wearer === ActorManager.instance.getPlayer()
+				&& this._targetSelector.method !== TargetSelectionMethod.SELECTED_RANGE
+				&& this._targetSelector.method !== TargetSelectionMethod.SELECTED_ACTOR ) {
+				EventBus.instance.publishEvent(new Event<GameStatus>(EventType.CHANGE_STATUS, GameStatus.NEW_TURN));
+			}
+		}
+
+		private applyEffectToActorList(owner: Actor, wearer: Actor, actors: Actor[]) {
+			var success: boolean = false;
+			if ( this._message ) {
+				log(this._message);
+			}
+
+			for (var i = 0; i < actors.length; ++i) {
+				if (this._effect.applyTo(actors[i])) {
+					success = true;
+				}
+			}
+			if ( success && wearer && wearer.container ) {
+				wearer.container.remove( owner );
+			}
+		}
+	}
 	/*
 		Class: Pickable
 		An actor that can be picked by a creature
 	*/
 	export class Pickable implements Persistent {
 		className: string;
-		private _effect: Effect;
-		private _targetSelector: TargetSelector;
-		private onUseMessage: string;
+		private onUseEffector: Effector;
+		private onThrowEffector: Effector;
 
-		constructor( _effect?: Effect, _targetSelector?: TargetSelector, onUseMessage?: string) {
+		constructor() {
 			this.className = "Pickable";
-			this._effect = _effect;
-			this._targetSelector = _targetSelector;
-			this.onUseMessage = onUseMessage;
 		}
 
-		get effect() {return this._effect; }
+		setOnUseEffect(effect?: Effect, targetSelector?: TargetSelector, message?: string) {
+			this.onUseEffector = new Effector(effect, targetSelector, message);
+		}
+
+		setOnThrowEffect(effect?: Effect, targetSelector?: TargetSelector, message?: string) {
+			this.onThrowEffector = new Effector(effect, targetSelector, message);
+		}
 
 		/*
 			Function: pick
@@ -260,24 +312,23 @@ module Game {
 				owner.equipment.unequip(owner, wearer);
 			}
 			log(wearer.getThename() + " " + verb + wearer.getVerbEnd() + owner.getthename());
-			EventBus.instance.publishEvent(new Event<GameStatus>(EventType.CHANGE_STATUS, GameStatus.NEW_TURN));
+			if ( verb === "drop") {
+				EventBus.instance.publishEvent(new Event<GameStatus>(EventType.CHANGE_STATUS, GameStatus.NEW_TURN));
+			}
 		}
 
 		/*
 			Function: use
-			Consume this item, destroying it
+			Use this item. If it has a onUseEffector, apply the effect and destroy the item.
+			If it's an equipment, equip/unequip it.
 
 			Parameters:
 			owner - the actor owning this Pickable (the item)
 			wearer - the container (the creature using the item)
 		*/
 		use(owner: Actor, wearer: Actor) {
-			if ( this._targetSelector ) {
-				this._targetSelector.selectTargets(owner, wearer, this.applyEffectToActorList.bind(this));
-				if ( this._targetSelector.method !== TargetSelectionMethod.SELECTED_RANGE
-					&& this._targetSelector.method !== TargetSelectionMethod.SELECTED_ACTOR ) {
-					EventBus.instance.publishEvent(new Event<GameStatus>(EventType.CHANGE_STATUS, GameStatus.NEW_TURN));
-				}
+			if ( this.onUseEffector ) {
+				this.onUseEffector.apply(owner, wearer);
 			}
 			if ( owner.equipment ) {
 				owner.equipment.use(owner, wearer);
@@ -285,41 +336,26 @@ module Game {
 			}
 		}
 
+		/*
+			Function: throw
+			Throw this item. If it has a onUseEffector, apply the effect and destroy the item.
+
+			Parameters:
+			owner - the actor owning this Pickable (the item)
+			wearer - the container (the creature using the item)
+		*/
 		throw(owner: Actor, wearer: Actor) {
 			log("Left-click where to throw the " + owner.name
 				+ ",\nor right-click to cancel.", "red");
 			EventBus.instance.publishEvent(new Event<TilePickerListener>(EventType.PICK_TILE,
 				function(pos: Yendor.Position) {
-					if ( owner.pickable.effect || owner.attacker ) {
-						var actors: Actor[] = ActorManager.instance.findActorsOnCell( pos, ActorManager.instance.getCreatures());
-						if (actors.length > 0) {
-							if ( owner.pickable.effect ) {
-								owner.pickable.applyEffectToActorList(owner, undefined, actors);
-							}
-							if ( owner.attacker ) {
-								owner.attacker.attack(owner, actors[0]);
-							}
-						}
-					}
 					owner.pickable.drop(owner, ActorManager.instance.getPlayer(), pos, "throw");
+					if (owner.pickable.onThrowEffector) {
+						owner.pickable.onThrowEffector.apply(owner, wearer, pos);
+						EventBus.instance.publishEvent(new Event<Actor>(EventType.REMOVE_ACTOR, owner));
+					}
 				}
 			));
-		}
-
-		applyEffectToActorList(owner: Actor, wearer: Actor, actors: Actor[]) {
-			var success: boolean = false;
-			if ( this.onUseMessage ) {
-				log(this.onUseMessage);
-			}
-
-			for (var i = 0; i < actors.length; ++i) {
-				if (this._effect.applyTo(actors[i])) {
-					success = true;
-				}
-			}
-			if ( success && wearer && wearer.container ) {
-				wearer.container.remove( owner );
-			}
 		}
 	}
 

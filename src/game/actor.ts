@@ -642,6 +642,10 @@ module Game {
 			root.fore[this.x][this.y] = this._col;
 		}
 
+		/********************************************************************************
+		 * Group: actor factories
+		 ********************************************************************************/
+
 		/*
 			item factories
 		*/
@@ -650,9 +654,15 @@ module Game {
 		static createHealthPotion(x: number, y: number, amount: number): Actor {
 			var healthPotion = new Actor();
 			healthPotion.init(x, y, "!", "health potion", "#800080", true);
-			healthPotion.pickable = new Pickable(new InstantHealthEffect(amount,
-				"[The actor1] drink[s] the health potion and regain[s] " + amount + " hit points."),
-				new TargetSelector( TargetSelectionMethod.WEARER ));
+			healthPotion.pickable = new Pickable();
+			healthPotion.pickable.setOnUseEffect(new InstantHealthEffect(amount,
+				"[The actor1] drink[s] the health potion and regain[s] " + amount + " hit points.",
+				"[The actor1] drink[s] the health potion but it has no effect"),
+				new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL ));
+			healthPotion.pickable.setOnThrowEffect(new InstantHealthEffect(amount,
+				"The potion explodes on [the actor1], healing [it] for " + amount + " hit points.",
+				"The potion explodes on [the actor1] but it has no effect"),
+				new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL ));
 			return healthPotion;
 		}
 
@@ -660,16 +670,18 @@ module Game {
 		static createLightningBoltScroll(x: number, y: number, range: number, damages: number): Actor {
 			var lightningBolt = new Actor();
 			lightningBolt.init(x, y, "#", "scroll of lightning bolt", "#FFFF3F", true);
-			lightningBolt.pickable = new Pickable( new InstantHealthEffect(-damages,
+			lightningBolt.pickable = new Pickable();
+			lightningBolt.pickable.setOnUseEffect(new InstantHealthEffect(-damages,
 				"A lightning bolt strikes [the actor1] with a loud thunder!\nThe damage is " + damages + " hit points."),
-				new TargetSelector( TargetSelectionMethod.WEARER_CLOSEST_ENEMY, range));
+				new TargetSelector( TargetSelectionMethod.CLOSEST_ENEMY, range));
 			return lightningBolt;
 		}
 
 		static createFireballScroll(x: number, y: number, range: number, damages: number): Actor {
 			var fireball = new Actor();
 			fireball.init(x, y, "#", "scroll of fireball", "#FFFF3F", true);
-			fireball.pickable = new Pickable( new InstantHealthEffect(-damages,
+			fireball.pickable = new Pickable();
+			fireball.pickable.setOnUseEffect(new InstantHealthEffect(-damages,
 				"[The actor1] get[s] burned for " + damages + " hit points."),
 				new TargetSelector( TargetSelectionMethod.SELECTED_RANGE, range),
 				"A fireball explodes, burning everything within " + range + " tiles.");
@@ -679,28 +691,34 @@ module Game {
 		static createConfusionScroll(x: number, y: number, range: number, nbTurns: number): Actor {
 			var confusionScroll = new Actor();
 			confusionScroll.init(x, y, "#", "scroll of confusion", "#FFFF3F", true);
-			confusionScroll.pickable = new Pickable( new AiChangeEffect(new ConfusedMonsterAi(nbTurns),
+			confusionScroll.pickable = new Pickable();
+			confusionScroll.pickable.setOnUseEffect(new AiChangeEffect(new ConfusedMonsterAi(nbTurns),
 				"[The actor1's] eyes look vacant,\nas [it] start[s] to stumble around!"),
 				new TargetSelector( TargetSelectionMethod.SELECTED_ACTOR, range));
 			return confusionScroll;
 		}
 
 		// weapons
-		static createSword(x: number, y: number): Actor {
+		static createSword(x: number, y: number, name: string, damages: number): Actor {
 			var sword = new Actor();
-			sword.init(x, y, "/", "sword", "#F0F0F0", true);
+			sword.init(x, y, "/", name, "#F0F0F0", true);
 			sword.pickable = new Pickable();
-			sword.equipment = new Equipment("right hand", 3);
-			// needed to deal damages when the sword is thrown
-			sword.attacker = new Attacker(3);
+			sword.pickable.setOnThrowEffect(new InstantHealthEffect(-damages,
+				"The sword hits [the actor1] for " + damages + " hit points."),
+				new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL ));
+
+			sword.equipment = new Equipment("right hand", damages);
 			return sword;
 		}
 
-		static createShield(x: number, y: number): Actor {
+		static createShield(x: number, y: number, name: string, defense: number): Actor {
 			var shield = new Actor();
-			shield.init(x, y, "[", "shield", "#F0F0F0", true);
+			shield.init(x, y, "[", name, "#F0F0F0", true);
 			shield.pickable = new Pickable();
-			shield.equipment = new Equipment("left hand", 0, 1);
+			shield.pickable.setOnThrowEffect(new AiChangeEffect(new ConfusedMonsterAi(2),
+				"The shield hits [the actor1] and stuns [it]!"),
+				new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL));
+			shield.equipment = new Equipment("left hand", 0, defense);
 			return shield;
 		}
 
