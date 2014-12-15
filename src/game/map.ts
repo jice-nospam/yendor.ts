@@ -100,9 +100,9 @@ module Game {
 			} else if ( item === "confusionScroll") {
 				return Actor.createConfusionScroll(x, y, 5, 12);
 			} else if ( item === "sword") {
-				return Actor.createSword(x, y);
+				return Actor.createSword(x, y, "iron sword", 3);
 			} else if ( item === "shield") {
-				return Actor.createShield(x, y);
+				return Actor.createShield(x, y, "wooden shield", 1);
 			}
 			return undefined;
 		}
