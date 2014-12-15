@@ -5,6 +5,7 @@
 * GenRogue
 	- multi-level dungeon
 	- can drop items with 'd'
+	- can throw items with 't'
 	- equipable items (sword, shield)
 
 # 0.0.3 / 06-dec-2014
