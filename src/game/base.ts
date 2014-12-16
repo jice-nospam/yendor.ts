@@ -33,7 +33,7 @@ module Game {
         export var INVENTORY_ID: string = "inventory";
         export var TILE_PICKER_ID: string = "tilePicker";
         export var MAIN_MENU_ID: string = "mainMenu";
-		export var LOG_DARKEN_COEF: number = 0.9;
+		export var LOG_DARKEN_COEF: number = 0.8;
 		export var STATUS_PANEL_HEIGHT: number = 7;
 		export var STAT_BAR_WIDTH: number = 20;
         export var INVENTORY_PANEL_WIDTH: number = 50;
@@ -47,10 +47,8 @@ module Game {
 
 		// gameplay
 		export var SCENT_THRESHOLD: number = 10;
-        export var ORC_XP = 35;
-        export var TROLL_XP = 100;
-        export var XP_BASE_LEVEL = 200;
-        export var XP_NEW_LEVEL = 150;
+        export var XP_BASE_LEVEL: number = 200;
+        export var XP_NEW_LEVEL: number = 150;
 
         // persistence local storage keys
         export var PERSISTENCE_VERSION_KEY: string = "version";
@@ -212,14 +210,14 @@ module Game {
         newText = newText.replace("[The actor1]", actor1.getThename());
         newText = newText.replace(" [the actor1]", actor1.getthename());
         newText = newText.replace(/\[s\]/g, actor1.getVerbEnd());
-        newText = newText.replace(/ \[it\] /g, actor1.getit());
+        newText = newText.replace(/ \[it\]/g, actor1.getit());
         if ( actor2 ) {
             newText.replace("[The actor2's] ", actor2.getThenames());
             newText = newText.replace(" [the actor2's] ", actor2.getthenames());
             newText = newText.replace("[The actor2]", actor2.getThename());
             newText = newText.replace(" [the actor2]", actor2.getthename());
             newText = newText.replace(/\[s2\]/g, actor2.getVerbEnd());
-            newText = newText.replace(/ \[it2\] /g, actor2.getit());
+            newText = newText.replace(/ \[it2\]/g, actor2.getit());
         }
         return newText;
     };
