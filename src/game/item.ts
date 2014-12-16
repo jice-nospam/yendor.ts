@@ -352,7 +352,10 @@ module Game {
 					owner.pickable.drop(owner, ActorManager.instance.getPlayer(), pos, "throw");
 					if (owner.pickable.onThrowEffector) {
 						owner.pickable.onThrowEffector.apply(owner, wearer, pos);
-						EventBus.instance.publishEvent(new Event<Actor>(EventType.REMOVE_ACTOR, owner));
+						if (! owner.equipment) {
+							// TODO better test to know it the item is destroyed when thrown
+							EventBus.instance.publishEvent(new Event<Actor>(EventType.REMOVE_ACTOR, owner));
+						}
 					}
 				}
 			));
