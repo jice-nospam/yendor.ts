@@ -75,9 +75,9 @@ module Game {
 				"troll": this.getValueForDungeon([[3, 10], [5, 20], [7, 30]])
 			});
 			if ( monster === "orc" ) {
-				return Actor.createOrc(x, y);
+				return Actor.createBeast(x, y, "o", "orc", "dead orc", "#3F7F3F", 10, 2, 0, 35);
 			} else if ( monster === "troll" ) {
-				return Actor.createTroll(x, y);
+				return Actor.createBeast(x, y, "T", "troll", "troll carcass", "#007F00", 16, 3, 1, 100);
 			}
 			return undefined;
 		}
