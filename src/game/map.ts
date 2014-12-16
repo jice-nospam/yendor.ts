@@ -71,10 +71,13 @@ module Game {
 		private createMonster(x: number, y: number, rng: Yendor.Random) {
 			// no trolls before level 3. then probability 10/80 until level 5, 20/80 until level 7 and 30/80 beyond
 			var monster = rng.getRandomChance({
-				"orc": 80,
+				"goblin": 60,
+				"orc": 30,
 				"troll": this.getValueForDungeon([[3, 10], [5, 20], [7, 30]])
 			});
-			if ( monster === "orc" ) {
+			if ( monster === "goblin" ) {
+				return Actor.createBeast(x, y, "g", "goblin", "goblin corpse", "#3F7F3F", 3, 1, 0, 10);
+			} else if ( monster === "orc" ) {
 				return Actor.createBeast(x, y, "o", "orc", "dead orc", "#3F7F3F", 10, 2, 0, 35);
 			} else if ( monster === "troll" ) {
 				return Actor.createBeast(x, y, "T", "troll", "troll carcass", "#007F00", 16, 3, 1, 100);

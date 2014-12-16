@@ -3,6 +3,7 @@
 	- added Random.getRandomChance()
 
 * GenRogue
+	- goblins
 	- multi-level dungeon
 	- can drop items with 'd'
 	- can throw items with 't'
