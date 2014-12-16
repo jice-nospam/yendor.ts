@@ -733,26 +733,16 @@ module Game {
 		/*
 			creature factories
 		*/
-		static createOrc(x: number, y: number): Actor {
-			var orc: Actor = new Actor();
-			orc.init(x, y, "o", "orc", "#3F7F3F", true);
-			orc.destructible = new MonsterDestructible(10, 0, "dead orc");
-			orc.attacker = new Attacker(2);
-			orc.ai = new MonsterAi();
-			orc.blocks = true;
-			orc.destructible.xp = Constants.ORC_XP;
-			return orc;
-		}
-
-		static createTroll(x: number, y: number): Actor {
-			var troll: Actor =  new Actor();
-			troll.init(x, y, "T", "troll", "#007F00", true);
-			troll.destructible = new MonsterDestructible(16, 1, "troll carcass");
-			troll.attacker = new Attacker(3);
-			troll.ai = new MonsterAi();
-			troll.blocks = true;
-			troll.destructible.xp = Constants.TROLL_XP;
-			return troll;
+		static createBeast(x: number, y: number, character: string, name: string, corpseName: string, color: string,
+			hp: number, attack: number, defense: number, xp: number): Actor {
+			var beast: Actor = new Actor();
+			beast.init(x, y, character, name, color, true);
+			beast.destructible = new MonsterDestructible(hp, defense, corpseName);
+			beast.attacker = new Attacker(attack);
+			beast.ai = new MonsterAi();
+			beast.blocks = true;
+			beast.destructible.xp = xp;
+			return beast;
 		}
 
 		static createPlayer(): Player {
