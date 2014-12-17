@@ -8,6 +8,7 @@
 	- can drop items with 'd'
 	- can throw items with 't'
 	- equipable items (sword, shield)
+	- inventory now stacks similar items
 
 # 0.0.3 / 06-dec-2014
 * Yendor toolkit

@@ -518,6 +518,10 @@ module Game {
 			return this._singular;
 		}
 
+		isStackable(): boolean {
+			return ! this.destructible && (! this.equipment || ! this.equipment.isEquipped());
+		}
+
 		isBlocking(): boolean {
 			return this._blocks;
 		}

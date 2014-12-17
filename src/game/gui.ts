@@ -269,8 +269,9 @@ module Game {
 
 		private selectItem(index: number) {
 			var player: Actor = ActorManager.instance.getPlayer();
-			if ( index >= 0 && index < player.container.size() ) {
-				var item: Actor = player.container.get(index);
+			var inventory: Actor[][] = this.buildStackedInventory(player.container);
+			if ( index >= 0 && index < inventory.length ) {
+				var item: Actor = inventory[index][0];
 				this.itemListener(item);
 				this.hide();
 			}
@@ -292,10 +293,6 @@ module Game {
 
 		private selectItemAtPos(pos: Yendor.Position) {
 			this.selectedItem = pos.y - (this.y + 1);
-			var player: Actor = ActorManager.instance.getPlayer();
-			if ( this.selectedItem < 0 || this.selectedItem > player.container.size() ) {
-				this.selectedItem = undefined;
-			}
 		}
 
 		render(map: Map, destination: Yendor.Console) {
@@ -307,18 +304,53 @@ module Game {
 			var y: number = 1;
 			this.console.print(Math.floor(this.width / 2 - this.title.length / 2), 0, this.title);
 			var player: Actor = ActorManager.instance.getPlayer();
-			for ( var i: number = 0; i < player.container.size(); ++i) {
-				var item: Actor = player.container.get(i);
-				var itemDescription = item.getDescription();
-				this.console.print(2, y, "(" + String.fromCharCode(shortcut) + ") " + itemDescription, Constants.INVENTORY_FOREGROUND );
-				if (i === this.selectedItem) {
-					this.console.clearBack(Constants.INVENTORY_BACKGROUND_ACTIVE, 0, y, -1, 1);
-					this.console.clearFore(Constants.INVENTORY_FOREGROUND_ACTIVE, 0, y, -1, 1);
-				}
+			var inventory: Actor[][] = this.buildStackedInventory(player.container);
+			for ( var i: number = 0; i < inventory.length; i++) {
+				var list: Actor[] = inventory[i];
+				this.renderItem(list[0], i, y, shortcut, list.length);
 				y++;
 				shortcut++;
+
 			}
 			super.render(map, destination);
+		}
+
+		private renderItem(item: Actor, entryNum: number, y: number, shortcut: number, count: number = 1) {
+			var itemDescription = "(" + String.fromCharCode(shortcut) + ") ";
+			if ( count > 1 ) {
+				itemDescription += count + " ";
+			}
+			itemDescription += item.getDescription();
+
+			this.console.print(2, y, itemDescription, Constants.INVENTORY_FOREGROUND );
+			if (entryNum === this.selectedItem) {
+				this.console.clearBack(Constants.INVENTORY_BACKGROUND_ACTIVE, 0, y, -1, 1);
+				this.console.clearFore(Constants.INVENTORY_FOREGROUND_ACTIVE, 0, y, -1, 1);
+			}
+		}
+
+		private buildStackedInventory(container: Container): Actor[][] {
+			var player: Actor = ActorManager.instance.getPlayer();
+			var inventory: Actor[][] = [];
+			for ( var i: number = 0; i < player.container.size(); ++i) {
+				var item: Actor = player.container.get(i);
+				var found: boolean = false;
+				if (item.isStackable()) {
+					for ( var j: number = 0; j < inventory.length; ++j) {
+						if ( inventory[j][0].isStackable() && inventory[j][0].name === item.name ) {
+							inventory[j].push(item);
+							found = true;
+							break;
+						}
+					}
+				}
+				if (! found) {
+					var itemTab: Actor[] = [];
+					itemTab.push(item);
+					inventory.push(itemTab);
+				}
+			}
+			return inventory;
 		}
 	}
 
