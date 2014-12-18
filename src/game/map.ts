@@ -91,8 +91,10 @@ module Game {
 				"lightningBoltScroll": this.getValueForDungeon([[3, 10]]),
 				"fireballScroll": 10,
 				"confusionScroll": 10,
-				"sword": this.getValueForDungeon([[5, 4]]),
-				"shield": this.getValueForDungeon([[10, 8]])
+				"iron sword": this.getValueForDungeon([[5, 4]]),
+				"wooden shield": this.getValueForDungeon([[10, 8]]),
+				"steel sword": this.getValueForDungeon([[8, 4]]),
+				"iron shield": this.getValueForDungeon([[14, 8]])
 			});
 			if ( item === "healthPotion" ) {
 				return Actor.createHealthPotion(x, y, 4);
@@ -102,10 +104,14 @@ module Game {
 				return Actor.createFireballScroll(x, y, 3, 12);
 			} else if ( item === "confusionScroll") {
 				return Actor.createConfusionScroll(x, y, 5, 12);
-			} else if ( item === "sword") {
+			} else if ( item === "iron sword") {
 				return Actor.createSword(x, y, "iron sword", 3);
-			} else if ( item === "shield") {
+			} else if ( item === "wooden shield") {
 				return Actor.createShield(x, y, "wooden shield", 1);
+			} else if ( item === "steel sword") {
+				return Actor.createSword(x, y, "steel sword", 4);
+			} else if ( item === "iron shield") {
+				return Actor.createShield(x, y, "iron shield", 2);
 			}
 			return undefined;
 		}
