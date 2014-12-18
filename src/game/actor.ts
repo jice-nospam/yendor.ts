@@ -632,6 +632,12 @@ module Game {
 			if ( this._equipment && this._equipment.isEquipped()) {
 				desc += " (on " + this._equipment.getSlot() + ")";
 			}
+			if ( this._ai ) {
+				var condDesc: string = this._ai.getConditionDescription();
+				if ( condDesc ) {
+					desc += " (" + condDesc + ")";
+				}
+			}
 			return desc;
 		}
 
@@ -696,7 +702,7 @@ module Game {
 			var confusionScroll = new Actor();
 			confusionScroll.init(x, y, "#", "scroll of confusion", "#FFFF3F", true);
 			confusionScroll.pickable = new Pickable();
-			confusionScroll.pickable.setOnUseEffect(new AiChangeEffect(new ConfusedMonsterAi(nbTurns),
+			confusionScroll.pickable.setOnUseEffect(new ConditionEffect(ConditionType.CONFUSED, nbTurns,
 				"[The actor1's] eyes look vacant,\nas [it] start[s] to stumble around!"),
 				new TargetSelector( TargetSelectionMethod.SELECTED_ACTOR, range));
 			return confusionScroll;
@@ -719,7 +725,7 @@ module Game {
 			var shield = new Actor();
 			shield.init(x, y, "[", name, "#F0F0F0", true);
 			shield.pickable = new Pickable();
-			shield.pickable.setOnThrowEffect(new AiChangeEffect(new ConfusedMonsterAi(5),
+			shield.pickable.setOnThrowEffect(new ConditionEffect(ConditionType.CONFUSED, 5,
 				"The shield hits [the actor1] and stuns [it]!"),
 				new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL));
 			shield.equipment = new Equipment("left hand", 0, defense);

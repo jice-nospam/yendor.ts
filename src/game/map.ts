@@ -69,7 +69,8 @@ module Game {
 		}
 
 		private createMonster(x: number, y: number, rng: Yendor.Random) {
-			// no trolls before level 3. then probability 10/80 until level 5, 20/80 until level 7 and 30/80 beyond
+			// no trolls before level 3. then probability 10/(60+30+10)=0.1 until level 5, 
+			// 20/(60+30+20)=0.18 until level 7 and 30/(60+30+30)=0.23 beyond
 			var monster = rng.getRandomChance({
 				"goblin": 60,
 				"orc": 30,
