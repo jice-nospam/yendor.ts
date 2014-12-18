@@ -200,7 +200,7 @@ module Game {
 			if (!actor.ai) {
 				return false;
 			}
-			actor.ai.addCondition(new Condition(this.type, this.nbTurns));
+			actor.ai.addCondition(Condition.getCondition(this.type, this.nbTurns));
 			if ( this.message ) {
 				log(transformMessage(this.message, actor));
 			}

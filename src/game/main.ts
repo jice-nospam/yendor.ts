@@ -66,6 +66,10 @@ module Game {
 			this.map.init( Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT );
 			var dungeonBuilder: BspDungeonBuilder = new BspDungeonBuilder(this.dungeonLevel);
 			dungeonBuilder.build(this.map);
+
+			// this helps debugging items
+			// var player: Actor = ActorManager.instance.getPlayer();
+			// ActorManager.instance.addItem(Actor.createShield(player.x + 1, player.y, "wooden shield", 1));
 		}
 
 		private loadGame() {

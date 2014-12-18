@@ -8,53 +8,86 @@ module Game {
 	/********************************************************************************
 	 * Group: creatures conditions
 	 ********************************************************************************/
-	 /*
-	 	Enum: ConditionType
+	/*
+		Enum: ConditionType
 
 	 	CONFUSED - moves randomly and attacks anything on path
 	 	STUNNED - don't move or attack
-	 */
-	 export enum ConditionType {
-	 	CONFUSED,
-	 	STUNNED,
-	 }
+	*/
+	export enum ConditionType {
+		CONFUSED,
+		STUNNED,
+	}
 
-	 /*
+	/*
 	 	Class: Condition
 	 	Permanent or temporary effect affecting a creature
-	 */
-	 export class Condition implements Persistent {
-	 	className: string;
-	 	/*
+	*/
+	export class Condition implements Persistent {
+		className: string;
+		/*
 	 		Property: nbTurns
 	 		Number of turns before this condition stops, or -1 for permanent conditions
-	 	*/
-	 	private nbTurns: number;
-	 	private _type: ConditionType;
-	 	private static condNames = [ "confused", "stunned" ];
-	 	constructor(type: ConditionType, nbTurns: number) {
-	 		this.className = "Condition";
-	 		this.nbTurns = nbTurns;
-	 		this._type = type;
-	 	}
+		*/
+		protected nbTurns: number;
+		protected _type: ConditionType;
+		private static condNames = [ "confused", "stunned" ];
 
-	 	get type() { return this._type; }
+		// factory
+		static getCondition(type: ConditionType, nbTurns: number): Condition {
+			switch ( type ) {
+				case ConditionType.STUNNED :
+					return new StunnedCondition(nbTurns);
+				default :
+					return new Condition(type, nbTurns);
+			}
+		}
 
-	 	getName() { return Condition.condNames[this._type]; }
+		constructor(type: ConditionType, nbTurns: number) {
+			this.className = "Condition";
+			this.nbTurns = nbTurns;
+			this._type = type;
+		}
 
-	 	/*
-	 		Function: update
-	 		Returns:
-	 			false if the condition has ended
-	 	*/
-	 	update(): boolean {
+		get type() { return this._type; }
+
+		getName() { return Condition.condNames[this._type]; }
+
+		/*
+			Function: update
+			Returns:
+				false if the condition has ended
+		*/
+		update(): boolean {
 			if ( this.nbTurns > 0 ) {
 				this.nbTurns--;
 				return (this.nbTurns > 0);
 			}
 			return true;
-	 	}
-	 }
+		}
+	}
+
+	export class StunnedCondition extends Condition {
+		constructor(nbTurns: number) {
+			super(ConditionType.STUNNED, nbTurns);
+			this.className = "StunnedCondition";
+		}
+
+		update(): boolean {
+			if (! super.update()) {
+				if ( this.type === ConditionType.STUNNED) {
+					// after being stunned, wake up confused
+					this._type = ConditionType.CONFUSED;
+					this.nbTurns = Constants.AFTER_STUNNED_CONFUSION_DELAY;
+				} else {
+					return false;
+				}
+			}
+			return true;
+		}
+	}
+
+
 
 	/********************************************************************************
 	 * Group: articifial intelligence
@@ -117,13 +150,16 @@ module Game {
 			true if the owner actually moved to the new cell
 		*/
 		protected moveOrAttack(owner: Actor, x: number, y: number, map: Map): boolean {
+			if ( this.hasCondition(ConditionType.STUNNED)) {
+				return false;
+			}
 			if ( this.hasCondition(ConditionType.CONFUSED)) {
 				// random move
 				x = owner.x + rng.getNumber(-1, 1);
 				y = owner.y + rng.getNumber(-1, 1);
-				if ( x === owner.x && y === owner.y ) {
-					return false;
-				}
+			}
+			if ( x === owner.x && y === owner.y ) {
+				return false;
 			}
 			// cannot move or attack a wall! 
 			if ( map.isWall(x, y)) {
@@ -238,7 +274,7 @@ module Game {
 					newTurn = true;
 				break;
 				default :
-					if (! this.hasCondition(ConditionType.CONFUSED)) {
+					if (! this.hasCondition(ConditionType.CONFUSED) && ! this.hasCondition(ConditionType.STUNNED)) {
 						this.handleActionKey(owner, map);
 					}
 				break;
@@ -356,11 +392,11 @@ module Game {
 			}
 			var player: Actor = ActorManager.instance.getPlayer();
 			// attack the player when at melee range, else try to track his scent
-			this.moveOrAttack(owner, player.x, player.y, map);
+			this.searchPlayer(owner, player.x, player.y, map);
 		}
 
 		/*
-			Function: moveOrAttack
+			Function: searchPlayer
 			If the player is at range, attack him. If in sight, move towards him, else try to track his scent.
 
 			Parameters:
@@ -369,7 +405,7 @@ module Game {
 			y - the destination cell y coordinate
 			map - the game map. Used to check if player is in sight
 		*/
-		moveOrAttack(owner: Actor, x: number, y: number, map: Map): boolean {
+		searchPlayer(owner: Actor, x: number, y: number, map: Map): boolean {
 			if ( map.isInFov(owner.x, owner.y) ) {
 				// player is visible, go towards him
 				var dx: number = x - owner.x;
