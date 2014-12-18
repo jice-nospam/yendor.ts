@@ -6,6 +6,57 @@
 module Game {
 	"use strict";
 	/********************************************************************************
+	 * Group: creatures conditions
+	 ********************************************************************************/
+	 /*
+	 	Enum: ConditionType
+
+	 	CONFUSED - moves randomly and attacks anything on path
+	 	STUNNED - don't move or attack
+	 */
+	 export enum ConditionType {
+	 	CONFUSED,
+	 	STUNNED,
+	 }
+
+	 /*
+	 	Class: Condition
+	 	Permanent or temporary effect affecting a creature
+	 */
+	 export class Condition implements Persistent {
+	 	className: string;
+	 	/*
+	 		Property: nbTurns
+	 		Number of turns before this condition stops, or -1 for permanent conditions
+	 	*/
+	 	private nbTurns: number;
+	 	private _type: ConditionType;
+	 	private static condNames = [ "confused", "stunned" ];
+	 	constructor(type: ConditionType, nbTurns: number) {
+	 		this.className = "Condition";
+	 		this.nbTurns = nbTurns;
+	 		this._type = type;
+	 	}
+
+	 	get type() { return this._type; }
+
+	 	getName() { return Condition.condNames[this._type]; }
+
+	 	/*
+	 		Function: update
+	 		Returns:
+	 			false if the condition has ended
+	 	*/
+	 	update(): boolean {
+			if ( this.nbTurns > 0 ) {
+				this.nbTurns--;
+				return (this.nbTurns > 0);
+			}
+			return true;
+	 	}
+	 }
+
+	/********************************************************************************
 	 * Group: articifial intelligence
 	 ********************************************************************************/
 
@@ -15,12 +66,42 @@ module Game {
 	*/
 	export class Ai implements Persistent {
 		className: string;
+		private conditions: Condition[];
 
 		constructor() {
 			this.className = "Ai";
 		}
 
-		update(owner: Actor, map: Map) {}
+		update(owner: Actor, map: Map) {
+			var n: number = this.conditions ? this.conditions.length : 0;
+			for ( var i: number = 0; i < n; i++) {
+				if ( !this.conditions[i].update() ) {
+					this.conditions.splice(i, 1);
+					i--;
+				}
+			}
+		}
+
+		addCondition(cond: Condition) {
+			if ( ! this.conditions ) {
+				this.conditions = [];
+			}
+			this.conditions.push(cond);
+		}
+
+		getConditionDescription(): string {
+			return  this.conditions && this.conditions.length > 0 ? this.conditions[0].getName() : undefined;
+		}
+
+		hasCondition(type: ConditionType): boolean {
+			var n: number = this.conditions ? this.conditions.length : 0;
+			for ( var i: number = 0; i < n; i++) {
+				if ( this.conditions[i].type === type ) {
+					return true;
+				}
+			}
+			return false;
+		}
 
 		/*
 			Function: moveOrAttack
@@ -36,6 +117,14 @@ module Game {
 			true if the owner actually moved to the new cell
 		*/
 		protected moveOrAttack(owner: Actor, x: number, y: number, map: Map): boolean {
+			if ( this.hasCondition(ConditionType.CONFUSED)) {
+				// random move
+				x = owner.x + rng.getNumber(-1, 1);
+				y = owner.y + rng.getNumber(-1, 1);
+				if ( x === owner.x && y === owner.y ) {
+					return false;
+				}
+			}
 			// cannot move or attack a wall! 
 			if ( map.isWall(x, y)) {
 				return false;
@@ -43,10 +132,6 @@ module Game {
 			// check for living creatures on the destination cell
 			var cellPos: Yendor.Position = new Yendor.Position(x, y);
 			var actors: Actor[] = ActorManager.instance.findActorsOnCell(cellPos, ActorManager.instance.getCreatures());
-			var player = ActorManager.instance.getPlayer();
-			if ( player !== owner && <Yendor.Position>player === cellPos ) {
-				actors.push(player);
-			}
 			for (var i = 0; i < actors.length; i++) {
 				var actor: Actor = actors[i];
 				if ( actor.destructible && ! actor.destructible.isDead() ) {
@@ -59,6 +144,9 @@ module Game {
 			if ( !map.canWalk(x, y)) {
 				return false;
 			}
+			// move the creature
+			owner.x = x;
+			owner.y = y;
 			return true;
 		}
 	}
@@ -100,6 +188,7 @@ module Game {
 			owner - the actor owning this PlayerAi (obviously, the player)
 		*/
 		update(owner: Actor, map: Map) {
+			super.update(owner, map);
 			// don't update a dead actor
 			if ( owner.destructible && owner.destructible.isDead()) {
 				return;
@@ -148,7 +237,11 @@ module Game {
 					// wait for a turn
 					newTurn = true;
 				break;
-				default : this.handleActionKey(owner, map); break;
+				default :
+					if (! this.hasCondition(ConditionType.CONFUSED)) {
+						this.handleActionKey(owner, map);
+					}
+				break;
 			}
 			if ( dx !== 0 || dy !== 0 )  {
 				newTurn = true;
@@ -183,7 +276,7 @@ module Game {
 			if ( !super.moveOrAttack(owner, x, y, map) ) {
 				return false;
 			}
-			var cellPos: Yendor.Position = new Yendor.Position(x, y);
+			var cellPos: Yendor.Position = new Yendor.Position(owner.x, owner.y);
 			// no living actor. Log exising corpses and items
 			ActorManager.instance.findActorsOnCell(cellPos, ActorManager.instance.getCorpses()).forEach(function(actor: Actor) {
 				log(actor.getTheresaname() + " here.");
@@ -191,9 +284,6 @@ module Game {
 			ActorManager.instance.findActorsOnCell(cellPos, ActorManager.instance.getItems()).forEach(function(actor: Actor) {
 				log(actor.getTheresaname() + " here.");
 			});
-			// move the player
-			owner.x = x;
-			owner.y = y;
 			return true;
 		}
 
@@ -258,12 +348,14 @@ module Game {
 			map - the game map (used to check player line of sight)
 		*/
 		update(owner: Actor, map: Map) {
+			super.update(owner, map);
+
 			// don't update a dead monster
 			if ( owner.destructible && owner.destructible.isDead()) {
 				return;
 			}
-			// attack the player when at melee range, else try to track his scent
 			var player: Actor = ActorManager.instance.getPlayer();
+			// attack the player when at melee range, else try to track his scent
 			this.moveOrAttack(owner, player.x, player.y, map);
 		}
 
@@ -278,22 +370,16 @@ module Game {
 			map - the game map. Used to check if player is in sight
 		*/
 		moveOrAttack(owner: Actor, x: number, y: number, map: Map): boolean {
-			var dx: number = x - owner.x;
-			var dy: number = y - owner.y;
-			// compute distance from player
-			var distance: number = Math.sqrt(dx * dx + dy * dy);
-			if ( distance < 2 ) {
-				// at melee range. Attack !
-				if ( owner.attacker ) {
-					owner.attacker.attack(owner, ActorManager.instance.getPlayer());
-				}
-			} else if ( map.isInFov(owner.x, owner.y) ) {
-				// not at melee range, but in sight. Move towards him
+			if ( map.isInFov(owner.x, owner.y) ) {
+				// player is visible, go towards him
+				var dx: number = x - owner.x;
+				var dy: number = y - owner.y;
+				var distance: number = Math.sqrt(dx * dx + dy * dy);
 				dx = dx / distance;
 				dy = dy / distance;
 				this.move(owner, dx, dy, map);
 			} else {
-				// player not in range. Use scent tracking
+				// player not visible. Use scent tracking
 				this.trackScent(owner, map);
 			}
 			return true;
@@ -313,17 +399,20 @@ module Game {
 			// compute the unitary move vector
 			var stepdx: number = dx > 0 ? 1 : (dx < 0 ? -1 : 0);
 			var stepdy: number = dy > 0 ? 1 : (dy < 0 ? -1 : 0);
+			var x: number = owner.x;
+			var y: number = owner.y;
 			if ( map.canWalk(owner.x + stepdx, owner.y + stepdy)) {
 				// can walk
-				owner.x += stepdx;
-				owner.y += stepdy;
+				x += stepdx;
+				y += stepdy;
 			} else if ( map.canWalk(owner.x + stepdx, owner.y)) {
 				// horizontal slide
-				owner.x += stepdx;
+				x += stepdx;
 			} else if ( map.canWalk(owner.x, owner.y + stepdy)) {
 				// vertical slide
-				owner.y += stepdy;
+				y += stepdy;
 			}
+			super.moveOrAttack(owner, x, y, map);
 		}
 
 		/*
@@ -380,84 +469,6 @@ module Game {
 			}
 		}
 	}
-
-	/*
-		Class: TemporaryAi
-		Some artificial intelligence that temporarily replace a NPC Ai.
-		Stores the old Ai to be able to restore it.
-	*/
-	export class TemporaryAi extends Ai {
-		private _nbTurns: number;
-		private oldAi: Ai;
-
-		constructor(_nbTurns: number) {
-			super();
-			this.className = "TemporaryAi";
-			this._nbTurns = _nbTurns;
-		}
-
-		update(owner: Actor, map: Map) {
-			this._nbTurns--;
-			if ( this._nbTurns === 0 ) {
-				owner.ai = this.oldAi;
-			}
-		}
-
-		applyTo(actor: Actor) {
-			this.oldAi = actor.ai;
-			actor.ai = this;
-		}
-	}
-
-
-	/*
-		Class: ConfusedMonsterAi
-		NPC monsters articial intelligence. Moves randomly, 
-		then attacks any creature at melee range.
-	*/
-	export class ConfusedMonsterAi extends TemporaryAi {
-
-		constructor(_nbTurns: number) {
-			super(_nbTurns);
-			this.className = "ConfusedMonsterAi";
-		}
-		/*
-			Function: update
-
-			Parameters:
-			owner - the actor owning this MonsterAi (the monster)
-			map - the game map (used to check player line of sight)
-		*/
-		update(owner: Actor, map: Map) {
-			// don't update a dead monster
-			if ( owner.destructible && owner.destructible.isDead()) {
-				return;
-			}
-			this.moveRandomly(owner, map);
-			super.update(owner, map);
-			if ( owner === ActorManager.instance.getPlayer()) {
-				EventBus.instance.publishEvent(new Event<GameStatus>(EventType.CHANGE_STATUS, GameStatus.NEW_TURN));
-			}
-		}
-
-		/*
-			Function: moveRandomly
-			Move in a random direction, attacking anything on this cell.
-
-			Parameters:
-			owner - the actor owning this MonsterAi (the monster)
-			map - the game map. Used to check if player is in sight
-		*/
-		private moveRandomly(owner: Actor, map: Map) {
-			var dx: number = rng.getNumber(-1, 1);
-			var dy: number = rng.getNumber(-1, 1);
-			if (dx !== 0 && dy !== 0 && super.moveOrAttack(owner, owner.x + dx, owner.y + dy, map)) {
-				owner.x += dx;
-				owner.y += dy;
-			}
-		}
-	}
-
 
 	/********************************************************************************
 	 * Group: actors

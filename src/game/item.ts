@@ -184,20 +184,25 @@ module Game {
 		}
 	}
 
-	export class AiChangeEffect implements Effect {
+	export class ConditionEffect implements Effect {
 		className: string;
-		private _newAi: TemporaryAi;
-		private _message: string;
-		constructor( _newAi: TemporaryAi = undefined, _message?: string ) {
-			this.className = "AiChangeEffect";
-			this._newAi = _newAi;
-			this._message = _message;
+		private type: ConditionType;
+		private nbTurns: number;
+		private message: string;
+		constructor( type: ConditionType, nbTurns: number, message?: string ) {
+			this.className = "ConditionEffect";
+			this.type = type;
+			this.nbTurns = nbTurns;
+			this.message = message;
 		}
 
 		applyTo(actor: Actor): boolean {
-			this._newAi.applyTo(actor);
-			if ( this._message ) {
-				log(transformMessage(this._message, actor));
+			if (!actor.ai) {
+				return false;
+			}
+			actor.ai.addCondition(new Condition(this.type, this.nbTurns));
+			if ( this.message ) {
+				log(transformMessage(this.message, actor));
 			}
 			return true;
 		}

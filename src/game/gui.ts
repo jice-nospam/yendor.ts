@@ -199,7 +199,7 @@ module Game {
 					if ( i > 0 ) {
 						this.mouseLookText += ",";
 					}
-					this.mouseLookText += actor.name;
+					this.mouseLookText += actor.getDescription();
 				}
 			}
 		}
