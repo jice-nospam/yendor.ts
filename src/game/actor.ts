@@ -725,7 +725,7 @@ module Game {
 			var shield = new Actor();
 			shield.init(x, y, "[", name, "#F0F0F0", true);
 			shield.pickable = new Pickable();
-			shield.pickable.setOnThrowEffect(new ConditionEffect(ConditionType.CONFUSED, 5,
+			shield.pickable.setOnThrowEffect(new ConditionEffect(ConditionType.STUNNED, 5,
 				"The shield hits [the actor1] and stuns [it]!"),
 				new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL));
 			shield.equipment = new Equipment("left hand", 0, defense);

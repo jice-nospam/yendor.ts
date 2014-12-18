@@ -49,6 +49,8 @@ module Game {
 		export var SCENT_THRESHOLD: number = 10;
         export var XP_BASE_LEVEL: number = 200;
         export var XP_NEW_LEVEL: number = 150;
+        // how many turns you are confused after being stunned
+        export var AFTER_STUNNED_CONFUSION_DELAY: number = 3;
 
         // persistence local storage keys
         export var PERSISTENCE_VERSION_KEY: string = "version";
