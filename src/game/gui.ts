@@ -350,6 +350,7 @@ module Game {
 					inventory.push(itemTab);
 				}
 			}
+			inventory.sort(function(a: Actor[], b: Actor[]) { return a[0].name.localeCompare(b[0].name); });
 			return inventory;
 		}
 	}
