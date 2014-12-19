@@ -528,14 +528,38 @@ module Game {
 				this.updateMousePosition(event.data);
 			} else if (event.type === EventType.MOUSE_CLICK) {
 				if ( event.data === MouseButton.LEFT ) {
-					this.handleMouseClick();
+					this.activateActiveItem();
 				}
-			} else if (event.type === EventType.KEY_PRESSED && event.data.keyCode === KeyEvent.DOM_VK_ESCAPE) {
-				this.hide();
+			} else if (event.type === EventType.KEY_PRESSED) {
+				switch ( event.data.keyCode ) {
+					case KeyEvent.DOM_VK_ESCAPE :
+						this.hide();
+					break;
+					case KeyEvent.DOM_VK_UP:
+					case KeyEvent.DOM_VK_NUMPAD8:
+						if (this.activeItemIndex) {
+							this.activeItemIndex --;
+						} else {
+							this.activeItemIndex = this.items.length - 1;
+						}
+					break;
+					case KeyEvent.DOM_VK_DOWN:
+					case KeyEvent.DOM_VK_NUMPAD2:
+						if (this.activeItemIndex !== undefined && this.activeItemIndex < this.items.length - 1) {
+							this.activeItemIndex ++;
+						} else {
+							this.activeItemIndex = 0;
+						}
+					break;
+					case KeyEvent.DOM_VK_RETURN:
+					case KeyEvent.DOM_VK_ENTER:
+						this.activateActiveItem();
+					break;
+				}
 			}
 		}
 
-		private handleMouseClick() {
+		private activateActiveItem() {
 			if ( this.activeItemIndex !== undefined ) {
 				var item: MenuItem = this.items[this.activeItemIndex];
 				if (! item.disabled ) {

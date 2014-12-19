@@ -12,7 +12,7 @@ module Game {
 		Enum: ConditionType
 
 	 	CONFUSED - moves randomly and attacks anything on path
-	 	STUNNED - don't move or attack
+	 	STUNNED - don't move or attack, then get confused
 	*/
 	export enum ConditionType {
 		CONFUSED,
@@ -67,6 +67,10 @@ module Game {
 		}
 	}
 
+	/*
+		Class: StunnedCondition
+		The creature cannot move or attack while stunned. Then it gets confused for a few turns
+	*/
 	export class StunnedCondition extends Condition {
 		constructor(nbTurns: number) {
 			super(ConditionType.STUNNED, nbTurns);
@@ -86,8 +90,6 @@ module Game {
 			return true;
 		}
 	}
-
-
 
 	/********************************************************************************
 	 * Group: articifial intelligence
