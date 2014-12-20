@@ -202,41 +202,8 @@ module Game {
 				// ESC : open game menu
 				EventBus.instance.publishEvent(new Event<void>(EventType.OPEN_MAIN_MENU));
 				return true;
-			} else if ( event.keyCode === KeyEvent.DOM_VK_I ) {
-				// i : use item from inventory
-				EventBus.instance.publishEvent(new Event<OpenInventoryEventData>(EventType.OPEN_INVENTORY,
-					{ title: "use an item", itemListener: this.useItem.bind(this) } ));
-				return true;
-			} else if ( event.keyCode === KeyEvent.DOM_VK_D ) {
-				// d : drop item from inventory
-				EventBus.instance.publishEvent(new Event<OpenInventoryEventData>(EventType.OPEN_INVENTORY,
-					{ title: "drop an item", itemListener: this.dropItem.bind(this) } ));
-				return true;
-			} else if ( event.keyCode === KeyEvent.DOM_VK_T ) {
-				// t : throw an item from inventory
-				EventBus.instance.publishEvent(new Event<OpenInventoryEventData>(EventType.OPEN_INVENTORY,
-					{ title: "throw an item", itemListener: this.throwItem.bind(this) } ));
-				return true;
 			}
 			return false;
-		}
-
-		private useItem(item: Actor) {
-			if (item.pickable) {
-				item.pickable.use(item, ActorManager.instance.getPlayer());
-			}
-		}
-
-		private dropItem(item: Actor) {
-			if ( item.pickable ) {
-				item.pickable.drop(item, ActorManager.instance.getPlayer());
-			}
-		}
-
-		private throwItem(item: Actor) {
-			if ( item.pickable ) {
-				item.pickable.throw(item, ActorManager.instance.getPlayer());
-			}
 		}
 
 		/*
