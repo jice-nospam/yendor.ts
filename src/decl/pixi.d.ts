@@ -1,4 +1,4 @@
-// Type definitions for PIXI 2.0.0 dev 2014-10-19
+// Type definitions for PIXI 2.2.0 dev 2014-16-12
 // Project: https://github.com/GoodBoyDigital/pixi.js/
 
 declare module PIXI {
@@ -49,9 +49,12 @@ declare module PIXI {
     export var RETINA_PREFIX: string;
     export var identityMatrix: Matrix;
     export var glContexts: WebGLRenderingContext[];
+    export var instances: any[];
 
     export var BaseTextureCache: { [key: string]: BaseTexture }
     export var TextureCache: { [key: string]: Texture }
+
+    export function isPowerOfTwo(width: number, height: number): boolean;
 
     export function rgb2hex(rgb: number[]): string;
     export function hex2rgb(hex: string): number[];
@@ -64,8 +67,8 @@ declare module PIXI {
 
     export function AjaxRequest(): XMLHttpRequest;
 
-    export function CompileFragmentShader(gl: WebGLRenderingContext, shaderSrc: any): any;
-    export function CompileProgram(gl: WebGLRenderingContext, vertexSrc: any[], fragmentSrc: any): any;
+    export function CompileFragmentShader(gl: WebGLRenderingContext, shaderSrc: string[]): any;
+    export function CompileProgram(gl: WebGLRenderingContext, vertexSrc: string[], fragmentSrc: string[]): any;
 
 
     export interface IEventCallback {
@@ -87,6 +90,7 @@ declare module PIXI {
 
     export interface PixiRenderer {
 
+        autoResize: boolean;
         height: number;
         transparent: boolean;
         type: number;
@@ -100,12 +104,13 @@ declare module PIXI {
 
     export interface PixiRendererOptions {
 
-        antialias: boolean;
-        clearBeforeRender: boolean;
-        preserveDrawingBuffer: boolean;
-        resolution: number;
-        transparent: boolean;
-        view: HTMLCanvasElement;
+        autoResize?: boolean;
+        antialias?: boolean;
+        clearBeforeRender?: boolean;
+        preserveDrawingBuffer?: boolean;
+        resolution?: number;
+        transparent?: boolean;
+        view?: HTMLCanvasElement;
 
     }
 
@@ -169,10 +174,12 @@ declare module PIXI {
 
     export class AbstractFilter {
 
-        constructor(fragmentSrc: any, uniforms: any);
+        constructor(fragmentSrc: string[], uniforms: any);
 
         dirty: boolean;
         padding: number;
+        uniforms: any;
+        fragmentSrc: string[];
 
         apply(frameBuffer: WebGLFramebuffer): void;
         syncUniforms(): void;
@@ -249,6 +256,7 @@ declare module PIXI {
 
         height: number;
         hasLoaded: boolean;
+        mipmap: boolean;
         premultipliedAlpha: boolean;
         resolution: number;
         scaleMode: scaleModes;
@@ -267,7 +275,7 @@ declare module PIXI {
         destroy(): void;
         dirty(): void;
         updateSourceImage(newSrc: string): void;
-
+        unloadFromGPU(): void;
 
     }
 
@@ -357,6 +365,7 @@ declare module PIXI {
 
         constructor(width?: number, height?: number, options?: PixiRendererOptions);
 
+        autoResize: boolean;
         clearBeforeRender: boolean;
         context: CanvasRenderingContext2D;
         count: number;
@@ -370,6 +379,7 @@ declare module PIXI {
         view: HTMLCanvasElement;
         width: number;
 
+        destroy(removeView?: boolean): void;
         render(stage: Stage): void;
         resize(width: number, height: number): void;
 
@@ -420,7 +430,7 @@ declare module PIXI {
 
         constructor(matrix: number[], width: number, height: number);
 
-        matrix: number[];
+        matrix: Matrix;
         width: number;
         height: number;
 
@@ -474,6 +484,7 @@ declare module PIXI {
         y: number;
 
         click(e: InteractionData): void;
+        displayObjectUpdateTransform(): void;
         getBounds(matrix?: Matrix): Rectangle;
         getLocalBounds(): Rectangle;
         generateTexture(resolution: number, scaleMode: scaleModes, renderer: PixiRenderer): RenderTexture;
@@ -481,6 +492,7 @@ declare module PIXI {
         mouseout(e: InteractionData): void;
         mouseover(e: InteractionData): void;
         mouseup(e: InteractionData): void;
+        mousemove(e: InteractionData): void;
         mouseupoutside(e: InteractionData): void;
         rightclick(e: InteractionData): void;
         rightdown(e: InteractionData): void;
@@ -488,11 +500,13 @@ declare module PIXI {
         rightupoutside(e: InteractionData): void;
         setStageReference(stage: Stage): void;
         tap(e: InteractionData): void;
-        toGlobal(pos: Point): Point;
-        toLocal(pos: Point, from: DisplayObject): Point;
+        toGlobal(position: Point): Point;
+        toLocal(position: Point, from: DisplayObject): Point;
         touchend(e: InteractionData): void;
         touchendoutside(e: InteractionData): void;
         touchstart(e: InteractionData): void;
+        touchmove(e: InteractionData): void;
+        updateTransform(): void;
 
     }
 
@@ -544,6 +558,7 @@ declare module PIXI {
         timeStamp: number;
 
         stopPropagation(): void;
+        preventDefault(): void;
         stopImmediatePropagation(): void;
 
     }
@@ -562,8 +577,8 @@ declare module PIXI {
         frameBuffer: WebGLFramebuffer;
         gl: WebGLRenderingContext;
         program: WebGLProgram;
-        scaleMode: scaleModes;
-        texture: any;
+        scaleMode: number;
+        texture: WebGLTexture;
 
         clear(): void;
         resize(width: number, height: number): void;
@@ -571,7 +586,28 @@ declare module PIXI {
 
     }
 
+    export class GraphicsData {
+
+        constructor(lineWidth?: number, lineColor?: number, lineAlpha?: number, fillColor?: number, fillAlpha?: number, fill?: boolean, shape?: any);
+
+        lineWidth: number;
+        lineColor: number;
+        lineAlpha: number;
+        fillColor: number;
+        fillAlpha: number;
+        fill: boolean;
+        shape: any;
+        type: number;
+
+    }
+
     export class Graphics extends DisplayObjectContainer {
+
+        static POLY: number;
+        static RECT: number;
+        static CIRC: number;
+        static ELIP: number;
+        static RREC: number;
 
         blendMode: number;
         boundsPadding: number;
@@ -580,29 +616,28 @@ declare module PIXI {
         lineWidth: number;
         lineColor: string;
         tint: number;
+        worldAlpha: number;
 
         arc(cx: number, cy: number, radius: number, startAngle: number, endAngle: number, anticlockwise: boolean): Graphics;
         arcTo(x1: number, y1: number, x2: number, y2: number, radius: number): Graphics;
-        beginFill(color: number, alpha?: number): void;
+        beginFill(color?: number, alpha?: number): Graphics;
         bezierCurveTo(cpX: number, cpY: number, cpX2: number, cpY2: number, toX: number, toY: number): Graphics;
-        clear(): void;
+        clear(): Graphics;
         destroyCachedSprite(): void;
-        drawCircle(x: number, y: number, radius: number): void;
-        drawEllipse(x: number, y: number, width: number, height: number): void;
-        drawPolygon(path: any): void;
-        drawRect(x: number, y: number, width: number, height: number): void;
+        drawCircle(x: number, y: number, radius: number): Graphics;
+        drawEllipse(x: number, y: number, width: number, height: number): Graphics;
+        drawPolygon(path: any): Graphics;
+        drawRect(x: number, y: number, width: number, height: number): Graphics;
         drawRoundedRect(x: number, y: number, width: number, height: number, radius: number): Graphics;
-        drawShape(shape: Circle): any; //GraphicsData?
-        drawShape(shape: Rectangle): any; //GraphicsData?
-        drawShape(shape: Ellipse): any; //GraphicsData?
-        drawShape(shape: Polygon): any; //GraphicsData?
-
-        endFill(): void;
-        lineStyle(lineWidth: number, color: number, alpha: number): void;
-        lineTo(x: number, y: number): void;
-        moveTo(x: number, y: number): void;
+        drawShape(shape: Circle): GraphicsData;
+        drawShape(shape: Rectangle): GraphicsData;
+        drawShape(shape: Ellipse): GraphicsData;
+        drawShape(shape: Polygon): GraphicsData;
+        endFill(): Graphics;
+        lineStyle(lineWidth?: number, color?: number, alpha?: number): Graphics;
+        lineTo(x: number, y: number): Graphics;
+        moveTo(x: number, y: number): Graphics;
         quadraticCurveTo(cpX: number, cpY: number, toX: number, toY: number): Graphics;
-        updateBounds(): void;
 
     }
 
@@ -769,24 +804,92 @@ declare module PIXI {
 
     }
 
-    export class PixiShader {
+    export interface IPixiShader {
 
-        constructor(gl: WebGLRenderingContext);
-
-        defaultVertexSrc: string;
-        dirty: boolean;
         fragmentSrc: string[];
-        firstRun: boolean;
         gl: WebGLRenderingContext;
         program: WebGLProgram;
-        textureCount: number;
-        attributes: ShaderAttribute[];
+        vertexSrc: string[];
 
         destroy(): void;
         init(): void;
+
+    }
+
+    export class PixiShader implements IPixiShader {
+
+        constructor(gl: WebGLRenderingContext);
+
+        attributes: ShaderAttribute[];
+        defaultVertexSrc: string[];
+        dirty: boolean;
+        firstRun: boolean;
+        textureCount: number;
+        fragmentSrc: string[];
+        gl: WebGLRenderingContext;
+        program: WebGLProgram;
+        vertexSrc: string[];
+
         initSampler2D(): void;
         initUniforms(): void;
         syncUniforms(): void;
+
+        destroy(): void;
+        init(): void;
+
+    }
+
+    export class PixiFastShader implements IPixiShader {
+
+        constructor(gl: WebGLRenderingContext);
+
+        textureCount: number;
+        fragmentSrc: string[];
+        gl: WebGLRenderingContext;
+        program: WebGLProgram;
+        vertexSrc: string[];
+
+        destroy(): void;
+        init(): void;
+
+    }
+
+    export class PrimitiveShader implements IPixiShader {
+
+        constructor(gl: WebGLRenderingContext);
+        fragmentSrc: string[];
+        gl: WebGLRenderingContext;
+        program: WebGLProgram;
+        vertexSrc: string[];
+
+        destroy(): void;
+        init(): void;
+
+    }
+
+    export class ComplexPrimitiveShader implements IPixiShader {
+
+        constructor(gl: WebGLRenderingContext);
+        fragmentSrc: string[];
+        gl: WebGLRenderingContext;
+        program: WebGLProgram;
+        vertexSrc: string[];
+
+        destroy(): void;
+        init(): void;
+
+    }
+
+    export class StripShader implements IPixiShader {
+
+        constructor(gl: WebGLRenderingContext);
+        fragmentSrc: string[];
+        gl: WebGLRenderingContext;
+        program: WebGLProgram;
+        vertexSrc: string[];
+
+        destroy(): void;
+        init(): void;
 
     }
 
@@ -809,7 +912,7 @@ declare module PIXI {
         constructor(...points: Point[]);
         constructor(...points: number[]);
 
-        points: Point[];
+        points: any[]; //number[] Point[]
 
         clone(): Polygon;
         contains(x: number, y: number): boolean;
@@ -832,18 +935,36 @@ declare module PIXI {
 
     export class RGBSplitFilter extends AbstractFilter {
 
-        angle: number;
+        red: Point;
+        green: Point;
+        blue: Point;
 
     }
 
     export class Rope extends Strip {
 
         points: Point[];
+        vertices: number[];
 
         constructor(texture: Texture, points: Point[]);
 
         refresh(): void;
         setTexture(texture: Texture): void;
+
+    }
+
+    export class RoundedRectangle implements HitArea {
+
+        constructor(x?: number, y?: number, width?: number, height?: number, radius?: number);
+
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+        radius: number;
+
+        clone(): RoundedRectangle;
+        contains(x: number, y: number): boolean;
 
     }
 
@@ -880,11 +1001,12 @@ declare module PIXI {
 
     }
 
-    export class Spine extends DisplayObjectContainer {
+    export class SpineTextureLoader {
 
-        constructor(url: string);
+        constructor(basePath: string, crossorigin: boolean);
 
-        createSprite(slot: any, descriptior: any): void;
+        load(page: AtlasPage, file: string): void;
+        unload(texture: BaseTexture): void;
 
     }
 
@@ -897,7 +1019,7 @@ declare module PIXI {
 
         anchor: Point;
         blendMode: blendModes;
-        shader: AbstractFilter;
+        shader: IPixiShader;
         texture: Texture;
         tint: number;
 
@@ -953,15 +1075,25 @@ declare module PIXI {
 
     export class Strip extends DisplayObjectContainer {
 
+        static DrawModes: {
+
+            TRIANGLE_STRIP: number;
+            TRIANGLES: number;
+
+        }
+
         constructor(texture: Texture);
 
+        blendMode: number;
         colors: number[];
         dirty: boolean;
         indices: number[];
-        padding: number;
+        canvasPadding: number;
         texture: Texture;
         uvs: number[];
         vertices: number[];
+
+        getBounds(matrix?: Matrix): Rectangle;
 
     }
 
@@ -979,6 +1111,8 @@ declare module PIXI {
     }
 
     export class Texture implements Mixin {
+
+        static emptyTexture: Texture;
 
         static fromCanvas(canvas: HTMLCanvasElement, scaleMode?: scaleModes): Texture;
         static fromFrame(frameId: string): Texture;
@@ -1068,6 +1202,22 @@ declare module PIXI {
 
     }
 
+    export class VideoTexture extends BaseTexture {
+
+        static baseTextureFromVideo(video: HTMLVideoElement, scaleMode: number): BaseTexture;
+        static textureFromVideo(video: HTMLVideoElement, scaleMode: number): Texture;
+        static fromUrl(videoSrc: string, scaleMode: number): Texture;
+
+        autoUpdate: boolean;
+
+        destroy(): void;
+        updateBound(): void;
+        onPlayStart(): void;
+        onPlayStop(): void;
+        onCanPlay(): void;
+
+    }
+
     export class WebGLBlendModeManager {
 
         currentBlendMode: number;
@@ -1080,19 +1230,19 @@ declare module PIXI {
 
     export class WebGLFastSpriteBatch {
 
-        constructor();
+        constructor(gl: CanvasRenderingContext2D);
 
         currentBatchSize: number;
-        currentBaseTexture: any;
+        currentBaseTexture: BaseTexture;
         currentBlendMode: number;
         renderSession: RenderSession;
         drawing: boolean;
         indexBuffer: any;
         indices: number[];
         lastIndexCount: number;
-        matrix: any;
+        matrix: Matrix;
         maxSize: number;
-        shader: any;
+        shader: IPixiShader;
         size: number;
         vertexBuffer: any;
         vertices: number[];
@@ -1100,6 +1250,7 @@ declare module PIXI {
 
         end(): void;
         begin(spriteBatch: SpriteBatch, renderSession: RenderSession): void;
+        destroy(removeView?: boolean): void;
         flush(): void;
         render(spriteBatch: SpriteBatch): void;
         renderSprite(sprite: Sprite): void;
@@ -1128,6 +1279,42 @@ declare module PIXI {
 
     export class WebGLGraphics {
 
+        static graphicsDataPool: any[];
+
+        static renderGraphics(graphics: Graphics, renderRession: RenderSession): void;
+        static updateGraphics(graphics: Graphics, gl: WebGLRenderingContext): void;
+        static switchMode(webGL: WebGLRenderingContext, type: number): any; //WebGLData
+        static buildRectangle(graphicsData: GraphicsData, webGLData: any): void;
+        static buildRoundedRectangle(graphicsData: GraphicsData, webGLData: any): void;
+        static quadraticBezierCurve(fromX: number, fromY: number, cpX: number, cpY: number, toX: number, toY: number): number[];
+        static buildCircle(graphicsData: GraphicsData, webGLData: any): void;
+        static buildLine(graphicsData: GraphicsData, webGLData: any): void;
+        static buildComplexPoly(graphicsData: GraphicsData, webGLData: any): void;
+        static buildPoly(graphicsData: GraphicsData, webGLData: any): boolean;
+
+        reset(): void;
+        upload(): void;
+
+    }
+
+    export class WebGLGraphicsData {
+
+        constructor(gl: WebGLRenderingContext);
+
+        gl: WebGLRenderingContext;
+        glPoints: any[];
+        color: number[];
+        points: any[];
+        indices: any[];
+        buffer: WebGLBuffer;
+        indexBuffer: WebGLBuffer;
+        mode: number;
+        alpha: number;
+        dirty: boolean;
+
+        reset(): void;
+        upload(): void;
+
     }
 
     export class WebGLMaskManager {
@@ -1145,6 +1332,7 @@ declare module PIXI {
 
         constructor(width?: number, height?: number, options?: PixiRendererOptions);
 
+        autoResize: boolean;
         clearBeforeRender: boolean;
         contextLost: boolean;
         contextLostBound: Function;
@@ -1183,11 +1371,12 @@ declare module PIXI {
         maxAttibs: number;
         attribState: any[];
         stack: any[];
+        tempAttribState: any[];
 
         destroy(): void;
         setAttribs(attribs: ShaderAttribute[]): void;
         setContext(gl: WebGLRenderingContext): void;
-        setShader(shader: WebGLShader): boolean;
+        setShader(shader: IPixiShader): boolean;
 
     }
 
@@ -1208,6 +1397,7 @@ declare module PIXI {
     export class WebGLSpriteBatch {
 
         blendModes: number[];
+        colors: number[];
         currentBatchSize: number;
         currentBaseTexture: Texture;
         defaultShader: AbstractFilter;
@@ -1215,8 +1405,9 @@ declare module PIXI {
         drawing: boolean;
         indices: number[];
         lastIndexCount: number;
+        positions: number[];
         textures: Texture[];
-        shaders: AbstractFilter[]; //todo WebGLShader[] or PixiShader[]?
+        shaders: IPixiShader[];
         size: number;
         sprites: any[]; //todo Sprite[]?
         vertices: number[];
@@ -1225,7 +1416,7 @@ declare module PIXI {
         begin(renderSession: RenderSession): void;
         destroy(): void;
         end(): void;
-        flush(shader?: PixiShader): void;
+        flush(shader?: IPixiShader): void;
         render(sprite: Sprite): void;
         renderBatch(texture: Texture, size: number, startIndex: number): void;
         renderTilingSprite(sprite: TilingSprite): void;
@@ -1249,14 +1440,460 @@ declare module PIXI {
         clear(): void;
         getBase64(): string;
         getCanvas(): HTMLCanvasElement;
+        getImage(): HTMLImageElement;
         resize(width: number, height: number, updateBase: boolean): void;
         render(displayObject: DisplayObject, position?: Point, clear?: boolean): void;
 
     }
 
+    //SPINE
+
+    export class BoneData {
+
+        constructor(name: string, parent?: any);
+
+        name: string;
+        parent: any;
+        length: number;
+        x: number;
+        y: number;
+        rotation: number;
+        scaleX: number;
+        scaleY: number;
+
+    }
+
+    export class SlotData {
+
+        constructor(name: string, boneData: BoneData);
+
+        name: string;
+        boneData: BoneData;
+        r: number;
+        g: number;
+        b: number;
+        a: number;
+        attachmentName: string;
+
+    }
+
+    export class Bone {
+
+        constructor(boneData: BoneData, parent?: any);
+
+        data: BoneData;
+        parent: any;
+        yDown: boolean;
+        x: number;
+        y: number;
+        rotation: number;
+        scaleX: number;
+        scaleY: number;
+        worldRotation: number;
+        worldScaleX: number;
+        worldScaleY: number;
+
+        updateWorldTransform(flipX: boolean, flip: boolean): void;
+        setToSetupPose(): void;
+
+    }
+
+    export class Slot {
+
+        constructor(slotData: SlotData, skeleton: Skeleton, bone: Bone);
+
+        data: SlotData;
+        skeleton: Skeleton;
+        bone: Bone;
+        r: number;
+        g: number;
+        b: number;
+        a: number;
+        attachment: RegionAttachment;
+        setAttachment(attachment: RegionAttachment): void;
+        setAttachmentTime(time: number): void;
+        getAttachmentTime(): number;
+        setToSetupPose(): void;
+
+    }
+
+    export class Skin {
+
+        constructor(name: string);
+
+        name: string;
+        attachments: any;
+
+        addAttachment(slotIndex: number, name: string, attachment: RegionAttachment): void;
+        getAttachment(slotIndex: number, name: string): void;
+
+    }
+
+    export class Animation {
+
+        constructor(name: string, timelines: ISpineTimeline[], duration: number);
+
+        name: string;
+        timelines: ISpineTimeline[];
+        duration: number;
+        apply(skeleton: Skeleton, time: number, loop: boolean): void;
+        min(skeleton: Skeleton, time: number, loop: boolean, alpha: number): void;
+
+    }
+
+    export class Curves {
+
+        constructor(frameCount: number);
+
+        curves: number[];
+
+        setLinear(frameIndex: number): void;
+        setStepped(frameIndex: number): void;
+        setCurve(frameIndex: number, cx1: number, cy1: number, cx2: number, cy2: number): void;
+        getCurvePercent(frameIndex: number, percent: number): number;
+
+    }
+
+    export interface ISpineTimeline {
+
+        curves: Curves;
+        frames: number[];
+
+        getFrameCount(): number;
+        apply(skeleton: Skeleton, time: number, alpha: number): void;
+
+    }
+
+    export class RotateTimeline implements ISpineTimeline {
+
+        constructor(frameCount: number);
+
+        curves: Curves;
+        frames: number[];
+        boneIndex: number;
+
+        getFrameCount(): number;
+        setFrame(frameIndex: number, time: number, angle: number): void;
+        apply(skeleton: Skeleton, time: number, alpha: number): void;
+
+    }
+
+    export class TranslateTimeline implements ISpineTimeline {
+
+        constructor(frameCount: number);
+
+        curves: Curves;
+        frames: number[];
+        boneIndex: number;
+
+        getFrameCount(): number;
+        setFrame(frameIndex: number, time: number, x: number, y: number): void;
+        apply(skeleton: Skeleton, time: number, alpha: number): void;
+
+    }
+
+    export class ScaleTimeline implements ISpineTimeline {
+
+        constructor(frameCount: number);
+
+        curves: Curves;
+        frames: number[];
+        boneIndex: number;
+
+        getFrameCount(): number;
+        setFrame(frameIndex: number, time: number, x: number, y: number): void;
+        apply(skeleton: Skeleton, time: number, alpha: number): void;
+
+    }
+
+    export class ColorTimeline implements ISpineTimeline {
+
+        constructor(frameCount: number);
+
+        curves: Curves;
+        frames: number[];
+        boneIndex: number;
+
+        getFrameCount(): number;
+        setFrame(frameIndex: number, time: number, r: number, g: number, b: number, a: number): void;
+        apply(skeleton: Skeleton, time: number, alpha: number): void;
+
+    }
+
+    export class AttachmentTimeline implements ISpineTimeline {
+
+        constructor(frameCount: number);
+
+        curves: Curves;
+        frames: number[];
+        attachmentNames: string[];
+        slotIndex: number;
+
+        getFrameCount(): number;
+        setFrame(frameIndex: number, time: number, attachmentName: string): void;
+        apply(skeleton: Skeleton, time: number, alpha: number): void;
+
+    }
+
+    export class SkeletonData {
+
+        bones: Bone[];
+        slots: Slot[];
+        skins: Skin[];
+        animations: Animation[];
+        defaultSkin: Skin;
+
+        findBone(boneName: string): Bone;
+        findBoneIndex(boneName: string): number;
+        findSlot(slotName: string): Slot;
+        findSlotIndex(slotName: string): number;
+        findSkin(skinName: string): Skin;
+        findAnimation(animationName: string): Animation;
+
+    }
+
+    export class Skeleton {
+
+        constructor(skeletonData: SkeletonData);
+
+        data: SkeletonData;
+        bones: Bone[];
+        slots: Slot[];
+        drawOrder: any[];
+        x: number;
+        y: number;
+        skin: Skin;
+        r: number;
+        g: number;
+        b: number;
+        a: number;
+        time: number;
+        flipX: boolean;
+        flipY: boolean;
+
+        updateWorldTransform(): void;
+        setToSetupPose(): void;
+        setBonesToSetupPose(): void;
+        setSlotsToSetupPose(): void;
+        getRootBone(): Bone;
+        findBone(boneName: string): Bone;
+        fineBoneIndex(boneName: string): number;
+        findSlot(slotName: string): Slot;
+        findSlotIndex(slotName: string): number;
+        setSkinByName(skinName: string): void;
+        setSkin(newSkin: Skin): void;
+        getAttachmentBySlotName(slotName: string, attachmentName: string): RegionAttachment;
+        getAttachmentBySlotIndex(slotIndex: number, attachmentName: string): RegionAttachment;
+        setAttachment(slotName: string, attachmentName: string): void;
+        update(data: number): void;
+
+    }
+
+    export class RegionAttachment {
+
+        offset: number[];
+        uvs: number[];
+        x: number;
+        y: number;
+        rotation: number;
+        scaleX: number;
+        scaleY: number;
+        width: number;
+        height: number;
+        rendererObject: any;
+        regionOffsetX: number;
+        regionOffsetY: number;
+        regionWidth: number;
+        regionHeight: number;
+        regionOriginalWidth: number;
+        regionOriginalHeight: number;
+
+        setUVs(u: number, v: number, u2: number, v2: number, rotate: number): void;
+        updateOffset(): void;
+        computeVertices(x: number, y: number, bone: Bone, vertices: number[]): void;
+
+    }
+
+    export class AnimationStateData {
+
+        constructor(skeletonData: SkeletonData);
+
+        skeletonData: SkeletonData;
+        animationToMixTime: any;
+        defaultMix: number;
+
+        setMixByName(fromName: string, toName: string, duration: number): void;
+        setMix(from: string, to: string): number;
+
+    }
+
+    export class AnimationState {
+
+        constructor(stateData: any);
+
+        animationSpeed: number;
+        current: any;
+        previous: any;
+        currentTime: number;
+        previousTime: number;
+        currentLoop: boolean;
+        previousLoop: boolean;
+        mixTime: number;
+        mixDuration: number;
+        queue: Animation[];
+
+        update(delta: number): void;
+        apply(skeleton: any): void;
+        clearAnimation(): void;
+        setAnimation(animation: any, loop: boolean): void;
+        setAnimationByName(animationName: string, loop: boolean): void;
+        addAnimationByName(animationName: string, loop: boolean, delay: number): void;
+        addAnimation(animation: any, loop: boolean, delay: number): void;
+        isComplete(): number;
+
+    }
+
+    export class SkeletonJson {
+
+        constructor(attachmentLoader: AtlasAttachmentLoader);
+
+        attachmentLoader: AtlasAttachmentLoader;
+        scale: number;
+
+        readSkeletonData(root: any): SkeletonData;
+        readAttachment(skin: Skin, name: string, map: any): RegionAttachment;
+        readAnimation(name: string, map: any, skeletonData: SkeletonData): void;
+        readCurve(timeline: ISpineTimeline, frameIndex: number, valueMap: any): void;
+        toColor(hexString: string, colorIndex: number): number;
+
+    }
+
+    export class Atlas {
+
+        static FORMAT: {
+
+            alpha: number;
+            intensity: number;
+            luminanceAlpha: number;
+            rgb565: number;
+            rgba4444: number;
+            rgb888: number;
+            rgba8888: number;
+
+        }
+
+        static TextureFilter: {
+
+            nearest: number;
+            linear: number;
+            mipMap: number;
+            mipMapNearestNearest: number;
+            mipMapLinearNearest: number;
+            mipMapNearestLinear: number;
+            mipMapLinearLinear: number;
+
+        }
+
+        static textureWrap: {
+
+            mirroredRepeat: number;
+            clampToEdge: number;
+            repeat: number;
+
+        }
+
+        constructor(atlasText: string, textureLoader: AtlasLoader);
+
+        textureLoader: AtlasLoader;
+        pages: AtlasPage[];
+        regions: AtlasRegion[];
+
+        findRegion(name: string): AtlasRegion;
+        dispose(): void;
+        updateUVs(page: AtlasPage): void;
+
+    }
+
+    export class AtlasPage {
+
+        name: string;
+        format: number;
+        minFilter: number;
+        magFilter: number;
+        uWrap: number;
+        vWrap: number;
+        rendererObject: any;
+        width: number;
+        height: number;
+
+    }
+
+    export class AtlasRegion {
+
+        page: AtlasPage;
+        name: string;
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+        u: number;
+        v: number;
+        u2: number;
+        v2: number;
+        offsetX: number;
+        offsetY: number;
+        originalWidth: number;
+        originalHeight: number;
+        index: number;
+        rotate: boolean;
+        splits: any[];
+        pads: any[];
+
+    }
+
+    export class AtlasReader {
+
+        constructor(text: string);
+
+        lines: string[];
+        index: number;
+
+        trim(value: string): string;
+        readLine(): string;
+        readValue(): string;
+        readTuple(tuple: number): number;
+
+    }
+
+    export class AtlasAttachmentLoader {
+
+        constructor(atlas: Atlas);
+
+        atlas: Atlas;
+
+        newAttachment(skin: Skin, type: number, name: string): RegionAttachment;
+
+    }
+
+    export class Spine extends DisplayObjectContainer {
+
+        constructor(url: string);
+
+        autoUpdate: boolean;
+        spineData: any;
+        skeleton: Skeleton;
+        stateData: AnimationStateData;
+        state: AnimationState;
+        slotContainers: DisplayObjectContainer[];
+
+        createSprite(slot: Slot, descriptor: { name: string }): Sprite[];
+        update(dt: number): void;
+
+    }
+
 }
 
-declare function requestAnimFrame(): void;
+declare function requestAnimFrame(callback: Function): void;
 
 declare module PIXI.PolyK {
     export function Triangulate(p: number[]): number[];
