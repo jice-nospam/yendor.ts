@@ -327,8 +327,10 @@ module Game {
 
 		private handleActionKey(owner: Actor, map: Map) {
 			if ( this.keyChar === "g" ) {
+				// 'g' : pick an item
 				this.pickupItem(owner, map);
 			} else if ( this.keyChar === ">") {
+				// '>' : go down
 				var stairsDown: Actor = ActorManager.instance.getStairsDown();
 				if ( stairsDown.x === owner.x && stairsDown.y === owner.y ) {
 					EventBus.instance.publishEvent(new Event<void>(EventType.NEXT_LEVEL) );
@@ -336,12 +338,47 @@ module Game {
 					log("There are no stairs going down here.");
 				}
 			} else if ( this.keyChar === "<") {
+				// '<' : go up
 				var stairsUp: Actor = ActorManager.instance.getStairsUp();
 				if ( stairsUp.x === owner.x && stairsUp.y === owner.y ) {
 					EventBus.instance.publishEvent(new Event<void>(EventType.PREV_LEVEL) );
 				} else {
 					log("There are no stairs going up here.");
 				}
+			} else if ( this.keyCode === KeyEvent.DOM_VK_I ) {
+				// i : use item from inventory
+				EventBus.instance.publishEvent(new Event<OpenInventoryEventData>(EventType.OPEN_INVENTORY,
+					{ title: "use an item", itemListener: this.useItem.bind(this) } ));
+				return true;
+			} else if ( this.keyCode === KeyEvent.DOM_VK_D ) {
+				// d : drop item from inventory
+				EventBus.instance.publishEvent(new Event<OpenInventoryEventData>(EventType.OPEN_INVENTORY,
+					{ title: "drop an item", itemListener: this.dropItem.bind(this) } ));
+				return true;
+			} else if ( this.keyCode === KeyEvent.DOM_VK_T ) {
+				// t : throw an item from inventory
+				EventBus.instance.publishEvent(new Event<OpenInventoryEventData>(EventType.OPEN_INVENTORY,
+					{ title: "throw an item", itemListener: this.throwItem.bind(this) } ));
+				return true;
+			}
+		}
+
+		// inventory item listeners
+		private useItem(item: Actor) {
+			if (item.pickable) {
+				item.pickable.use(item, ActorManager.instance.getPlayer());
+			}
+		}
+
+		private dropItem(item: Actor) {
+			if ( item.pickable ) {
+				item.pickable.drop(item, ActorManager.instance.getPlayer());
+			}
+		}
+
+		private throwItem(item: Actor) {
+			if ( item.pickable ) {
+				item.pickable.throw(item, ActorManager.instance.getPlayer());
 			}
 		}
 
