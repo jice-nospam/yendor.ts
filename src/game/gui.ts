@@ -271,9 +271,9 @@ module Game {
 			var player: Actor = ActorManager.instance.getPlayer();
 			var inventory: Actor[][] = this.buildStackedInventory(player.container);
 			if ( index >= 0 && index < inventory.length ) {
+				this.hide();
 				var item: Actor = inventory[index][0];
 				this.itemListener(item);
-				this.hide();
 			}
 		}
 
@@ -370,7 +370,7 @@ module Game {
 		Then it calls the TilePickerListener with the selected tile position.
 	*/
 	export class TilePicker extends Gui implements EventListener {
-		private tilePos : Yendor.Position;
+		private tilePos : Yendor.Position = new Yendor.Position();
 		private listener: TilePickerListener;
 		private tileIsValid: boolean = false;
 		private map: Map;
@@ -397,11 +397,50 @@ module Game {
 					}
 				}
 				this.deactivate();
+			} else if (event.type === EventType.KEY_PRESSED) {
+				switch ( event.data.keyCode ) {
+					case KeyEvent.DOM_VK_ESCAPE :
+						this.deactivate();
+					break;
+					case KeyEvent.DOM_VK_UP:
+					case KeyEvent.DOM_VK_NUMPAD8:
+						if ( this.tilePos.y > 0 ) {
+							this.tilePos.y --;
+						}
+					break;
+					case KeyEvent.DOM_VK_DOWN:
+					case KeyEvent.DOM_VK_NUMPAD2:
+						if ( this.tilePos.y < this.map.height - 1 ) {
+							this.tilePos.y ++;
+						}
+					break;
+					case KeyEvent.DOM_VK_LEFT:
+					case KeyEvent.DOM_VK_NUMPAD4:
+						if ( this.tilePos.x > 0 ) {
+							this.tilePos.x --;
+						}
+					break;
+					case KeyEvent.DOM_VK_RIGHT:
+					case KeyEvent.DOM_VK_NUMPAD6:
+						if ( this.tilePos.x < this.map.width - 1 ) {
+							this.tilePos.x ++;
+						}
+					break;
+					case KeyEvent.DOM_VK_ENTER:
+					case KeyEvent.DOM_VK_RETURN:
+						if ( this.tileIsValid && this.listener ) {
+							this.listener(this.tilePos);
+							EventBus.instance.publishEvent(new Event<GameStatus>(EventType.CHANGE_STATUS, GameStatus.NEW_TURN));
+							this.deactivate();
+						}
+					break;
+				}
+				this.tileIsValid = this.map.isInFov(this.tilePos.x, this.tilePos.y);
 			}
 		}
 
 		render(map: Map, console: Yendor.Console) {
-			if ( this.tilePos && console.contains(this.tilePos) ) {
+			if ( console.contains(this.tilePos) ) {
 				console.setChar( this.tilePos.x, this.tilePos.y, this.tileIsValid ? "+" : "x" );
 				console.fore[this.tilePos.x][this.tilePos.y] = this.tileIsValid ? "green" : "red";
 			}
@@ -411,18 +450,21 @@ module Game {
 			this.listener = listener;
 			EventBus.instance.registerListener(this, EventType.MOUSE_MOVE);
 			EventBus.instance.registerListener(this, EventType.MOUSE_CLICK);
+			EventBus.instance.registerListener(this, EventType.KEY_PRESSED);
 			this.show();
 			this.tileIsValid = false;
 		}
 
 		private updateMousePosition(mousePos: Yendor.Position) {
-			this.tilePos = mousePos;
+			this.tilePos.x = mousePos.x;
+			this.tilePos.y = mousePos.y;
 			this.tileIsValid = this.map.isInFov(this.tilePos.x, this.tilePos.y);
 		}
 
 		private deactivate() {
 			EventBus.instance.unregisterListener(this, EventType.MOUSE_MOVE);
 			EventBus.instance.unregisterListener(this, EventType.MOUSE_CLICK);
+			EventBus.instance.unregisterListener(this, EventType.KEY_PRESSED);
 			this.hide();
 		}
 	}
