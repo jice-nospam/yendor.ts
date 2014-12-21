@@ -438,6 +438,22 @@ module Game {
 	 		return undefined;
 	 	}
 
+	 	isSlotEmpty(slot: string): boolean {
+	 		if ( this.getFromSlot(slot)) {
+	 			return false;
+	 		}
+	 		if ( slot === Constants.SLOT_RIGHT_HAND || slot === Constants.SLOT_LEFT_HAND ) {
+	 			if ( this.getFromSlot(Constants.SLOT_BOTH_HANDS)) {
+	 				return false;
+	 			}
+	 		} else if ( slot === Constants.SLOT_BOTH_HANDS ) {
+	 			if ( this.getFromSlot(Constants.SLOT_LEFT_HAND) || this.getFromSlot(Constants.SLOT_RIGHT_HAND) ) {
+	 				return false;
+	 			}
+	 		}
+	 		return true;
+	 	}
+
 	 	/*
 	 		Function: add
 	 		add a new actor in this container
@@ -709,7 +725,7 @@ module Game {
 		}
 
 		// weapons
-		static createSword(x: number, y: number, name: string, damages: number): Actor {
+		static createSword(x: number, y: number, name: string, damages: number, twoHanded: boolean = false): Actor {
 			var sword = new Actor();
 			sword.init(x, y, "/", name, "#F0F0F0", true);
 			sword.pickable = new Pickable();
@@ -717,7 +733,7 @@ module Game {
 				"The sword hits [the actor1] for " + damages + " hit points."),
 				new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL ));
 
-			sword.equipment = new Equipment("right hand", damages);
+			sword.equipment = new Equipment(twoHanded ? Constants.SLOT_BOTH_HANDS : Constants.SLOT_RIGHT_HAND, damages);
 			return sword;
 		}
 
@@ -728,7 +744,7 @@ module Game {
 			shield.pickable.setOnThrowEffect(new ConditionEffect(ConditionType.STUNNED, 5,
 				"The shield hits [the actor1] and stuns [it]!"),
 				new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL));
-			shield.equipment = new Equipment("left hand", 0, defense);
+			shield.equipment = new Equipment(Constants.SLOT_LEFT_HAND, 0, defense);
 			return shield;
 		}
 

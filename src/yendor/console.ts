@@ -404,7 +404,7 @@ module Yendor {
 
 		private newColorTable(): Color[][] {
 			var table = [];
-			for (var i = 0; i < this.width; i++) {
+			for (var i = 0; i < this.width; ++i) {
 				table[i] = [];
 			}
 			return table;
@@ -412,7 +412,7 @@ module Yendor {
 
 		private emptyLine(): string {
 			var s = "";
-			for (var i = 0; i < this.width; i++) {
+			for (var i = 0; i < this.width; ++i) {
 				s += " ";
 			}
 			return s;

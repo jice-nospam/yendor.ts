@@ -47,10 +47,16 @@ module Game {
 
 		// gameplay
 		export var SCENT_THRESHOLD: number = 10;
+        // xp level required for level 1
         export var XP_BASE_LEVEL: number = 200;
+        // xp level required for level n = BASE_LEVEL + n * NEW_LEVEL
         export var XP_NEW_LEVEL: number = 150;
         // how many turns you are confused after being stunned
         export var AFTER_STUNNED_CONFUSION_DELAY: number = 3;
+        // equipment slots names
+        export var SLOT_RIGHT_HAND: string = "right hand";
+        export var SLOT_LEFT_HAND: string = "left hand";
+        export var SLOT_BOTH_HANDS: string = "both hands";
 
         // persistence local storage keys
         export var PERSISTENCE_VERSION_KEY: string = "version";
