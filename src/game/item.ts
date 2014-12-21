@@ -284,7 +284,7 @@ module Game {
 			if ( wearer.container && wearer.container.add(owner)) {
 				log(transformMessage("[The actor1] pick[s] [the actor2].", wearer, owner));
 
-				if ( owner.equipment && !wearer.container.getFromSlot(owner.equipment.getSlot())) {
+				if ( owner.equipment && wearer.container.isSlotEmpty(owner.equipment.getSlot())) {
 					// equippable and slot is empty : auto-equip
 					owner.equipment.equip(owner, wearer);
 				}
@@ -411,6 +411,22 @@ module Game {
 			if ( previousEquipped ) {
 				// first unequip previously equipped item
 				previousEquipped.equipment.unequip( previousEquipped, wearer );
+			} else if (this.slot === Constants.SLOT_BOTH_HANDS) {
+				// unequip both hands when equipping a two hand weapon
+				var rightHandItem = wearer.container.getFromSlot(Constants.SLOT_RIGHT_HAND);
+				if ( rightHandItem ) {
+					rightHandItem.equipment.unequip( rightHandItem, wearer );
+				}
+				var leftHandItem = wearer.container.getFromSlot(Constants.SLOT_LEFT_HAND);
+				if ( leftHandItem ) {
+					leftHandItem.equipment.unequip( leftHandItem, wearer );
+				}
+			} else if ( this.slot === Constants.SLOT_RIGHT_HAND || this.slot === Constants.SLOT_LEFT_HAND) {
+				// unequip two hands weapon when equipping single hand weapon
+				var twoHandsItem = wearer.container.getFromSlot(Constants.SLOT_BOTH_HANDS);
+				if ( twoHandsItem) {
+					twoHandsItem.equipment.unequip( twoHandsItem, wearer );
+				}
 			}
 			this.equipped = true;
 			if ( wearer === ActorManager.instance.getPlayer()) {

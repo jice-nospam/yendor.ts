@@ -66,6 +66,7 @@ module Yendor {
 		at https://en.wikipedia.org/wiki/Multiply-with-carry> algorithm by George Marsaglia.
 	*/
 	export class ComplementaryMultiplyWithCarryRandom extends Random {
+		static DIVIDER: number = Math.pow(2, 32);
 		private cur: number = 0;
 		private Q: number[];
 		private c: number;
@@ -109,13 +110,13 @@ module Yendor {
 			var x: number;
 			this.cur = (this.cur + 1) % 4096;
 			t = 18782 * this.Q[this.cur] + this.c;
-			this.c = Math.floor(t / Math.pow(2, 32));
+			this.c = Math.floor(t / ComplementaryMultiplyWithCarryRandom.DIVIDER);
 			x = (t + this.c) % 0x100000000;
 			if (x < this.c) {
 				x++;
 				this.c++;
 			}
-			if ( (x + 1) === 0 ) {
+			if ( x === -1 ) {
 				this.c++;
 				x = 0;
 			}

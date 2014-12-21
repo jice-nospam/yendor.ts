@@ -2,19 +2,19 @@
 * Yendor toolkit
 	- added Random.getRandomChance()
 
-* GenRogue
+* GeneRogue
 	- goblins
 	- multi-level dungeon
 	- can drop items with 'd'
 	- can throw items with 't'
-	- equipable items (sword, shield)
+	- equipable one-handed and two-handed items (swords, shields)
 	- inventory now stacks similar items
 
 # 0.0.3 / 06-dec-2014
 * Yendor toolkit
 	- mush faster console implementation using pixi.js
 
-* GenRogue :
+* GeneRogue :
 	- scroll of fireball
 	- scroll of confusion
 	- persistence (game state saved in the browser's local storage)
@@ -34,7 +34,7 @@ Initial release
 	- random number generator (complementary multiply with carry)
 	- field of view (restrictive precise angle shadowcasting algorithm by Dominik Marczuk)
 
-* GenRogue : a generic roguelike
+* GeneRogue : a generic roguelike
 	- random levels
 	- orcs and trolls with scent tracking A.I.
 	- health potions, scrolls

@@ -3,7 +3,7 @@
 var	root: Yendor.Console;
 
 module Benchmark {
-
+	"use strict";
 	// these are the dimensions of the libtcod benchmark sample
 	var WIDTH: number = 80;
 	var HEIGHT: number = 60;
@@ -11,7 +11,6 @@ module Benchmark {
 	var SAMPLE_SCREEN_HEIGHT: number = 20;
 	var SAMPLE_SCREEN_X: number = 20;
 	var SAMPLE_SCREEN_Y: number = 10;
-	var rootDiv: HTMLElement;
 	var rng: Yendor.Random = new Yendor.ComplementaryMultiplyWithCarryRandom();
 	var framesPerSecond: number = 0;
 	var currentFrameCount: number = 0;
@@ -53,7 +52,7 @@ module Benchmark {
 	$(function() {
 		Yendor.init();
 		root = new Yendor.PixiConsole( WIDTH, HEIGHT, "#ffffff", "#000000", "#console", "terminal.png" );
-		//root = new Yendor.DivConsole( WIDTH, HEIGHT, "#ffffff", "#000000", "#console" );
+		// root = new Yendor.DivConsole( WIDTH, HEIGHT, "#ffffff", "#000000", "#console" );
 		Yendor.loop(handleNewFrame);
 	});
 }

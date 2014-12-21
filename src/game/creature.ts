@@ -191,7 +191,7 @@ module Game {
 
 	/*
 		Class: PlayerAi
-		Handles player input. Determin in a new game turn must be started.
+		Handles player input. Determin if a new game turn must be started.
 	*/
 	export class PlayerAi extends Ai implements EventListener {
 		private keyCode: number = 0;

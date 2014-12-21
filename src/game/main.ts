@@ -69,6 +69,8 @@ module Game {
 
 			// this helps debugging items
 			// var player: Actor = ActorManager.instance.getPlayer();
+			// ActorManager.instance.addItem(Actor.createSword(player.x + 1, player.y, "greatsword", 6, true));
+			// ActorManager.instance.addItem(Actor.createSword(player.x + 1, player.y, "short sword", 3));
 			// ActorManager.instance.addItem(Actor.createShield(player.x + 1, player.y, "wooden shield", 1));
 		}
 
