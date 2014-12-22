@@ -84,22 +84,30 @@ module Yendor {
 
 		private initCanvas() {
 			var div = $(this.divSelector)[0];
-			var canvas_width = this.width * this.charWidth;
-            var canvas_height = this.height * this.charHeight;
+			var canvasWidth = this.width * this.charWidth;
+            var canvasHeight = this.height * this.charHeight;
 
 			div.innerHTML = "<canvas id='" + PixiConsole.CANVAS_ID
-                + "' width='" + canvas_width
-                + "' height='" + canvas_height + "'></canvas>";
+                + "' width='" + canvasWidth
+                + "' height='" + canvasHeight + "'></canvas>";
 
 			this.canvas = <HTMLCanvasElement>$(PixiConsole.CANVAS_SELECTOR)[0];
 			this.stage = new PIXI.Stage(this.defaultBackgroundColor);
-			this.renderer = PIXI.autoDetectRenderer(canvas_width, canvas_height, {
+			var pixiOptions: any = {
 				antialias: false,
 				clearBeforeRender: false,
 				preserveDrawingBuffer: false,
 				resolution: 1,
 				transparent: false,
-				view: this.canvas});
+				view: this.canvas};
+			var rendererName: string = Yendor.urlParams[URL_PARAM_RENDERER];
+			if ( rendererName === URL_PARAM_RENDERER_PIXI_WEBGL) {
+				this.renderer = new PIXI.WebGLRenderer(canvasWidth, canvasHeight, pixiOptions);
+			} else if ( rendererName === URL_PARAM_RENDERER_PIXI_CANVAS) {
+				this.renderer = new PIXI.CanvasRenderer(canvasWidth, canvasHeight, pixiOptions);
+			} else {
+				this.renderer = PIXI.autoDetectRenderer(canvasWidth, canvasHeight, pixiOptions);
+			}
 		}
 
 		private initCharacterMap() {

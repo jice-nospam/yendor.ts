@@ -53,7 +53,7 @@ module Yendor {
 		*/
 		private computeCharSize() {
 			// insert a single (invisible) character in the console
-			this.text[0][0] = "@";
+			this.setChar(0, 0, "@");
 			this.fore[0][0] = "black";
 			this.render();
 			// get the resulting span size
@@ -65,7 +65,7 @@ module Yendor {
 			console.log("Char size : " + this.charWidth + " x " + this.charHeight);
 			// restore the console
 			this.div.id = oldId;
-			this.text[0][0] = " ";
+			this.setChar(0, 0, " ");
 			this.fore[0][0] = this.fore[0][1];
 			this.render();
 		}

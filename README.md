@@ -47,7 +47,16 @@ Then open game/index.html in your favorite browser.
 * [Play GenRogue online](http://roguecentral.org/doryen/yendor.ts/game/index.html)
 * [Run the benchmark online](http://roguecentral.org/doryen/yendor.ts/bench/index.html)
 
-# Community
+# Troubleshooting
+
+By default, Yendor will render the screen using PIXI. PIXI will try to use a webGL renderer and fall back to a canvas based renderer if that doesn't work. Yet, if you have rendering issues, you can force the use of a specific renderer by adding the `renderer` parameter to the URL.
+
+`http://mysite/index.html?renderer=<rendererName>`
+
+Following renderer names are supported :
+* pixi/webgl : should be the fastest except if you have broken OpenGL drivers or an old browser
+* pixi/canvas : should work on not so recent browser, but not on very old browsers
+* yendor/div : failsafe but slow classic HTML renderer
 
 # License
 

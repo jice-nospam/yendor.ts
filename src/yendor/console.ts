@@ -3,6 +3,11 @@
 */
 module Yendor {
 	"use strict";
+    // URL params
+    export var URL_PARAM_RENDERER: string = "renderer";
+    export var URL_PARAM_RENDERER_PIXI_WEBGL: string = "pixi/webgl";
+    export var URL_PARAM_RENDERER_PIXI_CANVAS: string = "pixi/canvas";
+    export var URL_PARAM_RENDERER_DIV: string = "yendor/div";
 
 	/*
 		Interface: Color
