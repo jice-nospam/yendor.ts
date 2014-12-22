@@ -9,6 +9,8 @@ module Yendor {
 	"use strict";
 
 	export var VERSION = "0.0.3";
+
+	export var urlParams : { [index: string]: string; };
 	var frameLoop : (callback: (elapsedTime: number) => void) => void;
 	/*
 		Function: init
@@ -32,6 +34,28 @@ module Yendor {
 				window.setTimeout(callback, 1000 / 60, new Date().getTime());
 			};
 		})();
+		urlParams = parseUrlParams();
+	}
+
+	function parseUrlParams() {
+		var params: string[] = window.location.search.substring(1).split("&");
+		var paramMap: { [index: string]: string; } = {};
+		for (var i = 0; i < params.length; ++i) {
+			var p = params[i].split("=");
+			if ( p.length === 2 ) {
+				paramMap[p[0]] = decodeURIComponent(p[1].replace(/\+/g, " "));
+			}
+		}
+		return paramMap;
+	}
+
+	export function createConsole(width: number, height: number,
+			foreground: Color, background: Color, divSelector: string, fontUrl: string ): Console {
+		if ( urlParams[URL_PARAM_RENDERER] === URL_PARAM_RENDERER_DIV ) {
+			return new DivConsole(width, height, foreground, background, divSelector);
+		} else {
+			return new PixiConsole(width, height, foreground, background, divSelector, fontUrl);
+		}
 	}
 
 	export interface FrameRenderer {
