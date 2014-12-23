@@ -92,8 +92,8 @@ module Game {
 				"lightningBoltScroll": this.getValueForDungeon([[3, 10]]),
 				"fireballScroll": 10,
 				"confusionScroll": 10,
-				"short sword": this.getValueForDungeon([[5, 4]]),
-				"wooden shield": this.getValueForDungeon([[10, 8]]),
+				"short sword": this.getValueForDungeon([[5, 4],[12,0]]),
+				"wooden shield": this.getValueForDungeon([[10, 8],[16,0]]),
 				"longsword": this.getValueForDungeon([[8, 4]]),
 				"iron shield": this.getValueForDungeon([[14, 8]]),
 				"greatsword": this.getValueForDungeon([[12, 4]])

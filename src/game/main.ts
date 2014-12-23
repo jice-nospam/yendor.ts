@@ -173,6 +173,70 @@ module Game {
 		}
 
 		/*
+			Function: convertKeyToAction
+			This function maps keyboard input into actual game actions.
+		*/
+		private convertKeyToAction(event: KeyboardEvent): PlayerAction {
+			switch (event.keyCode) {
+				// cardinal movements				
+				case KeyEvent.DOM_VK_LEFT:
+				case KeyEvent.DOM_VK_NUMPAD4:
+				case KeyEvent.DOM_VK_H:
+					return PlayerAction.MOVE_WEST;
+				case KeyEvent.DOM_VK_RIGHT:
+				case KeyEvent.DOM_VK_NUMPAD6:
+				case KeyEvent.DOM_VK_L:
+					return PlayerAction.MOVE_EAST;
+				case KeyEvent.DOM_VK_UP:
+				case KeyEvent.DOM_VK_NUMPAD8:
+				case KeyEvent.DOM_VK_K:
+					return PlayerAction.MOVE_NORTH;
+				case KeyEvent.DOM_VK_DOWN:
+				case KeyEvent.DOM_VK_NUMPAD2:
+				case KeyEvent.DOM_VK_J:
+					return PlayerAction.MOVE_SOUTH;
+				// diagonal movements
+				case KeyEvent.DOM_VK_NUMPAD7:
+				case KeyEvent.DOM_VK_Y:
+					return PlayerAction.MOVE_NW;
+				case KeyEvent.DOM_VK_NUMPAD9:
+				case KeyEvent.DOM_VK_U:
+					return PlayerAction.MOVE_NE;
+				case KeyEvent.DOM_VK_NUMPAD1:
+				case KeyEvent.DOM_VK_B:
+					return PlayerAction.MOVE_SW;
+				case KeyEvent.DOM_VK_NUMPAD3:
+				case KeyEvent.DOM_VK_N:
+					return PlayerAction.MOVE_SE;
+				// other movements
+				case KeyEvent.DOM_VK_NUMPAD5:
+				case KeyEvent.DOM_VK_SPACE:
+					return PlayerAction.WAIT;
+				case KeyEvent.DOM_VK_G :
+					return PlayerAction.GRAB;
+				case KeyEvent.DOM_VK_I :
+					return PlayerAction.USE_ITEM;
+				case KeyEvent.DOM_VK_D :
+					return PlayerAction.DROP_ITEM;
+				case KeyEvent.DOM_VK_T :
+					return PlayerAction.THROW_ITEM;
+				case KeyEvent.DOM_VK_ENTER :
+				case KeyEvent.DOM_VK_RETURN :
+					return PlayerAction.VALIDATE;
+				case KeyEvent.DOM_VK_ESCAPE :
+					return PlayerAction.CANCEL;
+				default:
+					if ( event.key === ">" ) {
+						return PlayerAction.MOVE_DOWN;
+					} else if ( event.key === "<" ) {
+						return PlayerAction.MOVE_UP;
+					}
+				break;
+			}
+			return undefined;
+		}
+
+		/*
 			Function: handleKeypress
 			Triggered when the player presses a key. Updates the game world and possibly starts a new turn for NPCs.
 
@@ -180,28 +244,26 @@ module Game {
 			event - the KeyboardEvent
 		*/
 		handleKeypress(event: KeyboardEvent) {
-			if (event.key === "MozPrintableKey") {
-				// fix for old firefox versions
-				if ( event.keyCode >= KeyEvent.DOM_VK_A && event.keyCode <= KeyEvent.DOM_VK_Z ) {
-					event.key = String.fromCharCode(event.keyCode).toLowerCase();
-				}
-			}
+			var input: KeyInput = {
+				action : this.convertKeyToAction(event),
+				keyCode : event.keyCode,
+				char : event.key
+			};
 			if (! Gui.getActiveModal() ) {
-				if ( !this.handleGlobalShortcuts(event) ) {
-					EventBus.instance.publishEvent(new Event<KeyboardEvent>(EventType.KEY_PRESSED, event));
+				if ( !this.handleGlobalShortcuts(input) ) {
+					EventBus.instance.publishEvent(new Event<KeyInput>(EventType.KEYBOARD_INPUT, input));
 					ActorManager.instance.getPlayer().ai.update(ActorManager.instance.getPlayer(), this.map);
 				}
 			} else {
-				EventBus.instance.publishEvent(new Event<KeyboardEvent>(EventType.KEY_PRESSED, event));
+				EventBus.instance.publishEvent(new Event<KeyInput>(EventType.KEYBOARD_INPUT, input));
 			}
 			if ( this.status === GameStatus.NEW_TURN )  {
 				this.handleNewTurn();
 			}
 		}
 
-		private handleGlobalShortcuts(event: KeyboardEvent): boolean {
-			if ( event.keyCode === KeyEvent.DOM_VK_ESCAPE ) {
-				// ESC : open game menu
+		private handleGlobalShortcuts(input: KeyInput): boolean {
+			if ( input.action === PlayerAction.CANCEL ) {
 				EventBus.instance.publishEvent(new Event<void>(EventType.OPEN_MAIN_MENU));
 				return true;
 			}
