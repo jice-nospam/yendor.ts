@@ -251,8 +251,8 @@ module Game {
 				this.itemListener = data.itemListener;
 				this.title = "=== " + data.title + " - ESC to close ===";
 				this.show();
-			} else if ( event.type === EventType.KEY_PRESSED ) {
-				if ( event.data.keyCode === KeyEvent.DOM_VK_ESCAPE ) {
+			} else if ( event.type === EventType.KEYBOARD_INPUT ) {
+				if ( event.data.action === PlayerAction.CANCEL ) {
 					this.hide();
 				} else {
 					var index = event.data.keyCode - KeyEvent.DOM_VK_A;
@@ -279,14 +279,14 @@ module Game {
 
 		show() {
 			super.show();
-			EventBus.instance.registerListener(this, EventType.KEY_PRESSED);
+			EventBus.instance.registerListener(this, EventType.KEYBOARD_INPUT);
 			EventBus.instance.registerListener(this, EventType.MOUSE_MOVE);
 			EventBus.instance.registerListener(this, EventType.MOUSE_CLICK);
 		}
 
 		hide() {
 			super.hide();
-			EventBus.instance.unregisterListener(this, EventType.KEY_PRESSED);
+			EventBus.instance.unregisterListener(this, EventType.KEYBOARD_INPUT);
 			EventBus.instance.unregisterListener(this, EventType.MOUSE_MOVE);
 			EventBus.instance.unregisterListener(this, EventType.MOUSE_CLICK);
 		}
@@ -397,37 +397,23 @@ module Game {
 					}
 				}
 				this.deactivate();
-			} else if (event.type === EventType.KEY_PRESSED) {
-				switch ( event.data.keyCode ) {
-					case KeyEvent.DOM_VK_ESCAPE :
+			} else if (event.type === EventType.KEYBOARD_INPUT) {
+				var move: Yendor.Position = convertActionToPosition(event.data.action);
+				if ( move.y === -1 && this.tilePos.y > 0 ) {
+					this.tilePos.y --;
+				} else if ( move.y === 1 && this.tilePos.y < this.map.height - 1 ) {
+					this.tilePos.y ++;
+				}
+				if ( move.x === -1 && this.tilePos.x > 0 ) {
+					this.tilePos.x --;
+				} else if ( move.x === 1 && this.tilePos.x < this.map.width - 1 ) {
+					this.tilePos.x ++;
+				}
+				switch ( event.data.action ) {
+					case PlayerAction.CANCEL :
 						this.deactivate();
 					break;
-					case KeyEvent.DOM_VK_UP:
-					case KeyEvent.DOM_VK_NUMPAD8:
-						if ( this.tilePos.y > 0 ) {
-							this.tilePos.y --;
-						}
-					break;
-					case KeyEvent.DOM_VK_DOWN:
-					case KeyEvent.DOM_VK_NUMPAD2:
-						if ( this.tilePos.y < this.map.height - 1 ) {
-							this.tilePos.y ++;
-						}
-					break;
-					case KeyEvent.DOM_VK_LEFT:
-					case KeyEvent.DOM_VK_NUMPAD4:
-						if ( this.tilePos.x > 0 ) {
-							this.tilePos.x --;
-						}
-					break;
-					case KeyEvent.DOM_VK_RIGHT:
-					case KeyEvent.DOM_VK_NUMPAD6:
-						if ( this.tilePos.x < this.map.width - 1 ) {
-							this.tilePos.x ++;
-						}
-					break;
-					case KeyEvent.DOM_VK_ENTER:
-					case KeyEvent.DOM_VK_RETURN:
+					case PlayerAction.VALIDATE:
 						if ( this.tileIsValid && this.listener ) {
 							this.listener(this.tilePos);
 							EventBus.instance.publishEvent(new Event<GameStatus>(EventType.CHANGE_STATUS, GameStatus.NEW_TURN));
@@ -450,9 +436,11 @@ module Game {
 			this.listener = listener;
 			EventBus.instance.registerListener(this, EventType.MOUSE_MOVE);
 			EventBus.instance.registerListener(this, EventType.MOUSE_CLICK);
-			EventBus.instance.registerListener(this, EventType.KEY_PRESSED);
+			EventBus.instance.registerListener(this, EventType.KEYBOARD_INPUT);
 			this.show();
 			this.tileIsValid = false;
+			var player: Actor = ActorManager.instance.getPlayer();
+			this.tilePos = new Yendor.Position(player.x, player.y);
 		}
 
 		private updateMousePosition(mousePos: Yendor.Position) {
@@ -464,7 +452,7 @@ module Game {
 		private deactivate() {
 			EventBus.instance.unregisterListener(this, EventType.MOUSE_MOVE);
 			EventBus.instance.unregisterListener(this, EventType.MOUSE_CLICK);
-			EventBus.instance.unregisterListener(this, EventType.KEY_PRESSED);
+			EventBus.instance.unregisterListener(this, EventType.KEYBOARD_INPUT);
 			this.hide();
 		}
 	}
@@ -540,14 +528,14 @@ module Game {
 			super.show();
 			EventBus.instance.registerListener(this, EventType.MOUSE_MOVE);
 			EventBus.instance.registerListener(this, EventType.MOUSE_CLICK);
-			EventBus.instance.registerListener(this, EventType.KEY_PRESSED);
+			EventBus.instance.registerListener(this, EventType.KEYBOARD_INPUT);
 		}
 
 		hide() {
 			super.hide();
 			EventBus.instance.unregisterListener(this, EventType.MOUSE_MOVE);
 			EventBus.instance.unregisterListener(this, EventType.MOUSE_CLICK);
-			EventBus.instance.unregisterListener(this, EventType.KEY_PRESSED);
+			EventBus.instance.unregisterListener(this, EventType.KEYBOARD_INPUT);
 		}
 
 		render(map: Map, destination: Yendor.Console) {
@@ -572,29 +560,26 @@ module Game {
 				if ( event.data === MouseButton.LEFT ) {
 					this.activateActiveItem();
 				}
-			} else if (event.type === EventType.KEY_PRESSED) {
-				switch ( event.data.keyCode ) {
-					case KeyEvent.DOM_VK_ESCAPE :
+			} else if (event.type === EventType.KEYBOARD_INPUT) {
+				switch ( event.data.action ) {
+					case PlayerAction.CANCEL :
 						this.hide();
 					break;
-					case KeyEvent.DOM_VK_UP:
-					case KeyEvent.DOM_VK_NUMPAD8:
+					case PlayerAction.MOVE_NORTH:
 						if (this.activeItemIndex) {
 							this.activeItemIndex --;
 						} else {
 							this.activeItemIndex = this.items.length - 1;
 						}
 					break;
-					case KeyEvent.DOM_VK_DOWN:
-					case KeyEvent.DOM_VK_NUMPAD2:
+					case PlayerAction.MOVE_SOUTH:
 						if (this.activeItemIndex !== undefined && this.activeItemIndex < this.items.length - 1) {
 							this.activeItemIndex ++;
 						} else {
 							this.activeItemIndex = 0;
 						}
 					break;
-					case KeyEvent.DOM_VK_RETURN:
-					case KeyEvent.DOM_VK_ENTER:
+					case PlayerAction.VALIDATE:
 						this.activateActiveItem();
 					break;
 				}

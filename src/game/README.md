@@ -20,3 +20,4 @@ To compile it, run `jake` then open game/index.html in your browser.
 * t : throw an item
 * > : go down the stairs
 * < : go up the stairs
+* ESC : open game menu

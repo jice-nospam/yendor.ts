@@ -194,28 +194,22 @@ module Game {
 		Handles player input. Determin if a new game turn must be started.
 	*/
 	export class PlayerAi extends Ai implements EventListener {
-		private keyCode: number = 0;
-		private keyChar: string;
+		private lastAction: PlayerAction;
 		constructor() {
 			super();
 			this.className = "PlayerAi";
-			EventBus.instance.registerListener(this, EventType.KEY_PRESSED);
+			EventBus.instance.registerListener(this, EventType.KEYBOARD_INPUT);
 		}
 
 		/*
 			Function: processEvent
-			Stores the keyCode from KEY_PRESSED event so that <update> can use it.
+			Stores the action from KEYBOARD_INPUT event so that <update> can use it.
 
 			Parameters:
-			event - the KEY_PRESSED <Event>
+			action - the PlayerAction
 		*/
 		processEvent(event: Event<any>) {
-			this.keyCode = 0;
-			this.keyChar = undefined;
-			if ( event.type === EventType.KEY_PRESSED ) {
-				this.keyCode = event.data.keyCode;
-				this.keyChar = event.data.key;
-			}
+			this.lastAction = (<KeyInput>event.data).action;
 		}
 
 		/*
@@ -232,74 +226,26 @@ module Game {
 				return;
 			}
 			// check movement keys
-			var dx : number = 0;
-			var dy : number = 0;
+			var move: Yendor.Position = convertActionToPosition(this.lastAction);
 			var newTurn: boolean = false;
-			switch (this.keyCode) {
-				// cardinal movements
-				case KeyEvent.DOM_VK_LEFT:
-				case KeyEvent.DOM_VK_NUMPAD4:
-				case KeyEvent.DOM_VK_H:
-					dx = -1;
-				break;
-				case KeyEvent.DOM_VK_RIGHT:
-				case KeyEvent.DOM_VK_NUMPAD6:
-				case KeyEvent.DOM_VK_L:
-					dx = 1;
-				break;
-				case KeyEvent.DOM_VK_UP:
-				case KeyEvent.DOM_VK_NUMPAD8:
-				case KeyEvent.DOM_VK_K:
-					dy = -1;
-				break;
-				case KeyEvent.DOM_VK_DOWN:
-				case KeyEvent.DOM_VK_NUMPAD2:
-				case KeyEvent.DOM_VK_J:
-					dy = 1;
-				break;
-				// diagonal movements
-				case KeyEvent.DOM_VK_NUMPAD7:
-				case KeyEvent.DOM_VK_Y:
-					dx = -1;
-					dy = -1;
-				break;
-				case KeyEvent.DOM_VK_NUMPAD9:
-				case KeyEvent.DOM_VK_U:
-					dx = 1;
-					dy = -1;
-				break;
-				case KeyEvent.DOM_VK_NUMPAD1:
-				case KeyEvent.DOM_VK_B:
-					dx = -1;
-					dy = 1;
-				break;
-				case KeyEvent.DOM_VK_NUMPAD3:
-				case KeyEvent.DOM_VK_N:
-					dx = 1;
-					dy = 1;
-				break;
-				// other movements
-				case KeyEvent.DOM_VK_NUMPAD5:
-				case KeyEvent.DOM_VK_SPACE:
-					// wait until next turn
+			if ( move.x === 0 && move.y === 0 ) {
+				if (this.lastAction === PlayerAction.WAIT ) {
 					newTurn = true;
-				break;
-				default :
+				} else {
 					if (! this.hasCondition(ConditionType.CONFUSED) && ! this.hasCondition(ConditionType.STUNNED)) {
-						this.handleActionKey(owner, map);
+						this.handleAction(owner, map);
 					}
-				break;
+				}
 			}
-			if ( dx !== 0 || dy !== 0 )  {
+			if ( move.x !== 0 || move.y !== 0 )  {
 				newTurn = true;
 				// move to the target cell or attack if there's a creature
-				if ( this.moveOrAttack(owner, owner.x + dx, owner.y + dy, map) ) {
+				if ( this.moveOrAttack(owner, owner.x + move.x, owner.y + move.y, map) ) {
 					// the player actually move. Recompute the field of view
 					map.computeFov(owner.x, owner.y, Constants.FOV_RADIUS);
 				}
 			}
-			this.keyCode = undefined;
-			this.keyChar = undefined;
+			this.lastAction = undefined;
 			if ( newTurn ) {
 				// the player moved or try to move. New game turn
 				EventBus.instance.publishEvent(new Event<GameStatus>(EventType.CHANGE_STATUS, GameStatus.NEW_TURN));
@@ -334,38 +280,32 @@ module Game {
 			return true;
 		}
 
-		private handleActionKey(owner: Actor, map: Map) {
-			if ( this.keyChar === "g" ) {
-				// 'g' : pick an item
+		private handleAction(owner: Actor, map: Map) {
+			if ( this.lastAction === PlayerAction.GRAB ) {
 				this.pickupItem(owner, map);
-			} else if ( this.keyChar === ">") {
-				// '>' : go down
+			} else if ( this.lastAction === PlayerAction.MOVE_DOWN ) {
 				var stairsDown: Actor = ActorManager.instance.getStairsDown();
 				if ( stairsDown.x === owner.x && stairsDown.y === owner.y ) {
 					EventBus.instance.publishEvent(new Event<void>(EventType.NEXT_LEVEL) );
 				} else {
 					log("There are no stairs going down here.");
 				}
-			} else if ( this.keyChar === "<") {
-				// '<' : go up
+			} else if ( this.lastAction === PlayerAction.MOVE_UP ) {
 				var stairsUp: Actor = ActorManager.instance.getStairsUp();
 				if ( stairsUp.x === owner.x && stairsUp.y === owner.y ) {
 					EventBus.instance.publishEvent(new Event<void>(EventType.PREV_LEVEL) );
 				} else {
 					log("There are no stairs going up here.");
 				}
-			} else if ( this.keyCode === KeyEvent.DOM_VK_I ) {
-				// i : use item from inventory
+			} else if ( this.lastAction === PlayerAction.USE_ITEM ) {
 				EventBus.instance.publishEvent(new Event<OpenInventoryEventData>(EventType.OPEN_INVENTORY,
 					{ title: "use an item", itemListener: this.useItem.bind(this) } ));
 				return true;
-			} else if ( this.keyCode === KeyEvent.DOM_VK_D ) {
-				// d : drop item from inventory
+			} else if ( this.lastAction === PlayerAction.DROP_ITEM ) {
 				EventBus.instance.publishEvent(new Event<OpenInventoryEventData>(EventType.OPEN_INVENTORY,
 					{ title: "drop an item", itemListener: this.dropItem.bind(this) } ));
 				return true;
-			} else if ( this.keyCode === KeyEvent.DOM_VK_T ) {
-				// t : throw an item from inventory
+			} else if ( this.lastAction === PlayerAction.THROW_ITEM ) {
 				EventBus.instance.publishEvent(new Event<OpenInventoryEventData>(EventType.OPEN_INVENTORY,
 					{ title: "throw an item", itemListener: this.throwItem.bind(this) } ));
 				return true;

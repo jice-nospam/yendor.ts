@@ -10,8 +10,8 @@ module Game {
 	export enum EventType {
 		// change game status. Associated data : GameStatus
 		CHANGE_STATUS,
-		// key press event. Associated data : KeyboardEvent
-		KEY_PRESSED,
+		// key press event. Associated data : KeyInput
+		KEYBOARD_INPUT,
 		// sends a message to the log. Associated data : Message containing the text and the color
 		LOG_MESSAGE,
 		// mouse movement. Associated data : Yendor.Position with mouse coordinates on the root console
