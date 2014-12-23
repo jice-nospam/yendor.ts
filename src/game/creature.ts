@@ -239,40 +239,49 @@ module Game {
 				// cardinal movements
 				case KeyEvent.DOM_VK_LEFT:
 				case KeyEvent.DOM_VK_NUMPAD4:
+				case KeyEvent.DOM_VK_H:
 					dx = -1;
 				break;
 				case KeyEvent.DOM_VK_RIGHT:
 				case KeyEvent.DOM_VK_NUMPAD6:
+				case KeyEvent.DOM_VK_L:
 					dx = 1;
 				break;
 				case KeyEvent.DOM_VK_UP:
 				case KeyEvent.DOM_VK_NUMPAD8:
+				case KeyEvent.DOM_VK_K:
 					dy = -1;
 				break;
 				case KeyEvent.DOM_VK_DOWN:
 				case KeyEvent.DOM_VK_NUMPAD2:
+				case KeyEvent.DOM_VK_J:
 					dy = 1;
 				break;
 				// diagonal movements
 				case KeyEvent.DOM_VK_NUMPAD7:
+				case KeyEvent.DOM_VK_Y:
 					dx = -1;
 					dy = -1;
 				break;
 				case KeyEvent.DOM_VK_NUMPAD9:
+				case KeyEvent.DOM_VK_U:
 					dx = 1;
 					dy = -1;
 				break;
 				case KeyEvent.DOM_VK_NUMPAD1:
+				case KeyEvent.DOM_VK_B:
 					dx = -1;
 					dy = 1;
 				break;
 				case KeyEvent.DOM_VK_NUMPAD3:
+				case KeyEvent.DOM_VK_N:
 					dx = 1;
 					dy = 1;
 				break;
 				// other movements
 				case KeyEvent.DOM_VK_NUMPAD5:
-					// wait for a turn
+				case KeyEvent.DOM_VK_SPACE:
+					// wait until next turn
 					newTurn = true;
 				break;
 				default :

@@ -6,8 +6,14 @@ To compile it, run `jake` then open game/index.html in your browser.
 
 # Controls
 
-* NUMPAD / arrows : move or melee attack
-* NUMPAD 5 : wait a turn
+* movement / melee attack
+
+>     arrows          numpad          vi
+>        ^            7  8  9        y  k  u
+>      <   >          4     6        h     l
+>        v            1  2  3        b  j  n
+
+* NUMPAD 5 / space : wait a turn
 * g : pick an item up
 * i : use an item from your inventory
 * d : drop an item from your inventory
