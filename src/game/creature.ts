@@ -541,7 +541,7 @@ module Game {
 		get xpLevel() { return this._xpLevel; }
 
 		init(_x: number, _y: number, _ch: string, _name: string, _col: Yendor.Color) {
-			super.init(_x, _y, _ch, _name, _col);
+			super.init(_x, _y, _ch, _name, "creature|human", _col);
 			this.ai = new PlayerAi();
 			this.attacker = new Attacker(5);
 			this.destructible = new PlayerDestructible(30, 0, "your cadaver");

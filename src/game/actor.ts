@@ -487,12 +487,71 @@ module Game {
 	 	}
 	}
 
+	export class ActorType implements Persistent {
+		className: string;
+		_name: string;
+		father: ActorType;
+		private static actorTypes: ActorType[];
+		private static rootType: ActorType = new ActorType("root");
+		constructor(name: string, father?: ActorType) {
+			this.className = "ActorType";
+			this._name = name;
+			this.father = father ? father : ActorType.rootType;
+			ActorType.actorTypes.push(this);
+		}
+
+		get name() { return this._name; }
+
+		static getRootType(): ActorType {
+			return ActorType.rootType;
+		}
+
+		static getActorType(name: string): ActorType {
+			var n: number = ActorType.actorTypes.length;
+			for ( var i = 0; i < n; ++i ) {
+				if ( ActorType.actorTypes[i]._name === name ) {
+					return ActorType.actorTypes[i];
+				}
+			}
+			return undefined;
+		}
+
+		static buildTypeHierarchy(types: string): ActorType {
+			var typeArray: string[] = types.split("|");
+			var n: number = typeArray.length;
+			var currentType: ActorType = ActorType.rootType;
+			for ( var i = 0; i < n; ++i ) {
+				var newType = ActorType.getActorType(typeArray[i]);
+				if (!newType) {
+					newType = new ActorType(typeArray[i], currentType);
+				}
+				currentType = newType;
+			}
+			return currentType;
+		}
+
+		/*
+			Function: isA
+			Return true if this is a type
+		*/
+		isA(type: ActorType): boolean {
+			if ( this === type ) {
+				return true;
+			}
+			if ( this.father === ActorType.rootType ) {
+				return false;
+			}
+			return this.father.isA(type);
+		}
+	}
+
 	/********************************************************************************
 	 * Group: actors
 	 ********************************************************************************/
 
 	export class Actor extends Yendor.Position implements Persistent {
 		className: string;
+		private _type: ActorType;
 		private _ch: string;
 		private _name: string;
 		private _col: Yendor.Color;
@@ -513,12 +572,18 @@ module Game {
 			this.className = "Actor";
 		}
 
-		init(_x: number = 0, _y: number = 0, _ch: string = "", _name: string = "", _col: Yendor.Color = "", singular: boolean = true) {
+		init(_x: number = 0, _y: number = 0, _ch: string = "", _name: string = "", types: string = "",
+			_col: Yendor.Color = "", singular: boolean = true) {
 			this.moveTo(_x, _y);
 			this._ch = _ch;
 			this._name = _name;
 			this._col = _col;
 			this._singular = singular;
+			this._type = types ? ActorType.buildTypeHierarchy(types) : ActorType.getRootType();
+		}
+
+		isA(type: ActorType): boolean {
+			return this._type.isA(type);
 		}
 
 		get ch() { return this._ch; }
@@ -679,7 +744,7 @@ module Game {
 		// potions
 		static createHealthPotion(x: number, y: number, amount: number): Actor {
 			var healthPotion = new Actor();
-			healthPotion.init(x, y, "!", "health potion", "#800080", true);
+			healthPotion.init(x, y, "!", "health potion", "potion", "#800080", true);
 			healthPotion.pickable = new Pickable();
 			healthPotion.pickable.setOnUseEffect(new InstantHealthEffect(amount,
 				"[The actor1] drink[s] the health potion and regain[s] " + amount + " hit points.",
@@ -695,7 +760,7 @@ module Game {
 		// scrolls
 		static createLightningBoltScroll(x: number, y: number, range: number, damages: number): Actor {
 			var lightningBolt = new Actor();
-			lightningBolt.init(x, y, "#", "scroll of lightning bolt", "#FFFF3F", true);
+			lightningBolt.init(x, y, "#", "scroll of lightning bolt", "scroll", "#FFFF3F", true);
 			lightningBolt.pickable = new Pickable();
 			lightningBolt.pickable.setOnUseEffect(new InstantHealthEffect(-damages,
 				"A lightning bolt strikes [the actor1] with a loud thunder!\nThe damage is " + damages + " hit points."),
@@ -705,7 +770,7 @@ module Game {
 
 		static createFireballScroll(x: number, y: number, range: number, damages: number): Actor {
 			var fireball = new Actor();
-			fireball.init(x, y, "#", "scroll of fireball", "#FFFF3F", true);
+			fireball.init(x, y, "#", "scroll of fireball", "scroll", "#FFFF3F", true);
 			fireball.pickable = new Pickable();
 			fireball.pickable.setOnUseEffect(new InstantHealthEffect(-damages,
 				"[The actor1] get[s] burned for " + damages + " hit points."),
@@ -716,7 +781,7 @@ module Game {
 
 		static createConfusionScroll(x: number, y: number, range: number, nbTurns: number): Actor {
 			var confusionScroll = new Actor();
-			confusionScroll.init(x, y, "#", "scroll of confusion", "#FFFF3F", true);
+			confusionScroll.init(x, y, "#", "scroll of confusion", "scroll", "#FFFF3F", true);
 			confusionScroll.pickable = new Pickable();
 			confusionScroll.pickable.setOnUseEffect(new ConditionEffect(ConditionType.CONFUSED, nbTurns,
 				"[The actor1's] eyes look vacant,\nas [it] start[s] to stumble around!"),
@@ -727,7 +792,7 @@ module Game {
 		// weapons
 		static createSword(x: number, y: number, name: string, damages: number, twoHanded: boolean = false): Actor {
 			var sword = new Actor();
-			sword.init(x, y, "/", name, "#F0F0F0", true);
+			sword.init(x, y, "/", name, "weapon|blade", "#F0F0F0", true);
 			sword.pickable = new Pickable();
 			sword.pickable.setOnThrowEffect(new InstantHealthEffect(-damages,
 				"The sword hits [the actor1] for " + damages + " hit points."),
@@ -739,7 +804,7 @@ module Game {
 
 		static createShield(x: number, y: number, name: string, defense: number): Actor {
 			var shield = new Actor();
-			shield.init(x, y, "[", name, "#F0F0F0", true);
+			shield.init(x, y, "[", name, "weapon|shield", "#F0F0F0", true);
 			shield.pickable = new Pickable();
 			shield.pickable.setOnThrowEffect(new ConditionEffect(ConditionType.STUNNED, 2,
 				"The shield hits [the actor1] and stuns [it]!"),
@@ -751,7 +816,7 @@ module Game {
 		// miscellaneous
 		static createStairs(character: string, direction: string): Actor {
 			var stairs: Actor = new Actor();
-			stairs.init(0, 0, character, "stairs " + direction, "#FFFFFF", false);
+			stairs.init(0, 0, character, "stairs " + direction, undefined, "#FFFFFF", false);
 			stairs.fovOnly = false;
 			return stairs;
 		}
@@ -762,7 +827,7 @@ module Game {
 		static createBeast(x: number, y: number, character: string, name: string, corpseName: string, color: string,
 			hp: number, attack: number, defense: number, xp: number): Actor {
 			var beast: Actor = new Actor();
-			beast.init(x, y, character, name, color, true);
+			beast.init(x, y, character, name, "creature|beast", color, true);
 			beast.destructible = new MonsterDestructible(hp, defense, corpseName);
 			beast.attacker = new Attacker(attack);
 			beast.ai = new MonsterAi();
