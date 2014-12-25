@@ -88,12 +88,16 @@ module Game {
 
 		private createItem(x: number, y: number, rng: Yendor.Random) {
 			var item = rng.getRandomChance({
-				"healthPotion": 70,
+				"healthPotion": 40,
 				"lightningBoltScroll": this.getValueForDungeon([[3, 10]]),
 				"fireballScroll": 10,
 				"confusionScroll": 10,
-				"short sword": this.getValueForDungeon([[5, 4],[12, 0]]),
-				"wooden shield": this.getValueForDungeon([[8, 8],[12, 0]]),
+				"arrow": 10,
+				"bolt": 10,
+				"short bow": this.getValueForDungeon([[5, 4]]),
+				"crossbow": this.getValueForDungeon([[5, 4]]),
+				"short sword": this.getValueForDungeon([[5, 4], [12, 0]]),
+				"wooden shield": this.getValueForDungeon([[8, 8], [12, 0]]),
 				"longsword": this.getValueForDungeon([[10, 4]]),
 				"iron shield": this.getValueForDungeon([[14, 8]]),
 				"greatsword": this.getValueForDungeon([[14, 4]])
@@ -106,6 +110,14 @@ module Game {
 				return Actor.createFireballScroll(x, y, 3, 12);
 			} else if ( item === "confusionScroll") {
 				return Actor.createConfusionScroll(x, y, 5, 12);
+			} else if ( item === "arrow") {
+				return Actor.createMissile(x, y, "arrow", 1, "arrow");
+			} else if ( item === "bolt") {
+				return Actor.createMissile(x, y, "bolt", 1, "bolt");
+			} else if ( item === "short bow") {
+				return Actor.createBow(x, y, "short bow", 5, "arrow", true);
+			} else if ( item === "crossbow") {
+				return Actor.createBow(x, y, "crossbow", 3, "bolt");
 			} else if ( item === "short sword") {
 				return Actor.createSword(x, y, "short sword", 3);
 			} else if ( item === "wooden shield") {

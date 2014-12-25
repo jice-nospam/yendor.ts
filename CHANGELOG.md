@@ -1,3 +1,8 @@
+# 0.1.1 / TBD
+* Yendor toolkit
+* GeneRogue
+	- added ranged weapons (bow, crossbow)
+
 # 0.1.0 / 23-dec-2014
 * Yendor toolkit
 	- added Random.getRandomChance()

@@ -487,12 +487,35 @@ module Game {
 	 	}
 	}
 
+	/*
+		class: ActorType
+		This stores a type hierarchy for all actors in the game.
+		ActorType.getRootType() is the root type that encompasses all actors.
+		Current type hierarchy is :
+		root
+		    creature
+		        beast
+		        human
+		    potion
+		    scroll
+		    weapon
+		        blade
+		        shield
+		        bow
+		        missile
+		        	arrow
+		        	bolt
+	*/
 	export class ActorType implements Persistent {
 		className: string;
 		_name: string;
 		father: ActorType;
-		private static actorTypes: ActorType[];
+		private static actorTypes: ActorType[] = [];
 		private static rootType: ActorType = new ActorType("root");
+		/*
+			constructor
+			To be used internally only. Typescript does not allow private constructors yet.
+		*/
 		constructor(name: string, father?: ActorType) {
 			this.className = "ActorType";
 			this._name = name;
@@ -506,6 +529,10 @@ module Game {
 			return ActorType.rootType;
 		}
 
+		/*
+			Function: getActorType
+			Returns: the ActorType with given name or undefined if unknown
+		*/
 		static getActorType(name: string): ActorType {
 			var n: number = ActorType.actorTypes.length;
 			for ( var i = 0; i < n; ++i ) {
@@ -516,6 +543,17 @@ module Game {
 			return undefined;
 		}
 
+		/*
+			Function: buildTypeHierarchy
+			Create a hierarchy of actor types and return the last type.
+			For example buildTypeHierarchy("weapon|blade|sword") will return a "sword" actor type, 
+			creating every type in the hierarchy that doesn't exist yet.
+
+			Parameters:
+				types - list of type names separated with a pipe "|"
+			Returns:
+				the last type of the list, creating missing types in the hierarchy
+		*/
 		static buildTypeHierarchy(types: string): ActorType {
 			var typeArray: string[] = types.split("|");
 			var n: number = typeArray.length;
@@ -535,10 +573,10 @@ module Game {
 			Return true if this is a type
 		*/
 		isA(type: ActorType): boolean {
-			if ( this === type ) {
+			if ( this._name === type._name ) {
 				return true;
 			}
-			if ( this.father === ActorType.rootType ) {
+			if ( this.father._name === ActorType.rootType._name ) {
 				return false;
 			}
 			return this.father.isA(type);
@@ -562,6 +600,7 @@ module Game {
 		private _pickable: Pickable;
 		private _container: Container;
 		private _equipment: Equipment;
+		private _ranged: Ranged;
 
 		private _blocks: boolean = false;
 		private _fovOnly: boolean = true;
@@ -630,6 +669,9 @@ module Game {
 
 		get equipment() {return this._equipment; }
 		set equipment(newValue: Equipment) {this._equipment = newValue; }
+
+		get ranged() { return this._ranged; }
+		set ranged(newValue: Ranged) { this._ranged = newValue; }
 
 		/*
 			Function: getaname
@@ -747,11 +789,11 @@ module Game {
 			healthPotion.init(x, y, "!", "health potion", "potion", "#800080", true);
 			healthPotion.pickable = new Pickable();
 			healthPotion.pickable.setOnUseEffect(new InstantHealthEffect(amount,
-				"[The actor1] drink[s] the health potion and regain[s] " + amount + " hit points.",
+				"[The actor1] drink[s] the health potion and regain[s] [value1] hit points.",
 				"[The actor1] drink[s] the health potion but it has no effect"),
 				new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL ));
 			healthPotion.pickable.setOnThrowEffect(new InstantHealthEffect(amount,
-				"The potion explodes on [the actor1], healing [it] for " + amount + " hit points.",
+				"The potion explodes on [the actor1], healing [it] for [value1] hit points.",
 				"The potion explodes on [the actor1] but it has no effect"),
 				new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL ));
 			return healthPotion;
@@ -763,7 +805,7 @@ module Game {
 			lightningBolt.init(x, y, "#", "scroll of lightning bolt", "scroll", "#FFFF3F", true);
 			lightningBolt.pickable = new Pickable();
 			lightningBolt.pickable.setOnUseEffect(new InstantHealthEffect(-damages,
-				"A lightning bolt strikes [the actor1] with a loud thunder!\nThe damage is " + damages + " hit points."),
+				"A lightning bolt strikes [the actor1] with a loud thunder!\nThe damage is [value1] hit points."),
 				new TargetSelector( TargetSelectionMethod.CLOSEST_ENEMY, range));
 			return lightningBolt;
 		}
@@ -773,7 +815,7 @@ module Game {
 			fireball.init(x, y, "#", "scroll of fireball", "scroll", "#FFFF3F", true);
 			fireball.pickable = new Pickable();
 			fireball.pickable.setOnUseEffect(new InstantHealthEffect(-damages,
-				"[The actor1] get[s] burned for " + damages + " hit points."),
+				"[The actor1] get[s] burned for [value1] hit points."),
 				new TargetSelector( TargetSelectionMethod.SELECTED_RANGE, range),
 				"A fireball explodes, burning everything within " + range + " tiles.");
 			return fireball;
@@ -795,11 +837,31 @@ module Game {
 			sword.init(x, y, "/", name, "weapon|blade", "#F0F0F0", true);
 			sword.pickable = new Pickable();
 			sword.pickable.setOnThrowEffect(new InstantHealthEffect(-damages,
-				"The sword hits [the actor1] for " + damages + " hit points."),
+				"The sword hits [the actor1] for [value1] hit points."),
 				new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL ));
 
 			sword.equipment = new Equipment(twoHanded ? Constants.SLOT_BOTH_HANDS : Constants.SLOT_RIGHT_HAND, damages);
 			return sword;
+		}
+
+		static createBow(x: number, y: number, name: string, damages: number, missileTypeName: string, twoHanded: boolean = false): Actor {
+			var bow = new Actor();
+			bow.init(x, y, ")", name, "weapon|bow", "#F0F0F0", true);
+			bow.pickable = new Pickable();
+			bow.equipment = new Equipment(twoHanded ? Constants.SLOT_BOTH_HANDS : Constants.SLOT_RIGHT_HAND);
+			bow.ranged = new Ranged(damages, missileTypeName);
+			return bow;
+		}
+
+		static createMissile(x: number, y: number, name: string, damages: number, missileTypeName: string): Actor {
+			var missile = new Actor();
+			missile.init(x, y, "\\", name, "weapon|missile|" + missileTypeName, "#D0D0D0", true);
+			missile.pickable = new Pickable();
+			missile.pickable.setOnThrowEffect(new InstantHealthEffect(-damages,
+				"The " + name + " hits [the actor1] for [value1] points."),
+				new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL));
+			missile.equipment = new Equipment(Constants.SLOT_QUIVER);
+			return missile;
 		}
 
 		static createShield(x: number, y: number, name: string, defense: number): Actor {
