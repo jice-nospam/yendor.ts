@@ -56,7 +56,8 @@ module Game {
         // equipment slots names
         export var SLOT_RIGHT_HAND: string = "right hand";
         export var SLOT_LEFT_HAND: string = "left hand";
-        export var SLOT_BOTH_HANDS: string = "both hands";
+        export var SLOT_BOTH_HANDS: string = "hands";
+        export var SLOT_QUIVER: string = "quiver";
 
         // persistence local storage keys
         export var PERSISTENCE_VERSION_KEY: string = "version";
@@ -96,6 +97,7 @@ module Game {
         USE_ITEM,
         DROP_ITEM,
         THROW_ITEM,
+        FIRE,
         VALIDATE,
         CANCEL
     }
@@ -236,13 +238,40 @@ module Game {
 
     /*
         Function: transformMessage
-        Apply a generic message to an actor.
+        Convert variables inside a text into their actual value.
+        Available variables (example for actor1  = a sword or the player) :
+        [The actor1's] - The sword's / Your
+        [the actor1's] - the sword's  / your
+        [The actor1] - The sword / You
+        [the actor1] - the sword / you
+        [A actor1] - A sword / You
+        [a actor1] - a sword / you
+        [s] - s / <empty>  (verb ending)
+        [it] - it / you
+        The same variables are available for a second actor :
+        [The actor2's]
+        [the actor2's]
+        [The actor2]
+        [the actor2]
+        [A actor2]
+        [a actor2]
+        [s2]
+        [it2]
+        There are also two numerical values [value1] and [value2].
+        Example :
+        [The actor1] hit[s] with [a actor2] for [value1] points.
+        applied to actor1 = player, actor2 = sword, value1 = 5 :
+        You hit with a sword for 5 points. 
+        applied to actor1 = orc, actor2 = axe, value1 = 5 :
+        The orc hits with an axe for 5 points.
     */
-    export var transformMessage = function(text: string, actor1: Actor, actor2?: Actor): string {
+    export var transformMessage = function(text: string, actor1: Actor, actor2?: Actor, value1?: number, value2?: number): string {
         var newText = text.replace("[The actor1's] ", actor1.getThenames());
         newText = newText.replace(" [the actor1's] ", actor1.getthenames());
         newText = newText.replace("[The actor1]", actor1.getThename());
         newText = newText.replace(" [the actor1]", actor1.getthename());
+        newText = newText.replace("[A actor1]", actor1.getAname());
+        newText = newText.replace(" [a actor1]", actor1.getaname());
         newText = newText.replace(/\[s\]/g, actor1.getVerbEnd());
         newText = newText.replace(/ \[it\]/g, actor1.getit());
         if ( actor2 ) {
@@ -250,8 +279,16 @@ module Game {
             newText = newText.replace(" [the actor2's] ", actor2.getthenames());
             newText = newText.replace("[The actor2]", actor2.getThename());
             newText = newText.replace(" [the actor2]", actor2.getthename());
+            newText = newText.replace("[A actor2]", actor2.getAname());
+            newText = newText.replace(" [a actor2]", actor2.getaname());
             newText = newText.replace(/\[s2\]/g, actor2.getVerbEnd());
             newText = newText.replace(/ \[it2\]/g, actor2.getit());
+        }
+        if ( value1 !== undefined ) {
+            newText = newText.replace("[value1]", "" + value1);
+        }
+        if ( value2 !== undefined ) {
+            newText = newText.replace("[value2]", "" + value2);
         }
         return newText;
     };

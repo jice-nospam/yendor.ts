@@ -166,7 +166,7 @@ module Game {
 		private applyHealingEffectTo(actor: Actor): boolean {
 			var healPointsCount: number = actor.destructible.heal( this.amount );
 			if ( healPointsCount > 0 && this.successMessage ) {
-				log(transformMessage(this.successMessage, actor));
+				log(transformMessage(this.successMessage, actor, undefined, healPointsCount));
 			} else if ( healPointsCount <= 0 && this.failureMessage ) {
 				log(transformMessage(this.failureMessage, actor));
 			}
@@ -176,7 +176,7 @@ module Game {
 		private applyWoundingEffectTo(actor: Actor) : boolean {
 			var realDefense: number = actor.destructible.computeRealDefense(actor);
 			if ( realDefense < -this.amount && this.successMessage ) {
-				log(transformMessage(this.successMessage, actor));
+				log(transformMessage(this.successMessage, actor, undefined, -this.amount - realDefense));
 			} else if ( realDefense >= -this.amount && this.failureMessage ) {
 				log(transformMessage(this.failureMessage, actor));
 			}
@@ -308,15 +308,17 @@ module Game {
 			wearer - the container (the creature picking the item)
 			pos - coordinate if the position is not the wearer's position
 		*/
-		drop(owner: Actor, wearer: Actor, pos?: Yendor.Position, verb: string = "drop") {
+		drop(owner: Actor, wearer: Actor, pos?: Yendor.Position, verb: string = "drop", fromFire: boolean = false) {
 			wearer.container.remove(owner);
 			owner.x = pos ? pos.x : wearer.x;
 			owner.y = pos ? pos.y : wearer.y;
 			ActorManager.instance.addItem(owner);
 			if ( owner.equipment ) {
-				owner.equipment.unequip(owner, wearer);
+				owner.equipment.unequip(owner, wearer, true);
 			}
-			log(wearer.getThename() + " " + verb + wearer.getVerbEnd() + owner.getthename());
+			if (! fromFire) {
+				log(wearer.getThename() + " " + verb + wearer.getVerbEnd() + owner.getthename());
+			}
 			if ( verb === "drop") {
 				EventBus.instance.publishEvent(new Event<GameStatus>(EventType.CHANGE_STATUS, GameStatus.NEW_TURN));
 			}
@@ -349,12 +351,12 @@ module Game {
 			owner - the actor owning this Pickable (the item)
 			wearer - the container (the creature using the item)
 		*/
-		throw(owner: Actor, wearer: Actor) {
+		throw(owner: Actor, wearer: Actor, fromFire: boolean = false) {
 			log("Left-click where to throw the " + owner.name
 				+ ",\nor right-click to cancel.", "red");
 			EventBus.instance.publishEvent(new Event<TilePickerListener>(EventType.PICK_TILE,
 				function(pos: Yendor.Position) {
-					owner.pickable.drop(owner, ActorManager.instance.getPlayer(), pos, "throw");
+					owner.pickable.drop(owner, ActorManager.instance.getPlayer(), pos, "throw", fromFire);
 					if (owner.pickable.onThrowEffector) {
 						owner.pickable.onThrowEffector.apply(owner, wearer, pos);
 						if (! owner.equipment) {
@@ -434,11 +436,54 @@ module Game {
 			}
 		}
 
-		unequip(owner: Actor, wearer: Actor) {
+		unequip(owner: Actor, wearer: Actor, beforeDrop: boolean = false) {
 			this.equipped = false;
-			if ( wearer === ActorManager.instance.getPlayer()) {
+			if ( !beforeDrop && wearer === ActorManager.instance.getPlayer()) {
 				log(wearer.getThename() + " unequip" + wearer.getVerbEnd() + owner.getthename() + " from" + wearer.getits() + this.slot, "#FFA500" );
 			}
+		}
+	}
+
+	/*
+		class: Ranged
+		an item that throws other items
+	*/
+	export class Ranged implements Persistent {
+		className: string;
+		damageCoef: number;
+		missileType: ActorType;
+		missile: Actor;
+		constructor(damageCoef: number, missileTypeName: string) {
+			this.className = "Ranged";
+			this.damageCoef = damageCoef;
+			this.missileType  = ActorType.buildTypeHierarchy("weapon|missile|" + missileTypeName);
+		}
+
+		fire(owner: Actor, wearer: Actor) {
+			if ( wearer.container ) {
+				// if a missile type is selected (equipped in quiver), use it
+				this.missile = wearer.container.getFromSlot(Constants.SLOT_QUIVER);
+				if (! this.missile) {
+					// else use the first compatible missile
+					var n: number = wearer.container.size();
+					for ( var i: number = 0; i < n; ++i) {
+						var item: Actor = wearer.container.get(i);
+						if ( item.isA(this.missileType)) {
+							this.missile = item;
+							break;
+						}
+					}
+				}
+			}
+			if (! this.missile) {
+				// no missile found. cannot fire
+				if ( wearer === ActorManager.instance.getPlayer()) {
+					log("No " + this.missileType.name + " available.", "#FF0000");
+					return;
+				}
+			}
+			log(transformMessage("[The actor1] fire[s] [a actor2].", wearer, this.missile));
+			this.missile.pickable.throw(this.missile, wearer, true);
 		}
 	}
 }

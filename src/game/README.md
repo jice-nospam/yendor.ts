@@ -18,6 +18,7 @@ To compile it, run `jake` then open game/index.html in your browser.
 * i : use an item from your inventory
 * d : drop an item from your inventory
 * t : throw an item
+* f : fire a missile using a ranged weapon
 * > : go down the stairs
 * < : go up the stairs
 * ESC : open game menu

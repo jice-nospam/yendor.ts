@@ -68,10 +68,13 @@ module Game {
 			dungeonBuilder.build(this.map);
 
 			// this helps debugging items
-			// var player: Actor = ActorManager.instance.getPlayer();
-			// ActorManager.instance.addItem(Actor.createSword(player.x + 1, player.y, "greatsword", 6, true));
-			// ActorManager.instance.addItem(Actor.createSword(player.x + 1, player.y, "short sword", 3));
-			// ActorManager.instance.addItem(Actor.createShield(player.x + 1, player.y, "wooden shield", 1));
+			/*
+			var player: Actor = ActorManager.instance.getPlayer();
+			ActorManager.instance.addItem(Actor.createBow(player.x, player.y, "short bow", 5, "arrow", true));
+			ActorManager.instance.addItem(Actor.createBow(player.x, player.y, "crossbow", 3, "bolt"));
+			ActorManager.instance.addItem(Actor.createMissile(player.x, player.y, "arrow", 1, "arrow"));
+			ActorManager.instance.addItem(Actor.createMissile(player.x, player.y, "bolt", 1, "bolt"));
+			*/
 		}
 
 		private loadGame() {
@@ -225,6 +228,8 @@ module Game {
 					return PlayerAction.VALIDATE;
 				case KeyEvent.DOM_VK_ESCAPE :
 					return PlayerAction.CANCEL;
+				case KeyEvent.DOM_VK_F :
+					return PlayerAction.FIRE;
 				default:
 					if ( event.key === ">" ) {
 						return PlayerAction.MOVE_DOWN;

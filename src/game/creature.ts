@@ -281,35 +281,61 @@ module Game {
 		}
 
 		private handleAction(owner: Actor, map: Map) {
-			if ( this.lastAction === PlayerAction.GRAB ) {
-				this.pickupItem(owner, map);
-			} else if ( this.lastAction === PlayerAction.MOVE_DOWN ) {
-				var stairsDown: Actor = ActorManager.instance.getStairsDown();
-				if ( stairsDown.x === owner.x && stairsDown.y === owner.y ) {
-					EventBus.instance.publishEvent(new Event<void>(EventType.NEXT_LEVEL) );
-				} else {
-					log("There are no stairs going down here.");
-				}
-			} else if ( this.lastAction === PlayerAction.MOVE_UP ) {
-				var stairsUp: Actor = ActorManager.instance.getStairsUp();
-				if ( stairsUp.x === owner.x && stairsUp.y === owner.y ) {
-					EventBus.instance.publishEvent(new Event<void>(EventType.PREV_LEVEL) );
-				} else {
-					log("There are no stairs going up here.");
-				}
-			} else if ( this.lastAction === PlayerAction.USE_ITEM ) {
-				EventBus.instance.publishEvent(new Event<OpenInventoryEventData>(EventType.OPEN_INVENTORY,
-					{ title: "use an item", itemListener: this.useItem.bind(this) } ));
-				return true;
-			} else if ( this.lastAction === PlayerAction.DROP_ITEM ) {
-				EventBus.instance.publishEvent(new Event<OpenInventoryEventData>(EventType.OPEN_INVENTORY,
-					{ title: "drop an item", itemListener: this.dropItem.bind(this) } ));
-				return true;
-			} else if ( this.lastAction === PlayerAction.THROW_ITEM ) {
-				EventBus.instance.publishEvent(new Event<OpenInventoryEventData>(EventType.OPEN_INVENTORY,
-					{ title: "throw an item", itemListener: this.throwItem.bind(this) } ));
-				return true;
+			switch ( this.lastAction ) {
+				case PlayerAction.GRAB :
+					this.pickupItem(owner, map);
+				break;
+				case PlayerAction.MOVE_DOWN :
+					var stairsDown: Actor = ActorManager.instance.getStairsDown();
+					if ( stairsDown.x === owner.x && stairsDown.y === owner.y ) {
+						EventBus.instance.publishEvent(new Event<void>(EventType.NEXT_LEVEL) );
+					} else {
+						log("There are no stairs going down here.");
+					}
+				break;
+				case PlayerAction.MOVE_UP :
+					var stairsUp: Actor = ActorManager.instance.getStairsUp();
+					if ( stairsUp.x === owner.x && stairsUp.y === owner.y ) {
+						EventBus.instance.publishEvent(new Event<void>(EventType.PREV_LEVEL) );
+					} else {
+						log("There are no stairs going up here.");
+					}
+				break;
+				case PlayerAction.USE_ITEM :
+					EventBus.instance.publishEvent(new Event<OpenInventoryEventData>(EventType.OPEN_INVENTORY,
+						{ title: "use an item", itemListener: this.useItem.bind(this) } ));
+				break;
+				case PlayerAction.DROP_ITEM :
+					EventBus.instance.publishEvent(new Event<OpenInventoryEventData>(EventType.OPEN_INVENTORY,
+						{ title: "drop an item", itemListener: this.dropItem.bind(this) } ));
+				break;
+				case PlayerAction.THROW_ITEM :
+					EventBus.instance.publishEvent(new Event<OpenInventoryEventData>(EventType.OPEN_INVENTORY,
+						{ title: "throw an item", itemListener: this.throwItem.bind(this) } ));
+				break;
+				case PlayerAction.FIRE :
+					this.fire(owner);
+				break;
 			}
+		}
+
+		/*
+			Function: fire
+			Fire a missile using a ranged weapon.
+		*/
+		private fire(owner: Actor) {
+			var weapon: Actor = owner.container.getFromSlot(Constants.SLOT_RIGHT_HAND);
+			if (! weapon || ! weapon.ranged) {
+				weapon = owner.container.getFromSlot(Constants.SLOT_BOTH_HANDS);
+			}
+			if (! weapon || ! weapon.ranged) {
+				weapon = owner.container.getFromSlot(Constants.SLOT_LEFT_HAND);
+			}
+			if (! weapon || ! weapon.ranged) {
+				log("You have no ranged weapon equipped.", "#FF0000");
+				return;
+			}
+			weapon.ranged.fire(weapon, owner);
 		}
 
 		// inventory item listeners
