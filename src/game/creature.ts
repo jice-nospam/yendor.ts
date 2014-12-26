@@ -483,7 +483,7 @@ module Game {
 			- 5 : south-west
 			- 6 : south
 			- 7 : south-east
-			- or -1 if no adjacent cell has scent.
+			- or -1 if no adjacent cell has enough scent.
 		*/
 		private findHighestScentCellIndex(owner: Actor, map: Map): number {
 			var bestScentLevel: number = 0;
