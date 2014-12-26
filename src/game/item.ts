@@ -143,6 +143,10 @@ module Game {
 		applyTo(actor: Actor, coef: number): boolean;
 	}
 
+	/*
+		Class: InstantHealthEffect
+		Add or remove health points.
+	*/
 	export class InstantHealthEffect implements Effect {
 		className: string;
 		private amount: number;
@@ -189,6 +193,10 @@ module Game {
 		}
 	}
 
+	/*
+		Class: ConditionEffect
+		Add a condition to an actor.
+	*/
 	export class ConditionEffect implements Effect {
 		className: string;
 		private type: ConditionType;
@@ -216,6 +224,10 @@ module Game {
 	/********************************************************************************
 	 * Group: items
 	 ********************************************************************************/
+	 /*
+	 	Class: Effector
+	 	Combines an effect and a target selector. Can also display a message before applying the effect.
+	 */
 	export class Effector implements Persistent {
 		className: string;
 		private _effect: Effect;
@@ -261,7 +273,15 @@ module Game {
 	*/
 	export class Pickable implements Persistent {
 		className: string;
+		/*
+			Property: onUseEffector
+			What happens when this item is used.
+		*/
 		private onUseEffector: Effector;
+		/*
+			Property: onThrowEffector
+			What happens when this item is thrown.
+		*/
 		private onThrowEffector: Effector;
 
 		constructor() {
@@ -358,16 +378,16 @@ module Game {
 			owner - the actor owning this Pickable (the item)
 			wearer - the container (the creature using the item)
 			fromFire - whether the item is thrown by using a weapon (bow, ...)
-			damageCoef - damage multiplicator to apply to the item base damage
+			coef - multiplicator to apply to the item throw effect
 		*/
-		throw(owner: Actor, wearer: Actor, fromFire: boolean = false, damageCoef: number = 1.0) {
+		throw(owner: Actor, wearer: Actor, fromFire: boolean = false, coef: number = 1.0) {
 			log("Left-click where to throw the " + owner.name
 				+ ",\nor right-click to cancel.", "red");
 			EventBus.instance.publishEvent(new Event<TilePickerListener>(EventType.PICK_TILE,
 				function(pos: Yendor.Position) {
 					owner.pickable.drop(owner, ActorManager.instance.getPlayer(), pos, "throw", fromFire);
 					if (owner.pickable.onThrowEffector) {
-						owner.pickable.onThrowEffector.apply(owner, wearer, pos, damageCoef);
+						owner.pickable.onThrowEffector.apply(owner, wearer, pos, coef);
 						if (! owner.equipment) {
 							// TODO better test to know if the item is destroyed when thrown
 							EventBus.instance.publishEvent(new Event<Actor>(EventType.REMOVE_ACTOR, owner));
@@ -380,7 +400,7 @@ module Game {
 
 	/*
 		Class: Equipment
-		An item that can be equiped
+		An item that can be equipped
 	*/
 	export class Equipment implements Persistent {
 		className: string;

@@ -1,6 +1,7 @@
 var TSC_COMMAND='tsc';
 var RM_COMMAND='rm -f';
-var NATURALDOCS_COMMAND='perl ../naturaldocs/NaturalDocs';
+//var NATURALDOCS_COMMAND='perl ../naturaldocs/NaturalDocs';
+var NATURALDOCS_COMMAND='naturaldocs';
 
 
 task( 'default', ['compile'] );

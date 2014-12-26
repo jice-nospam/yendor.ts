@@ -4,6 +4,106 @@
 module Game {
 	"use strict";
 
+	/*
+		class: ActorType
+		This stores a type hierarchy for all actors in the game.
+		ActorType.getRootType() is the root type that encompasses all actors.
+		Current type hierarchy is :
+		> root
+		>    creature
+		>        beast
+		>        human
+		>    potion
+		>    scroll
+		>    weapon
+		>        blade
+		>        shield
+		>        bow
+		>        missile
+		>        	arrow
+		>        	bolt
+	*/
+	export class ActorType implements Persistent {
+		className: string;
+		_name: string;
+		father: ActorType;
+		private static actorTypes: ActorType[] = [];
+		private static rootType: ActorType = new ActorType("root");
+		/*
+			constructor
+			To be used internally only. Typescript does not allow private constructors yet.
+		*/
+		constructor(name: string, father?: ActorType) {
+			this.className = "ActorType";
+			this._name = name;
+			this.father = father ? father : ActorType.rootType;
+			ActorType.actorTypes.push(this);
+		}
+
+		get name() { return this._name; }
+
+		static getRootType(): ActorType {
+			return ActorType.rootType;
+		}
+
+		/*
+			Function: getActorType
+			Returns: the ActorType with given name or undefined if unknown
+		*/
+		static getActorType(name: string): ActorType {
+			var n: number = ActorType.actorTypes.length;
+			for ( var i = 0; i < n; ++i ) {
+				if ( ActorType.actorTypes[i]._name === name ) {
+					return ActorType.actorTypes[i];
+				}
+			}
+			return undefined;
+		}
+
+		/*
+			Function: buildTypeHierarchy
+			Create a hierarchy of actor types and return the last type.
+			For example buildTypeHierarchy("weapon|blade|sword") will return a "sword" actor type, 
+			creating every type in the hierarchy that doesn't exist yet.
+
+			Parameters:
+				types - list of type names separated with a pipe "|"
+			Returns:
+				the last type of the list, creating missing types in the hierarchy
+		*/
+		static buildTypeHierarchy(types: string): ActorType {
+			var typeArray: string[] = types.split("|");
+			var n: number = typeArray.length;
+			var currentType: ActorType = ActorType.rootType;
+			for ( var i = 0; i < n; ++i ) {
+				var newType = ActorType.getActorType(typeArray[i]);
+				if (!newType) {
+					newType = new ActorType(typeArray[i], currentType);
+				}
+				currentType = newType;
+			}
+			return currentType;
+		}
+
+		/*
+			Function: isA
+			Return true if this is a type
+		*/
+		isA(type: ActorType): boolean {
+			if ( this._name === type._name ) {
+				return true;
+			}
+			if ( this.father._name === ActorType.rootType._name ) {
+				return false;
+			}
+			return this.father.isA(type);
+		}
+	}
+
+	/*
+		Class: ActorManager
+		Stores all the actors in the game.
+	*/
 	export class ActorManager {
 		private static _instance: ActorManager = new ActorManager();
 		static get instance() { return ActorManager._instance; }
@@ -487,106 +587,13 @@ module Game {
 	 	}
 	}
 
-	/*
-		class: ActorType
-		This stores a type hierarchy for all actors in the game.
-		ActorType.getRootType() is the root type that encompasses all actors.
-		Current type hierarchy is :
-		root
-		    creature
-		        beast
-		        human
-		    potion
-		    scroll
-		    weapon
-		        blade
-		        shield
-		        bow
-		        missile
-		        	arrow
-		        	bolt
-	*/
-	export class ActorType implements Persistent {
-		className: string;
-		_name: string;
-		father: ActorType;
-		private static actorTypes: ActorType[] = [];
-		private static rootType: ActorType = new ActorType("root");
-		/*
-			constructor
-			To be used internally only. Typescript does not allow private constructors yet.
-		*/
-		constructor(name: string, father?: ActorType) {
-			this.className = "ActorType";
-			this._name = name;
-			this.father = father ? father : ActorType.rootType;
-			ActorType.actorTypes.push(this);
-		}
-
-		get name() { return this._name; }
-
-		static getRootType(): ActorType {
-			return ActorType.rootType;
-		}
-
-		/*
-			Function: getActorType
-			Returns: the ActorType with given name or undefined if unknown
-		*/
-		static getActorType(name: string): ActorType {
-			var n: number = ActorType.actorTypes.length;
-			for ( var i = 0; i < n; ++i ) {
-				if ( ActorType.actorTypes[i]._name === name ) {
-					return ActorType.actorTypes[i];
-				}
-			}
-			return undefined;
-		}
-
-		/*
-			Function: buildTypeHierarchy
-			Create a hierarchy of actor types and return the last type.
-			For example buildTypeHierarchy("weapon|blade|sword") will return a "sword" actor type, 
-			creating every type in the hierarchy that doesn't exist yet.
-
-			Parameters:
-				types - list of type names separated with a pipe "|"
-			Returns:
-				the last type of the list, creating missing types in the hierarchy
-		*/
-		static buildTypeHierarchy(types: string): ActorType {
-			var typeArray: string[] = types.split("|");
-			var n: number = typeArray.length;
-			var currentType: ActorType = ActorType.rootType;
-			for ( var i = 0; i < n; ++i ) {
-				var newType = ActorType.getActorType(typeArray[i]);
-				if (!newType) {
-					newType = new ActorType(typeArray[i], currentType);
-				}
-				currentType = newType;
-			}
-			return currentType;
-		}
-
-		/*
-			Function: isA
-			Return true if this is a type
-		*/
-		isA(type: ActorType): boolean {
-			if ( this._name === type._name ) {
-				return true;
-			}
-			if ( this.father._name === ActorType.rootType._name ) {
-				return false;
-			}
-			return this.father.isA(type);
-		}
-	}
-
 	/********************************************************************************
 	 * Group: actors
 	 ********************************************************************************/
-
+	 /*
+	 	Class: Actor
+	 	The base class for all actors
+	 */
 	export class Actor extends Yendor.Position implements Persistent {
 		className: string;
 		private _type: ActorType;
