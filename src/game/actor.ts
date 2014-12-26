@@ -639,7 +639,7 @@ module Game {
 		}
 
 		isStackable(): boolean {
-			return ! this.destructible && (! this.equipment || ! this.equipment.isEquipped());
+			return ! this.destructible && (! this.equipment || ! this.equipment.isEquipped() || this.equipment.getSlot() === Constants.SLOT_QUIVER);
 		}
 
 		isBlocking(): boolean {

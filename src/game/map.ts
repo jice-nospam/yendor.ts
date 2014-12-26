@@ -79,9 +79,9 @@ module Game {
 			if ( monster === "goblin" ) {
 				return Actor.createBeast(x, y, "g", "goblin", "goblin corpse", "#3F7F3F", 3, 1, 0, 10);
 			} else if ( monster === "orc" ) {
-				return Actor.createBeast(x, y, "o", "orc", "dead orc", "#3F7F3F", 10, 2, 0, 35);
+				return Actor.createBeast(x, y, "o", "orc", "dead orc", "#3F7F3F", 9, 2, 0, 35);
 			} else if ( monster === "troll" ) {
-				return Actor.createBeast(x, y, "T", "troll", "troll carcass", "#007F00", 16, 3, 1, 100);
+				return Actor.createBeast(x, y, "T", "troll", "troll carcass", "#007F00", 15, 3, 1, 100);
 			}
 			return undefined;
 		}
@@ -92,9 +92,11 @@ module Game {
 				"lightningBoltScroll": this.getValueForDungeon([[3, 10]]),
 				"fireballScroll": 10,
 				"confusionScroll": 10,
-				"arrow": 10,
+				"bone arrow": 10,
+				"iron arrow": 10,
 				"bolt": 10,
 				"short bow": this.getValueForDungeon([[5, 4]]),
+				"long bow": this.getValueForDungeon([[8, 4]]),
 				"crossbow": this.getValueForDungeon([[5, 4]]),
 				"short sword": this.getValueForDungeon([[5, 4], [12, 0]]),
 				"wooden shield": this.getValueForDungeon([[8, 8], [12, 0]]),
@@ -110,24 +112,28 @@ module Game {
 				return Actor.createFireballScroll(x, y, 3, 12);
 			} else if ( item === "confusionScroll") {
 				return Actor.createConfusionScroll(x, y, 5, 12);
-			} else if ( item === "arrow") {
-				return Actor.createMissile(x, y, "arrow", 1, "arrow");
+			} else if ( item === "bone arrow") {
+				return Actor.createMissile(x, y, "bone arrow", 1, "arrow");
+			} else if ( item === "iron arrow") {
+				return Actor.createMissile(x, y, "iron arrow", 1.5, "arrow");
 			} else if ( item === "bolt") {
 				return Actor.createMissile(x, y, "bolt", 1, "bolt");
 			} else if ( item === "short bow") {
-				return Actor.createBow(x, y, "short bow", 5, "arrow", true);
+				return Actor.createBow(x, y, "short bow", 3, "arrow", true);
+			} else if ( item === "long bow") {
+				return Actor.createBow(x, y, "long bow", 5, "arrow", true);
 			} else if ( item === "crossbow") {
-				return Actor.createBow(x, y, "crossbow", 3, "bolt");
+				return Actor.createBow(x, y, "crossbow", 2, "bolt");
 			} else if ( item === "short sword") {
-				return Actor.createSword(x, y, "short sword", 3);
+				return Actor.createSword(x, y, "short sword", 4);
 			} else if ( item === "wooden shield") {
 				return Actor.createShield(x, y, "wooden shield", 1);
 			} else if ( item === "longsword") {
-				return Actor.createSword(x, y, "longsword", 4);
+				return Actor.createSword(x, y, "longsword", 6);
 			} else if ( item === "iron shield") {
 				return Actor.createShield(x, y, "iron shield", 2);
 			} else if ( item === "greatsword") {
-				return Actor.createSword(x, y, "greatsword", 6, true);
+				return Actor.createSword(x, y, "greatsword", 8, true);
 			}
 			return undefined;
 		}
