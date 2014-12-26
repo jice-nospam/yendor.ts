@@ -5,10 +5,11 @@
 /// <reference path="rng.ts" />
 /// <reference path="bsp.ts" />
 /// <reference path="fov.ts" />
+/// <reference path="path.ts" />
 module Yendor {
 	"use strict";
 
-	export var VERSION = "0.0.3";
+	export var VERSION = "0.2.0";
 
 	export var urlParams : { [index: string]: string; };
 	var frameLoop : (callback: (elapsedTime: number) => void) => void;
