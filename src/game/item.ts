@@ -133,10 +133,14 @@ module Game {
 			Function: applyTo
 			Apply an effect to an actor
 
+			Parameters:
+			actor - the actor this effect is applied to
+			coef - a multiplicator to apply to the effect
+
 			Returns:
 			false if effect cannot be applied
 		*/
-		applyTo(actor: Actor): boolean;
+		applyTo(actor: Actor, coef: number): boolean;
 	}
 
 	export class InstantHealthEffect implements Effect {
@@ -151,20 +155,20 @@ module Game {
 			this.failureMessage = failureMessage;
 		}
 
-		applyTo(actor: Actor): boolean {
+		applyTo(actor: Actor, coef: number = 1.0): boolean {
 			if (! actor.destructible ) {
 				return false;
 			}
 			if ( this.amount > 0 ) {
-				return this.applyHealingEffectTo(actor);
+				return this.applyHealingEffectTo(actor, coef);
 			} else {
-				return this.applyWoundingEffectTo(actor);
+				return this.applyWoundingEffectTo(actor, coef);
 			}
 			return false;
 		}
 
-		private applyHealingEffectTo(actor: Actor): boolean {
-			var healPointsCount: number = actor.destructible.heal( this.amount );
+		private applyHealingEffectTo(actor: Actor, coef: number = 1.0): boolean {
+			var healPointsCount: number = actor.destructible.heal( coef * this.amount );
 			if ( healPointsCount > 0 && this.successMessage ) {
 				log(transformMessage(this.successMessage, actor, undefined, healPointsCount));
 			} else if ( healPointsCount <= 0 && this.failureMessage ) {
@@ -173,14 +177,15 @@ module Game {
 			return true;
 		}
 
-		private applyWoundingEffectTo(actor: Actor) : boolean {
+		private applyWoundingEffectTo(actor: Actor, coef: number = 1.0) : boolean {
 			var realDefense: number = actor.destructible.computeRealDefense(actor);
-			if ( realDefense < -this.amount && this.successMessage ) {
-				log(transformMessage(this.successMessage, actor, undefined, -this.amount - realDefense));
-			} else if ( realDefense >= -this.amount && this.failureMessage ) {
+			var damageDealt = -this.amount * coef - realDefense;
+			if ( damageDealt > 0 && this.successMessage ) {
+				log(transformMessage(this.successMessage, actor, undefined, damageDealt));
+			} else if ( damageDealt <= 0 && this.failureMessage ) {
 				log(transformMessage(this.failureMessage, actor));
 			}
-			return actor.destructible.takeDamage(actor, -this.amount) > 0;
+			return actor.destructible.takeDamage(actor, -this.amount * coef) > 0;
 		}
 	}
 
@@ -196,11 +201,11 @@ module Game {
 			this.message = message;
 		}
 
-		applyTo(actor: Actor): boolean {
+		applyTo(actor: Actor, coef: number = 1.0): boolean {
 			if (!actor.ai) {
 				return false;
 			}
-			actor.ai.addCondition(Condition.getCondition(this.type, this.nbTurns));
+			actor.ai.addCondition(Condition.getCondition(this.type, Math.floor(coef * this.nbTurns)));
 			if ( this.message ) {
 				log(transformMessage(this.message, actor));
 			}
@@ -216,6 +221,7 @@ module Game {
 		private _effect: Effect;
 		private _targetSelector: TargetSelector;
 		private _message: string;
+		private coef: number;
 		constructor(_effect?: Effect, _targetSelector?: TargetSelector, _message?: string) {
 			this.className = "Effector";
 			this._effect = _effect;
@@ -223,7 +229,8 @@ module Game {
 			this._message = _message;
 		}
 
-		apply(owner: Actor, wearer: Actor, cellPos?: Yendor.Position) {
+		apply(owner: Actor, wearer: Actor, cellPos?: Yendor.Position, coef: number = 1.0) {
+			this.coef = coef;
 			this._targetSelector.selectTargets(owner, wearer, cellPos, this.applyEffectToActorList.bind(this));
 			if ( wearer === ActorManager.instance.getPlayer()
 				&& this._targetSelector.method !== TargetSelectionMethod.SELECTED_RANGE
@@ -239,7 +246,7 @@ module Game {
 			}
 
 			for (var i = 0; i < actors.length; ++i) {
-				if (this._effect.applyTo(actors[i])) {
+				if (this._effect.applyTo(actors[i], this.coef)) {
 					success = true;
 				}
 			}
@@ -350,17 +357,19 @@ module Game {
 			Parameters:
 			owner - the actor owning this Pickable (the item)
 			wearer - the container (the creature using the item)
+			fromFire - whether the item is thrown by using a weapon (bow, ...)
+			damageCoef - damage multiplicator to apply to the item base damage
 		*/
-		throw(owner: Actor, wearer: Actor, fromFire: boolean = false) {
+		throw(owner: Actor, wearer: Actor, fromFire: boolean = false, damageCoef: number = 1.0) {
 			log("Left-click where to throw the " + owner.name
 				+ ",\nor right-click to cancel.", "red");
 			EventBus.instance.publishEvent(new Event<TilePickerListener>(EventType.PICK_TILE,
 				function(pos: Yendor.Position) {
 					owner.pickable.drop(owner, ActorManager.instance.getPlayer(), pos, "throw", fromFire);
 					if (owner.pickable.onThrowEffector) {
-						owner.pickable.onThrowEffector.apply(owner, wearer, pos);
+						owner.pickable.onThrowEffector.apply(owner, wearer, pos, damageCoef);
 						if (! owner.equipment) {
-							// TODO better test to know it the item is destroyed when thrown
+							// TODO better test to know if the item is destroyed when thrown
 							EventBus.instance.publishEvent(new Event<Actor>(EventType.REMOVE_ACTOR, owner));
 						}
 					}
@@ -446,13 +455,27 @@ module Game {
 
 	/*
 		class: Ranged
-		an item that throws other items
+		an item that throws other items. It's basically a shortcut to throw missile items with added damages.
+		For example instead of [t]hrowing an arrow by hand, you equip a bow and [f]ire it. The result is the same
+		except that the arrow will deal more damages. The same arrow will deal different damages depending on 
+		the bow you use.
+		A ranged weapon can throw several type of missiles (for example dwarven and elven arrows). 
+		The missileType property makes it possible to look for an adequate item in the inventory.
+		If a compatible type is equipped (on quiver), it will be used. Else the first compatible item will be used.
+		So far, the weapon has no impact on the range but this could be done easily.
 	*/
 	export class Ranged implements Persistent {
 		className: string;
+		/*
+			Property: damageCoef
+			Damage multiplicator when using this weapon to fire a missile.
+		*/
 		damageCoef: number;
+		/*
+			Property: missileType
+			The actor type that this weapon can fire.
+		*/
 		missileType: ActorType;
-		missile: Actor;
 		constructor(damageCoef: number, missileTypeName: string) {
 			this.className = "Ranged";
 			this.damageCoef = damageCoef;
@@ -460,30 +483,32 @@ module Game {
 		}
 
 		fire(owner: Actor, wearer: Actor) {
+			var missile: Actor;
 			if ( wearer.container ) {
 				// if a missile type is selected (equipped in quiver), use it
-				this.missile = wearer.container.getFromSlot(Constants.SLOT_QUIVER);
-				if (! this.missile) {
+				missile = wearer.container.getFromSlot(Constants.SLOT_QUIVER);
+				if (! missile || ! missile.isA(this.missileType)) {
 					// else use the first compatible missile
+					missile = undefined;
 					var n: number = wearer.container.size();
 					for ( var i: number = 0; i < n; ++i) {
 						var item: Actor = wearer.container.get(i);
 						if ( item.isA(this.missileType)) {
-							this.missile = item;
+							missile = item;
 							break;
 						}
 					}
 				}
 			}
-			if (! this.missile) {
+			if (! missile) {
 				// no missile found. cannot fire
 				if ( wearer === ActorManager.instance.getPlayer()) {
 					log("No " + this.missileType.name + " available.", "#FF0000");
 					return;
 				}
 			}
-			log(transformMessage("[The actor1] fire[s] [a actor2].", wearer, this.missile));
-			this.missile.pickable.throw(this.missile, wearer, true);
+			log(transformMessage("[The actor1] fire[s] [a actor2].", wearer, missile));
+			missile.pickable.throw(missile, wearer, true, this.damageCoef);
 		}
 	}
 }
