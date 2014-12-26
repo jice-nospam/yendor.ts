@@ -43,8 +43,8 @@ Then open game/index.html in your favorite browser.
 
 # Links
 * [yendor.ts documentation](http://roguecentral.org/doryen/yendor.ts/doc/yendor/index.html)
-* [GenRogue documentation](http://roguecentral.org/doryen/yendor.ts/doc/game/index.html)
-* [Play GenRogue online](http://roguecentral.org/doryen/yendor.ts/game/index.html)
+* [GeneRogue documentation](http://roguecentral.org/doryen/yendor.ts/doc/game/index.html)
+* [Play GeneRogue online](http://roguecentral.org/doryen/yendor.ts/game/index.html)
 * [Run the benchmark online](http://roguecentral.org/doryen/yendor.ts/bench/index.html)
 
 # Troubleshooting

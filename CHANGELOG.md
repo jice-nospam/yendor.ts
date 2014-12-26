@@ -1,5 +1,6 @@
-# 0.1.1 / TBD
+# 0.2.0 / TBD
 * Yendor toolkit
+	- added BinaryHeap
 * GeneRogue
 	- added ranged weapons (bow, crossbow)
 
