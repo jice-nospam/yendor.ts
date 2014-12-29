@@ -1,8 +1,12 @@
 # 0.2.0 / TBD
 * Yendor toolkit
-	- added BinaryHeap
+	- added BinaryHeap, A* path finding toolkit
+
 * GeneRogue
 	- added ranged weapons (bow, crossbow)
+
+* Benchmark
+	- added path finding sample
 
 # 0.1.0 / 23-dec-2014
 * Yendor toolkit
@@ -44,3 +48,6 @@ Initial release
 	- random levels
 	- orcs and trolls with scent tracking A.I.
 	- health potions, scrolls
+
+* Benchmark
+	- true color rendering performance benchmark
