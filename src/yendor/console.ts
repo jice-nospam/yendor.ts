@@ -99,8 +99,10 @@ module Yendor {
 					color = "#" + color.charAt(1) + color.charAt(1) + color.charAt(2)
 						+ color.charAt(2) + color.charAt(3) + color.charAt(3);
 				}
-				var num: number = parseInt(color.substr(1), 16);
-				return [ num >> 16, num >> 8 & 0xFF, num & 0xFF ];
+				var r: number = parseInt(color.substr(1, 2), 16);
+				var g: number = parseInt(color.substr(3, 2), 16);
+				var b: number = parseInt(color.substr(5, 2), 16);
+				return [ r, g, b ];
 			} else if (color.indexOf("rgb(") === 0) {
 				// rgb(r,g,b) format
 				var rgbList = color.substr(4, color.length - 5 ).split(",");
@@ -176,6 +178,23 @@ module Yendor {
 			var dx: number = p1.x - p2.x;
 			var dy: number = p1.y - p2.y;
 			return Math.sqrt(dx * dx + dy * dy);
+		}
+
+		// static arrays to help scan adjacent cells
+		private static TDX: number[] = [-1, 0, 1, -1, 1, -1, 0, 1];
+		private static TDY: number[] = [-1, -1, -1, 0, 0, 1, 1, 1];
+		getAdjacentCells(mapWidth: number, mapHeight: number): Position[] {
+			var adjacents : Position[] = [];
+			for ( var i: number = 0; i < 8; ++i) {
+				var x = this.x + Position.TDX[i];
+				if ( x >= 0 && x < mapWidth ) {
+					var y = this.y + Position.TDY[i];
+					if ( y >= 0 && y < mapHeight) {
+						adjacents.push(new Position(x, y));
+					}
+				}
+			}
+			return adjacents;
 		}
 	}
 

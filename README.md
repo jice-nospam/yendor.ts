@@ -10,6 +10,7 @@ It comes with a simple generic roguelike game to extend.
 * BSP based dungeon building toolkit
 * [CMWC random number generator](https://en.wikipedia.org/wiki/Multiply-with-carry#Complementary-multiply-with-carry_generators)
 * field of view toolkit using [restrictive precise angle shadowcasting](http://www.roguebasin.com/index.php?title=Restrictive_Precise_Angle_Shadowcasting)
+* [A* pathfinding](http://en.wikipedia.org/wiki/A*_search_algorithm) toolkit
 
 # Quick Start
 
