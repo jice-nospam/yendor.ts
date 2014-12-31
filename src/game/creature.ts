@@ -381,10 +381,6 @@ module Game {
 		else moves towards him using scent tracking.
 	*/
 	export class MonsterAi extends Ai {
-		// static arrays to help scan adjacent cells
-		private static TDX: number[] = [-1, 0, 1, -1, 1, -1, 0, 1];
-		private static TDY: number[] = [-1, -1, -1, 0, 0, 1, 1, 1];
-
 		constructor() {
 			super();
 			this.className = "MonsterAi";
@@ -485,25 +481,25 @@ module Game {
 			- 7 : south-east
 			- or -1 if no adjacent cell has enough scent.
 		*/
-		private findHighestScentCellIndex(owner: Actor, map: Map): number {
+		private findHighestScentCell(owner: Actor, map: Map): Yendor.Position {
 			var bestScentLevel: number = 0;
-			var bestCellIndex: number = -1;
+			var bestCell: Yendor.Position;
+			var adjacentCells: Yendor.Position[] = owner.getAdjacentCells(map.width, map.height);
+			var len: number = adjacentCells.length;
 			// scan all 8 adjacent cells
-			for ( var i: number = 0; i < 8; i++) {
-				var cellx = owner.x + MonsterAi.TDX[i];
-				var celly = owner.y + MonsterAi.TDY[i];
-				if ( !map.isWall(cellx, celly)) {
+			for ( var i: number = 0; i < len; ++i) {
+				if ( !map.isWall(adjacentCells[i].x, adjacentCells[i].y)) {
 					// not a wall, check if scent is higher
-					var scentAmount = map.getScent(cellx, celly);
+					var scentAmount = map.getScent(adjacentCells[i].x, adjacentCells[i].y);
 					if ( scentAmount > map.currentScentValue - Constants.SCENT_THRESHOLD
 						&& scentAmount > bestScentLevel ) {
 						// scent is higher. New candidate
 						bestScentLevel = scentAmount;
-						bestCellIndex = i;
+						bestCell = adjacentCells[i];
 					}
 				}
 			}
-			return bestCellIndex;
+			return bestCell;
 		}
 
 		/*
@@ -512,10 +508,10 @@ module Game {
 		*/
 		private trackScent(owner: Actor, map: Map) {
 			// get the adjacent cell with the highest scent value
-			var bestCellIndex: number = this.findHighestScentCellIndex(owner, map);
-			if ( bestCellIndex !== -1 ) {
+			var bestCell: Yendor.Position = this.findHighestScentCell(owner, map);
+			if ( bestCell ) {
 				// found. try to move 
-				this.move(owner, MonsterAi.TDX[bestCellIndex], MonsterAi.TDY[bestCellIndex], map);
+				this.move(owner, bestCell.x, bestCell.y, map);
 			}
 		}
 	}
