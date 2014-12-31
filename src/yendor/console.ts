@@ -131,10 +131,17 @@ module Yendor {
 	}
 
 	/*
+		Interface: Comparable
+	*/
+	export interface Comparable {
+		equals(c: Comparable): boolean;
+	}
+
+	/*
 		Class: Position
 		Stores the position of a cell in the console (column, row)
 	*/
-	export class Position {
+	export class Position implements Comparable {
 		private _x: number;
 		private _y: number;
 		/*
@@ -172,6 +179,10 @@ module Yendor {
 		moveTo(x: number, y: number) {
 			this.x = x;
 			this.y = y;
+		}
+
+		equals(pos: Position): boolean {
+			return this.x === pos.x && this.y === pos.y;
 		}
 
 		static distance(p1: Position, p2: Position): number {

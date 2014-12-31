@@ -49,12 +49,39 @@ module Benchmark {
 	class AStarSample implements Sample {
 		name: string = "Path finding";
 		private pathFinder: Yendor.PathFinder;
-		private from: Yendor.Position = new Yendor.Position( SAMPLE_SCREEN_WIDTH / 2, SAMPLE_SCREEN_HEIGHT / 2 );
+		private from: Yendor.Position = new Yendor.Position( 19, 10 );
 		private to: Yendor.Position = new Yendor.Position(0, 0);
+		private static DARK_WALL: Yendor.Color = "#000064";
+		private static LIGHT_WALL: Yendor.Color = "#826E32";
+		private static DARK_GROUND: Yendor.Color = "#323296";
+		private map: string[] = ["##############################################",
+								"#######################      #################",
+								"#####################    #     ###############",
+								"######################  ###        ###########",
+								"##################      #####             ####",
+								"################       ########    ###### ####",
+								"###############      #################### ####",
+								"################    ######                  ##",
+								"########   #######  ######   #     #     #  ##",
+								"########   ######      ###                  ##",
+								"########                                    ##",
+								"####       ######      ###   #     #     #  ##",
+								"#### ###   ########## ####                  ##",
+								"#### ###   ##########   ###########=##########",
+								"#### ##################   #####          #####",
+								"#### ###             #### #####          #####",
+								"####           #     ####                #####",
+								"########       #     #### #####          #####",
+								"########       #####      ####################",
+								"##############################################"];
 		constructor() {
-			this.pathFinder = new Yendor.PathFinder(SAMPLE_SCREEN_WIDTH, SAMPLE_SCREEN_HEIGHT);
+			var thisMap: string[] = this.map;
+			this.pathFinder = new Yendor.PathFinder(SAMPLE_SCREEN_WIDTH, SAMPLE_SCREEN_HEIGHT,
+				function(from: Yendor.Position, to: Yendor.Position): number {
+					return thisMap[to.y][to.x] === "#" ? 0 : 1;
+				});
 		}
-		render(root: Yendor.Console) {
+		private setNewDestination() {
 			this.to.x ++;
 			if ( this.to.x === SAMPLE_SCREEN_WIDTH ) {
 				this.to.x = 0;
@@ -63,12 +90,28 @@ module Benchmark {
 					this.to.y = 0;
 				}
 			}
-			root.clearBack("#323296", SAMPLE_SCREEN_X, SAMPLE_SCREEN_Y, SAMPLE_SCREEN_WIDTH, SAMPLE_SCREEN_HEIGHT);
+		}
+		private drawMap(root: Yendor.Console) {
+			for ( var y: number = 0; y < SAMPLE_SCREEN_HEIGHT; ++y) {
+				for ( var x: number = 0; x < SAMPLE_SCREEN_WIDTH; ++x) {
+					root.back[SAMPLE_SCREEN_X + x][SAMPLE_SCREEN_Y + y] =
+						this.map[y][x] === "#" ? AStarSample.DARK_WALL : AStarSample.DARK_GROUND;
+				}
+			}
+		}
+		private isDestinationWalkable(): boolean {
+			return this.map[this.to.y][this.to.x] === " ";
+		}
+		render(root: Yendor.Console) {
+			do {
+				this.setNewDestination();
+			} while (! this.isDestinationWalkable());
+			this.drawMap(root);
 			var path: Yendor.Position[] = this.pathFinder.getPath(this.from, this.to);
 			if ( path ) {
 				var pos: Yendor.Position = path.pop();
 				while ( pos ) {
-					root.back[SAMPLE_SCREEN_X + pos.x][SAMPLE_SCREEN_Y + pos.y] = "#C8B432";
+					root.back[SAMPLE_SCREEN_X + pos.x][SAMPLE_SCREEN_Y + pos.y] = AStarSample.LIGHT_WALL;
 					pos = path.pop();
 				}
 			}

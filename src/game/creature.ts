@@ -381,6 +381,8 @@ module Game {
 		else moves towards him using scent tracking.
 	*/
 	export class MonsterAi extends Ai {
+		private __path: Yendor.Position[];
+		private static __pathFinder: Yendor.PathFinder;
 		constructor() {
 			super();
 			this.className = "MonsterAi";
@@ -400,9 +402,8 @@ module Game {
 			if ( owner.destructible && owner.destructible.isDead()) {
 				return;
 			}
-			var player: Actor = ActorManager.instance.getPlayer();
 			// attack the player when at melee range, else try to track his scent
-			this.searchPlayer(owner, player.x, player.y, map);
+			this.searchPlayer(owner, map);
 		}
 
 		/*
@@ -411,24 +412,60 @@ module Game {
 
 			Parameters:
 			owner - the actor owning this MonsterAi (the monster)
-			x - the destination cell x coordinate
-			y - the destination cell y coordinate
 			map - the game map. Used to check if player is in sight
 		*/
-		searchPlayer(owner: Actor, x: number, y: number, map: Map): boolean {
+		searchPlayer(owner: Actor, map: Map) {
 			if ( map.isInFov(owner.x, owner.y) ) {
 				// player is visible, go towards him
-				var dx: number = x - owner.x;
-				var dy: number = y - owner.y;
-				var distance: number = Math.sqrt(dx * dx + dy * dy);
-				dx = dx / distance;
-				dy = dy / distance;
-				this.move(owner, dx, dy, map);
+				var player: Actor = ActorManager.instance.getPlayer();
+				var dx = player.x - owner.x;
+				var dy = player.y - owner.y;
+				if ( Math.abs(dx) > 1 || Math.abs(dy) > 1) {
+					if (! this.hasPath()
+						|| this.__path[0].x !== player.x || this.__path[0].y !== player.y) {
+						if (! MonsterAi.__pathFinder) {
+							MonsterAi.__pathFinder = new Yendor.PathFinder(map.width, map.height,
+								function(from: Yendor.Position, to: Yendor.Position): number {
+									return map.canWalk(to.x, to.y) ? 1 : 0;
+								});
+						}
+						this.__path = MonsterAi.__pathFinder.getPath(owner, player);
+					}
+					if ( this.__path ) {
+						this.followPath(owner, map);
+					}
+				} else {
+					// at melee range. attack
+					this.move(owner, dx, dy, map);
+				}
 			} else {
-				// player not visible. Use scent tracking
-				this.trackScent(owner, map);
+				if ( this.hasPath() ) {
+					// go to last known position
+					this.followPath(owner, map);
+				} else {
+					// player not visible. Use scent tracking
+					this.trackScent(owner, map);
+				}
 			}
-			return true;
+		}
+
+		private hasPath() {
+			return this.__path && this.__path.length > 0;
+		}
+
+		private followPath(owner: Actor, map: Map) {
+			// use precomputed path
+			var pos: Yendor.Position = this.__path.pop();
+			this.moveToCell(owner, pos, map);
+		}
+
+		private moveToCell(owner: Actor, pos: Yendor.Position, map: Map) {
+			var dx: number = pos.x - owner.x;
+			var dy: number = pos.y - owner.y;
+			// compute the move vector
+			var stepdx: number = dx > 0 ? 1 : (dx < 0 ? -1 : 0);
+			var stepdy: number = dy > 0 ? 1 : (dy < 0 ? -1 : 0);
+			this.move(owner, stepdx, stepdy, map);
 		}
 
 		/*
@@ -437,14 +474,11 @@ module Game {
 
 			Parameters:
 			owner - the actor owning this MonsterAi (the monster)
-			dx - horizontal direction
-			dy - vertical direction
+			stepdx - horizontal direction
+			stepdy - vertical direction
 			map - the game map (to check if a cell is walkable)
 		*/
-		private move(owner: Actor, dx: number, dy: number, map: Map) {
-			// compute the unitary move vector
-			var stepdx: number = dx > 0 ? 1 : (dx < 0 ? -1 : 0);
-			var stepdy: number = dy > 0 ? 1 : (dy < 0 ? -1 : 0);
+		private move(owner: Actor, stepdx: number, stepdy: number, map: Map) {
 			var x: number = owner.x;
 			var y: number = owner.y;
 			if ( map.canWalk(owner.x + stepdx, owner.y + stepdy)) {
@@ -462,7 +496,7 @@ module Game {
 		}
 
 		/*
-			Function: findHighestScentCellIndex
+			Function: findHighestScentCell
 			Find the adjacent cell with the highest scent value
 
 			Parameters:
@@ -470,16 +504,7 @@ module Game {
 			map - the game map, used to skip wall cells from the search
 
 			Returns:
-			the cell index :
-			- 0 : north-west
-			- 1 : north
-			- 2 : north-east
-			- 3 : west
-			- 4 : east
-			- 5 : south-west
-			- 6 : south
-			- 7 : south-east
-			- or -1 if no adjacent cell has enough scent.
+			the cell position or undefined if no adjacent cell has enough scent.
 		*/
 		private findHighestScentCell(owner: Actor, map: Map): Yendor.Position {
 			var bestScentLevel: number = 0;
@@ -510,8 +535,7 @@ module Game {
 			// get the adjacent cell with the highest scent value
 			var bestCell: Yendor.Position = this.findHighestScentCell(owner, map);
 			if ( bestCell ) {
-				// found. try to move 
-				this.move(owner, bestCell.x, bestCell.y, map);
+				this.moveToCell(owner, bestCell, map);
 			}
 		}
 	}
