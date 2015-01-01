@@ -174,14 +174,14 @@ module Yendor {
 			var fromOffset: number = this.pos2Offset(from);
 			gScore[fromOffset] = 0;
 			fScore[fromOffset] = gScore[fromOffset] + this.heuristicFunction(from, to);
-			openSet.push(from);
+			openSet.push(new Position(from.x, from.y));
 			var step: number = this.maxSteps;
 			while (openSet.size() > 0 && step > 0) {
 				step --;
 				var current: Position = <Position>openSet.pop();
 				if ( current.x === to.x && current.y === to.y) {
 					// reached destination. build path
-					return this.reconstructPath( cameFrom, to );
+					return this.reconstructPath( cameFrom, current );
 				}
 				closedSet.push(current);
 				var currentOffset: number = this.pos2Offset(current);
