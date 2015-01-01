@@ -593,8 +593,8 @@ module Game {
 			this.attacker = new Attacker(3);
 			// player has 30 hit points
 			this.destructible = new PlayerDestructible(30, 0, "your cadaver");
-			// player can carry up to 15 kg
-			this.container = new Container(15);
+			// player can carry up to 20 kg
+			this.container = new Container(20);
 		}
 		getNextLevelXp(): number {
 			return Constants.XP_BASE_LEVEL + this._xpLevel * Constants.XP_NEW_LEVEL;

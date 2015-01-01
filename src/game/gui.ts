@@ -319,7 +319,7 @@ module Game {
 		}
 
 		private renderItem(item: Actor, entryNum: number, y: number, shortcut: number, count: number = 1) {
-			var itemDescription = "(" + String.fromCharCode(shortcut) + ") ";
+			var itemDescription = "(" + String.fromCharCode(shortcut) + ") " + item.ch + " ";
 			if ( count > 1 ) {
 				itemDescription += count + " ";
 			}
@@ -330,6 +330,7 @@ module Game {
 				this.console.clearBack(Constants.INVENTORY_BACKGROUND_ACTIVE, 0, y, -1, 1);
 				this.console.clearFore(Constants.INVENTORY_FOREGROUND_ACTIVE, 0, y, -1, 1);
 			}
+			this.console.fore[6][y] = item.col;
 		}
 
 		private buildStackedInventory(container: Container): Actor[][] {
