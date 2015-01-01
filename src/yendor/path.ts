@@ -118,7 +118,7 @@ module Yendor {
 		private maxSteps: number;
 
 		/*
-			Constructor:
+			Constructor: constructor
 			Parameters:
 			mapWidth - width of the map
 			mapHeight - height of the map

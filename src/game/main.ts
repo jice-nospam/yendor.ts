@@ -68,15 +68,12 @@ module Game {
 			dungeonBuilder.build(this.map);
 
 			// this helps debugging items
-			/*
 			var player: Actor = ActorManager.instance.getPlayer();
 			ActorManager.instance.addItem(Actor.createBow(player.x, player.y, "short bow", 3, "arrow", true));
-			ActorManager.instance.addItem(Actor.createBow(player.x, player.y, "long bow", 5, "arrow", true));
+			ActorManager.instance.addItem(Actor.createShield(player.x, player.y, "wooden shield", 1));
 			ActorManager.instance.addItem(Actor.createBow(player.x, player.y, "crossbow", 2, "bolt"));
 			ActorManager.instance.addItem(Actor.createMissile(player.x, player.y, "bone arrow", 1, "arrow"));
-			ActorManager.instance.addItem(Actor.createMissile(player.x, player.y, "iron arrow", 1.5, "arrow"));
-			ActorManager.instance.addItem(Actor.createMissile(player.x, player.y, "bolt", 1, "bolt"));
-			*/
+			ActorManager.instance.addItem(Actor.createSword(player.x, player.y, "short sword", 3));
 		}
 
 		private loadGame() {

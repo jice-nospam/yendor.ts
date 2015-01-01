@@ -589,9 +589,12 @@ module Game {
 		init(_x: number, _y: number, _ch: string, _name: string, _col: Yendor.Color) {
 			super.init(_x, _y, _ch, _name, "creature|human", _col);
 			this.ai = new PlayerAi();
+			// default unarmed damages : 3 hit points
 			this.attacker = new Attacker(3);
+			// player has 30 hit points
 			this.destructible = new PlayerDestructible(30, 0, "your cadaver");
-			this.container = new Container(26);
+			// player can carry up to 15 kg
+			this.container = new Container(15);
 		}
 		getNextLevelXp(): number {
 			return Constants.XP_BASE_LEVEL + this._xpLevel * Constants.XP_NEW_LEVEL;

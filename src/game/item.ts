@@ -283,10 +283,14 @@ module Game {
 			What happens when this item is thrown.
 		*/
 		private onThrowEffector: Effector;
+		private _weight: number;
 
-		constructor() {
+		constructor(weight: number) {
 			this.className = "Pickable";
+			this._weight = weight;
 		}
+
+		get weight() { return this._weight; }
 
 		setOnUseEffect(effect?: Effect, targetSelector?: TargetSelector, message?: string) {
 			this.onUseEffector = new Effector(effect, targetSelector, message);

@@ -512,7 +512,7 @@ module Game {
 	 		Constructor: constructor
 
 	 		Parameters:
-	 		_capacity - this container's maximum number of items
+	 		_capacity - this container's maximum weight
 	 	*/
 	 	constructor(_capacity: number = 0) {
 			this.className = "Container";
@@ -554,6 +554,16 @@ module Game {
 	 		return true;
 	 	}
 
+	 	computeTotalWeight(): number {
+	 		var weight: number = 0;
+	 		this.actors.forEach(function(actor: Actor) {
+	 			if ( actor.pickable ) {
+	 				weight += actor.pickable.weight;
+	 			}
+	 		});
+	 		return weight;
+	 	}
+
 	 	/*
 	 		Function: add
 	 		add a new actor in this container
@@ -565,7 +575,8 @@ module Game {
 	 		false if the operation failed because the container is full
 	 	*/
 	 	add(actor: Actor) {
-	 		if ( this.actors.length >= this._capacity ) {
+	 		var weight: number = this.computeTotalWeight();
+	 		if ( actor.pickable.weight + weight >= this._capacity ) {
 	 			return false;
 	 		}
 	 		this.actors.push( actor );
@@ -794,7 +805,7 @@ module Game {
 		static createHealthPotion(x: number, y: number, amount: number): Actor {
 			var healthPotion = new Actor();
 			healthPotion.init(x, y, "!", "health potion", "potion", "#800080", true);
-			healthPotion.pickable = new Pickable();
+			healthPotion.pickable = new Pickable(0.5);
 			healthPotion.pickable.setOnUseEffect(new InstantHealthEffect(amount,
 				"[The actor1] drink[s] the health potion and regain[s] [value1] hit points.",
 				"[The actor1] drink[s] the health potion but it has no effect"),
@@ -810,7 +821,7 @@ module Game {
 		static createLightningBoltScroll(x: number, y: number, range: number, damages: number): Actor {
 			var lightningBolt = new Actor();
 			lightningBolt.init(x, y, "#", "scroll of lightning bolt", "scroll", "#FFFF3F", true);
-			lightningBolt.pickable = new Pickable();
+			lightningBolt.pickable = new Pickable(0.1);
 			lightningBolt.pickable.setOnUseEffect(new InstantHealthEffect(-damages,
 				"A lightning bolt strikes [the actor1] with a loud thunder!\nThe damage is [value1] hit points."),
 				new TargetSelector( TargetSelectionMethod.CLOSEST_ENEMY, range));
@@ -820,7 +831,7 @@ module Game {
 		static createFireballScroll(x: number, y: number, range: number, damages: number): Actor {
 			var fireball = new Actor();
 			fireball.init(x, y, "#", "scroll of fireball", "scroll", "#FFFF3F", true);
-			fireball.pickable = new Pickable();
+			fireball.pickable = new Pickable(0.1);
 			fireball.pickable.setOnUseEffect(new InstantHealthEffect(-damages,
 				"[The actor1] get[s] burned for [value1] hit points."),
 				new TargetSelector( TargetSelectionMethod.SELECTED_RANGE, range),
@@ -831,7 +842,7 @@ module Game {
 		static createConfusionScroll(x: number, y: number, range: number, nbTurns: number): Actor {
 			var confusionScroll = new Actor();
 			confusionScroll.init(x, y, "#", "scroll of confusion", "scroll", "#FFFF3F", true);
-			confusionScroll.pickable = new Pickable();
+			confusionScroll.pickable = new Pickable(0.1);
 			confusionScroll.pickable.setOnUseEffect(new ConditionEffect(ConditionType.CONFUSED, nbTurns,
 				"[The actor1's] eyes look vacant,\nas [it] start[s] to stumble around!"),
 				new TargetSelector( TargetSelectionMethod.SELECTED_ACTOR, range));
@@ -842,7 +853,7 @@ module Game {
 		static createSword(x: number, y: number, name: string, damages: number, twoHanded: boolean = false): Actor {
 			var sword = new Actor();
 			sword.init(x, y, "/", name, "weapon|blade", "#F0F0F0", true);
-			sword.pickable = new Pickable();
+			sword.pickable = new Pickable(3);
 			sword.pickable.setOnThrowEffect(new InstantHealthEffect(-damages,
 				"The sword hits [the actor1] for [value1] hit points."),
 				new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL ));
@@ -854,7 +865,7 @@ module Game {
 		static createBow(x: number, y: number, name: string, damages: number, missileTypeName: string, twoHanded: boolean = false): Actor {
 			var bow = new Actor();
 			bow.init(x, y, ")", name, "weapon|bow", "#F0F0F0", true);
-			bow.pickable = new Pickable();
+			bow.pickable = new Pickable(2);
 			bow.equipment = new Equipment(twoHanded ? Constants.SLOT_BOTH_HANDS : Constants.SLOT_RIGHT_HAND);
 			bow.ranged = new Ranged(damages, missileTypeName);
 			return bow;
@@ -863,7 +874,7 @@ module Game {
 		static createMissile(x: number, y: number, name: string, damages: number, missileTypeName: string): Actor {
 			var missile = new Actor();
 			missile.init(x, y, "\\", name, "weapon|missile|" + missileTypeName, "#D0D0D0", true);
-			missile.pickable = new Pickable();
+			missile.pickable = new Pickable(0.1);
 			missile.pickable.setOnThrowEffect(new InstantHealthEffect(-damages,
 				"The " + name + " hits [the actor1] for [value1] points."),
 				new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL));
@@ -874,7 +885,7 @@ module Game {
 		static createShield(x: number, y: number, name: string, defense: number): Actor {
 			var shield = new Actor();
 			shield.init(x, y, "[", name, "weapon|shield", "#F0F0F0", true);
-			shield.pickable = new Pickable();
+			shield.pickable = new Pickable(5);
 			shield.pickable.setOnThrowEffect(new ConditionEffect(ConditionType.STUNNED, 2,
 				"The shield hits [the actor1] and stuns [it]!"),
 				new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL));
