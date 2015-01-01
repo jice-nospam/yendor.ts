@@ -312,7 +312,7 @@ module Game {
 				shortcut++;
 
 			}
-			var capacity: string = "capacity " + Math.floor(player.container.computeTotalWeight())
+			var capacity: string = "capacity " + ( Math.floor(10 * player.container.computeTotalWeight()) / 10 )
 				+ "/" + player.container.capacity;
 			this.console.print( Math.floor(this.width / 2 - capacity.length / 2), this.height - 1, capacity);
 			super.render(map, destination);
