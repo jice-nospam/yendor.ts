@@ -18,7 +18,7 @@ module Game {
 		to keep the game from trying to load data with an old format.
 		This should be a numeric value (x.y.z not supported).
 	*/
-	var VERSION: string = "0.10";
+	var VERSION: string = "0.1";
 	/*
 		Class: Engine
 		Handles frame rendering and world updating.
