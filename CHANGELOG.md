@@ -1,9 +1,10 @@
-# 0.2.0 / TBD
+# 0.2.0 / 01-jan-2015
 * Yendor toolkit
 	- added BinaryHeap, A* path finding toolkit
 
 * GeneRogue
 	- added ranged weapons (bow, crossbow)
+	- creatures now use A* pathfinding when player is in field of view
 
 * Benchmark
 	- added path finding sample
