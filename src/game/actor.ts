@@ -608,20 +608,33 @@ module Game {
 	export class Actor extends Yendor.Position implements Persistent {
 		className: string;
 		private _type: ActorType;
+		// the symbol representing this actor on the map
 		private _ch: string;
+		// the name to be used by mouse look or the inventory screen
 		private _name: string;
+		// the color associated with this actor's symbol
 		private _col: Yendor.Color;
 
+		// can be destroyed/killed
 		private _destructible: Destructible;
+		// can deal damages
 		private _attacker: Attacker;
+		// can think
 		private _ai: Ai;
+		// can be picked (put inside a container actor)
 		private _pickable: Pickable;
+		// can contain other actors
 		private _container: Container;
+		// can be equipped on a slot
 		private _equipment: Equipment;
+		// can throw away some type of actors
 		private _ranged: Ranged;
 
+		// whether you can walk on the tile where this actor is
 		private _blocks: boolean = false;
+		// whether you can see this actor only if it's in your field of view
 		private _fovOnly: boolean = true;
+		// whether this actor name is singular (you can write "a <name>")
 		private _singular: boolean = true;
 
 		constructor() {
