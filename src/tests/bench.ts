@@ -26,18 +26,19 @@ module Benchmark {
 
 	class PerfSample implements Sample {
 		name: string = "True color";
+		static hexa: string = "0123456789ABCDEF";
 		render(root: Yendor.Console) {
 			for (var x = SAMPLE_SCREEN_X; x < SAMPLE_SCREEN_X + SAMPLE_SCREEN_WIDTH; x++ ) {
 				for ( var y = SAMPLE_SCREEN_Y; y < SAMPLE_SCREEN_Y + SAMPLE_SCREEN_HEIGHT; y++ ) {
-					var r = rng.getNumber(0, 255);
-					var g = rng.getNumber(0, 255);
-					var b = rng.getNumber(0, 255);
-					var col = "rgb(" + r + "," + g + "," + b + ")";
+					var r = PerfSample.hexa[rng.getNumber(0, 15)] + PerfSample.hexa[rng.getNumber(0, 15)];
+					var g = PerfSample.hexa[rng.getNumber(0, 15)] + PerfSample.hexa[rng.getNumber(0, 15)];
+					var b = PerfSample.hexa[rng.getNumber(0, 15)] + PerfSample.hexa[rng.getNumber(0, 15)];
+					var col = "#" + r + g + b;
 					root.back[x][y] = col;
-					r = rng.getNumber(0, 255);
-					g = rng.getNumber(0, 255);
-					b = rng.getNumber(0, 255);
-					col = "rgb(" + r + "," + g + "," + b + ")";
+					r = PerfSample.hexa[rng.getNumber(0, 15)] + PerfSample.hexa[rng.getNumber(0, 15)];
+					g = PerfSample.hexa[rng.getNumber(0, 15)] + PerfSample.hexa[rng.getNumber(0, 15)];
+					b = PerfSample.hexa[rng.getNumber(0, 15)] + PerfSample.hexa[rng.getNumber(0, 15)];
+					col = "#" + r + g + b;
 					root.fore[x][y] = col;
 					var ch = rng.getNumber(32, 128);
 					root.setChar(x, y, String.fromCharCode(ch));
