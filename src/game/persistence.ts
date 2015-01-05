@@ -26,14 +26,6 @@ module Game {
 			jsonData - parsed json data to load from
 		*/
 		load?: (jsonData: any) => any;
-		/*
-			Function: save
-			Optional custom saving function
-
-			Parameters:
-			key - key to access this object's saved data
-		*/
-		save?: (key: string) => void;
 	}
 
 	/*
@@ -72,7 +64,7 @@ module Game {
 	/*
 		Class: LocalStoragePersister
 		Implements Persister useing the browser's HTML5 local storage.
-		Note : in internet explorer, this only work with http://... URL. Local storage
+		Note : in internet explorer, this only works with http://... URL. Local storage
 		will be disabled if you open the game with a file://... URL.
 	*/
 	export class LocalStoragePersister implements Persister {
@@ -96,12 +88,8 @@ module Game {
 			if (! this.localStorage) {
 				return;
 			}
-			if ( object.save ) {
-				object.save(key);
-			} else {
-				this.localStorage.setItem(key,
-					typeof object === "string" ? object : JSON.stringify(object, this.jsonReplacer));
-			}
+			this.localStorage.setItem(key,
+				typeof object === "string" ? object : JSON.stringify(object, this.jsonReplacer));
 		}
 
 		private jsonReplacer(key: string, value: any) {
