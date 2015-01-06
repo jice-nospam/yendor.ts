@@ -1,3 +1,7 @@
+# 0.2.1 / TBD
+* GeneRogue
+	- weight based container capacity
+
 # 0.2.0 / 01-jan-2015
 * Yendor toolkit
 	- added BinaryHeap, A* path finding toolkit
