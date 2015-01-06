@@ -465,14 +465,14 @@ module Game {
 			}
 			this.equipped = true;
 			if ( wearer === ActorManager.instance.getPlayer()) {
-				log(wearer.getThename() + " equip" + wearer.getVerbEnd() + owner.getthename() + " on" + wearer.getits() + this.slot, "#FF0000" );
+				log(transformMessage("[The actor1] equip[s] [the actor2] on [its] " + this.slot, wearer, owner), "#FFA500" );
 			}
 		}
 
 		unequip(owner: Actor, wearer: Actor, beforeDrop: boolean = false) {
 			this.equipped = false;
 			if ( !beforeDrop && wearer === ActorManager.instance.getPlayer()) {
-				log(wearer.getThename() + " unequip" + wearer.getVerbEnd() + owner.getthename() + " from" + wearer.getits() + this.slot, "#FFA500" );
+				log(transformMessage("[The actor1] unequip[s] [the actor2] from [its] " + this.slot, wearer, owner), "#FFA500" );
 			}
 		}
 	}
