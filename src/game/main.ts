@@ -16,10 +16,9 @@ module Game {
 		Property: VERSION
 		This is mainly the savegame format version. To be incremented when the format changes
 		to keep the game from trying to load data with an old format.
-		This should be a x.y numeric value (x.y.z not supported).
-		No trailing 0 (0.1 instead of 0.10).
+		This should be an integer.
 	*/
-	var VERSION: string = "0.1";
+	var VERSION: string = "1";
 	/*
 		Class: Engine
 		Handles frame rendering and world updating.
