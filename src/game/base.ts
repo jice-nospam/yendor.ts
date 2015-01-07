@@ -46,6 +46,8 @@ module Game {
 		export var ROOM_MIN_SIZE: number = 4;
 
 		// gameplay
+        // how often the world is updated
+        export var TICKS_PER_SECOND: number = 10;
 		export var SCENT_THRESHOLD: number = 10;
         export var PLAYER_WALK_TIME: number = 10;
         // xp level required for level 1

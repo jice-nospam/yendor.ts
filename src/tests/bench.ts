@@ -119,6 +119,43 @@ module Benchmark {
 		}
 	}
 
+	class ScheduledEntity implements Yendor.TimedEntity {
+		waitTime: number = 0;
+		blinkDelay: number;
+		status: boolean = true;
+		constructor(blinkDelay: number) {
+			this.blinkDelay = blinkDelay;
+		}
+		update(): Yendor.EntityUpdateResult {
+			this.status = ! this.status;
+			this.waitTime = this.blinkDelay;
+			return Yendor.EntityUpdateResult.CONTINUE;
+		}
+	}
+	class SchedulerSample implements Sample {
+		name: string = "Scheduler";
+		private scheduler: Yendor.Scheduler = new Yendor.Scheduler();
+		private entities: ScheduledEntity[] = [];
+		constructor() {
+			this.entities.push( new ScheduledEntity(1) );
+			this.entities.push( new ScheduledEntity(5) );
+			this.entities.push( new ScheduledEntity(20) );
+			this.entities.push( new ScheduledEntity(50) );
+			this.scheduler.addAll(this.entities);
+		}
+		render(root: Yendor.Console) {
+			var x: number = 2;
+			root.clearBack("#000000", SAMPLE_SCREEN_X, SAMPLE_SCREEN_Y, SAMPLE_SCREEN_WIDTH, SAMPLE_SCREEN_HEIGHT);
+			this.entities.forEach((entity: ScheduledEntity) => {
+				if ( entity.status ) {
+					root.clearBack("#FF0000", SAMPLE_SCREEN_X + x, SAMPLE_SCREEN_Y + 2, 5, 5);
+				}
+				x += 7;
+			});
+			this.scheduler.run();
+		}
+	}
+
 	function render() {
 		samples[currentSampleIndex].render(root);
 		for (var i: number = 0; i < samples.length; ++i) {
@@ -153,6 +190,7 @@ module Benchmark {
 		root = Yendor.createConsole( WIDTH, HEIGHT, "#ffffff", "#000000", "#console", "terminal.png" );
 		samples.push(new PerfSample());
 		samples.push(new AStarSample());
+		samples.push(new SchedulerSample());
 		$(document).keydown(function(event: KeyboardEvent) {
 			if ( event.keyCode === 40 ) {
 				// DOWN

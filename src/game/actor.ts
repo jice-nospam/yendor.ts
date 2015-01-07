@@ -114,14 +114,7 @@ module Game {
 		private creatures: Actor[];
 		private corpses: Actor[];
 		private items: Actor[];
-		private creatureQueue: Yendor.BinaryHeap;
-
-		constructor() {
-			// creatures sorted by wait time (lowest first)
-			this.creatureQueue = new Yendor.BinaryHeap(function(actor: Actor): number {
-				return actor.ai.waitTime;
-			});
-		}
+		private scheduler: Yendor.Scheduler = new Yendor.Scheduler();
 
 		getPlayer() : Player {
 			return this.player;
@@ -129,7 +122,7 @@ module Game {
 
 		addCreature( actor: Actor ) {
 			this.creatures.push(actor);
-			this.creatureQueue.push(actor);
+			this.scheduler.add(actor);
 		}
 
 		addItem( actor: Actor ) {
@@ -188,22 +181,23 @@ module Game {
 			Moves the dead actors from the actor list to the corpse list.
 		*/
 		updateActors(map: Map) {
-			var readiestActor: Actor = <Actor>this.creatureQueue.peek();
-			var elapsedTime = readiestActor.ai.waitTime;
-			if ( elapsedTime < 0 ) {
-				elapsedTime = 0;
-			}
-			do {
-				var actor: Actor = <Actor>this.creatureQueue.pop();
-				actor.update(map, elapsedTime);
+			this.scheduler.run();
+			for ( var i: number = 0, len: number = this.creatures.length; i < len; ++i) {
+				var actor: Actor = this.creatures[i];
 				if ( actor.destructible && actor.destructible.isDead() ) {
 					// actor is dead. don't push it back to creatureQueue. move it to corpse list
 					this.creatures.splice( this.creatures.indexOf(actor), 1);
 					this.corpses.push(actor);
 				}
-			} while (!this.creatureQueue.isEmpty());
-			// put back actors in the queue
-			this.creatureQueue.pushAll(this.creatures);
+			}
+		}
+
+		resume() {
+			this.scheduler.resume();
+		}
+
+		pause() {
+			this.scheduler.pause();
 		}
 
 		removeItem(item: Actor) {
@@ -232,10 +226,6 @@ module Game {
 		load(persister: Persister) {
 			this.creatures = persister.loadFromKey(Constants.PERSISTENCE_ACTORS_KEY);
 			this.player = <Player>this.creatures[0];
-			var thisCreatureQueue = this.creatureQueue;
-			this.creatures.forEach(function(actor: Actor) {
-				thisCreatureQueue.push(actor);
-			});
 			this.items = persister.loadFromKey(Constants.PERSISTENCE_ITEMS_KEY);
 			this.stairsUp = this.items[0];
 			this.stairsDown = this.items[1];
@@ -623,7 +613,7 @@ module Game {
 	 	Class: Actor
 	 	The base class for all actors
 	 */
-	export class Actor extends Yendor.Position implements Persistent, Yendor.Comparable {
+	export class Actor extends Yendor.Position implements Persistent, Yendor.TimedEntity {
 		className: string;
 		private _type: ActorType;
 		// the symbol representing this actor on the map
@@ -660,11 +650,6 @@ module Game {
 			this.className = "Actor";
 		}
 
-		// comparable interface
-		equals(actor: Actor): boolean {
-			return this === actor;
-		}
-
 		init(_x: number = 0, _y: number = 0, _ch: string = "", _name: string = "", types: string = "",
 			_col: Yendor.Color = "", singular: boolean = true) {
 			this.moveTo(_x, _y);
@@ -673,6 +658,13 @@ module Game {
 			this._col = _col;
 			this._singular = singular;
 			this._type = types ? ActorType.buildTypeHierarchy(types) : ActorType.getRootType();
+		}
+
+		get waitTime() { return this.ai ? this.ai.waitTime : undefined ; }
+		set waitTime(newValue: number) {
+			if (this.ai) {
+				this.ai.waitTime = newValue;
+			}
 		}
 
 		isA(type: ActorType): boolean {
@@ -818,10 +810,11 @@ module Game {
 			return desc;
 		}
 
-		update(map: Map, elapsedTime: number) {
+		update(): Yendor.EntityUpdateResult {
 			if ( this._ai ) {
-				this._ai.update(this, map, elapsedTime);
+				this._ai.update(this, Map.instance);
 			}
+			return this.destructible && this.destructible.isDead() ? Yendor.EntityUpdateResult.REMOVE : Yendor.EntityUpdateResult.CONTINUE;
 		}
 
 		render() {

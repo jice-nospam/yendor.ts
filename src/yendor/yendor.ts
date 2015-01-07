@@ -6,6 +6,7 @@
 /// <reference path="bsp.ts" />
 /// <reference path="fov.ts" />
 /// <reference path="path.ts" />
+/// <reference path="scheduler.ts" />
 module Yendor {
 	"use strict";
 

@@ -58,9 +58,9 @@ module Game {
 			Returns:
 				false if the condition has ended
 		*/
-		update(elapsedTime: number): boolean {
+		update(): boolean {
 			if ( this.time > 0 ) {
-				this.time -= elapsedTime;
+				this.time --;
 				return (this.time > 0);
 			}
 			return true;
@@ -77,8 +77,8 @@ module Game {
 			this.className = "StunnedCondition";
 		}
 
-		update(elapsedTime: number): boolean {
-			if (! super.update(elapsedTime)) {
+		update(): boolean {
+			if (! super.update()) {
 				if ( this.type === ConditionType.STUNNED) {
 					// after being stunned, wake up confused
 					this._type = ConditionType.CONFUSED;
@@ -113,16 +113,11 @@ module Game {
 		}
 
 		get waitTime() { return this._waitTime; }
-		set waitTime(newValue: number) { this._waitTime = newValue; }
-		isReady(): boolean {
-			return this._waitTime <= 0;
-		}
 
-		update(owner: Actor, map: Map, elapsedTime: number) {
-			this._waitTime -= elapsedTime;
+		update(owner: Actor, map: Map) {
 			var n: number = this.conditions ? this.conditions.length : 0;
 			for ( var i: number = 0; i < n; i++) {
-				if ( !this.conditions[i].update(elapsedTime) ) {
+				if ( !this.conditions[i].update() ) {
 					this.conditions.splice(i, 1);
 					i--;
 				}
@@ -197,7 +192,7 @@ module Game {
 			// move the creature
 			owner.x = x;
 			owner.y = y;
-			this._waitTime += this.walkTime;
+			this._waitTime = this.walkTime;
 			return true;
 		}
 	}
@@ -232,10 +227,10 @@ module Game {
 			Parameters:
 			owner - the actor owning this PlayerAi (obviously, the player)
 		*/
-		update(owner: Actor, map: Map, elapsedTime: number) {
-			super.update(owner, map, elapsedTime);
-			// don't update a not ready or dead actor
-			if ( ! this.isReady() || (owner.destructible && owner.destructible.isDead())) {
+		update(owner: Actor, map: Map) {
+			super.update(owner, map);
+			// don't update a dead actor
+			if ( owner.destructible && owner.destructible.isDead()) {
 				return;
 			}
 			// check movement keys
@@ -243,6 +238,7 @@ module Game {
 			var newTurn: boolean = false;
 			if ( move.x === 0 && move.y === 0 ) {
 				if (this.lastAction === PlayerAction.WAIT ) {
+					this.waitTime = 1;
 					newTurn = true;
 				} else {
 					if (! this.hasCondition(ConditionType.CONFUSED) && ! this.hasCondition(ConditionType.STUNNED)) {
@@ -251,6 +247,7 @@ module Game {
 				}
 			}
 			if ( move.x !== 0 || move.y !== 0 )  {
+				this.waitTime = 1;
 				newTurn = true;
 				// move to the target cell or attack if there's a creature
 				if ( this.moveOrAttack(owner, owner.x + move.x, owner.y + move.y, map) ) {
@@ -408,11 +405,11 @@ module Game {
 			owner - the actor owning this MonsterAi (the monster)
 			map - the game map (used to check player line of sight)
 		*/
-		update(owner: Actor, map: Map, elapsedTime: number) {
-			super.update(owner, map, elapsedTime);
+		update(owner: Actor, map: Map) {
+			super.update(owner, map);
 
 			// don't update a dead monster
-			if ( ! this.isReady() || (owner.destructible && owner.destructible.isDead())) {
+			if ( owner.destructible && owner.destructible.isDead()) {
 				return;
 			}
 			// attack the player when at melee range, else try to track his scent
@@ -620,6 +617,10 @@ module Game {
 				this.destructible.xp -= nextLevelXp;
 				log("Your battle skills grow stronger! You reached level " + this.xpLevel, "#FF0000");
 			}
+		}
+
+		update(): Yendor.EntityUpdateResult {
+			return Yendor.EntityUpdateResult.PAUSE;
 		}
 
 		getaname(): string {

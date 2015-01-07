@@ -206,6 +206,9 @@ module Game {
 	}
 
 	export class Map implements Persistent {
+		private static _instance: Map;
+		static get instance() { return Map._instance; }
+
 		className: string;
 		private tiles: Tile[][];
 		private map: Yendor.Fov;
@@ -215,6 +218,7 @@ module Game {
 
 		constructor() {
 			this.className = "Map";
+			Map._instance = this;
 		}
 
 		init(_width: number, _height: number) {

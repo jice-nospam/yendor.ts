@@ -19,6 +19,7 @@ module Game {
 		This should be an integer.
 	*/
 	var VERSION: string = "1";
+
 	/*
 		Class: Engine
 		Handles frame rendering and world updating.
@@ -28,6 +29,7 @@ module Game {
 		private status : GameStatus;
 		private persister: Persister = new LocalStoragePersister();
 		private dungeonLevel: number = 1;
+		private gameTime : number = 0;
 
 		constructor() {
 			this.resetGame();
@@ -256,13 +258,14 @@ module Game {
 			if (! Gui.getActiveModal() ) {
 				if ( !this.handleGlobalShortcuts(input) ) {
 					EventBus.instance.publishEvent(new Event<KeyInput>(EventType.KEYBOARD_INPUT, input));
-					ActorManager.instance.getPlayer().ai.update(ActorManager.instance.getPlayer(), this.map, 0);
+					ActorManager.instance.getPlayer().ai.update(ActorManager.instance.getPlayer(), this.map);
 				}
 			} else {
 				EventBus.instance.publishEvent(new Event<KeyInput>(EventType.KEYBOARD_INPUT, input));
 			}
 			if ( this.status === GameStatus.NEW_TURN )  {
-				this.handleNewTurn();
+				ActorManager.instance.resume();
+				this.status = GameStatus.IDLE;
 			}
 		}
 
@@ -285,9 +288,16 @@ module Game {
 			time - elapsed time since the last frame in milliseconds
 		*/
 		handleNewFrame (time: number) {
+			var tickLength: number = 1.0 / Constants.TICKS_PER_SECOND;
+			this.gameTime += time;
 			if ( this.status === GameStatus.STARTUP ) {
-				ActorManager.instance.getPlayer().ai.update(ActorManager.instance.getPlayer(), this.map, 0);
+				ActorManager.instance.getPlayer().ai.update(ActorManager.instance.getPlayer(), this.map);
 				this.status = GameStatus.IDLE;
+			} else {
+				while ( this.gameTime >= tickLength ) {
+					this.gameTime -= tickLength;
+					this.handleNewTurn();
+				}
 			}
 			this.render();
 			root.render();
@@ -315,7 +325,8 @@ module Game {
 		handleMouseClick(event: JQueryMouseEventObject) {
 			EventBus.instance.publishEvent(new Event<MouseButton>( EventType.MOUSE_CLICK, <MouseButton>event.which));
 			if ( this.status === GameStatus.NEW_TURN )  {
-				this.handleNewTurn();
+				ActorManager.instance.resume();
+				this.status = GameStatus.IDLE;
 			}
 		}
 
@@ -342,7 +353,6 @@ module Game {
 		*/
 		private handleNewTurn() {
 			ActorManager.instance.updateActors(this.map);
-			this.status = GameStatus.IDLE;
 			if (!ActorManager.instance.isPlayerDead()) {
 				this.saveGame();
 			} else {

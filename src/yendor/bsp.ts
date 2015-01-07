@@ -6,8 +6,6 @@
 module Yendor {
 	"use strict";
 
-	export enum BSPTraversalOrder {PRE_ORDER, IN_ORDER, POST_ORDER, LEVEL_ORDER, INVERTED_LEVEL_ORDER}
-
 	/*
 		Enum: BSPTraversalAction
 		Value returned by the callback during a tree traversal.

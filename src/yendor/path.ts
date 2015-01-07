@@ -9,48 +9,52 @@ module Yendor {
 		A min heap used for A* algorithm.
 		Adapted from http://www.openbookproject.net/books/mi2pwjs/app_b.html#binary-heaps-appendix
 	*/
-	export class BinaryHeap {
-		private content: Comparable[] = [];
-		private scoreFunction: (element: Comparable) => number;
-		constructor(scoreFunction: (element: Comparable) => number) {
+	export class BinaryHeap<T> {
+		private content: T[] = [];
+		private scoreFunction: (element: T) => number;
+		constructor(scoreFunction: (element: T) => number) {
 			this.scoreFunction = scoreFunction;
 		}
-		push(element: Comparable) {
+		push(element: T) {
 			this.content.push(element);
 			this.bubbleUp(this.content.length - 1);
 		}
-		pushAll(elements: Comparable[]) {
+		pushAll(elements: T[]) {
 			var len: number = elements.length;
 			for (var i: number = 0; i < len; ++i) {
 				this.push(elements[i]);
 			}
 		}
-		peek(index: number = 0): Comparable {
+		peek(index: number = 0): T {
 			return this.content.length > index ? this.content[index] : undefined;
 		}
-		pop(): Comparable {
-			var result: Comparable = this.content[0];
-			var end: Comparable = this.content.pop();
+		pop(): T {
+			var result: T = this.content[0];
+			var end: T = this.content.pop();
 			if ( this.content.length > 0 ) {
 				this.content[0] = end;
 				this.sinkDown(0);
 			}
 			return result;
 		}
-		contains(element: Comparable): boolean {
+		/*
+			Function: contains
+			Check if the heap contains en element. Only works if the elements implements Comparable
+		*/
+		contains(element: T): boolean {
 			var len: number = this.content.length;
 			for (var i: number = 0; i < len; ++i) {
-				if ( this.content[i].equals( element ) ) {
+				if ( (<any>element).equals(<any>(this.content[i])) ) {
 					return true;
 				}
 			}
 			return false;
 		}
-		remove(element: Comparable) {
+		remove(element: T) {
 			var len: number = this.content.length;
 			for (var i: number = 0; i < len; ++i) {
 				if ( this.content[i] === element ) {
-					var end: Comparable = this.content.pop();
+					var end: T = this.content.pop();
 					if (i !== len - 1) {
 						this.content[i] = end;
 						if (this.scoreFunction(end) < this.scoreFunction(element)) {
@@ -70,10 +74,10 @@ module Yendor {
 			return this.content.length === 0;
 		}
 		private bubbleUp(n: number) {
-			var element: Comparable = this.content[n];
+			var element: T = this.content[n];
 			while (n > 0) {
 				var parentN: number = Math.floor((n + 1) / 2) - 1;
-                var parent: Comparable = this.content[parentN];
+                var parent: T = this.content[parentN];
                 if (this.scoreFunction(element) < this.scoreFunction(parent)) {
                 	this.content[parentN] = element;
                 	this.content[n] = parent;
@@ -85,7 +89,7 @@ module Yendor {
 		}
 		private sinkDown(n: number) {
 			var length: number = this.content.length;
-            var element: Comparable = this.content[n];
+            var element: T = this.content[n];
             var elemScore: number = this.scoreFunction(element);
             while (true) {
             	var child2N: number = (n + 1) * 2;
@@ -178,7 +182,7 @@ module Yendor {
 			// estimated walk cost from start to the destination cell, going through this cell
 			var fScore: { [index: number]: number} = {};
 			var pathFinderThis: PathFinder = this;
-			var openSet: BinaryHeap = new BinaryHeap(
+			var openSet: BinaryHeap<Position> = new BinaryHeap<Position>(
 				function(pos: Position): number {
 					return fScore[pathFinderThis.pos2Offset(pos)];
 				}
