@@ -47,6 +47,7 @@ module Game {
 
 		// gameplay
 		export var SCENT_THRESHOLD: number = 10;
+        export var PLAYER_WALK_TIME: number = 10;
         // xp level required for level 1
         export var XP_BASE_LEVEL: number = 200;
         // xp level required for level n = BASE_LEVEL + n * NEW_LEVEL

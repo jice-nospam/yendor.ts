@@ -111,16 +111,25 @@ module Game {
 		private player: Player;
 		private stairsUp: Actor;
 		private stairsDown: Actor;
-		private actors: Actor[];
+		private creatures: Actor[];
 		private corpses: Actor[];
 		private items: Actor[];
+		private creatureQueue: Yendor.BinaryHeap;
+
+		constructor() {
+			// creatures sorted by wait time (lowest first)
+			this.creatureQueue = new Yendor.BinaryHeap(function(actor: Actor): number {
+				return actor.ai.waitTime;
+			});
+		}
 
 		getPlayer() : Player {
 			return this.player;
 		}
 
 		addCreature( actor: Actor ) {
-			this.actors.push(actor);
+			this.creatures.push(actor);
+			this.creatureQueue.push(actor);
 		}
 
 		addItem( actor: Actor ) {
@@ -128,7 +137,7 @@ module Game {
 		}
 
 		getCreatures(): Actor[] {
-			return this.actors;
+			return this.creatures;
 		}
 
 		getItems(): Actor[] {
@@ -148,7 +157,7 @@ module Game {
 		}
 
 		clear() {
-			this.actors = [];
+			this.creatures = [];
 			this.corpses = [];
 			this.items = [];
 		}
@@ -166,7 +175,7 @@ module Game {
 		renderActors(map: Map) {
 			this.renderActorList(this.corpses, map);
 			this.renderActorList(this.items, map);
-			this.renderActorList(this.actors, map);
+			this.renderActorList(this.creatures, map);
 		}
 
 		isPlayerDead(): boolean {
@@ -179,17 +188,22 @@ module Game {
 			Moves the dead actors from the actor list to the corpse list.
 		*/
 		updateActors(map: Map) {
-			var nbActors: number = this.actors.length;
-			for (var i = 1; i < nbActors; i++) {
-				var actor: Actor = this.actors[i];
-				actor.update( map );
+			var readiestActor: Actor = <Actor>this.creatureQueue.peek();
+			var elapsedTime = readiestActor.ai.waitTime;
+			if ( elapsedTime < 0 ) {
+				elapsedTime = 0;
+			}
+			do {
+				var actor: Actor = <Actor>this.creatureQueue.pop();
+				actor.update(map, elapsedTime);
 				if ( actor.destructible && actor.destructible.isDead() ) {
-					this.actors.splice(i, 1);
-					i--;
-					nbActors--;
+					// actor is dead. don't push it back to creatureQueue. move it to corpse list
+					this.creatures.splice( this.creatures.indexOf(actor), 1);
 					this.corpses.push(actor);
 				}
-			}
+			} while (!this.creatureQueue.isEmpty());
+			// put back actors in the queue
+			this.creatureQueue.pushAll(this.creatures);
 		}
 
 		removeItem(item: Actor) {
@@ -212,12 +226,16 @@ module Game {
 
 		createPlayer() {
 			this.player = Actor.createPlayer();
-			this.actors.push(this.player);
+			this.creatures.push(this.player);
 		}
 
 		load(persister: Persister) {
-			this.actors = persister.loadFromKey(Constants.PERSISTENCE_ACTORS_KEY);
-			this.player = <Player>this.actors[0];
+			this.creatures = persister.loadFromKey(Constants.PERSISTENCE_ACTORS_KEY);
+			this.player = <Player>this.creatures[0];
+			var thisCreatureQueue = this.creatureQueue;
+			this.creatures.forEach(function(actor: Actor) {
+				thisCreatureQueue.push(actor);
+			});
 			this.items = persister.loadFromKey(Constants.PERSISTENCE_ITEMS_KEY);
 			this.stairsUp = this.items[0];
 			this.stairsDown = this.items[1];
@@ -225,7 +243,7 @@ module Game {
 		}
 
 		save(persister: Persister) {
-			persister.saveToKey(Constants.PERSISTENCE_ACTORS_KEY, this.actors);
+			persister.saveToKey(Constants.PERSISTENCE_ACTORS_KEY, this.creatures);
 			persister.saveToKey(Constants.PERSISTENCE_ITEMS_KEY, this.items);
 			persister.saveToKey(Constants.PERSISTENCE_CORPSES_KEY, this.corpses);
 		}
@@ -605,7 +623,7 @@ module Game {
 	 	Class: Actor
 	 	The base class for all actors
 	 */
-	export class Actor extends Yendor.Position implements Persistent {
+	export class Actor extends Yendor.Position implements Persistent, Yendor.Comparable {
 		className: string;
 		private _type: ActorType;
 		// the symbol representing this actor on the map
@@ -640,6 +658,11 @@ module Game {
 		constructor() {
 			super();
 			this.className = "Actor";
+		}
+
+		// comparable interface
+		equals(actor: Actor): boolean {
+			return this === actor;
 		}
 
 		init(_x: number = 0, _y: number = 0, _ch: string = "", _name: string = "", types: string = "",
@@ -795,9 +818,9 @@ module Game {
 			return desc;
 		}
 
-		update(map: Map) {
+		update(map: Map, elapsedTime: number) {
 			if ( this._ai ) {
-				this._ai.update(this, map);
+				this._ai.update(this, map, elapsedTime);
 			}
 		}
 
@@ -918,12 +941,12 @@ module Game {
 			creature factories
 		*/
 		static createBeast(x: number, y: number, character: string, name: string, corpseName: string, color: string,
-			hp: number, attack: number, defense: number, xp: number): Actor {
+			hp: number, attack: number, defense: number, xp: number, walkTime: number): Actor {
 			var beast: Actor = new Actor();
 			beast.init(x, y, character, name, "creature|beast", color, true);
 			beast.destructible = new MonsterDestructible(hp, defense, corpseName);
 			beast.attacker = new Attacker(attack);
-			beast.ai = new MonsterAi();
+			beast.ai = new MonsterAi(walkTime);
 			beast.blocks = true;
 			beast.destructible.xp = xp;
 			return beast;

@@ -256,7 +256,7 @@ module Game {
 			if (! Gui.getActiveModal() ) {
 				if ( !this.handleGlobalShortcuts(input) ) {
 					EventBus.instance.publishEvent(new Event<KeyInput>(EventType.KEYBOARD_INPUT, input));
-					ActorManager.instance.getPlayer().ai.update(ActorManager.instance.getPlayer(), this.map);
+					ActorManager.instance.getPlayer().ai.update(ActorManager.instance.getPlayer(), this.map, 0);
 				}
 			} else {
 				EventBus.instance.publishEvent(new Event<KeyInput>(EventType.KEYBOARD_INPUT, input));
@@ -286,7 +286,7 @@ module Game {
 		*/
 		handleNewFrame (time: number) {
 			if ( this.status === GameStatus.STARTUP ) {
-				ActorManager.instance.getPlayer().ai.update(ActorManager.instance.getPlayer(), this.map);
+				ActorManager.instance.getPlayer().ai.update(ActorManager.instance.getPlayer(), this.map, 0);
 				this.status = GameStatus.IDLE;
 			}
 			this.render();

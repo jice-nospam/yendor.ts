@@ -19,6 +19,15 @@ module Yendor {
 			this.content.push(element);
 			this.bubbleUp(this.content.length - 1);
 		}
+		pushAll(elements: Comparable[]) {
+			var len: number = elements.length;
+			for (var i: number = 0; i < len; ++i) {
+				this.push(elements[i]);
+			}
+		}
+		peek(index: number = 0): Comparable {
+			return this.content.length > index ? this.content[index] : undefined;
+		}
 		pop(): Comparable {
 			var result: Comparable = this.content[0];
 			var end: Comparable = this.content.pop();
@@ -56,6 +65,9 @@ module Yendor {
 		}
 		size(): number {
 			return this.content.length;
+		}
+		isEmpty(): boolean {
+			return this.content.length === 0;
 		}
 		private bubbleUp(n: number) {
 			var element: Comparable = this.content[n];

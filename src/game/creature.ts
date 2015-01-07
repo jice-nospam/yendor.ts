@@ -26,26 +26,26 @@ module Game {
 	export class Condition implements Persistent {
 		className: string;
 		/*
-	 		Property: nbTurns
-	 		Number of turns before this condition stops, or -1 for permanent conditions
+	 		Property: time
+	 		Time before this condition stops, or -1 for permanent conditions
 		*/
-		protected nbTurns: number;
+		protected time: number;
 		protected _type: ConditionType;
 		private static condNames = [ "confused", "stunned" ];
 
 		// factory
-		static getCondition(type: ConditionType, nbTurns: number): Condition {
+		static getCondition(type: ConditionType, time: number): Condition {
 			switch ( type ) {
 				case ConditionType.STUNNED :
-					return new StunnedCondition(nbTurns);
+					return new StunnedCondition(time);
 				default :
-					return new Condition(type, nbTurns);
+					return new Condition(type, time);
 			}
 		}
 
-		constructor(type: ConditionType, nbTurns: number) {
+		constructor(type: ConditionType, time: number) {
 			this.className = "Condition";
-			this.nbTurns = nbTurns;
+			this.time = time;
 			this._type = type;
 		}
 
@@ -58,10 +58,10 @@ module Game {
 			Returns:
 				false if the condition has ended
 		*/
-		update(): boolean {
-			if ( this.nbTurns > 0 ) {
-				this.nbTurns--;
-				return (this.nbTurns > 0);
+		update(elapsedTime: number): boolean {
+			if ( this.time > 0 ) {
+				this.time -= elapsedTime;
+				return (this.time > 0);
 			}
 			return true;
 		}
@@ -77,12 +77,12 @@ module Game {
 			this.className = "StunnedCondition";
 		}
 
-		update(): boolean {
-			if (! super.update()) {
+		update(elapsedTime: number): boolean {
+			if (! super.update(elapsedTime)) {
 				if ( this.type === ConditionType.STUNNED) {
 					// after being stunned, wake up confused
 					this._type = ConditionType.CONFUSED;
-					this.nbTurns = Constants.AFTER_STUNNED_CONFUSION_DELAY;
+					this.time = Constants.AFTER_STUNNED_CONFUSION_DELAY;
 				} else {
 					return false;
 				}
@@ -102,15 +102,27 @@ module Game {
 	export class Ai implements Persistent {
 		className: string;
 		private conditions: Condition[];
+		// time until next turn.
+		private _waitTime: number = 0;
+		// time to make a step
+		private walkTime: number;
 
-		constructor() {
+		constructor(walkTime: number) {
 			this.className = "Ai";
+			this.walkTime = walkTime;
 		}
 
-		update(owner: Actor, map: Map) {
+		get waitTime() { return this._waitTime; }
+		set waitTime(newValue: number) { this._waitTime = newValue; }
+		isReady(): boolean {
+			return this._waitTime <= 0;
+		}
+
+		update(owner: Actor, map: Map, elapsedTime: number) {
+			this._waitTime -= elapsedTime;
 			var n: number = this.conditions ? this.conditions.length : 0;
 			for ( var i: number = 0; i < n; i++) {
-				if ( !this.conditions[i].update() ) {
+				if ( !this.conditions[i].update(elapsedTime) ) {
 					this.conditions.splice(i, 1);
 					i--;
 				}
@@ -185,6 +197,7 @@ module Game {
 			// move the creature
 			owner.x = x;
 			owner.y = y;
+			this._waitTime += this.walkTime;
 			return true;
 		}
 	}
@@ -195,8 +208,8 @@ module Game {
 	*/
 	export class PlayerAi extends Ai implements EventListener {
 		private lastAction: PlayerAction;
-		constructor() {
-			super();
+		constructor(walkTime: number) {
+			super(walkTime);
 			this.className = "PlayerAi";
 			EventBus.instance.registerListener(this, EventType.KEYBOARD_INPUT);
 		}
@@ -219,10 +232,10 @@ module Game {
 			Parameters:
 			owner - the actor owning this PlayerAi (obviously, the player)
 		*/
-		update(owner: Actor, map: Map) {
-			super.update(owner, map);
-			// don't update a dead actor
-			if ( owner.destructible && owner.destructible.isDead()) {
+		update(owner: Actor, map: Map, elapsedTime: number) {
+			super.update(owner, map, elapsedTime);
+			// don't update a not ready or dead actor
+			if ( ! this.isReady() || (owner.destructible && owner.destructible.isDead())) {
 				return;
 			}
 			// check movement keys
@@ -383,8 +396,8 @@ module Game {
 	export class MonsterAi extends Ai {
 		private __path: Yendor.Position[];
 		private static __pathFinder: Yendor.PathFinder;
-		constructor() {
-			super();
+		constructor(walkTime: number) {
+			super(walkTime);
 			this.className = "MonsterAi";
 		}
 
@@ -395,11 +408,11 @@ module Game {
 			owner - the actor owning this MonsterAi (the monster)
 			map - the game map (used to check player line of sight)
 		*/
-		update(owner: Actor, map: Map) {
-			super.update(owner, map);
+		update(owner: Actor, map: Map, elapsedTime: number) {
+			super.update(owner, map, elapsedTime);
 
 			// don't update a dead monster
-			if ( owner.destructible && owner.destructible.isDead()) {
+			if ( ! this.isReady() || (owner.destructible && owner.destructible.isDead())) {
 				return;
 			}
 			// attack the player when at melee range, else try to track his scent
@@ -588,7 +601,7 @@ module Game {
 
 		init(_x: number, _y: number, _ch: string, _name: string, _col: Yendor.Color) {
 			super.init(_x, _y, _ch, _name, "creature|human", _col);
-			this.ai = new PlayerAi();
+			this.ai = new PlayerAi(Constants.PLAYER_WALK_TIME);
 			// default unarmed damages : 3 hit points
 			this.attacker = new Attacker(3);
 			// player has 30 hit points
