@@ -397,7 +397,6 @@ module Game {
 						return;
 					} else if (this.listener) {
 						this.listener(this.tilePos);
-						EventBus.instance.publishEvent(new Event<GameStatus>(EventType.CHANGE_STATUS, GameStatus.NEW_TURN));
 					}
 				}
 				this.deactivate();
@@ -420,7 +419,6 @@ module Game {
 					case PlayerAction.VALIDATE:
 						if ( this.tileIsValid && this.listener ) {
 							this.listener(this.tilePos);
-							EventBus.instance.publishEvent(new Event<GameStatus>(EventType.CHANGE_STATUS, GameStatus.NEW_TURN));
 							this.deactivate();
 						}
 					break;

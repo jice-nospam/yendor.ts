@@ -105,7 +105,7 @@ module Game {
 		// time until next turn.
 		private _waitTime: number = 0;
 		// time to make a step
-		private walkTime: number;
+		protected walkTime: number;
 
 		constructor(walkTime: number) {
 			this.className = "Ai";
@@ -113,6 +113,7 @@ module Game {
 		}
 
 		get waitTime() { return this._waitTime; }
+		set waitTime(newValue: number) { this._waitTime = newValue; }
 
 		update(owner: Actor, map: Map) {
 			var n: number = this.conditions ? this.conditions.length : 0;
@@ -159,6 +160,7 @@ module Game {
 			true if the owner actually moved to the new cell
 		*/
 		protected moveOrAttack(owner: Actor, x: number, y: number, map: Map): boolean {
+			this.waitTime = this.walkTime;
 			if ( this.hasCondition(ConditionType.STUNNED)) {
 				return false;
 			}
@@ -192,7 +194,6 @@ module Game {
 			// move the creature
 			owner.x = x;
 			owner.y = y;
-			this._waitTime = this.walkTime;
 			return true;
 		}
 	}
@@ -202,12 +203,14 @@ module Game {
 		Handles player input. Determin if a new game turn must be started.
 	*/
 	export class PlayerAi extends Ai implements EventListener {
-		private lastAction: PlayerAction;
+		private _lastAction: PlayerAction;
 		constructor(walkTime: number) {
 			super(walkTime);
 			this.className = "PlayerAi";
 			EventBus.instance.registerListener(this, EventType.KEYBOARD_INPUT);
 		}
+
+		get lastAction() { return this._lastAction; }
 
 		/*
 			Function: processEvent
@@ -217,7 +220,11 @@ module Game {
 			action - the PlayerAction
 		*/
 		processEvent(event: Event<any>) {
-			this.lastAction = (<KeyInput>event.data).action;
+			this._lastAction = (<KeyInput>event.data).action;
+			// if ( this.waitTime <= 0 ) {
+			// 	ActorManager.instance.updatePlayer();
+			ActorManager.instance.resume();
+			// }
 		}
 
 		/*
@@ -231,34 +238,47 @@ module Game {
 			super.update(owner, map);
 			// don't update a dead actor
 			if ( owner.destructible && owner.destructible.isDead()) {
+				this._lastAction = undefined;
 				return;
 			}
-			// check movement keys
-			var move: Yendor.Position = convertActionToPosition(this.lastAction);
 			var newTurn: boolean = false;
-			if ( move.x === 0 && move.y === 0 ) {
-				if (this.lastAction === PlayerAction.WAIT ) {
-					this.waitTime = 1;
+			switch ( this._lastAction ) {
+				case PlayerAction.MOVE_NORTH :
+        		case PlayerAction.MOVE_SOUTH :
+        		case PlayerAction.MOVE_EAST :
+        		case PlayerAction.MOVE_WEST :
+        		case PlayerAction.MOVE_NW :
+        		case PlayerAction.MOVE_NE :
+        		case PlayerAction.MOVE_SW :
+        		case PlayerAction.MOVE_SE :
+        			var move: Yendor.Position = convertActionToPosition(this._lastAction);
 					newTurn = true;
-				} else {
+					// move to the target cell or attack if there's a creature
+					if ( this.moveOrAttack(owner, owner.x + move.x, owner.y + move.y, map) ) {
+						// the player actually move. Recompute the field of view
+						map.computeFov(owner.x, owner.y, Constants.FOV_RADIUS);
+					}
+				break;
+        		case PlayerAction.WAIT :
+        			newTurn = true;
+        		break;
+        		case PlayerAction.GRAB :
+        		case PlayerAction.USE_ITEM :
+        		case PlayerAction.DROP_ITEM :
+        		case PlayerAction.THROW_ITEM :
+        		case PlayerAction.FIRE :
+        		case PlayerAction.MOVE_UP :
+        		case PlayerAction.MOVE_DOWN :
 					if (! this.hasCondition(ConditionType.CONFUSED) && ! this.hasCondition(ConditionType.STUNNED)) {
 						this.handleAction(owner, map);
 					}
-				}
+				break;
 			}
-			if ( move.x !== 0 || move.y !== 0 )  {
-				this.waitTime = 1;
-				newTurn = true;
-				// move to the target cell or attack if there's a creature
-				if ( this.moveOrAttack(owner, owner.x + move.x, owner.y + move.y, map) ) {
-					// the player actually move. Recompute the field of view
-					map.computeFov(owner.x, owner.y, Constants.FOV_RADIUS);
-				}
-			}
-			this.lastAction = undefined;
+			this._lastAction = undefined;
 			if ( newTurn ) {
 				// the player moved or try to move. New game turn
-				EventBus.instance.publishEvent(new Event<GameStatus>(EventType.CHANGE_STATUS, GameStatus.NEW_TURN));
+				ActorManager.instance.resume();
+				this.waitTime = this.walkTime;
 			}
 		}
 
@@ -302,6 +322,8 @@ module Game {
 					} else {
 						log("There are no stairs going down here.");
 					}
+					ActorManager.instance.resume();
+					this.waitTime = this.walkTime;
 				break;
 				case PlayerAction.MOVE_UP :
 					var stairsUp: Actor = ActorManager.instance.getStairsUp();
@@ -310,6 +332,8 @@ module Game {
 					} else {
 						log("There are no stairs going up here.");
 					}
+					ActorManager.instance.resume();
+					this.waitTime = this.walkTime;
 				break;
 				case PlayerAction.USE_ITEM :
 					EventBus.instance.publishEvent(new Event<OpenInventoryEventData>(EventType.OPEN_INVENTORY,
@@ -353,23 +377,30 @@ module Game {
 			if (item.pickable) {
 				item.pickable.use(item, ActorManager.instance.getPlayer());
 			}
+			ActorManager.instance.resume();
+			this.waitTime = this.walkTime;
 		}
 
 		private dropItem(item: Actor) {
 			if ( item.pickable ) {
 				item.pickable.drop(item, ActorManager.instance.getPlayer());
 			}
+			ActorManager.instance.resume();
+			this.waitTime = this.walkTime;
 		}
 
 		private throwItem(item: Actor) {
 			if ( item.pickable ) {
 				item.pickable.throw(item, ActorManager.instance.getPlayer());
 			}
+			ActorManager.instance.resume();
+			this.waitTime = this.walkTime;
 		}
 
 		private pickupItem(owner: Actor, map: Map) {
 			var found: boolean = false;
-			EventBus.instance.publishEvent(new Event<GameStatus>(EventType.CHANGE_STATUS, GameStatus.NEW_TURN));
+			ActorManager.instance.resume();
+			this.waitTime = this.walkTime;
 			ActorManager.instance.getItems().some(function(item: Actor) {
 				if ( item.pickable && item.x === owner.x && item.y === owner.y ) {
 					found = true;
@@ -546,6 +577,8 @@ module Game {
 			var bestCell: Yendor.Position = this.findHighestScentCell(owner, map);
 			if ( bestCell ) {
 				this.moveToCell(owner, bestCell, map);
+			} else {
+				this.waitTime = this.walkTime;
 			}
 		}
 	}
@@ -619,8 +652,12 @@ module Game {
 			}
 		}
 
-		update(): Yendor.EntityUpdateResult {
-			return Yendor.EntityUpdateResult.PAUSE;
+		update() {
+			if ( (<PlayerAi>this.ai).lastAction ) {
+				this.ai.update(this, Map.instance);
+			} else {
+				ActorManager.instance.pause();
+			}
 		}
 
 		getaname(): string {

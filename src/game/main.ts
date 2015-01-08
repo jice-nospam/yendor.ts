@@ -162,11 +162,11 @@ module Game {
 					this.newLevel();
 					break;
 				case EventType.NEXT_LEVEL :
-					this.status = GameStatus.NEW_TURN;
+					this.status = GameStatus.STARTUP;
 					this.gotoNextLevel();
 					break;
 				case EventType.PREV_LEVEL :
-					this.status = GameStatus.NEW_TURN;
+					this.status = GameStatus.STARTUP;
 					this.gotoPrevLevel();
 					break;
 				case EventType.GAIN_XP :
@@ -258,14 +258,9 @@ module Game {
 			if (! Gui.getActiveModal() ) {
 				if ( !this.handleGlobalShortcuts(input) ) {
 					EventBus.instance.publishEvent(new Event<KeyInput>(EventType.KEYBOARD_INPUT, input));
-					ActorManager.instance.getPlayer().ai.update(ActorManager.instance.getPlayer(), this.map);
 				}
 			} else {
 				EventBus.instance.publishEvent(new Event<KeyInput>(EventType.KEYBOARD_INPUT, input));
-			}
-			if ( this.status === GameStatus.NEW_TURN )  {
-				ActorManager.instance.resume();
-				this.status = GameStatus.IDLE;
 			}
 		}
 
@@ -288,19 +283,18 @@ module Game {
 			time - elapsed time since the last frame in milliseconds
 		*/
 		handleNewFrame (time: number) {
-			var tickLength: number = 1.0 / Constants.TICKS_PER_SECOND;
 			this.gameTime += time;
 			if ( this.status === GameStatus.STARTUP ) {
-				ActorManager.instance.getPlayer().ai.update(ActorManager.instance.getPlayer(), this.map);
+				ActorManager.instance.updatePlayer();
 				this.status = GameStatus.IDLE;
 			} else {
-				while ( this.gameTime >= tickLength ) {
-					this.gameTime -= tickLength;
+				if ( this.gameTime >= Constants.TICK_LENGTH ) {
+					this.gameTime = 0;
 					this.handleNewTurn();
 				}
+				this.render();
+				root.render();
 			}
-			this.render();
-			root.render();
 		}
 
 		/*
@@ -324,10 +318,6 @@ module Game {
 		*/
 		handleMouseClick(event: JQueryMouseEventObject) {
 			EventBus.instance.publishEvent(new Event<MouseButton>( EventType.MOUSE_CLICK, <MouseButton>event.which));
-			if ( this.status === GameStatus.NEW_TURN )  {
-				ActorManager.instance.resume();
-				this.status = GameStatus.IDLE;
-			}
 		}
 
 		/*

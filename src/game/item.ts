@@ -247,7 +247,7 @@ module Game {
 			if ( wearer === ActorManager.instance.getPlayer()
 				&& this._targetSelector.method !== TargetSelectionMethod.SELECTED_RANGE
 				&& this._targetSelector.method !== TargetSelectionMethod.SELECTED_ACTOR ) {
-				EventBus.instance.publishEvent(new Event<GameStatus>(EventType.CHANGE_STATUS, GameStatus.NEW_TURN));
+				ActorManager.instance.resume();
 			}
 		}
 
@@ -351,7 +351,7 @@ module Game {
 				log(wearer.getThename() + " " + verb + wearer.getVerbEnd() + owner.getthename());
 			}
 			if ( verb === "drop") {
-				EventBus.instance.publishEvent(new Event<GameStatus>(EventType.CHANGE_STATUS, GameStatus.NEW_TURN));
+				ActorManager.instance.resume();
 			}
 		}
 
@@ -370,7 +370,7 @@ module Game {
 			}
 			if ( owner.equipment ) {
 				owner.equipment.use(owner, wearer);
-				EventBus.instance.publishEvent(new Event<GameStatus>(EventType.CHANGE_STATUS, GameStatus.NEW_TURN));
+				ActorManager.instance.resume();
 			}
 		}
 

@@ -19,6 +19,7 @@ module Benchmark {
 	interface Sample {
 		name: string;
 		render(root: Yendor.Console);
+		onKeyDown(event: KeyboardEvent);
 	}
 
 	var samples: Sample[] = [];
@@ -45,6 +46,7 @@ module Benchmark {
 				}
 			}
 		}
+		onKeyDown(event: KeyboardEvent) {}
 	}
 
 	class AStarSample implements Sample {
@@ -117,42 +119,104 @@ module Benchmark {
 				}
 			}
 		}
+		onKeyDown(event: KeyboardEvent) {}
 	}
 
 	class ScheduledEntity implements Yendor.TimedEntity {
 		waitTime: number = 0;
-		blinkDelay: number;
-		status: boolean = true;
-		constructor(blinkDelay: number) {
-			this.blinkDelay = blinkDelay;
+		turnLength: number;
+		position: number = 0;
+		char: string = "r";
+		constructor(turnLength: number) {
+			this.turnLength = turnLength;
 		}
-		update(): Yendor.EntityUpdateResult {
-			this.status = ! this.status;
-			this.waitTime = this.blinkDelay;
-			return Yendor.EntityUpdateResult.CONTINUE;
+		update() {
+			this.position ++;
+			if ( this.position === SAMPLE_SCREEN_WIDTH ) {
+				this.position = 0;
+			}
+			this.waitTime = this.turnLength;
 		}
 	}
-	class SchedulerSample implements Sample {
-		name: string = "Scheduler";
-		private scheduler: Yendor.Scheduler = new Yendor.Scheduler();
-		private entities: ScheduledEntity[] = [];
-		constructor() {
-			this.entities.push( new ScheduledEntity(1) );
+
+	class PlayerEntity extends ScheduledEntity {
+		move: boolean = false;
+		constructor(turnLength : number) {
+			super(turnLength);
+			this.char = "@";
+		}
+		update() {
+			if (this.move) {
+				super.update();
+				this.move = false;
+			}
+			this.waitTime = this.turnLength;
+		}
+	}
+	class AbstractSchedulerSample implements Sample {
+		name: string;
+		protected scheduler: Yendor.Scheduler = new Yendor.Scheduler();
+		protected entities: ScheduledEntity[] = [];
+		protected player: PlayerEntity;
+		protected init() {
 			this.entities.push( new ScheduledEntity(5) );
+			this.entities.push( new ScheduledEntity(10) );
 			this.entities.push( new ScheduledEntity(20) );
 			this.entities.push( new ScheduledEntity(50) );
+			this.entities.push( this.player );
 			this.scheduler.addAll(this.entities);
 		}
 		render(root: Yendor.Console) {
-			var x: number = 2;
-			root.clearBack("#000000", SAMPLE_SCREEN_X, SAMPLE_SCREEN_Y, SAMPLE_SCREEN_WIDTH, SAMPLE_SCREEN_HEIGHT);
+			var y: number = 2;
+			root.clearText();
+			root.print(SAMPLE_SCREEN_X, SAMPLE_SCREEN_Y + 15, "Press any key to move");
 			this.entities.forEach((entity: ScheduledEntity) => {
-				if ( entity.status ) {
-					root.clearBack("#FF0000", SAMPLE_SCREEN_X + x, SAMPLE_SCREEN_Y + 2, 5, 5);
-				}
-				x += 7;
+				root.setChar(SAMPLE_SCREEN_X + entity.position, SAMPLE_SCREEN_Y + y, entity.char);
+				y += 2;
 			});
 			this.scheduler.run();
+		}
+		onKeyDown(event: KeyboardEvent) {}
+	}
+
+	class RealTimeSchedulerSample extends AbstractSchedulerSample {
+		constructor() {
+			super();
+			this.name = "Scheduler (real time)";
+			this.player = new PlayerEntity(1);
+			this.init();
+		}
+		onKeyDown(event: KeyboardEvent) {
+			this.player.move = true;
+		}
+	}
+
+	class TurnByTurnPlayerEntity extends PlayerEntity {
+		scheduler : Yendor.Scheduler;
+		constructor(scheduler: Yendor.Scheduler) {
+			super(5);
+			this.scheduler = scheduler;
+		}
+		update() {
+			if ( this.move ) {
+				super.update();
+			} else {
+				// pause the scheduler to wait for a keypress
+				this.scheduler.pause();
+			}
+		}
+	}
+
+	class TurnByTurnSchedulerSample extends AbstractSchedulerSample {
+		constructor() {
+			super();
+			this.name = "Scheduler (turn by turn)";
+			this.player = new TurnByTurnPlayerEntity(this.scheduler);
+			this.init();
+		}
+		onKeyDown(event: KeyboardEvent) {
+			this.player.move = true;
+			this.scheduler.resume();
 		}
 	}
 
@@ -190,11 +254,14 @@ module Benchmark {
 		root = Yendor.createConsole( WIDTH, HEIGHT, "#ffffff", "#000000", "#console", "terminal.png" );
 		samples.push(new PerfSample());
 		samples.push(new AStarSample());
-		samples.push(new SchedulerSample());
+		samples.push(new RealTimeSchedulerSample());
+		samples.push(new TurnByTurnSchedulerSample());
 		$(document).keydown(function(event: KeyboardEvent) {
 			if ( event.keyCode === 40 ) {
 				// DOWN
 				root.clearText();
+				root.clearBack("#000000");
+				root.clearFore("#FFFFFF");
 				currentSampleIndex ++;
 				if (currentSampleIndex >= samples.length ) {
 					currentSampleIndex = 0;
@@ -202,10 +269,14 @@ module Benchmark {
 			} else if (event.keyCode === 38) {
 				// UP
 				root.clearText();
+				root.clearBack("#000000");
+				root.clearFore("#FFFFFF");
 				currentSampleIndex --;
 				if ( currentSampleIndex < 0 ) {
 					currentSampleIndex = samples.length - 1;
 				}
+			} else {
+				samples[currentSampleIndex].onKeyDown(event);
 			}
 		});
 		Yendor.loop(handleNewFrame);

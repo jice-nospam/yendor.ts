@@ -48,8 +48,9 @@ module Game {
 		// gameplay
         // how often the world is updated
         export var TICKS_PER_SECOND: number = 10;
+        export var TICK_LENGTH: number = 1.0 / Constants.TICKS_PER_SECOND;
 		export var SCENT_THRESHOLD: number = 10;
-        export var PLAYER_WALK_TIME: number = 10;
+        export var PLAYER_WALK_TIME: number = 5;
         // xp level required for level 1
         export var XP_BASE_LEVEL: number = 200;
         // xp level required for level n = BASE_LEVEL + n * NEW_LEVEL
@@ -76,8 +77,6 @@ module Game {
 		STARTUP,
         // new frame with no world update
 		IDLE,
-        // new frame with world update
-		NEW_TURN,
         // player won
 		VICTORY,
         // player died

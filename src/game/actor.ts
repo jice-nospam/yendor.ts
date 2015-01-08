@@ -185,11 +185,20 @@ module Game {
 			for ( var i: number = 0, len: number = this.creatures.length; i < len; ++i) {
 				var actor: Actor = this.creatures[i];
 				if ( actor.destructible && actor.destructible.isDead() ) {
-					// actor is dead. don't push it back to creatureQueue. move it to corpse list
+					// actor is dead. move it to corpse list
+					this.scheduler.remove(actor);
 					this.creatures.splice( this.creatures.indexOf(actor), 1);
+					i--;
+					len--;
 					this.corpses.push(actor);
 				}
 			}
+		}
+
+		updatePlayer() {
+			this.scheduler.remove(this.player);
+			this.player.ai.update(this.player, Map.instance);
+			this.scheduler.add(this.player);
 		}
 
 		resume() {
@@ -198,6 +207,10 @@ module Game {
 
 		pause() {
 			this.scheduler.pause();
+		}
+
+		isPaused() {
+			return this.scheduler.isPaused();
 		}
 
 		removeItem(item: Actor) {
@@ -225,6 +238,7 @@ module Game {
 
 		load(persister: Persister) {
 			this.creatures = persister.loadFromKey(Constants.PERSISTENCE_ACTORS_KEY);
+			this.scheduler.addAll(this.creatures);
 			this.player = <Player>this.creatures[0];
 			this.items = persister.loadFromKey(Constants.PERSISTENCE_ITEMS_KEY);
 			this.stairsUp = this.items[0];
@@ -810,11 +824,10 @@ module Game {
 			return desc;
 		}
 
-		update(): Yendor.EntityUpdateResult {
+		update() {
 			if ( this._ai ) {
 				this._ai.update(this, Map.instance);
 			}
-			return this.destructible && this.destructible.isDead() ? Yendor.EntityUpdateResult.REMOVE : Yendor.EntityUpdateResult.CONTINUE;
 		}
 
 		render() {

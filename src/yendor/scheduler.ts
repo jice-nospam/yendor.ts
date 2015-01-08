@@ -5,20 +5,6 @@ module Yendor {
 	"use strict";
 
 	/*
-		Enum: EntityUpdateResult
-		What to do after updating an entity
-
-		CONTINUE - put back the entity in the queue
-		REMOVE - stop scheduling this entity (typically when a creature dies)
-		PAUSE - stop updating entities (typically to wait for a keypress when it's the player's turn)
-	*/
-	export enum EntityUpdateResult {
-		CONTINUE,
-		REMOVE,
-		PAUSE
-	};
-
-	/*
 		Interface: TimedEntity
 		Something that must be updated every once in a while
 	*/
@@ -26,11 +12,8 @@ module Yendor {
 		/*
 			Function: update
 			Update the entity and set its new waitTime
-
-			Returns:
-			what to do next (see <EntityUpdateResult>)
 		*/
-		update(): EntityUpdateResult;
+		update();
 
 		/*
 			Property: waitTime
@@ -61,33 +44,42 @@ module Yendor {
 			this.entities.pushAll(entities);
 		}
 
+		remove(entity: TimedEntity) {
+			this.entities.remove(entity);
+		}
+
 		pause() {
 			this.paused = true;
 		}
 		resume() {
 			this.paused = false;
 		}
+		isPaused() {
+			return this.paused;
+		}
 		run() {
 			if ( this.paused || this.entities.isEmpty() ) {
 				return;
 			}
-			var entitiesToPush : TimedEntity[] = [];
-			do {
-				var entity: TimedEntity = this.entities.pop();
-				var result: EntityUpdateResult = EntityUpdateResult.CONTINUE;
-				entity.waitTime --;
-				if ( entity.waitTime <= 0 ) {
-					result = entity.update();
-				}
-				if (result !== EntityUpdateResult.REMOVE) {
-					entitiesToPush.push(entity);
-				}
-				if ( result === EntityUpdateResult.PAUSE ) {
-					this.pause();
+			// decrease all entities' wait time
+			for (var i: number = 0, len: number = this.entities.size(); i < len; ++i) {
+				this.entities.peek(i).waitTime --;
+			}
+			// update all entities with wait time <= 0
+			var updatedEntities: TimedEntity[] = [];
+			var entity: TimedEntity = this.entities.peek();
+			while ( entity && entity.waitTime <= 0 ) {
+				if ( updatedEntities.indexOf( entity ) !== -1 ) {
+					// safeguard in case an entity update doesn't reset its wait time
 					break;
 				}
-			} while (! this.entities.isEmpty());
-			this.entities.pushAll(entitiesToPush);
+				updatedEntities.push(entity);
+				this.entities.pop();
+				entity.update();
+				entity = this.entities.peek();
+			}
+			// push updated entities back to the heap
+			this.entities.pushAll(updatedEntities);
 		}
 	}
 }
