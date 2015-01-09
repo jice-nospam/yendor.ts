@@ -233,7 +233,7 @@ module Game {
 
 		createPlayer() {
 			this.player = Actor.createPlayer();
-			this.creatures.push(this.player);
+			this.addCreature(this.player);
 		}
 
 		load(persister: Persister) {
