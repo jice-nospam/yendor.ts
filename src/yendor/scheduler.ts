@@ -62,8 +62,11 @@ module Yendor {
 				return;
 			}
 			// decrease all entities' wait time
-			for (var i: number = 0, len: number = this.entities.size(); i < len; ++i) {
-				this.entities.peek(i).waitTime --;
+			var elapsed = this.entities.peek().waitTime;
+			if ( elapsed > 0 ) {
+				for (var i: number = 0, len: number = this.entities.size(); i < len; ++i) {
+					this.entities.peek(i).waitTime -= elapsed;
+				}
 			}
 			// update all entities with wait time <= 0
 			var updatedEntities: TimedEntity[] = [];
