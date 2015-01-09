@@ -152,7 +152,6 @@ module Yendor {
 			this.heuristicFunction = heuristicFunction ? heuristicFunction : Position.distance;
 			this.mapWidth = mapWidth;
 			this.mapHeight = mapHeight;
-			this.maxSteps = mapWidth * mapHeight / 4;
 		}
 
 		private pos2Offset(pos: Position): number {
@@ -193,6 +192,7 @@ module Yendor {
 			var fromOffset: number = this.pos2Offset(from);
 			gScore[fromOffset] = 0;
 			fScore[fromOffset] = gScore[fromOffset] + this.heuristicFunction(from, to);
+			this.maxSteps = fScore[fromOffset] * 10;
 			openSet.push(new Position(from.x, from.y));
 			var step: number = this.maxSteps;
 			while (openSet.size() > 0 && step > 0) {
