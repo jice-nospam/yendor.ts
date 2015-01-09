@@ -153,6 +153,7 @@ module Game {
 			this.creatures = [];
 			this.corpses = [];
 			this.items = [];
+			this.scheduler.clear();
 		}
 
 		private renderActorList(actors: Actor[], map: Map) {

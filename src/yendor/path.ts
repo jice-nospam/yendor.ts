@@ -28,6 +28,9 @@ module Yendor {
 		peek(index: number = 0): T {
 			return this.content.length > index ? this.content[index] : undefined;
 		}
+		clear() {
+			this.content = [];
+		}
 		pop(): T {
 			var result: T = this.content[0];
 			var end: T = this.content.pop();

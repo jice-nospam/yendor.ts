@@ -47,6 +47,9 @@ module Yendor {
 		remove(entity: TimedEntity) {
 			this.entities.remove(entity);
 		}
+		clear() {
+			this.entities.clear();
+		}
 
 		pause() {
 			this.paused = true;
