@@ -260,7 +260,7 @@ module Game {
 					EventBus.instance.publishEvent(new Event<KeyInput>(EventType.KEYBOARD_INPUT, input));
 				}
 			} else {
-				EventBus.instance.publishEvent(new Event<KeyInput>(EventType.KEYBOARD_INPUT, input));
+				Gui.getActiveModal().processEvent(new Event<KeyInput>(EventType.KEYBOARD_INPUT, input));
 			}
 		}
 

@@ -53,7 +53,7 @@ module Game {
 		}
 	}
 
-	export class Gui extends Yendor.Position {
+	export class Gui extends Yendor.Position implements EventListener {
 		private static activeModal: Gui;
 
 		private _width: number;
@@ -97,6 +97,8 @@ module Game {
 		get console() { return this.__console; }
 
 		clear() {}
+
+		processEvent( event: Event<any> ) {}
 
 		/*
 			Function: render
