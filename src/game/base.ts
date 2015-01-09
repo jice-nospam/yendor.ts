@@ -73,10 +73,8 @@ module Game {
 
 	}
 	export enum GameStatus {
-        // First frame
-		STARTUP,
-        // new frame with no world update
-		IDLE,
+        // game is running
+		RUNNING,
         // player won
 		VICTORY,
         // player died

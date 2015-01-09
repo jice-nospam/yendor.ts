@@ -32,7 +32,6 @@ module Game {
 		private gameTime : number = 0;
 
 		constructor() {
-			this.resetGame();
 			this.map = new Map();
 			this.initEventBus();
 			GuiManager.instance.createStatusPanel();
@@ -57,12 +56,8 @@ module Game {
 			EventBus.instance.registerListener(this, EventType.GAIN_XP);
 		}
 
-		private resetGame() {
-			ActorManager.instance.clear();
-			this.status = GameStatus.STARTUP;
-		}
-
 		private createNewGame() {
+			ActorManager.instance.clear();
 			ActorManager.instance.createStairs();
 			ActorManager.instance.createPlayer();
 			this.map.init( Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT );
@@ -76,6 +71,7 @@ module Game {
 			ActorManager.instance.addItem(Actor.createBow(player.x, player.y, "crossbow", 2, "bolt"));
 			ActorManager.instance.addItem(Actor.createMissile(player.x, player.y, "bone arrow", 1, "arrow"));
 			ActorManager.instance.addItem(Actor.createSword(player.x, player.y, "short sword", 3));
+			this.status = GameStatus.RUNNING;
 		}
 
 		private loadGame() {
@@ -83,6 +79,7 @@ module Game {
 			this.persister.loadFromKey(Constants.PERSISTENCE_MAP_KEY, this.map);
 			ActorManager.instance.load(this.persister);
 			this.persister.loadFromKey(Constants.STATUS_PANEL_ID, GuiManager.instance.getGui(Constants.STATUS_PANEL_ID));
+			this.status = GameStatus.RUNNING;
 		}
 
 		private saveGame() {
@@ -106,7 +103,6 @@ module Game {
 		}
 
 		private newLevel() {
-			this.resetGame();
 			this.createNewGame();
 			this.computePlayerFov();
 		}
@@ -117,7 +113,7 @@ module Game {
 		*/
 		private gotoNextLevel() {
 			this.dungeonLevel ++;
-			this.resetGame();
+			ActorManager.instance.clear();
 			ActorManager.instance.createStairs();
 			// don't reset the player
 			var player: Actor = ActorManager.instance.getPlayer();
@@ -162,11 +158,9 @@ module Game {
 					this.newLevel();
 					break;
 				case EventType.NEXT_LEVEL :
-					this.status = GameStatus.STARTUP;
 					this.gotoNextLevel();
 					break;
 				case EventType.PREV_LEVEL :
-					this.status = GameStatus.STARTUP;
 					this.gotoPrevLevel();
 					break;
 				case EventType.GAIN_XP :
@@ -284,17 +278,12 @@ module Game {
 		*/
 		handleNewFrame (time: number) {
 			this.gameTime += time;
-			if ( this.status === GameStatus.STARTUP ) {
-				ActorManager.instance.updatePlayer();
-				this.status = GameStatus.IDLE;
-			} else {
-				if ( this.gameTime >= Constants.TICK_LENGTH ) {
-					this.gameTime = 0;
-					this.handleNewTurn();
-				}
-				this.render();
-				root.render();
+			if ( this.gameTime >= Constants.TICK_LENGTH ) {
+				this.gameTime = 0;
+				this.handleNewTurn();
 			}
+			this.render();
+			root.render();
 		}
 
 		/*
