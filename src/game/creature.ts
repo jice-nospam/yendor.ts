@@ -370,6 +370,8 @@ module Game {
 				return;
 			}
 			weapon.ranged.fire(weapon, owner);
+			// TODO waitTime should depend on the weapon
+			this.waitTime = this.walkTime;
 		}
 
 		// inventory item listeners
