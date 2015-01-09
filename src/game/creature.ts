@@ -458,6 +458,7 @@ module Game {
 			map - the game map. Used to check if player is in sight
 		*/
 		searchPlayer(owner: Actor, map: Map) {
+			this.waitTime = this.walkTime;
 			if ( map.isInFov(owner.x, owner.y) ) {
 				// player is visible, go towards him
 				var player: Actor = ActorManager.instance.getPlayer();
