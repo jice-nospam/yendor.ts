@@ -480,11 +480,14 @@ module Game {
 		A generic popup menu
 	*/
 	export class Menu extends Gui implements EventListener {
-		items: MenuItem[];
-		activeItemIndex: number;
+		private items: MenuItem[];
+		private activeItemIndex: number;
 
 		constructor(items: MenuItem[] = [], x: number = -1, y: number = -1) {
 			this.items = items;
+			if ( items.length > 0 ) {
+				this.activeItemIndex = 0;
+			}
 			var maxWidth = this.computeWidth();
 			super(maxWidth, items.length + 2);
 			this.setModal();
