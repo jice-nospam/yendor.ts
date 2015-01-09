@@ -1,6 +1,13 @@
-# 0.2.1 / TBD
+# 0.3.0 / TBD
+* Yendor toolkit
+	- added timed entity Scheduler
+
 * GeneRogue
 	- weight based container capacity
+	- creatures speed
+
+* Benchmark
+	- turn by turn and real time scheduler samples
 
 # 0.2.0 / 01-jan-2015
 * Yendor toolkit

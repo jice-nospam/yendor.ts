@@ -2,7 +2,7 @@
 
 Yendor.ts is a [TypeScript](http://www.typescriptlang.org) API for roguelike developers. It provides a true color console, a robust random number generator, a field of view toolkit, and other utilities frequently used in roguelikes.
 
-It comes with a simple generic roguelike game to extend. 
+It comes with a simple generic roguelike game to extend and a benchmark showcasing some features. 
 
 # Features
 
@@ -11,6 +11,7 @@ It comes with a simple generic roguelike game to extend.
 * [CMWC random number generator](https://en.wikipedia.org/wiki/Multiply-with-carry#Complementary-multiply-with-carry_generators)
 * field of view toolkit using [restrictive precise angle shadowcasting](http://www.roguebasin.com/index.php?title=Restrictive_Precise_Angle_Shadowcasting)
 * [A* pathfinding](http://en.wikipedia.org/wiki/A*_search_algorithm) toolkit
+* a scheduler to handle the order in which creatures with different speed are updated
 
 # Quick Start
 
