@@ -121,6 +121,7 @@ module Game {
 				if ( !this.conditions[i].update() ) {
 					this.conditions.splice(i, 1);
 					i--;
+					n--;
 				}
 			}
 		}
