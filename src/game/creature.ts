@@ -222,7 +222,9 @@ module Game {
 		*/
 		processEvent(event: Event<any>) {
 			this._lastAction = (<KeyInput>event.data).action;
-			ActorManager.instance.resume();
+			if ( this._lastAction !== undefined) {
+				ActorManager.instance.resume();
+			}
 		}
 
 		/*
@@ -316,7 +318,7 @@ module Game {
 				case PlayerAction.MOVE_DOWN :
 					var stairsDown: Actor = ActorManager.instance.getStairsDown();
 					if ( stairsDown.x === owner.x && stairsDown.y === owner.y ) {
-						EventBus.instance.publishEvent(new Event<void>(EventType.NEXT_LEVEL) );
+						EventBus.instance.publishEvent(new Event<GameStatus>( EventType.CHANGE_STATUS, GameStatus.NEXT_LEVEL ));
 					} else {
 						log("There are no stairs going down here.");
 					}
@@ -325,10 +327,11 @@ module Game {
 				case PlayerAction.MOVE_UP :
 					var stairsUp: Actor = ActorManager.instance.getStairsUp();
 					if ( stairsUp.x === owner.x && stairsUp.y === owner.y ) {
-						EventBus.instance.publishEvent(new Event<void>(EventType.PREV_LEVEL) );
+						log("The stairs have collapsed. You can't go up anymore...");
 					} else {
 						log("There are no stairs going up here.");
 					}
+					this.waitTime += this.walkTime;
 					ActorManager.instance.resume();
 				break;
 				case PlayerAction.USE_ITEM :

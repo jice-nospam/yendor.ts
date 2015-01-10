@@ -51,8 +51,6 @@ module Game {
 			EventBus.instance.registerListener(this, EventType.CHANGE_STATUS);
 			EventBus.instance.registerListener(this, EventType.REMOVE_ACTOR);
 			EventBus.instance.registerListener(this, EventType.NEW_GAME);
-			EventBus.instance.registerListener(this, EventType.NEXT_LEVEL);
-			EventBus.instance.registerListener(this, EventType.PREV_LEVEL);
 			EventBus.instance.registerListener(this, EventType.GAIN_XP);
 		}
 
@@ -131,14 +129,6 @@ module Game {
 		}
 
 		/*
-			Function: gotoPrevLevel
-			Go up one level
-		*/
-		private gotoPrevLevel() {
-			log("The stairs have collapsed. You can't go up anymore...");
-		}
-
-		/*
 			Function: processEvent
 			Handle <CHANGE_STATUS> events (see <EventListener>)
 
@@ -155,12 +145,6 @@ module Game {
 					break;
 				case  EventType.NEW_GAME :
 					this.newGame();
-					break;
-				case EventType.NEXT_LEVEL :
-					this.gotoNextLevel();
-					break;
-				case EventType.PREV_LEVEL :
-					this.gotoPrevLevel();
 					break;
 				case EventType.GAIN_XP :
 					ActorManager.instance.getPlayer().addXp(event.data);
@@ -277,6 +261,10 @@ module Game {
 			time - elapsed time since the last frame in milliseconds
 		*/
 		handleNewFrame (time: number) {
+			if ( this.status === GameStatus.NEXT_LEVEL ) {
+				this.gotoNextLevel();
+				this.status = GameStatus.RUNNING;
+			}
 			this.gameTime += time;
 			if ( this.gameTime >= Constants.TICK_LENGTH ) {
 				// update the game only TICKS_PER_SECOND per second

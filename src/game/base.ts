@@ -73,6 +73,8 @@ module Game {
 
 	}
 	export enum GameStatus {
+        // go to next level
+        NEXT_LEVEL,
         // game is running
 		RUNNING,
         // player won
