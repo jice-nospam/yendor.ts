@@ -227,11 +227,11 @@ module Benchmark {
 			var sample: Sample = samples[i];
 			root.print(1, 40 + i, sample.name);
 			if ( i === currentSampleIndex ) {
-				root.clearBack("#323296", 1, 40 + i, 20, 1);
-				root.clearFore("#FFFFFF", 1, 40 + i, 20, 1);
+				root.clearBack("#323296", 0, 40 + i, 26, 1);
+				root.clearFore("#FFFFFF", 0, 40 + i, 26, 1);
 			} else {
-				root.clearBack("#000000", 1, 40 + i, 20, 1);
-				root.clearFore("#D0D0D0", 1, 40 + i, 20, 1);
+				root.clearBack("#000000", 0, 40 + i, 26, 1);
+				root.clearFore("#D0D0D0", 0, 40 + i, 26, 1);
 			}
 		}
 		root.print(1, 46, "fps : " + framesPerSecond);
