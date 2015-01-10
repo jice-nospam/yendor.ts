@@ -656,10 +656,10 @@ module Game {
 		}
 
 		update() {
-			if ( (<PlayerAi>this.ai).lastAction !== undefined ) {
-				this.ai.update(this, Map.instance);
-			} else {
+			if ( (<PlayerAi>this.ai).lastAction === undefined ) {
 				ActorManager.instance.pause();
+			} else {
+				this.ai.update(this, Map.instance);
 			}
 		}
 
