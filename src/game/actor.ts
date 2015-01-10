@@ -19,7 +19,7 @@ module Game {
 		>        blade
 		>        shield
 		>        ranged
-		>        missile
+		>        projectile
 		>        	arrow
 		>        	bolt
 	*/
@@ -831,12 +831,8 @@ module Game {
 		}
 
 		/********************************************************************************
-		 * Group: actor factories
+		 * Group: actor building helpers
 		 ********************************************************************************/
-
-		/*
-			item factories
-		*/
 
 		// potions
 		static createHealthPotion(x: number, y: number, amount: number): Actor {
@@ -899,24 +895,25 @@ module Game {
 			return sword;
 		}
 
-		static createBow(x: number, y: number, name: string, damages: number, missileTypeName: string, twoHanded: boolean = false): Actor {
+		static createBow(x: number, y: number, name: string, damages: number, projectileTypeName: string,
+			loadTime: number, twoHanded: boolean = false): Actor {
 			var bow = new Actor();
 			bow.init(x, y, ")", name, "weapon|ranged", "#F0F0F0", true);
 			bow.pickable = new Pickable(2);
 			bow.equipment = new Equipment(twoHanded ? Constants.SLOT_BOTH_HANDS : Constants.SLOT_RIGHT_HAND);
-			bow.ranged = new Ranged(damages, missileTypeName);
+			bow.ranged = new Ranged(damages, projectileTypeName, loadTime);
 			return bow;
 		}
 
-		static createMissile(x: number, y: number, name: string, damages: number, missileTypeName: string): Actor {
-			var missile = new Actor();
-			missile.init(x, y, "\\", name, "weapon|missile|" + missileTypeName, "#D0D0D0", true);
-			missile.pickable = new Pickable(0.1);
-			missile.pickable.setOnThrowEffect(new InstantHealthEffect(-damages,
+		static createProjectile(x: number, y: number, name: string, damages: number, projectileTypeName: string): Actor {
+			var projectile = new Actor();
+			projectile.init(x, y, "\\", name, "weapon|projectile|" + projectileTypeName, "#D0D0D0", true);
+			projectile.pickable = new Pickable(0.1);
+			projectile.pickable.setOnThrowEffect(new InstantHealthEffect(-damages,
 				"The " + name + " hits [the actor1] for [value1] points."),
 				new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL));
-			missile.equipment = new Equipment(Constants.SLOT_QUIVER);
-			return missile;
+			projectile.equipment = new Equipment(Constants.SLOT_QUIVER);
+			return projectile;
 		}
 
 		static createShield(x: number, y: number, name: string, defense: number): Actor {

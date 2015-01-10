@@ -354,7 +354,7 @@ module Game {
 
 		/*
 			Function: fire
-			Fire a missile using a ranged weapon.
+			Fire a projectile using a ranged weapon.
 		*/
 		private fire(owner: Actor) {
 			var weapon: Actor = owner.container.getFromSlot(Constants.SLOT_RIGHT_HAND);
@@ -369,8 +369,8 @@ module Game {
 				return;
 			}
 			weapon.ranged.fire(weapon, owner);
-			// TODO waitTime should depend on the weapon
-			this.waitTime += this.walkTime;
+			// note : this time is spent before you select the target. loading the projectile takes time
+			this.waitTime += weapon.ranged.loadTime;
 		}
 
 		// inventory item listeners

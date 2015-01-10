@@ -128,17 +128,17 @@ module Game {
 			} else if ( item === "confusionScroll") {
 				return Actor.createConfusionScroll(x, y, 5, 12);
 			} else if ( item === "bone arrow") {
-				return Actor.createMissile(x, y, "bone arrow", 1, "arrow");
+				return Actor.createProjectile(x, y, "bone arrow", 1, "arrow");
 			} else if ( item === "iron arrow") {
-				return Actor.createMissile(x, y, "iron arrow", 1.5, "arrow");
+				return Actor.createProjectile(x, y, "iron arrow", 1.5, "arrow");
 			} else if ( item === "bolt") {
-				return Actor.createMissile(x, y, "bolt", 1, "bolt");
+				return Actor.createProjectile(x, y, "bolt", 1, "bolt");
 			} else if ( item === "short bow") {
-				return Actor.createBow(x, y, "short bow", 3, "arrow", true);
+				return Actor.createBow(x, y, "short bow", 3, "arrow", 2, true);
 			} else if ( item === "long bow") {
-				return Actor.createBow(x, y, "long bow", 5, "arrow", true);
+				return Actor.createBow(x, y, "long bow", 5, "arrow", 6, true);
 			} else if ( item === "crossbow") {
-				return Actor.createBow(x, y, "crossbow", 2, "bolt");
+				return Actor.createBow(x, y, "crossbow", 2, "bolt", 5);
 			} else if ( item === "short sword") {
 				return Actor.createSword(x, y, "short sword", 4);
 			} else if ( item === "wooden shield") {

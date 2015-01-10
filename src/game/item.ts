@@ -479,12 +479,15 @@ module Game {
 
 	/*
 		class: Ranged
-		an item that throws other items. It's basically a shortcut to throw missile items with added damages.
+		an item that throws other items. It's basically a shortcut to throw projectile items with added damages.
 		For example instead of [t]hrowing an arrow by hand, you equip a bow and [f]ire it. The result is the same
-		except that the arrow will deal more damages. The same arrow will deal different damages depending on 
-		the bow you use.
-		A ranged weapon can throw several type of missiles (for example dwarven and elven arrows). 
-		The missileType property makes it possible to look for an adequate item in the inventory.
+		except that :
+		- the arrow will deal more damages
+		- the action will take more time because you need time to load the projectile on the weapon
+
+		The same arrow will deal different damages depending on the bow you use.
+		A ranged weapon can throw several type of projectiles (for example dwarven and elven arrows). 
+		The projectileType property makes it possible to look for an adequate item in the inventory.
 		If a compatible type is equipped (on quiver), it will be used. Else the first compatible item will be used.
 		So far, the weapon has no impact on the range but this could be done easily.
 	*/
@@ -492,47 +495,55 @@ module Game {
 		className: string;
 		/*
 			Property: damageCoef
-			Damage multiplicator when using this weapon to fire a missile.
+			Damage multiplicator when using this weapon to fire a projectile.
 		*/
-		damageCoef: number;
+		private damageCoef: number;
 		/*
-			Property: missileType
+			Property: projectileType
 			The actor type that this weapon can fire.
 		*/
-		missileType: ActorType;
-		constructor(damageCoef: number, missileTypeName: string) {
+		private projectileType: ActorType;
+		/*
+			Property: loadTime
+			Time to load this weapon with a projectile
+		*/
+		private _loadTime: number;
+		constructor(damageCoef: number, projectileTypeName: string, loadTime: number) {
 			this.className = "Ranged";
 			this.damageCoef = damageCoef;
-			this.missileType  = ActorType.buildTypeHierarchy("weapon|missile|" + missileTypeName);
+			this.projectileType  = ActorType.buildTypeHierarchy("weapon|projectile|" + projectileTypeName);
+			this._loadTime = loadTime;
 		}
 
+		get loadTime() { return this._loadTime; }
+
 		fire(owner: Actor, wearer: Actor) {
-			var missile: Actor;
+			var projectile: Actor;
 			if ( wearer.container ) {
-				// if a missile type is selected (equipped in quiver), use it
-				missile = wearer.container.getFromSlot(Constants.SLOT_QUIVER);
-				if (! missile || ! missile.isA(this.missileType)) {
-					// else use the first compatible missile
-					missile = undefined;
+				// if a projectile type is selected (equipped in quiver), use it
+				projectile = wearer.container.getFromSlot(Constants.SLOT_QUIVER);
+				if (! projectile || ! projectile.isA(this.projectileType)) {
+					// else use the first compatible projectile
+					projectile = undefined;
 					var n: number = wearer.container.size();
 					for ( var i: number = 0; i < n; ++i) {
 						var item: Actor = wearer.container.get(i);
-						if ( item.isA(this.missileType)) {
-							missile = item;
+						if ( item.isA(this.projectileType)) {
+							projectile = item;
 							break;
 						}
 					}
 				}
 			}
-			if (! missile) {
-				// no missile found. cannot fire
+			if (! projectile) {
+				// no projectile found. cannot fire
 				if ( wearer === ActorManager.instance.getPlayer()) {
-					log("No " + this.missileType.name + " available.", "#FF0000");
+					log("No " + this.projectileType.name + " available.", "#FF0000");
 					return;
 				}
 			}
-			log(transformMessage("[The actor1] fire[s] [a actor2].", wearer, missile));
-			missile.pickable.throw(missile, wearer, true, this.damageCoef);
+			log(transformMessage("[The actor1] fire[s] [a actor2].", wearer, projectile));
+			projectile.pickable.throw(projectile, wearer, true, this.damageCoef);
 		}
 	}
 }
