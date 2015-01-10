@@ -502,7 +502,7 @@ module Game {
 			Property: projectileType
 			The actor type that this weapon can fire.
 		*/
-		private projectileType: ActorType;
+		private projectileType: ActorClass;
 		/*
 			Property: loadTime
 			Time to load this weapon with a projectile
@@ -511,7 +511,7 @@ module Game {
 		constructor(damageCoef: number, projectileTypeName: string, loadTime: number) {
 			this.className = "Ranged";
 			this.damageCoef = damageCoef;
-			this.projectileType  = ActorType.buildTypeHierarchy("weapon|projectile|" + projectileTypeName);
+			this.projectileType  = ActorClass.buildClassHierarchy("weapon|projectile|" + projectileTypeName);
 			this._loadTime = loadTime;
 		}
 

@@ -84,73 +84,35 @@ module Game {
 		}
 
 		private createMonster(x: number, y: number, rng: Yendor.Random) {
+			var probabilities: { [index: string]: number; } = {};
+			probabilities[ActorType.GOBLIN] = 60;
+			probabilities[ActorType.ORC] = 30;
 			// no trolls before level 3. then probability 10/(60+30+10)=0.1 until level 5, 
 			// 20/(60+30+20)=0.18 until level 7 and 30/(60+30+30)=0.23 beyond
-			var monster = rng.getRandomChance({
-				"goblin": 60,
-				"orc": 30,
-				"troll": this.getValueForDungeon([[3, 10], [5, 20], [7, 30]])
-			});
-			if ( monster === "goblin" ) {
-				return Actor.createBeast(x, y, "g", "goblin", "goblin corpse", "#3F7F3F", 3, 1, 0, 10, 4);
-			} else if ( monster === "orc" ) {
-				return Actor.createBeast(x, y, "o", "orc", "dead orc", "#3F7F3F", 9, 2, 0, 35, 5);
-			} else if ( monster === "troll" ) {
-				return Actor.createBeast(x, y, "T", "troll", "troll carcass", "#007F00", 15, 3, 1, 100, 6);
-			}
-			return undefined;
+			probabilities[ActorType.TROLL] = this.getValueForDungeon([[3, 10], [5, 20], [7, 30]]);
+			var monster = rng.getRandomChance(probabilities);
+			return ActorFactory.create(monster, x, y);
 		}
 
 		private createItem(x: number, y: number, rng: Yendor.Random) {
-			var item = rng.getRandomChance({
-				"healthPotion": 40,
-				"lightningBoltScroll": this.getValueForDungeon([[3, 10]]),
-				"fireballScroll": 10,
-				"confusionScroll": 10,
-				"bone arrow": 10,
-				"iron arrow": 10,
-				"bolt": 10,
-				"short bow": this.getValueForDungeon([[5, 4]]),
-				"long bow": this.getValueForDungeon([[8, 4]]),
-				"crossbow": this.getValueForDungeon([[5, 4]]),
-				"short sword": this.getValueForDungeon([[5, 4], [12, 0]]),
-				"wooden shield": this.getValueForDungeon([[8, 8], [12, 0]]),
-				"longsword": this.getValueForDungeon([[10, 4]]),
-				"iron shield": this.getValueForDungeon([[14, 8]]),
-				"greatsword": this.getValueForDungeon([[14, 4]])
-			});
-			if ( item === "healthPotion" ) {
-				return Actor.createHealthPotion(x, y, 4);
-			} else if ( item === "lightningBoltScroll" ) {
-				return Actor.createLightningBoltScroll(x, y, 5, 20);
-			} else if ( item === "fireballScroll" ) {
-				return Actor.createFireballScroll(x, y, 3, 12);
-			} else if ( item === "confusionScroll") {
-				return Actor.createConfusionScroll(x, y, 5, 12);
-			} else if ( item === "bone arrow") {
-				return Actor.createProjectile(x, y, "bone arrow", 1, "arrow");
-			} else if ( item === "iron arrow") {
-				return Actor.createProjectile(x, y, "iron arrow", 1.5, "arrow");
-			} else if ( item === "bolt") {
-				return Actor.createProjectile(x, y, "bolt", 1, "bolt");
-			} else if ( item === "short bow") {
-				return Actor.createBow(x, y, "short bow", 3, "arrow", 2, true);
-			} else if ( item === "long bow") {
-				return Actor.createBow(x, y, "long bow", 5, "arrow", 6, true);
-			} else if ( item === "crossbow") {
-				return Actor.createBow(x, y, "crossbow", 2, "bolt", 5);
-			} else if ( item === "short sword") {
-				return Actor.createSword(x, y, "short sword", 4);
-			} else if ( item === "wooden shield") {
-				return Actor.createShield(x, y, "wooden shield", 1);
-			} else if ( item === "longsword") {
-				return Actor.createSword(x, y, "longsword", 6);
-			} else if ( item === "iron shield") {
-				return Actor.createShield(x, y, "iron shield", 2);
-			} else if ( item === "greatsword") {
-				return Actor.createSword(x, y, "greatsword", 8, true);
-			}
-			return undefined;
+			var probabilities: { [index: string]: number; } = {};
+			probabilities[ActorType.HEALTH_POTION] = 40;
+			probabilities[ActorType.LIGHTNING_BOLT_SCROLL] = this.getValueForDungeon([[3, 10]]);
+			probabilities[ActorType.FIREBALL_SCROLL] = 10;
+			probabilities[ActorType.CONFUSION_SCROLL] = 10;
+			probabilities[ActorType.BONE_ARROW] = 10;
+			probabilities[ActorType.IRON_ARROW] = 10;
+			probabilities[ActorType.BOLT] = 10;
+			probabilities[ActorType.SHORT_BOW] = this.getValueForDungeon([[5, 4]]);
+			probabilities[ActorType.LONG_BOW] = this.getValueForDungeon([[8, 4]]);
+			probabilities[ActorType.CROSSBOW] = this.getValueForDungeon([[5, 4]]);
+			probabilities[ActorType.SHORT_SWORD] = this.getValueForDungeon([[5, 4], [12, 0]]);
+			probabilities[ActorType.WOODEN_SHIELD] = this.getValueForDungeon([[8, 8], [12, 0]]);
+			probabilities[ActorType.LONG_SWORD] = this.getValueForDungeon([[10, 4]]);
+			probabilities[ActorType.IRON_SHIELD] = this.getValueForDungeon([[14, 8]]);
+			probabilities[ActorType.GREAT_SWORD] = this.getValueForDungeon([[14, 4]]);
+			var item = rng.getRandomChance(probabilities);
+			return ActorFactory.create(item, x, y);
 		}
 
 		private createMonsters(x1: number, y1: number, x2: number, y2: number, rng: Yendor.Random, map: Map) {

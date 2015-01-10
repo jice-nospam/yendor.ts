@@ -160,10 +160,10 @@ module Benchmark {
 		protected entities: ScheduledEntity[] = [];
 		protected player: PlayerEntity;
 		protected init() {
+			this.entities.push( new ScheduledEntity(4) );
 			this.entities.push( new ScheduledEntity(5) );
 			this.entities.push( new ScheduledEntity(6) );
-			this.entities.push( new ScheduledEntity(4) );
-			this.entities.push( new ScheduledEntity(50) );
+			this.entities.push( new ScheduledEntity(10) );
 			this.entities.push( this.player );
 			this.scheduler.addAll(this.entities);
 		}
@@ -184,7 +184,7 @@ module Benchmark {
 		constructor() {
 			super();
 			this.name = "Scheduler (real time)";
-			this.player = new PlayerEntity(1);
+			this.player = new PlayerEntity(5);
 			this.init();
 		}
 		onKeyDown(event: KeyboardEvent) {

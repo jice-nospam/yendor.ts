@@ -18,7 +18,7 @@ module Game {
 		to keep the game from trying to load data with an old format.
 		This should be an integer.
 	*/
-	var VERSION: string = "1";
+	var VERSION: string = "2";
 
 	/*
 		Class: Engine
@@ -64,11 +64,11 @@ module Game {
 
 			// this helps debugging items
 			var player: Actor = ActorManager.instance.getPlayer();
-			ActorManager.instance.addItem(Actor.createBow(player.x, player.y, "short bow", 3, "arrow", 2, true));
-			ActorManager.instance.addItem(Actor.createShield(player.x, player.y, "wooden shield", 1));
-			ActorManager.instance.addItem(Actor.createBow(player.x, player.y, "crossbow", 2, "bolt", 5));
-			ActorManager.instance.addItem(Actor.createProjectile(player.x, player.y, "bone arrow", 1, "arrow"));
-			ActorManager.instance.addItem(Actor.createSword(player.x, player.y, "short sword", 3));
+			ActorManager.instance.addItem(ActorFactory.create(ActorType.SHORT_BOW, player.x, player.y));
+			ActorManager.instance.addItem(ActorFactory.create(ActorType.WOODEN_SHIELD, player.x, player.y));
+			ActorManager.instance.addItem(ActorFactory.create(ActorType.CROSSBOW, player.x, player.y));
+			ActorManager.instance.addItem(ActorFactory.create(ActorType.BONE_ARROW, player.x, player.y));
+			ActorManager.instance.addItem(ActorFactory.create(ActorType.SHORT_SWORD, player.x, player.y));
 			this.status = GameStatus.RUNNING;
 		}
 

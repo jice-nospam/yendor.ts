@@ -3,12 +3,15 @@
 */
 module Game {
 	"use strict";
+	/********************************************************************************
+	 * Group: classes, types and factory
+	 ********************************************************************************/
 
 	/*
-		class: ActorType
-		This stores a type hierarchy for all actors in the game.
-		ActorType.getRootType() is the root type that encompasses all actors.
-		Current type hierarchy is :
+		class: ActorClass
+		This stores a class hierarchy for all actors in the game.
+		ActorClass.getRoot() is the root class that encompasses all actors.
+		Current class hierarchy is :
 		> root
 		>    creature
 		>        beast
@@ -23,83 +26,308 @@ module Game {
 		>        	arrow
 		>        	bolt
 	*/
-	export class ActorType implements Persistent {
+	export class ActorClass implements Persistent {
 		className: string;
 		_name: string;
-		father: ActorType;
-		private static actorTypes: ActorType[] = [];
-		private static rootType: ActorType = new ActorType("root");
+		father: ActorClass;
+		private static actorTypes: ActorClass[] = [];
+		private static rootClass: ActorClass = new ActorClass("root");
 		/*
 			constructor
-			To be used internally only. Typescript does not allow private constructors yet.
+			To be used internally only. Typescript does not allow private constructors yet. Classes must be built using <buildClassHierarchy>.
 		*/
-		constructor(name: string, father?: ActorType) {
-			this.className = "ActorType";
+		constructor(name: string, father?: ActorClass) {
+			this.className = "ActorClass";
 			this._name = name;
-			this.father = father ? father : ActorType.rootType;
-			ActorType.actorTypes.push(this);
+			this.father = father ? father : ActorClass.rootClass;
+			ActorClass.actorTypes.push(this);
 		}
 
 		get name() { return this._name; }
 
-		static getRootType(): ActorType {
-			return ActorType.rootType;
+		static getRoot(): ActorClass {
+			return ActorClass.rootClass;
 		}
 
 		/*
-			Function: getActorType
-			Returns: the ActorType with given name or undefined if unknown
+			Function: getActorClass
+			Returns: the ActorClass with given name or undefined if unknown
 		*/
-		static getActorType(name: string): ActorType {
-			var n: number = ActorType.actorTypes.length;
+		static getActorClass(name: string): ActorClass {
+			var n: number = ActorClass.actorTypes.length;
 			for ( var i = 0; i < n; ++i ) {
-				if ( ActorType.actorTypes[i]._name === name ) {
-					return ActorType.actorTypes[i];
+				if ( ActorClass.actorTypes[i]._name === name ) {
+					return ActorClass.actorTypes[i];
 				}
 			}
 			return undefined;
 		}
 
 		/*
-			Function: buildTypeHierarchy
-			Create a hierarchy of actor types and return the last type.
-			For example buildTypeHierarchy("weapon|blade|sword") will return a "sword" actor type, 
-			creating every type in the hierarchy that doesn't exist yet.
+			Function: buildClassHierarchy
+			Create a hierarchy of actor classes and return the last class.
+			For example buildClassHierarchy("weapon|blade|sword") will return a "sword" actor class, 
+			creating every class in the hierarchy that doesn't exist yet.
 
 			Parameters:
-				types - list of type names separated with a pipe "|"
+				classes - list of class names separated with a pipe "|"
 			Returns:
-				the last type of the list, creating missing types in the hierarchy
+				the last class of the list, creating missing classes in the hierarchy
 		*/
-		static buildTypeHierarchy(types: string): ActorType {
-			var typeArray: string[] = types.split("|");
-			var n: number = typeArray.length;
-			var currentType: ActorType = ActorType.rootType;
+		static buildClassHierarchy(classes: string): ActorClass {
+			var classArray: string[] = classes.split("|");
+			var n: number = classArray.length;
+			var currentClass: ActorClass = ActorClass.rootClass;
 			for ( var i = 0; i < n; ++i ) {
-				var newType = ActorType.getActorType(typeArray[i]);
-				if (!newType) {
-					newType = new ActorType(typeArray[i], currentType);
+				var newClass = ActorClass.getActorClass(classArray[i]);
+				if (!newClass) {
+					newClass = new ActorClass(classArray[i], currentClass);
 				}
-				currentType = newType;
+				currentClass = newClass;
 			}
-			return currentType;
+			return currentClass;
 		}
 
 		/*
 			Function: isA
 			Return true if this is a type
 		*/
-		isA(type: ActorType): boolean {
+		isA(type: ActorClass): boolean {
 			if ( this._name === type._name ) {
 				return true;
 			}
-			if ( this.father._name === ActorType.rootType._name ) {
+			if ( this.father._name === ActorClass.rootClass._name ) {
 				return false;
 			}
 			return this.father.isA(type);
 		}
 	}
 
+	/*
+		Enum: ActorType
+		String enum for all the actors existing in the game.
+	*/
+	export var ActorType = {
+		// creature
+		// 		beast
+		GOBLIN: "goblin",
+		ORC: "orc",
+		TROLL: "troll",
+		// 		human
+		PLAYER: "player",
+		// potion
+		HEALTH_POTION: "healthPotion",
+		// scroll
+		LIGHTNING_BOLT_SCROLL: "lightningBoltScroll",
+		FIREBALL_SCROLL: "fireballScroll",
+		CONFUSION_SCROLL: "confusionScroll",
+		// weapon
+		// 		blade
+		SHORT_SWORD: "shortSword",
+		LONG_SWORD: "longSword",
+		GREAT_SWORD: "greatSword",
+		// 		shield
+		WOODEN_SHIELD: "woodenShield",
+		IRON_SHIELD: "ironShield",
+		// 		ranged
+		SHORT_BOW: "shortBow",
+		LONG_BOW: "longBow",
+		CROSSBOW: "crossbow",
+		// 		projectile
+		// 			arrow	
+		BONE_ARROW: "boneArrow",
+		IRON_ARROW: "ironArrow",
+		// 			bolt
+		BOLT: "bolt",
+		// miscellaneous (under root class)
+		STAIR_UP: "stairUp",
+		STAIR_DOWN: "stairDown"
+	};
+
+	/*
+		Class: ActorFactory
+		Built an actor.
+	*/
+	export class ActorFactory {
+		/*
+			Function: create
+			Create an actor of given type
+
+			Parameters:
+			type - the <ActorType>
+			x - the actor x coordinate (default 0)
+			y - the actor y coordinate (default 0)
+		*/
+		static create(type: string, x: number = 0, y: number = 0): Actor {
+			if ( type === ActorType.GOBLIN ) {
+				return ActorFactory.createBeast(x, y, "g", "goblin", "goblin corpse", "#3F7F3F", 3, 1, 0, 10, 4);
+			} else if ( type === ActorType.ORC ) {
+				return ActorFactory.createBeast(x, y, "o", "orc", "dead orc", "#3F7F3F", 9, 2, 0, 35, 5);
+			} else if ( type === ActorType.TROLL ) {
+				return ActorFactory.createBeast(x, y, "T", "troll", "troll carcass", "#007F00", 15, 3, 1, 100, 6);
+			} else if ( type === ActorType.PLAYER ) {
+				return ActorFactory.createPlayer();
+			} else if ( type === ActorType.HEALTH_POTION ) {
+				return ActorFactory.createHealthPotion(x, y, 4);
+			} else if ( type === ActorType.LIGHTNING_BOLT_SCROLL ) {
+				return ActorFactory.createLightningBoltScroll(x, y, 5, 20);
+			} else if ( type === ActorType.FIREBALL_SCROLL ) {
+				return ActorFactory.createFireballScroll(x, y, 3, 12);
+			} else if ( type === ActorType.CONFUSION_SCROLL) {
+				return ActorFactory.createConfusionScroll(x, y, 5, 12);
+			} else if ( type === ActorType.BONE_ARROW) {
+				return ActorFactory.createProjectile(x, y, "bone arrow", 1, "arrow");
+			} else if ( type === ActorType.IRON_ARROW) {
+				return ActorFactory.createProjectile(x, y, "iron arrow", 1.5, "arrow");
+			} else if ( type === ActorType.BOLT) {
+				return ActorFactory.createProjectile(x, y, "bolt", 1, "bolt");
+			} else if ( type === ActorType.SHORT_BOW) {
+				return ActorFactory.createBow(x, y, "short bow", 3, "arrow", 2, true);
+			} else if ( type === ActorType.LONG_BOW) {
+				return ActorFactory.createBow(x, y, "long bow", 5, "arrow", 6, true);
+			} else if ( type === ActorType.CROSSBOW) {
+				return ActorFactory.createBow(x, y, "crossbow", 2, "bolt", 5);
+			} else if ( type === ActorType.SHORT_SWORD) {
+				return ActorFactory.createSword(x, y, "short sword", 4);
+			} else if ( type === ActorType.WOODEN_SHIELD) {
+				return ActorFactory.createShield(x, y, "wooden shield", 1);
+			} else if ( type === ActorType.LONG_SWORD) {
+				return ActorFactory.createSword(x, y, "longsword", 6);
+			} else if ( type === ActorType.IRON_SHIELD) {
+				return ActorFactory.createShield(x, y, "iron shield", 2);
+			} else if ( type === ActorType.GREAT_SWORD) {
+				return ActorFactory.createSword(x, y, "greatsword", 8, true);
+			} else if ( type === ActorType.STAIR_UP) {
+				return ActorFactory.createStairs("<", "up");
+			} else if ( type === ActorType.STAIR_DOWN) {
+				return ActorFactory.createStairs(">", "down");
+			}
+			log("ERROR : unknown actor type " + type, "#FF0000");
+			return undefined;
+		}
+
+		// potions
+		private static createHealthPotion(x: number, y: number, amount: number): Actor {
+			var healthPotion = new Actor();
+			healthPotion.init(x, y, "!", "health potion", "potion", "#800080", true);
+			healthPotion.pickable = new Pickable(0.5);
+			healthPotion.pickable.setOnUseEffect(new InstantHealthEffect(amount,
+				"[The actor1] drink[s] the health potion and regain[s] [value1] hit points.",
+				"[The actor1] drink[s] the health potion but it has no effect"),
+				new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL ));
+			healthPotion.pickable.setOnThrowEffect(new InstantHealthEffect(amount,
+				"The potion explodes on [the actor1], healing [it] for [value1] hit points.",
+				"The potion explodes on [the actor1] but it has no effect"),
+				new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL ));
+			return healthPotion;
+		}
+
+		// scrolls
+		private static createLightningBoltScroll(x: number, y: number, range: number, damages: number): Actor {
+			var lightningBolt = new Actor();
+			lightningBolt.init(x, y, "#", "scroll of lightning bolt", "scroll", "#FFFF3F", true);
+			lightningBolt.pickable = new Pickable(0.1);
+			lightningBolt.pickable.setOnUseEffect(new InstantHealthEffect(-damages,
+				"A lightning bolt strikes [the actor1] with a loud thunder!\nThe damage is [value1] hit points."),
+				new TargetSelector( TargetSelectionMethod.CLOSEST_ENEMY, range));
+			return lightningBolt;
+		}
+
+		private static createFireballScroll(x: number, y: number, range: number, damages: number): Actor {
+			var fireball = new Actor();
+			fireball.init(x, y, "#", "scroll of fireball", "scroll", "#FFFF3F", true);
+			fireball.pickable = new Pickable(0.1);
+			fireball.pickable.setOnUseEffect(new InstantHealthEffect(-damages,
+				"[The actor1] get[s] burned for [value1] hit points."),
+				new TargetSelector( TargetSelectionMethod.SELECTED_RANGE, range),
+				"A fireball explodes, burning everything within " + range + " tiles.");
+			return fireball;
+		}
+
+		private static createConfusionScroll(x: number, y: number, range: number, nbTurns: number): Actor {
+			var confusionScroll = new Actor();
+			confusionScroll.init(x, y, "#", "scroll of confusion", "scroll", "#FFFF3F", true);
+			confusionScroll.pickable = new Pickable(0.1);
+			confusionScroll.pickable.setOnUseEffect(new ConditionEffect(ConditionType.CONFUSED, nbTurns,
+				"[The actor1's] eyes look vacant,\nas [it] start[s] to stumble around!"),
+				new TargetSelector( TargetSelectionMethod.SELECTED_ACTOR, range));
+			return confusionScroll;
+		}
+
+		// weapons
+		private static createSword(x: number, y: number, name: string, damages: number, twoHanded: boolean = false): Actor {
+			var sword = new Actor();
+			sword.init(x, y, "/", name, "weapon|blade", "#F0F0F0", true);
+			sword.pickable = new Pickable(3);
+			sword.pickable.setOnThrowEffect(new InstantHealthEffect(-damages,
+				"The sword hits [the actor1] for [value1] hit points."),
+				new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL ));
+
+			sword.equipment = new Equipment(twoHanded ? Constants.SLOT_BOTH_HANDS : Constants.SLOT_RIGHT_HAND, damages);
+			return sword;
+		}
+
+		private static createBow(x: number, y: number, name: string, damages: number, projectileTypeName: string,
+			loadTime: number, twoHanded: boolean = false): Actor {
+			var bow = new Actor();
+			bow.init(x, y, ")", name, "weapon|ranged", "#F0F0F0", true);
+			bow.pickable = new Pickable(2);
+			bow.equipment = new Equipment(twoHanded ? Constants.SLOT_BOTH_HANDS : Constants.SLOT_RIGHT_HAND);
+			bow.ranged = new Ranged(damages, projectileTypeName, loadTime);
+			return bow;
+		}
+
+		private static createProjectile(x: number, y: number, name: string, damages: number, projectileTypeName: string): Actor {
+			var projectile = new Actor();
+			projectile.init(x, y, "\\", name, "weapon|projectile|" + projectileTypeName, "#D0D0D0", true);
+			projectile.pickable = new Pickable(0.1);
+			projectile.pickable.setOnThrowEffect(new InstantHealthEffect(-damages,
+				"The " + name + " hits [the actor1] for [value1] points."),
+				new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL));
+			projectile.equipment = new Equipment(Constants.SLOT_QUIVER);
+			return projectile;
+		}
+
+		private static createShield(x: number, y: number, name: string, defense: number): Actor {
+			var shield = new Actor();
+			shield.init(x, y, "[", name, "weapon|shield", "#F0F0F0", true);
+			shield.pickable = new Pickable(5);
+			shield.pickable.setOnThrowEffect(new ConditionEffect(ConditionType.STUNNED, 2,
+				"The shield hits [the actor1] and stuns [it]!"),
+				new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL));
+			shield.equipment = new Equipment(Constants.SLOT_LEFT_HAND, 0, defense);
+			return shield;
+		}
+
+		// miscellaneous
+		private static createStairs(character: string, direction: string): Actor {
+			var stairs: Actor = new Actor();
+			stairs.init(0, 0, character, "stairs " + direction, undefined, "#FFFFFF", false);
+			stairs.fovOnly = false;
+			return stairs;
+		}
+
+		/*
+			creature factories
+		*/
+		private static createBeast(x: number, y: number, character: string, name: string, corpseName: string, color: string,
+			hp: number, attack: number, defense: number, xp: number, walkTime: number): Actor {
+			var beast: Actor = new Actor();
+			beast.init(x, y, character, name, "creature|beast", color, true);
+			beast.destructible = new MonsterDestructible(hp, defense, corpseName);
+			beast.attacker = new Attacker(attack);
+			beast.ai = new MonsterAi(walkTime);
+			beast.blocks = true;
+			beast.destructible.xp = xp;
+			return beast;
+		}
+
+		private static createPlayer(): Player {
+			var player = new Player();
+			player.init(0, 0, "@", "player", "#FFFFFF");
+			return player;
+		}
+	}
 	/*
 		Class: ActorManager
 		Stores all the actors in the game.
@@ -220,14 +448,14 @@ module Game {
 			Create the actors for up and down stairs. The position is not important, actors will be placed by the dungeon builder.
 		*/
 		createStairs() {
-			this.stairsUp = Actor.createStairs("<", "up");
-			this.stairsDown = Actor.createStairs(">", "down");
+			this.stairsUp = ActorFactory.create(ActorType.STAIR_UP);
+			this.stairsDown = ActorFactory.create(ActorType.STAIR_DOWN);
 			this.items.push(this.stairsUp);
 			this.items.push(this.stairsDown);
 		}
 
 		createPlayer() {
-			this.player = Actor.createPlayer();
+			this.player = <Player>ActorFactory.create(ActorType.PLAYER);
 			this.addCreature(this.player);
 		}
 
@@ -624,7 +852,7 @@ module Game {
 	 */
 	export class Actor extends Yendor.Position implements Persistent, Yendor.TimedEntity {
 		className: string;
-		private _type: ActorType;
+		private _type: ActorClass;
 		// the symbol representing this actor on the map
 		private _ch: string;
 		// the name to be used by mouse look or the inventory screen
@@ -666,7 +894,7 @@ module Game {
 			this._name = _name;
 			this._col = _col;
 			this._singular = singular;
-			this._type = types ? ActorType.buildTypeHierarchy(types) : ActorType.getRootType();
+			this._type = types ? ActorClass.buildClassHierarchy(types) : ActorClass.getRoot();
 		}
 
 		get waitTime() { return this.ai ? this.ai.waitTime : undefined ; }
@@ -676,7 +904,7 @@ module Game {
 			}
 		}
 
-		isA(type: ActorType): boolean {
+		isA(type: ActorClass): boolean {
 			return this._type.isA(type);
 		}
 
@@ -828,132 +1056,6 @@ module Game {
 		render() {
 			root.setChar( this.x, this.y, this._ch );
 			root.fore[this.x][this.y] = this._col;
-		}
-
-		/********************************************************************************
-		 * Group: actor building helpers
-		 ********************************************************************************/
-
-		// potions
-		static createHealthPotion(x: number, y: number, amount: number): Actor {
-			var healthPotion = new Actor();
-			healthPotion.init(x, y, "!", "health potion", "potion", "#800080", true);
-			healthPotion.pickable = new Pickable(0.5);
-			healthPotion.pickable.setOnUseEffect(new InstantHealthEffect(amount,
-				"[The actor1] drink[s] the health potion and regain[s] [value1] hit points.",
-				"[The actor1] drink[s] the health potion but it has no effect"),
-				new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL ));
-			healthPotion.pickable.setOnThrowEffect(new InstantHealthEffect(amount,
-				"The potion explodes on [the actor1], healing [it] for [value1] hit points.",
-				"The potion explodes on [the actor1] but it has no effect"),
-				new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL ));
-			return healthPotion;
-		}
-
-		// scrolls
-		static createLightningBoltScroll(x: number, y: number, range: number, damages: number): Actor {
-			var lightningBolt = new Actor();
-			lightningBolt.init(x, y, "#", "scroll of lightning bolt", "scroll", "#FFFF3F", true);
-			lightningBolt.pickable = new Pickable(0.1);
-			lightningBolt.pickable.setOnUseEffect(new InstantHealthEffect(-damages,
-				"A lightning bolt strikes [the actor1] with a loud thunder!\nThe damage is [value1] hit points."),
-				new TargetSelector( TargetSelectionMethod.CLOSEST_ENEMY, range));
-			return lightningBolt;
-		}
-
-		static createFireballScroll(x: number, y: number, range: number, damages: number): Actor {
-			var fireball = new Actor();
-			fireball.init(x, y, "#", "scroll of fireball", "scroll", "#FFFF3F", true);
-			fireball.pickable = new Pickable(0.1);
-			fireball.pickable.setOnUseEffect(new InstantHealthEffect(-damages,
-				"[The actor1] get[s] burned for [value1] hit points."),
-				new TargetSelector( TargetSelectionMethod.SELECTED_RANGE, range),
-				"A fireball explodes, burning everything within " + range + " tiles.");
-			return fireball;
-		}
-
-		static createConfusionScroll(x: number, y: number, range: number, nbTurns: number): Actor {
-			var confusionScroll = new Actor();
-			confusionScroll.init(x, y, "#", "scroll of confusion", "scroll", "#FFFF3F", true);
-			confusionScroll.pickable = new Pickable(0.1);
-			confusionScroll.pickable.setOnUseEffect(new ConditionEffect(ConditionType.CONFUSED, nbTurns,
-				"[The actor1's] eyes look vacant,\nas [it] start[s] to stumble around!"),
-				new TargetSelector( TargetSelectionMethod.SELECTED_ACTOR, range));
-			return confusionScroll;
-		}
-
-		// weapons
-		static createSword(x: number, y: number, name: string, damages: number, twoHanded: boolean = false): Actor {
-			var sword = new Actor();
-			sword.init(x, y, "/", name, "weapon|blade", "#F0F0F0", true);
-			sword.pickable = new Pickable(3);
-			sword.pickable.setOnThrowEffect(new InstantHealthEffect(-damages,
-				"The sword hits [the actor1] for [value1] hit points."),
-				new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL ));
-
-			sword.equipment = new Equipment(twoHanded ? Constants.SLOT_BOTH_HANDS : Constants.SLOT_RIGHT_HAND, damages);
-			return sword;
-		}
-
-		static createBow(x: number, y: number, name: string, damages: number, projectileTypeName: string,
-			loadTime: number, twoHanded: boolean = false): Actor {
-			var bow = new Actor();
-			bow.init(x, y, ")", name, "weapon|ranged", "#F0F0F0", true);
-			bow.pickable = new Pickable(2);
-			bow.equipment = new Equipment(twoHanded ? Constants.SLOT_BOTH_HANDS : Constants.SLOT_RIGHT_HAND);
-			bow.ranged = new Ranged(damages, projectileTypeName, loadTime);
-			return bow;
-		}
-
-		static createProjectile(x: number, y: number, name: string, damages: number, projectileTypeName: string): Actor {
-			var projectile = new Actor();
-			projectile.init(x, y, "\\", name, "weapon|projectile|" + projectileTypeName, "#D0D0D0", true);
-			projectile.pickable = new Pickable(0.1);
-			projectile.pickable.setOnThrowEffect(new InstantHealthEffect(-damages,
-				"The " + name + " hits [the actor1] for [value1] points."),
-				new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL));
-			projectile.equipment = new Equipment(Constants.SLOT_QUIVER);
-			return projectile;
-		}
-
-		static createShield(x: number, y: number, name: string, defense: number): Actor {
-			var shield = new Actor();
-			shield.init(x, y, "[", name, "weapon|shield", "#F0F0F0", true);
-			shield.pickable = new Pickable(5);
-			shield.pickable.setOnThrowEffect(new ConditionEffect(ConditionType.STUNNED, 2,
-				"The shield hits [the actor1] and stuns [it]!"),
-				new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL));
-			shield.equipment = new Equipment(Constants.SLOT_LEFT_HAND, 0, defense);
-			return shield;
-		}
-
-		// miscellaneous
-		static createStairs(character: string, direction: string): Actor {
-			var stairs: Actor = new Actor();
-			stairs.init(0, 0, character, "stairs " + direction, undefined, "#FFFFFF", false);
-			stairs.fovOnly = false;
-			return stairs;
-		}
-
-		/*
-			creature factories
-		*/
-		static createBeast(x: number, y: number, character: string, name: string, corpseName: string, color: string,
-			hp: number, attack: number, defense: number, xp: number, walkTime: number): Actor {
-			var beast: Actor = new Actor();
-			beast.init(x, y, character, name, "creature|beast", color, true);
-			beast.destructible = new MonsterDestructible(hp, defense, corpseName);
-			beast.attacker = new Attacker(attack);
-			beast.ai = new MonsterAi(walkTime);
-			beast.blocks = true;
-			beast.destructible.xp = xp;
-			return beast;
-		}
-
-		static createPlayer(): Player {
-			var player = new Player();
-			player.init(0, 0, "@", "player", "#FFFFFF");
-			return player;
 		}
 	}
 }
