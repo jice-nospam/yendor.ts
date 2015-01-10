@@ -102,7 +102,9 @@ module Game {
 			this.map.computeFov(ActorManager.instance.getPlayer().x, ActorManager.instance.getPlayer().y, Constants.FOV_RADIUS);
 		}
 
-		private newLevel() {
+		private newGame() {
+			GuiManager.instance.getGui(Constants.STATUS_PANEL_ID ).clear();
+			this.dungeonLevel = 1;
 			this.createNewGame();
 			this.computePlayerFov();
 		}
@@ -149,13 +151,10 @@ module Game {
 					this.status = event.data;
 					break;
 				case EventType.REMOVE_ACTOR :
-					var item: Actor = event.data;
-					ActorManager.instance.removeItem(item);
+					ActorManager.instance.removeItem(<Actor>event.data);
 					break;
 				case  EventType.NEW_GAME :
-					GuiManager.instance.getGui(Constants.STATUS_PANEL_ID ).clear();
-					this.dungeonLevel = 1;
-					this.newLevel();
+					this.newGame();
 					break;
 				case EventType.NEXT_LEVEL :
 					this.gotoNextLevel();
@@ -254,6 +253,7 @@ module Game {
 					EventBus.instance.publishEvent(new Event<KeyInput>(EventType.KEYBOARD_INPUT, input));
 				}
 			} else {
+				// modal gui captures all key events
 				Gui.getActiveModal().processEvent(new Event<KeyInput>(EventType.KEYBOARD_INPUT, input));
 			}
 		}
@@ -279,9 +279,11 @@ module Game {
 		handleNewFrame (time: number) {
 			this.gameTime += time;
 			if ( this.gameTime >= Constants.TICK_LENGTH ) {
+				// update the game only TICKS_PER_SECOND per second
 				this.gameTime = 0;
 				this.handleNewTurn();
 			}
+			// but render every frame to allow background animations (torch flickering, ...)
 			this.render();
 			root.render();
 		}

@@ -18,7 +18,7 @@ module Game {
 		>    weapon
 		>        blade
 		>        shield
-		>        bow
+		>        ranged
 		>        missile
 		>        	arrow
 		>        	bolt
@@ -907,7 +907,7 @@ module Game {
 
 		static createBow(x: number, y: number, name: string, damages: number, missileTypeName: string, twoHanded: boolean = false): Actor {
 			var bow = new Actor();
-			bow.init(x, y, ")", name, "weapon|bow", "#F0F0F0", true);
+			bow.init(x, y, ")", name, "weapon|ranged", "#F0F0F0", true);
 			bow.pickable = new Pickable(2);
 			bow.equipment = new Equipment(twoHanded ? Constants.SLOT_BOTH_HANDS : Constants.SLOT_RIGHT_HAND);
 			bow.ranged = new Ranged(damages, missileTypeName);

@@ -14,6 +14,7 @@ module Game {
 		}
 
 		protected dig( map: Map, x1: number, y1: number, x2: number, y2: number ) {
+			// sort coordinates
 			if ( x2 < x1 ) {
 				var tmp: number = x2;
 				x2 = x1;
@@ -24,6 +25,20 @@ module Game {
 				y2 = y1;
 				y1 = tmp2;
 			}
+			// never dig on map border
+			if ( x1 === 0 ) {
+				x1 = 1;
+			}
+			if ( y1 === 0 ) {
+				y1 = 1;
+			}
+			if ( x2 === map.width - 1) {
+				x2--;
+			}
+			if ( y2 === map.height - 1) {
+				y2--;
+			}
+			// dig
 			for (var tilex: number = x1; tilex <= x2; tilex++) {
 				for (var tiley: number = y1; tiley <= y2; tiley++) {
 					map.setFloor(tilex, tiley);
@@ -165,43 +180,44 @@ module Game {
 	}
 
 	export class BspDungeonBuilder extends AbstractDungeonBuilder {
-		private roomNum: number = 0;
 		private lastx: number;
 		private lasty: number;
 		constructor(dungeonLevel: number) {
 			super(dungeonLevel);
 		}
 
-		private visitNode: (node: Yendor.BSPNode, userData: any) => Yendor.BSPTraversalAction
-			= function(node: Yendor.BSPNode, userData: any) {
-			var dungeonBuilder: BspDungeonBuilder = userData[0];
-			var map: Map = userData[1];
+		private createRandomRoom(node: Yendor.BSPNode, map: Map) {
+			var x, y, w, h: number;
+			var rng: Yendor.Random = new Yendor.ComplementaryMultiplyWithCarryRandom();
+			var firstRoom: boolean = (this.lastx === undefined);
+			w = rng.getNumber(Constants.ROOM_MIN_SIZE, node.w);
+			h = rng.getNumber(Constants.ROOM_MIN_SIZE, node.h);
+			x = rng.getNumber(node.x, node.x + node.w - w);
+			y = rng.getNumber(node.y, node.y + node.h - h);
+			this.createRoom( map, firstRoom, x, y, x + w - 1, y + h - 1 );
+			if ( ! firstRoom ) {
+				// build a corridor from previous room
+				this.dig(map, this.lastx, this.lasty,
+					Math.floor(x + w / 2), this.lasty);
+				this.dig(map, Math.floor(x + w / 2), this.lasty,
+					Math.floor(x + w / 2), Math.floor(y + h / 2));
+			}
+			this.lastx = Math.floor(x + w / 2);
+			this.lasty = Math.floor(y + h / 2);
+		}
+
+		private visitNode(node: Yendor.BSPNode, userData: any): Yendor.BSPTraversalAction {
+			var map: Map = <Map>userData;
 			if ( node.isLeaf() ) {
-				var x, y, w, h: number;
-				var rng: Yendor.Random = new Yendor.ComplementaryMultiplyWithCarryRandom();
-				w = rng.getNumber(Constants.ROOM_MIN_SIZE, node.w);
-				h = rng.getNumber(Constants.ROOM_MIN_SIZE, node.h);
-				x = rng.getNumber(node.x, node.x + node.w - w);
-				y = rng.getNumber(node.y, node.y + node.h - h);
-				dungeonBuilder.createRoom( map, dungeonBuilder.roomNum === 0, x, y, x + w - 1, y + h - 1 );
-				if ( dungeonBuilder.roomNum !== 0 ) {
-					// build a corridor from previous room
-					dungeonBuilder.dig(map, dungeonBuilder.lastx, dungeonBuilder.lasty,
-						Math.floor(x + w / 2), dungeonBuilder.lasty);
-					dungeonBuilder.dig(map, Math.floor(x + w / 2), dungeonBuilder.lasty,
-						Math.floor(x + w / 2), Math.floor(y + h / 2));
-				}
-				dungeonBuilder.lastx = Math.floor(x + w / 2);
-				dungeonBuilder.lasty = Math.floor(y + h / 2);
-				dungeonBuilder.roomNum++;
+				this.createRandomRoom(node, map);
 			}
 			return Yendor.BSPTraversalAction.CONTINUE;
-		};
+		}
 
 		build(map : Map) {
 			var bsp: Yendor.BSPNode = new Yendor.BSPNode( 0, 0, map.width, map.height );
 			bsp.splitRecursive(undefined, 8, Constants.ROOM_MIN_SIZE, 1.5 );
-			bsp.traverseInvertedLevelOrder( this.visitNode, [this, map] );
+			bsp.traverseInvertedLevelOrder( this.visitNode.bind(this), map );
 		}
 	}
 
