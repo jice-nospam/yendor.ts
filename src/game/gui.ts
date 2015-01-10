@@ -332,6 +332,9 @@ module Game {
 				this.console.clearBack(Constants.INVENTORY_BACKGROUND_ACTIVE, 0, y, -1, 1);
 				this.console.clearFore(Constants.INVENTORY_FOREGROUND_ACTIVE, 0, y, -1, 1);
 			}
+			if ( item.equipment && item.equipment.isEquipped() ) {
+				this.console.clearBack(Constants.INVENTORY_BACKGROUND_EQUIPPED, 5, y, 3, 1);
+			}
 			this.console.fore[6][y] = item.col;
 		}
 

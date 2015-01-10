@@ -27,6 +27,7 @@ module Game {
         export var INVENTORY_BACKGROUND_ACTIVE: Yendor.Color = "#383830";
         export var INVENTORY_FOREGROUND: Yendor.Color = "#FD971F";
         export var INVENTORY_FOREGROUND_ACTIVE: Yendor.Color = "#FFDF90";
+        export var INVENTORY_BACKGROUND_EQUIPPED: Yendor.Color = "#585850";
 
         // gui
         export var STATUS_PANEL_ID: string = "statusPanel";
