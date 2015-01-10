@@ -196,12 +196,6 @@ module Game {
 			}
 		}
 
-		updatePlayer() {
-			this.scheduler.remove(this.player);
-			this.player.ai.update(this.player, Map.instance);
-			this.scheduler.add(this.player);
-		}
-
 		resume() {
 			this.scheduler.resume();
 		}
@@ -599,7 +593,7 @@ module Game {
 	 	*/
 	 	add(actor: Actor) {
 	 		var weight: number = this.computeTotalWeight();
-	 		if ( actor.pickable.weight + weight >= this._capacity ) {
+	 		if ( actor.pickable.weight + weight > this._capacity ) {
 	 			return false;
 	 		}
 	 		this.actors.push( actor );

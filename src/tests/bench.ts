@@ -135,7 +135,7 @@ module Benchmark {
 			if ( this.position === SAMPLE_SCREEN_WIDTH ) {
 				this.position = 0;
 			}
-			this.waitTime = this.turnLength;
+			this.waitTime += this.turnLength;
 		}
 	}
 
@@ -149,8 +149,9 @@ module Benchmark {
 			if (this.move) {
 				super.update();
 				this.move = false;
+			} else {
+				this.waitTime += this.turnLength;
 			}
-			this.waitTime = this.turnLength;
 		}
 	}
 	class AbstractSchedulerSample implements Sample {
@@ -160,8 +161,8 @@ module Benchmark {
 		protected player: PlayerEntity;
 		protected init() {
 			this.entities.push( new ScheduledEntity(5) );
-			this.entities.push( new ScheduledEntity(10) );
-			this.entities.push( new ScheduledEntity(20) );
+			this.entities.push( new ScheduledEntity(6) );
+			this.entities.push( new ScheduledEntity(4) );
 			this.entities.push( new ScheduledEntity(50) );
 			this.entities.push( this.player );
 			this.scheduler.addAll(this.entities);

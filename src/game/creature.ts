@@ -160,7 +160,6 @@ module Game {
 			true if the owner actually moved to the new cell
 		*/
 		protected moveOrAttack(owner: Actor, x: number, y: number, map: Map): boolean {
-			this.waitTime = this.walkTime;
 			if ( this.hasCondition(ConditionType.STUNNED)) {
 				return false;
 			}
@@ -183,6 +182,7 @@ module Game {
 				var actor: Actor = actors[i];
 				if ( actor.destructible && ! actor.destructible.isDead() ) {
 					// attack the first living actor found on the cell
+					// TODO attacking time depends on the weapon used
 					owner.attacker.attack( owner, actor );
 					return false;
 				}
@@ -221,10 +221,7 @@ module Game {
 		*/
 		processEvent(event: Event<any>) {
 			this._lastAction = (<KeyInput>event.data).action;
-			// if ( this.waitTime <= 0 ) {
-			// 	ActorManager.instance.updatePlayer();
 			ActorManager.instance.resume();
-			// }
 		}
 
 		/*
@@ -278,7 +275,7 @@ module Game {
 			if ( newTurn ) {
 				// the player moved or try to move. New game turn
 				ActorManager.instance.resume();
-				this.waitTime = this.walkTime;
+				this.waitTime += this.walkTime;
 			}
 		}
 
@@ -323,7 +320,6 @@ module Game {
 						log("There are no stairs going down here.");
 					}
 					ActorManager.instance.resume();
-					this.waitTime = this.walkTime;
 				break;
 				case PlayerAction.MOVE_UP :
 					var stairsUp: Actor = ActorManager.instance.getStairsUp();
@@ -333,7 +329,6 @@ module Game {
 						log("There are no stairs going up here.");
 					}
 					ActorManager.instance.resume();
-					this.waitTime = this.walkTime;
 				break;
 				case PlayerAction.USE_ITEM :
 					EventBus.instance.publishEvent(new Event<OpenInventoryEventData>(EventType.OPEN_INVENTORY,
@@ -371,7 +366,7 @@ module Game {
 			}
 			weapon.ranged.fire(weapon, owner);
 			// TODO waitTime should depend on the weapon
-			this.waitTime = this.walkTime;
+			this.waitTime += this.walkTime;
 		}
 
 		// inventory item listeners
@@ -380,7 +375,7 @@ module Game {
 				item.pickable.use(item, ActorManager.instance.getPlayer());
 			}
 			ActorManager.instance.resume();
-			this.waitTime = this.walkTime;
+			this.waitTime += this.walkTime;
 		}
 
 		private dropItem(item: Actor) {
@@ -388,7 +383,7 @@ module Game {
 				item.pickable.drop(item, ActorManager.instance.getPlayer());
 			}
 			ActorManager.instance.resume();
-			this.waitTime = this.walkTime;
+			this.waitTime += this.walkTime;
 		}
 
 		private throwItem(item: Actor) {
@@ -396,13 +391,13 @@ module Game {
 				item.pickable.throw(item, ActorManager.instance.getPlayer());
 			}
 			ActorManager.instance.resume();
-			this.waitTime = this.walkTime;
+			this.waitTime += this.walkTime;
 		}
 
 		private pickupItem(owner: Actor, map: Map) {
 			var found: boolean = false;
 			ActorManager.instance.resume();
-			this.waitTime = this.walkTime;
+			this.waitTime += this.walkTime;
 			ActorManager.instance.getItems().some(function(item: Actor) {
 				if ( item.pickable && item.x === owner.x && item.y === owner.y ) {
 					found = true;
@@ -458,7 +453,7 @@ module Game {
 			map - the game map. Used to check if player is in sight
 		*/
 		searchPlayer(owner: Actor, map: Map) {
-			this.waitTime = this.walkTime;
+			this.waitTime += this.walkTime;
 			if ( map.isInFov(owner.x, owner.y) ) {
 				// player is visible, go towards him
 				var player: Actor = ActorManager.instance.getPlayer();
@@ -580,8 +575,6 @@ module Game {
 			var bestCell: Yendor.Position = this.findHighestScentCell(owner, map);
 			if ( bestCell ) {
 				this.moveToCell(owner, bestCell, map);
-			} else {
-				this.waitTime = this.walkTime;
 			}
 		}
 	}
