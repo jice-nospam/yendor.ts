@@ -11,7 +11,8 @@ module Yendor {
 	export interface TimedEntity {
 		/*
 			Function: update
-			Update the entity and set its new waitTime
+			Update the entity and set its new waitTime.
+			Any call to update MUST increase waitTime to keep the creature from locking the scheduler.
 		*/
 		update();
 
@@ -75,13 +76,14 @@ module Yendor {
 			var updatedEntities: TimedEntity[] = [];
 			var entity: TimedEntity = this.entities.peek();
 			while ( entity && entity.waitTime <= 0 ) {
-				if ( updatedEntities.indexOf( entity ) !== -1 ) {
-					// safeguard in case an entity update doesn't reset its wait time
-					break;
-				}
 				updatedEntities.push(entity);
 				this.entities.pop();
+				var oldWaitTime = entity.waitTime;
 				entity.update();
+				if ( entity.waitTime <= oldWaitTime ) {
+					// enforce waitTime to avoid deadlock
+					entity.waitTime = oldWaitTime + 1;
+				}
 				entity = this.entities.peek();
 			}
 			// push updated entities back to the heap
