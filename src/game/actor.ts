@@ -107,41 +107,42 @@ module Game {
 		Enum: ActorType
 		String enum for all the actors existing in the game.
 	*/
-	export var ActorType = {
+	// TODO use standard enum
+	export enum ActorType {
 		// creature
 		// 		beast
-		GOBLIN: "goblin",
-		ORC: "orc",
-		TROLL: "troll",
+		GOBLIN,
+		ORC,
+		TROLL,
 		// 		human
-		PLAYER: "player",
+		PLAYER,
 		// potion
-		HEALTH_POTION: "healthPotion",
+		HEALTH_POTION,
 		// scroll
-		LIGHTNING_BOLT_SCROLL: "lightningBoltScroll",
-		FIREBALL_SCROLL: "fireballScroll",
-		CONFUSION_SCROLL: "confusionScroll",
+		LIGHTNING_BOLT_SCROLL,
+		FIREBALL_SCROLL,
+		CONFUSION_SCROLL,
 		// weapon
 		// 		blade
-		SHORT_SWORD: "shortSword",
-		LONG_SWORD: "longSword",
-		GREAT_SWORD: "greatSword",
+		SHORT_SWORD,
+		LONG_SWORD,
+		GREAT_SWORD,
 		// 		shield
-		WOODEN_SHIELD: "woodenShield",
-		IRON_SHIELD: "ironShield",
+		WOODEN_SHIELD,
+		IRON_SHIELD,
 		// 		ranged
-		SHORT_BOW: "shortBow",
-		LONG_BOW: "longBow",
-		CROSSBOW: "crossbow",
+		SHORT_BOW,
+		LONG_BOW,
+		CROSSBOW,
 		// 		projectile
 		// 			arrow	
-		BONE_ARROW: "boneArrow",
-		IRON_ARROW: "ironArrow",
+		BONE_ARROW,
+		IRON_ARROW,
 		// 			bolt
-		BOLT: "bolt",
+		BOLT,
 		// miscellaneous (under root class)
-		STAIR_UP: "stairUp",
-		STAIR_DOWN: "stairDown"
+		STAIR_UP,
+		STAIR_DOWN
 	};
 
 	/*
@@ -149,6 +150,42 @@ module Game {
 		Built an actor.
 	*/
 	export class ActorFactory {
+		private static builders: { [index: string]: (x: number, y: number) => Actor } = {
+			// creature
+			// 		beast
+			GOBLIN: (x: number, y: number) => { return ActorFactory.createBeast(x, y, "g", "goblin", "goblin corpse", "#3F7F3F", 3, 1, 0, 10, 4); },
+			ORC: (x: number, y: number) => { return ActorFactory.createBeast(x, y, "o", "orc", "dead orc", "#3F7F3F", 9, 2, 0, 35, 5); },
+			TROLL: (x: number, y: number) => { return ActorFactory.createBeast(x, y, "T", "troll", "troll carcass", "#007F00", 15, 3, 1, 100, 6); },
+			// 		human
+			PLAYER: (x: number, y: number) => { return ActorFactory.createPlayer(); },
+			// potion
+			HEALTH_POTION: (x: number, y: number) => { return ActorFactory.createHealthPotion(x, y, 4); },
+			// scroll
+			LIGHTNING_BOLT_SCROLL: (x: number, y: number) => { return ActorFactory.createLightningBoltScroll(x, y, 5, 20); },
+			FIREBALL_SCROLL: (x: number, y: number) => { return ActorFactory.createFireballScroll(x, y, 3, 12); },
+			CONFUSION_SCROLL: (x: number, y: number) => { return ActorFactory.createConfusionScroll(x, y, 5, 12); },
+			// weapon
+			// 		blade
+			SHORT_SWORD: (x: number, y: number) => { return ActorFactory.createSword(x, y, "short sword", 4); },
+			LONG_SWORD: (x: number, y: number) => { return ActorFactory.createSword(x, y, "longsword", 6); },
+			GREAT_SWORD: (x: number, y: number) => { return ActorFactory.createSword(x, y, "greatsword", 8, true); },
+			// 		shield
+			WOODEN_SHIELD: (x: number, y: number) => { return ActorFactory.createShield(x, y, "wooden shield", 1); },
+			IRON_SHIELD: (x: number, y: number) => { return ActorFactory.createShield(x, y, "iron shield", 2); },
+			// 		ranged
+			SHORT_BOW: (x: number, y: number) => { return ActorFactory.createSword(x, y, "short sword", 4); },
+			LONG_BOW: (x: number, y: number) => { return ActorFactory.createBow(x, y, "long bow", 5, "arrow", 6, true); },
+			CROSSBOW: (x: number, y: number) => { return ActorFactory.createBow(x, y, "crossbow", 2, "bolt", 5); },
+			// 		projectile
+			// 			arrow
+			BONE_ARROW: (x: number, y: number) => { return ActorFactory.createProjectile(x, y, "bone arrow", 1, "arrow"); },
+			IRON_ARROW: (x: number, y: number) => { return ActorFactory.createProjectile(x, y, "iron arrow", 1.5, "arrow"); },
+			// 			bolt
+			BOLT: (x: number, y: number) => { return ActorFactory.createProjectile(x, y, "bolt", 1, "bolt"); },
+			// miscellaneous (under root class)
+			STAIR_UP: (x: number, y: number) => { return ActorFactory.createStairs("<", "up"); },
+			STAIR_DOWN: (x: number, y: number) => { return ActorFactory.createStairs(">", "down"); }
+		};
 		/*
 			Function: create
 			Create an actor of given type
@@ -158,52 +195,15 @@ module Game {
 			x - the actor x coordinate (default 0)
 			y - the actor y coordinate (default 0)
 		*/
-		static create(type: string, x: number = 0, y: number = 0): Actor {
-			if ( type === ActorType.GOBLIN ) {
-				return ActorFactory.createBeast(x, y, "g", "goblin", "goblin corpse", "#3F7F3F", 3, 1, 0, 10, 4);
-			} else if ( type === ActorType.ORC ) {
-				return ActorFactory.createBeast(x, y, "o", "orc", "dead orc", "#3F7F3F", 9, 2, 0, 35, 5);
-			} else if ( type === ActorType.TROLL ) {
-				return ActorFactory.createBeast(x, y, "T", "troll", "troll carcass", "#007F00", 15, 3, 1, 100, 6);
-			} else if ( type === ActorType.PLAYER ) {
-				return ActorFactory.createPlayer();
-			} else if ( type === ActorType.HEALTH_POTION ) {
-				return ActorFactory.createHealthPotion(x, y, 4);
-			} else if ( type === ActorType.LIGHTNING_BOLT_SCROLL ) {
-				return ActorFactory.createLightningBoltScroll(x, y, 5, 20);
-			} else if ( type === ActorType.FIREBALL_SCROLL ) {
-				return ActorFactory.createFireballScroll(x, y, 3, 12);
-			} else if ( type === ActorType.CONFUSION_SCROLL) {
-				return ActorFactory.createConfusionScroll(x, y, 5, 12);
-			} else if ( type === ActorType.BONE_ARROW) {
-				return ActorFactory.createProjectile(x, y, "bone arrow", 1, "arrow");
-			} else if ( type === ActorType.IRON_ARROW) {
-				return ActorFactory.createProjectile(x, y, "iron arrow", 1.5, "arrow");
-			} else if ( type === ActorType.BOLT) {
-				return ActorFactory.createProjectile(x, y, "bolt", 1, "bolt");
-			} else if ( type === ActorType.SHORT_BOW) {
-				return ActorFactory.createBow(x, y, "short bow", 3, "arrow", 2, true);
-			} else if ( type === ActorType.LONG_BOW) {
-				return ActorFactory.createBow(x, y, "long bow", 5, "arrow", 6, true);
-			} else if ( type === ActorType.CROSSBOW) {
-				return ActorFactory.createBow(x, y, "crossbow", 2, "bolt", 5);
-			} else if ( type === ActorType.SHORT_SWORD) {
-				return ActorFactory.createSword(x, y, "short sword", 4);
-			} else if ( type === ActorType.WOODEN_SHIELD) {
-				return ActorFactory.createShield(x, y, "wooden shield", 1);
-			} else if ( type === ActorType.LONG_SWORD) {
-				return ActorFactory.createSword(x, y, "longsword", 6);
-			} else if ( type === ActorType.IRON_SHIELD) {
-				return ActorFactory.createShield(x, y, "iron shield", 2);
-			} else if ( type === ActorType.GREAT_SWORD) {
-				return ActorFactory.createSword(x, y, "greatsword", 8, true);
-			} else if ( type === ActorType.STAIR_UP) {
-				return ActorFactory.createStairs("<", "up");
-			} else if ( type === ActorType.STAIR_DOWN) {
-				return ActorFactory.createStairs(">", "down");
+		static create(type: ActorType, x: number = 0, y: number = 0): Actor {
+			var builder: (x: number, y: number) => Actor = ActorFactory.builders[ ActorType[type] ];
+			var actor: Actor;
+			if ( ! builder ) {
+				log("ERROR : unknown actor type " + type, "#FF0000");
+			} else {
+				actor = builder(x, y);
 			}
-			log("ERROR : unknown actor type " + type, "#FF0000");
-			return undefined;
+			return actor;
 		}
 
 		// potions
