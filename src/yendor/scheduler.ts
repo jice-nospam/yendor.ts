@@ -1,5 +1,5 @@
 /*
-	Section: Scheduler.
+	Section: Scheduler
 */
 module Yendor {
 	"use strict";
@@ -36,30 +36,63 @@ module Yendor {
 			});
 		}
 
+		/*
+			Function: add
+		*/
 		add(entity: TimedEntity) {
 			this.entities.push(entity);
 		}
 
+		/*
+			Function: addAll
+		*/
 		addAll(entities: TimedEntity[]) {
 			this.entities.pushAll(entities);
 		}
 
+		/*
+			Function: remove
+		*/
 		remove(entity: TimedEntity) {
 			this.entities.remove(entity);
 		}
+
+		/*
+			Function: clear
+			Remove all timed entities from the scheduler.
+		*/
 		clear() {
 			this.entities.clear();
 		}
 
+		/*
+			Function: pause
+			Calling <run> has no effect until <resume> is called. You can use this to wait for a keypress in turn by turn games.
+		*/
 		pause() {
 			this.paused = true;
 		}
+
+		/*
+			Function: resume
+		*/
 		resume() {
 			this.paused = false;
 		}
+
+		/*
+			Function: isPaused
+		*/
 		isPaused() {
 			return this.paused;
 		}
+
+		/*
+			Function: run
+			Update all entities that are ready and put them back in the sorted queue.
+
+			The update function should increase the entity waitTime.
+		*/
 		run() {
 			if ( this.paused || this.entities.isEmpty() ) {
 				return;

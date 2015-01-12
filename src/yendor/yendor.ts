@@ -7,18 +7,28 @@
 /// <reference path="fov.ts" />
 /// <reference path="path.ts" />
 /// <reference path="scheduler.ts" />
+
+/*
+	Section: yendor.ts
+*/
 module Yendor {
 	"use strict";
 
-	export var VERSION = "0.2.0";
+	export var VERSION = "0.3.0";
 
+	/*
+		Property: urlParams
+		A map storing all parameters from the URL. If the game is started with :
+		> http://server/index.html?param=value
+		You can retrieve the value with :
+		> Yendor.urlParams["param"]
+	*/
 	export var urlParams : { [index: string]: string; };
 	var frameLoop : (callback: (elapsedTime: number) => void) => void;
 	/*
 		Function: init
 
-		Initialize the library.
-
+		Initialize the library. Must be called before anything else.
 	 */
 	export function init() {
 		/*
@@ -51,6 +61,23 @@ module Yendor {
 		return paramMap;
 	}
 
+	/*
+		Function: createConsole
+		Create a console. If the renderer is not defined by the 'renderer' URL parameter, it is automatically defined.
+
+		Possible values for the 'renderer' parameter are :
+		- 'pixi/webgl' : the fastest provided you have a recent browser and working openGL drivers.
+		- 'pixi/canvas' : should work on slightly older browser. Doesn't require openGL drivers.
+		- 'yendor/div' : very slow but should work on any browser.
+
+		Parameters:
+		width - number of columns
+		height - number of rows
+		foreground - default color for text
+		background - default color for text background
+		divSelector - jquery selector for the div containing the console
+		fontUrl - bitmap font containing the characters to use
+	*/
 	export function createConsole(width: number, height: number,
 			foreground: Color, background: Color, divSelector: string, fontUrl: string ): Console {
 		if ( urlParams[URL_PARAM_RENDERER] === URL_PARAM_RENDERER_DIV ) {
@@ -60,6 +87,10 @@ module Yendor {
 		}
 	}
 
+	/*
+		Interface: FrameRenderer
+		Renders the game screen
+	*/
 	export interface FrameRenderer {
 		(elapsedTime: number): void;
 	}

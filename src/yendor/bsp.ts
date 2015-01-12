@@ -1,7 +1,7 @@
 /// <reference path="rng.ts" />
 
 /*
-	Section: Binary space partition tree.
+	Section: Binary space partition tree
 */
 module Yendor {
 	"use strict";
