@@ -7,6 +7,9 @@ module Game {
 		export var CONSOLE_WIDTH: number = 80;
 		export var CONSOLE_HEIGHT: number = 34;
 
+        // URL parameters
+        export var URL_PARAM_DEBUG: string = "debug";
+
 		// rendering
 		export var DARK_WALL: Yendor.Color = "#000064";
 		export var LIGHT_WALL: Yendor.Color = "#826E32";

@@ -65,14 +65,20 @@ module Game {
 			this.status = GameStatus.RUNNING;
 
 			// this helps debugging items
-			/*
-			var player: Actor = ActorManager.instance.getPlayer();
-			ActorManager.instance.addItem(ActorFactory.create(ActorType.SHORT_SWORD, player.x, player.y));
-			ActorManager.instance.addItem(ActorFactory.create(ActorType.WOODEN_SHIELD, player.x, player.y));
-			ActorManager.instance.addItem(ActorFactory.create(ActorType.REGENERATION_POTION, player.x, player.y));
-			ActorManager.instance.addItem(ActorFactory.create(ActorType.LONG_SWORD, player.x, player.y));
-			ActorManager.instance.addItem(ActorFactory.create(ActorType.GREAT_SWORD, player.x, player.y));
-			*/
+			if ( Yendor.urlParams[Constants.URL_PARAM_DEBUG] ) {
+				var player: Actor = ActorManager.instance.getPlayer();
+				[	ActorType.SHORT_SWORD,
+					ActorType.WOODEN_SHIELD,
+					ActorType.IRON_SHIELD,
+					ActorType.HEALTH_POTION,
+					ActorType.REGENERATION_POTION,
+					ActorType.LONG_SWORD,
+					ActorType.GREAT_SWORD,
+					ActorType.SHORT_BOW,
+					ActorType.LONG_BOW,
+					ActorType.CROSSBOW
+				].forEach((type: ActorType) => { ActorManager.instance.addItem(ActorFactory.create(type, player.x, player.y)); });
+			}
 		}
 
 		private loadGame() {

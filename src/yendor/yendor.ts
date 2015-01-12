@@ -39,7 +39,7 @@ module Yendor {
 		urlParams = parseUrlParams();
 	}
 
-	function parseUrlParams() {
+	function parseUrlParams(): { [index: string]: string; } {
 		var params: string[] = window.location.search.substring(1).split("&");
 		var paramMap: { [index: string]: string; } = {};
 		for (var i = 0; i < params.length; ++i) {
