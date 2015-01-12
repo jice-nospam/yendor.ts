@@ -18,8 +18,7 @@ module Yendor {
 
 		/*
 			Property: waitTime
-			Time until the next update() call. This represents the number of times 
-			<Scheduler.run()> must be called before this entity is updated again.
+			Time until the next update() call. This is an arbitrary value.
 		*/
 		waitTime: number;
 	}
