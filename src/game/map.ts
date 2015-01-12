@@ -96,7 +96,8 @@ module Game {
 
 		private createItem(x: number, y: number, rng: Yendor.Random) {
 			var probabilities: { [index: string]: number; } = {};
-			probabilities[ActorType.HEALTH_POTION] = 40;
+			probabilities[ActorType.HEALTH_POTION] = this.getValueForDungeon([[0, 40], [5, 30]]);
+			probabilities[ActorType.REGENERATION_POTION] = this.getValueForDungeon([[5, 10]]);
 			probabilities[ActorType.LIGHTNING_BOLT_SCROLL] = this.getValueForDungeon([[3, 10]]);
 			probabilities[ActorType.FIREBALL_SCROLL] = 10;
 			probabilities[ActorType.CONFUSION_SCROLL] = 10;

@@ -176,12 +176,12 @@ module Game {
 			IRON_SHIELD: (x: number, y: number) => { return ActorFactory.createShield(x, y, "iron shield", 2); },
 			// 		ranged
 			SHORT_BOW: (x: number, y: number) => { return ActorFactory.createBow(x, y, "short bow", 3, "arrow", 2, true); },
-			LONG_BOW: (x: number, y: number) => { return ActorFactory.createBow(x, y, "long bow", 5, "arrow", 6, true); },
-			CROSSBOW: (x: number, y: number) => { return ActorFactory.createBow(x, y, "crossbow", 2, "bolt", 5); },
+			LONG_BOW: (x: number, y: number) => { return ActorFactory.createBow(x, y, "long bow", 4, "arrow", 6, true); },
+			CROSSBOW: (x: number, y: number) => { return ActorFactory.createBow(x, y, "crossbow", 5, "bolt", 5); },
 			// 		projectile
 			// 			arrow
 			BONE_ARROW: (x: number, y: number) => { return ActorFactory.createProjectile(x, y, "bone arrow", 1, "arrow"); },
-			IRON_ARROW: (x: number, y: number) => { return ActorFactory.createProjectile(x, y, "iron arrow", 1.5, "arrow"); },
+			IRON_ARROW: (x: number, y: number) => { return ActorFactory.createProjectile(x, y, "iron arrow", 2, "arrow"); },
 			// 			bolt
 			BOLT: (x: number, y: number) => { return ActorFactory.createProjectile(x, y, "bolt", 1, "bolt"); },
 			// miscellaneous (under root class)

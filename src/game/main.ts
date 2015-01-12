@@ -62,15 +62,17 @@ module Game {
 			this.map.init( Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT );
 			var dungeonBuilder: BspDungeonBuilder = new BspDungeonBuilder(this.dungeonLevel);
 			dungeonBuilder.build(this.map);
+			this.status = GameStatus.RUNNING;
 
 			// this helps debugging items
+			/*
 			var player: Actor = ActorManager.instance.getPlayer();
 			ActorManager.instance.addItem(ActorFactory.create(ActorType.SHORT_SWORD, player.x, player.y));
 			ActorManager.instance.addItem(ActorFactory.create(ActorType.WOODEN_SHIELD, player.x, player.y));
 			ActorManager.instance.addItem(ActorFactory.create(ActorType.REGENERATION_POTION, player.x, player.y));
 			ActorManager.instance.addItem(ActorFactory.create(ActorType.LONG_SWORD, player.x, player.y));
 			ActorManager.instance.addItem(ActorFactory.create(ActorType.GREAT_SWORD, player.x, player.y));
-			this.status = GameStatus.RUNNING;
+			*/
 		}
 
 		private loadGame() {
