@@ -220,7 +220,7 @@ module Game {
 			if ( barWidth > 0 ) {
 				this.console.clearBack(foreColor, x, y, barWidth, 1);
 			}
-			var label: string = name + " : " + value + "/" + maxValue;
+			var label: string = name + " : " + Math.floor(value) + "/" + Math.floor(maxValue);
 			this.console.print(x + Math.floor(( width - label.length) / 2), y, label);
 		}
 	}

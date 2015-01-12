@@ -66,7 +66,7 @@ module Game {
 			var player: Actor = ActorManager.instance.getPlayer();
 			ActorManager.instance.addItem(ActorFactory.create(ActorType.SHORT_BOW, player.x, player.y));
 			ActorManager.instance.addItem(ActorFactory.create(ActorType.WOODEN_SHIELD, player.x, player.y));
-			ActorManager.instance.addItem(ActorFactory.create(ActorType.CROSSBOW, player.x, player.y));
+			ActorManager.instance.addItem(ActorFactory.create(ActorType.REGENERATION_POTION, player.x, player.y));
 			ActorManager.instance.addItem(ActorFactory.create(ActorType.BONE_ARROW, player.x, player.y));
 			ActorManager.instance.addItem(ActorFactory.create(ActorType.SHORT_SWORD, player.x, player.y));
 			this.status = GameStatus.RUNNING;
@@ -269,7 +269,9 @@ module Game {
 			if ( this.gameTime >= Constants.TICK_LENGTH ) {
 				// update the game only TICKS_PER_SECOND per second
 				this.gameTime = 0;
-				this.handleNewTurn();
+				if (!ActorManager.instance.isPaused()) {
+					this.handleNewTurn();
+				}
 			}
 			// but render every frame to allow background animations (torch flickering, ...)
 			this.render();

@@ -105,7 +105,7 @@ module Game {
 
 	/*
 		Enum: ActorType
-		String enum for all the actors existing in the game.
+		enum for all the actors existing in the game.
 	*/
 	// TODO use standard enum
 	export enum ActorType {
@@ -118,6 +118,7 @@ module Game {
 		PLAYER,
 		// potion
 		HEALTH_POTION,
+		REGENERATION_POTION,
 		// scroll
 		LIGHTNING_BOLT_SCROLL,
 		FIREBALL_SCROLL,
@@ -157,9 +158,10 @@ module Game {
 			ORC: (x: number, y: number) => { return ActorFactory.createBeast(x, y, "o", "orc", "dead orc", "#3F7F3F", 9, 2, 0, 35, 5); },
 			TROLL: (x: number, y: number) => { return ActorFactory.createBeast(x, y, "T", "troll", "troll carcass", "#007F00", 15, 3, 1, 100, 6); },
 			// 		human
-			PLAYER: (x: number, y: number) => { return ActorFactory.createPlayer(); },
+			PLAYER: (x: number, y: number) => { return ActorFactory.createPlayer(x, y); },
 			// potion
-			HEALTH_POTION: (x: number, y: number) => { return ActorFactory.createHealthPotion(x, y, 4); },
+			HEALTH_POTION: (x: number, y: number) => { return ActorFactory.createHealthPotion(x, y, "health potion", 5); },
+			REGENERATION_POTION: (x: number, y: number) => { return ActorFactory.createRegenerationPotion(x, y, "regeneration potion", 20, 10); },
 			// scroll
 			LIGHTNING_BOLT_SCROLL: (x: number, y: number) => { return ActorFactory.createLightningBoltScroll(x, y, 5, 20); },
 			FIREBALL_SCROLL: (x: number, y: number) => { return ActorFactory.createFireballScroll(x, y, 3, 12); },
@@ -183,8 +185,8 @@ module Game {
 			// 			bolt
 			BOLT: (x: number, y: number) => { return ActorFactory.createProjectile(x, y, "bolt", 1, "bolt"); },
 			// miscellaneous (under root class)
-			STAIR_UP: (x: number, y: number) => { return ActorFactory.createStairs("<", "up"); },
-			STAIR_DOWN: (x: number, y: number) => { return ActorFactory.createStairs(">", "down"); }
+			STAIR_UP: (x: number, y: number) => { return ActorFactory.createStairs(x, y, "<", "up"); },
+			STAIR_DOWN: (x: number, y: number) => { return ActorFactory.createStairs(x, y, ">", "down"); }
 		};
 		/*
 			Function: create
@@ -207,19 +209,39 @@ module Game {
 		}
 
 		// potions
-		private static createHealthPotion(x: number, y: number, amount: number): Actor {
-			var healthPotion = new Actor();
-			healthPotion.init(x, y, "!", "health potion", "potion", "#800080", true);
-			healthPotion.pickable = new Pickable(0.5);
-			healthPotion.pickable.setOnUseEffect(new InstantHealthEffect(amount,
-				"[The actor1] drink[s] the health potion and regain[s] [value1] hit points.",
-				"[The actor1] drink[s] the health potion but it has no effect"),
-				new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL ));
-			healthPotion.pickable.setOnThrowEffect(new InstantHealthEffect(amount,
-				"The potion explodes on [the actor1], healing [it] for [value1] hit points.",
-				"The potion explodes on [the actor1] but it has no effect"),
-				new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL ));
-			return healthPotion;
+		private static createEffectPotion(x: number, y: number, name: string, onUseEffect: Effector, onThrowEffect?: Effector): Actor {
+			var effectPotion = new Actor();
+			effectPotion.init(x, y, "!", name, "potion", "#800080", true);
+			effectPotion.pickable = new Pickable(0.5);
+			if ( onUseEffect ) {
+				effectPotion.pickable.setOnUseEffector(onUseEffect);
+			}
+			if (onThrowEffect) {
+				effectPotion.pickable.setOnThrowEffector(onThrowEffect);
+			}
+			return effectPotion;
+		}
+
+		private static createRegenerationPotion(x: number, y: number, name: string, nbTurns: number, amount: number) {
+			return ActorFactory.createEffectPotion(x, y, name,
+				new Effector(new ConditionEffect(ConditionType.REGENERATION, nbTurns,
+					"[The actor1] drink[s] the " + name + " and feel[s]\nthe life flowing through [it].", [amount]),
+					new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL )),
+				new Effector(new ConditionEffect(ConditionType.REGENERATION, nbTurns,
+					"The potion explodes on [the actor1].\nLife is flowing through [it].", [amount]),
+					new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL ))
+				);
+		}
+
+		private static createHealthPotion(x: number, y: number, name: string, amount: number): Actor {
+			return ActorFactory.createEffectPotion(x, y, name,
+				new Effector(new InstantHealthEffect(amount, "[The actor1] drink[s] the " + name + " and regain[s] [value1] hit points.",
+					"[The actor1] drink[s] the " + name + " but it has no effect"),
+					new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL )),
+				new Effector(new InstantHealthEffect(amount, "The potion explodes on [the actor1], healing [it] for [value1] hit points.",
+					"The potion explodes on [the actor1] but it has no effect"),
+					new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL ))
+				);
 		}
 
 		// scrolls
@@ -300,9 +322,9 @@ module Game {
 		}
 
 		// miscellaneous
-		private static createStairs(character: string, direction: string): Actor {
+		private static createStairs(x: number, y: number, character: string, direction: string): Actor {
 			var stairs: Actor = new Actor();
-			stairs.init(0, 0, character, "stairs " + direction, undefined, "#FFFFFF", false);
+			stairs.init(x, y, character, "stairs " + direction, undefined, "#FFFFFF", false);
 			stairs.fovOnly = false;
 			return stairs;
 		}
@@ -322,9 +344,9 @@ module Game {
 			return beast;
 		}
 
-		private static createPlayer(): Player {
+		private static createPlayer(x: number, y: number): Player {
 			var player = new Player();
-			player.init(0, 0, "@", "player", "#FFFFFF");
+			player.init(x, y, "@", "player", "#FFFFFF");
 			return player;
 		}
 	}
@@ -1057,5 +1079,13 @@ module Game {
 			root.setChar( this.x, this.y, this._ch );
 			root.fore[this.x][this.y] = this._col;
 		}
+
+		postLoad() {
+			// rebuild conditions links
+			if ( this.ai ) {
+				this.ai.setPostLoadOwner(this);
+			}
+		}
+
 	}
 }

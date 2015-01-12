@@ -202,18 +202,20 @@ module Game {
 		private type: ConditionType;
 		private nbTurns: number;
 		private message: string;
-		constructor( type: ConditionType, nbTurns: number, message?: string ) {
+		private additionalArgs: any[];
+		constructor( type: ConditionType, nbTurns: number, message?: string, ...additionalArgs: any[] ) {
 			this.className = "ConditionEffect";
 			this.type = type;
 			this.nbTurns = nbTurns;
 			this.message = message;
+			this.additionalArgs = additionalArgs;
 		}
 
 		applyTo(actor: Actor, coef: number = 1.0): boolean {
 			if (!actor.ai) {
 				return false;
 			}
-			actor.ai.addCondition(Condition.getCondition(this.type, Math.floor(coef * this.nbTurns)));
+			actor.ai.addCondition(Condition.getCondition(this.type, actor, Math.floor(coef * this.nbTurns), this.additionalArgs));
 			if ( this.message ) {
 				log(transformMessage(this.message, actor));
 			}
@@ -296,8 +298,16 @@ module Game {
 			this.onUseEffector = new Effector(effect, targetSelector, message);
 		}
 
+		setOnUseEffector(effector: Effector) {
+			this.onUseEffector = effector;
+		}
+
 		setOnThrowEffect(effect?: Effect, targetSelector?: TargetSelector, message?: string) {
 			this.onThrowEffector = new Effector(effect, targetSelector, message);
+		}
+
+		setOnThrowEffector(effector: Effector) {
+			this.onThrowEffector = effector;
 		}
 
 		/*

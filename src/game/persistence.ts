@@ -26,6 +26,11 @@ module Game {
 			jsonData - parsed json data to load from
 		*/
 		load?: (jsonData: any) => any;
+		/*
+			Function: postLoad
+			Optional function called after the object is loaded.
+		*/
+		postLoad?: () => void;
 	}
 
 	/*
@@ -119,7 +124,11 @@ module Game {
 			if ( jsonData instanceof Array ) {
 				return this.loadArrayFromData(jsonData);
 			} else if ( typeof jsonData === "object" ) {
-				return this.loadObjectFromData(jsonData, object);
+				var obj: any = this.loadObjectFromData(jsonData, object);
+				if ( obj.postLoad ) {
+					obj.postLoad();
+				}
+				return obj;
 			}
 			// basic field, number, string, boolean, ...
 			return jsonData;

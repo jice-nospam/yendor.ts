@@ -13,10 +13,12 @@ module Game {
 
 	 	CONFUSED - moves randomly and attacks anything on path
 	 	STUNNED - don't move or attack, then get confused
+	 	REGENERATION - regain health points over time
 	*/
 	export enum ConditionType {
 		CONFUSED,
 		STUNNED,
+		REGENERATION,
 	}
 
 	/*
@@ -31,25 +33,34 @@ module Game {
 		*/
 		protected time: number;
 		protected _type: ConditionType;
+		// not persisted to avoid cyclic dependency
+		protected __owner: Actor;
 		private static condNames = [ "confused", "stunned" ];
 
 		// factory
-		static getCondition(type: ConditionType, time: number): Condition {
+		static getCondition(type: ConditionType, owner: Actor, time: number, ...additionalArgs : any[]): Condition {
 			switch ( type ) {
+				case ConditionType.REGENERATION :
+					return new RegenerationCondition(owner, time, <number>additionalArgs[0]);
 				case ConditionType.STUNNED :
-					return new StunnedCondition(time);
+					return new StunnedCondition(owner, time);
 				default :
-					return new Condition(type, time);
+					return new Condition(type, owner, time);
 			}
 		}
 
-		constructor(type: ConditionType, time: number) {
+		constructor(type: ConditionType, owner: Actor, time: number) {
 			this.className = "Condition";
 			this.time = time;
+			this.__owner = owner;
 			this._type = type;
 		}
 
 		get type() { return this._type; }
+		setOwner(actor: Actor) {
+			// used to rebuilt owner link after loading
+			this.__owner = actor;
+		}
 
 		getName() { return Condition.condNames[this._type]; }
 
@@ -68,12 +79,32 @@ module Game {
 	}
 
 	/*
+		Class: RegenerationCondition
+		The creature gain health points over time
+	*/
+	export class RegenerationCondition extends Condition {
+		private hpPerTurn: number;
+		constructor(owner: Actor, nbTurns: number, nbHP : number) {
+			super(ConditionType.REGENERATION, owner, nbTurns);
+			this.className = "RegenerationCondition";
+			this.hpPerTurn = nbHP / nbTurns;
+		}
+
+		update(): boolean {
+			if (this.__owner.destructible) {
+				this.__owner.destructible.heal(this.hpPerTurn);
+			}
+			return super.update();
+		}
+	}
+
+	/*
 		Class: StunnedCondition
 		The creature cannot move or attack while stunned. Then it gets confused for a few turns
 	*/
 	export class StunnedCondition extends Condition {
-		constructor(nbTurns: number) {
-			super(ConditionType.STUNNED, nbTurns);
+		constructor(owner: Actor, nbTurns: number) {
+			super(ConditionType.STUNNED, owner, nbTurns);
 			this.className = "StunnedCondition";
 		}
 
@@ -123,6 +154,13 @@ module Game {
 					i--;
 					n--;
 				}
+			}
+		}
+
+		setPostLoadOwner(owner: Actor) {
+			// rebuild conditions links
+			if ( this.conditions ) {
+				this.conditions.forEach( (cond: Condition) => { cond.setOwner(owner); });
 			}
 		}
 
