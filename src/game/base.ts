@@ -12,7 +12,6 @@ module Game {
 		export var LIGHT_WALL: Yendor.Color = "#826E32";
 		export var DARK_GROUND: Yendor.Color = "#323296";
 		export var LIGHT_GROUND: Yendor.Color = "#C8B432";
-        export var CORPSE_COLOR: Yendor.Color = "#BF0000";
         export var FOV_RADIUS: number = 10;
         export var MENU_BACKGROUND: Yendor.Color = "#272822";
         export var MENU_BACKGROUND_ACTIVE: Yendor.Color = "#383830";

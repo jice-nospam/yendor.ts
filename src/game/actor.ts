@@ -690,7 +690,6 @@ module Game {
 		*/
 		die(owner: Actor) {
 			owner.ch = "%";
-			owner.col = Constants.CORPSE_COLOR;
 			owner.name = this._corpseName;
 			owner.blocks = false;
 		}
