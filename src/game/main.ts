@@ -51,6 +51,7 @@ module Game {
 			EventBus.instance.registerListener(this, EventType.CHANGE_STATUS);
 			EventBus.instance.registerListener(this, EventType.REMOVE_ACTOR);
 			EventBus.instance.registerListener(this, EventType.NEW_GAME);
+			EventBus.instance.registerListener(this, EventType.SAVE_GAME);
 			EventBus.instance.registerListener(this, EventType.GAIN_XP);
 		}
 
@@ -64,11 +65,11 @@ module Game {
 
 			// this helps debugging items
 			var player: Actor = ActorManager.instance.getPlayer();
-			ActorManager.instance.addItem(ActorFactory.create(ActorType.SHORT_BOW, player.x, player.y));
+			ActorManager.instance.addItem(ActorFactory.create(ActorType.SHORT_SWORD, player.x, player.y));
 			ActorManager.instance.addItem(ActorFactory.create(ActorType.WOODEN_SHIELD, player.x, player.y));
 			ActorManager.instance.addItem(ActorFactory.create(ActorType.REGENERATION_POTION, player.x, player.y));
-			ActorManager.instance.addItem(ActorFactory.create(ActorType.BONE_ARROW, player.x, player.y));
-			ActorManager.instance.addItem(ActorFactory.create(ActorType.SHORT_SWORD, player.x, player.y));
+			ActorManager.instance.addItem(ActorFactory.create(ActorType.LONG_SWORD, player.x, player.y));
+			ActorManager.instance.addItem(ActorFactory.create(ActorType.GREAT_SWORD, player.x, player.y));
 			this.status = GameStatus.RUNNING;
 		}
 
@@ -148,6 +149,13 @@ module Game {
 					break;
 				case EventType.GAIN_XP :
 					ActorManager.instance.getPlayer().addXp(event.data);
+					break;
+				case EventType.SAVE_GAME :
+					if (!ActorManager.instance.isPlayerDead()) {
+						this.saveGame();
+					} else {
+						this.deleteSavedGame();
+					}
 					break;
 				default: break;
 			}
@@ -270,7 +278,7 @@ module Game {
 				// update the game only TICKS_PER_SECOND per second
 				this.gameTime = 0;
 				if (!ActorManager.instance.isPaused()) {
-					this.handleNewTurn();
+					ActorManager.instance.updateActors(this.map);
 				}
 			}
 			// but render every frame to allow background animations (torch flickering, ...)
@@ -314,21 +322,6 @@ module Game {
 			this.map.render();
 			ActorManager.instance.renderActors(this.map);
 			GuiManager.instance.renderGui(root, this.map);
-		}
-
-
-
-		/*
-			Function: handleNewTurn
-			Triggered when a new game turn starts. Updates all the world actors.
-		*/
-		private handleNewTurn() {
-			ActorManager.instance.updateActors(this.map);
-			if (!ActorManager.instance.isPlayerDead()) {
-				this.saveGame();
-			} else {
-				this.deleteSavedGame();
-			}
 		}
 	}
 

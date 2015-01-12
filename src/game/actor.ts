@@ -168,14 +168,14 @@ module Game {
 			CONFUSION_SCROLL: (x: number, y: number) => { return ActorFactory.createConfusionScroll(x, y, 5, 12); },
 			// weapon
 			// 		blade
-			SHORT_SWORD: (x: number, y: number) => { return ActorFactory.createSword(x, y, "short sword", 4); },
-			LONG_SWORD: (x: number, y: number) => { return ActorFactory.createSword(x, y, "longsword", 6); },
-			GREAT_SWORD: (x: number, y: number) => { return ActorFactory.createSword(x, y, "greatsword", 8, true); },
+			SHORT_SWORD: (x: number, y: number) => { return ActorFactory.createSword(x, y, "short sword", 4, 4); },
+			LONG_SWORD: (x: number, y: number) => { return ActorFactory.createSword(x, y, "longsword", 6, 5); },
+			GREAT_SWORD: (x: number, y: number) => { return ActorFactory.createSword(x, y, "greatsword", 10, 6, true); },
 			// 		shield
 			WOODEN_SHIELD: (x: number, y: number) => { return ActorFactory.createShield(x, y, "wooden shield", 1); },
 			IRON_SHIELD: (x: number, y: number) => { return ActorFactory.createShield(x, y, "iron shield", 2); },
 			// 		ranged
-			SHORT_BOW: (x: number, y: number) => { return ActorFactory.createSword(x, y, "short sword", 4); },
+			SHORT_BOW: (x: number, y: number) => { return ActorFactory.createBow(x, y, "short bow", 3, "arrow", 2, true); },
 			LONG_BOW: (x: number, y: number) => { return ActorFactory.createBow(x, y, "long bow", 5, "arrow", 6, true); },
 			CROSSBOW: (x: number, y: number) => { return ActorFactory.createBow(x, y, "crossbow", 2, "bolt", 5); },
 			// 		projectile
@@ -277,15 +277,15 @@ module Game {
 		}
 
 		// weapons
-		private static createSword(x: number, y: number, name: string, damages: number, twoHanded: boolean = false): Actor {
+		private static createSword(x: number, y: number, name: string, damages: number, attackTime: number, twoHanded: boolean = false): Actor {
 			var sword = new Actor();
 			sword.init(x, y, "/", name, "weapon|blade", "#F0F0F0", true);
 			sword.pickable = new Pickable(3);
 			sword.pickable.setOnThrowEffect(new InstantHealthEffect(-damages,
 				"The sword hits [the actor1] for [value1] hit points."),
 				new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL ));
-
-			sword.equipment = new Equipment(twoHanded ? Constants.SLOT_BOTH_HANDS : Constants.SLOT_RIGHT_HAND, damages);
+			sword.attacker = new Attacker(damages, attackTime);
+			sword.equipment = new Equipment(twoHanded ? Constants.SLOT_BOTH_HANDS : Constants.SLOT_RIGHT_HAND);
 			return sword;
 		}
 
@@ -317,7 +317,7 @@ module Game {
 			shield.pickable.setOnThrowEffect(new ConditionEffect(ConditionType.STUNNED, 2,
 				"The shield hits [the actor1] and stuns [it]!"),
 				new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL));
-			shield.equipment = new Equipment(Constants.SLOT_LEFT_HAND, 0, defense);
+			shield.equipment = new Equipment(Constants.SLOT_LEFT_HAND, defense);
 			return shield;
 		}
 
@@ -337,7 +337,7 @@ module Game {
 			var beast: Actor = new Actor();
 			beast.init(x, y, character, name, "creature|beast", color, true);
 			beast.destructible = new MonsterDestructible(hp, defense, corpseName);
-			beast.attacker = new Attacker(attack);
+			beast.attacker = new Attacker(attack, walkTime);
 			beast.ai = new MonsterAi(walkTime);
 			beast.blocks = true;
 			beast.destructible.xp = xp;
@@ -451,6 +451,9 @@ module Game {
 		}
 
 		pause() {
+			if (! this.isPaused()) {
+				EventBus.instance.publishEvent(new Event<void>( EventType.SAVE_GAME ));
+			}
 			this.scheduler.pause();
 		}
 
@@ -622,6 +625,7 @@ module Game {
 			var realDefense = this.defense;
 			if ( owner.container ) {
 				// add bonus from equipped items
+				// TODO shield can block only one attack per turn
 				var n: number = owner.container.size();
 				for ( var i: number = 0; i < n; i++) {
 					var item: Actor = owner.container.get(i);
@@ -699,15 +703,17 @@ module Game {
 	export class Attacker implements Persistent {
 		className: string;
 		private _power: number;
+		private _attackTime: number;
 		/*
 			Constructor: constructor
 
 			Parameters:
 			_power : amount of damages given
 		*/
-		constructor(_power: number = 0) {
+		constructor(_power: number = 0, attackTime: number = Constants.PLAYER_WALK_TIME) {
 			this.className = "Attacker";
 			this._power = _power;
+			this._attackTime = attackTime;
 		}
 
 		/*
@@ -717,20 +723,7 @@ module Game {
 		get power() { return this._power; }
 		set power(newValue: number) { this._power = newValue; }
 
-		public computeRealPower(owner: Actor): number {
-			var realPower = this.power;
-			if ( owner && owner.container ) {
-				// add bonus from equipped items
-				var n: number = owner.container.size();
-				for ( var i: number = 0; i < n; i++) {
-					var item: Actor = owner.container.get(i);
-					if ( item.equipment && item.equipment.isEquipped() ) {
-						realPower += item.equipment.getPowerBonus();
-					}
-				}
-			}
-			return realPower;
-		}
+		get attackTime() { return this._attackTime; }
 
 		/*
 			Function: attack
@@ -742,8 +735,7 @@ module Game {
 		*/
 		attack(owner: Actor, target: Actor) {
 			if ( target.destructible && ! target.destructible.isDead() ) {
-				var realPower: number = this.computeRealPower(owner);
-				var damage = realPower - target.destructible.computeRealDefense(target);
+				var damage = this._power - target.destructible.computeRealDefense(target);
 				var msg: string = "[The actor1] attack[s] [the actor2]";
 				var msgColor: string;
 				if ( damage >= target.destructible.hp ) {
@@ -756,7 +748,7 @@ module Game {
 					msg += " but it has no effect!";
 				}
 				log(transformMessage(msg, owner, target), msgColor);
-				target.destructible.takeDamage(target, realPower);
+				target.destructible.takeDamage(target, this._power);
 			}
 		}
 	}

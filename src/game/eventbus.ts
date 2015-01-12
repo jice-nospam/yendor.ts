@@ -10,6 +10,8 @@ module Game {
 	export enum EventType {
 		// change game status. Associated data : GameStatus
 		CHANGE_STATUS,
+		// save the game. no data associated
+		SAVE_GAME,
 		// key press event. Associated data : KeyInput
 		KEYBOARD_INPUT,
 		// sends a message to the log. Associated data : Message containing the text and the color

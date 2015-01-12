@@ -186,6 +186,29 @@ module Game {
 		}
 
 		/*
+			Function: getAttacker
+			Determin what will be used to attack
+		*/
+		private getAttacker(owner: Actor): Attacker {
+			if (! owner ) {
+				return undefined;
+			}
+			if ( owner.container ) {
+				// check for equipped weapons
+				// TODO each equipped weapon should be used only once per turn
+				for ( var i: number = 0, n: number = owner.container.size(); i < n; ++i) {
+					var item: Actor = owner.container.get(i);
+					if ( item.equipment && item.equipment.isEquipped() && item.attacker ) {
+						return item.attacker;
+					}
+				}
+			}
+			return owner.attacker;
+		}
+
+
+
+		/*
 			Function: moveOrAttack
 			Try to move the owner to a new map cell. If there's a living creature on this map cell, attack it.
 
@@ -200,6 +223,7 @@ module Game {
 		*/
 		protected moveOrAttack(owner: Actor, x: number, y: number, map: Map): boolean {
 			if ( this.hasCondition(ConditionType.STUNNED)) {
+				this.waitTime += this.walkTime;
 				return false;
 			}
 			if ( this.hasCondition(ConditionType.CONFUSED)) {
@@ -208,10 +232,12 @@ module Game {
 				y = owner.y + rng.getNumber(-1, 1);
 			}
 			if ( x === owner.x && y === owner.y ) {
+				this.waitTime += this.walkTime;
 				return false;
 			}
 			// cannot move or attack a wall! 
 			if ( map.isWall(x, y)) {
+				this.waitTime += this.walkTime;
 				return false;
 			}
 			// check for living creatures on the destination cell
@@ -221,16 +247,19 @@ module Game {
 				var actor: Actor = actors[i];
 				if ( actor.destructible && ! actor.destructible.isDead() ) {
 					// attack the first living actor found on the cell
-					// TODO attacking time depends on the weapon used
-					owner.attacker.attack( owner, actor );
+					var attacker: Attacker = this.getAttacker(owner);
+					attacker.attack( owner, actor );
+					this.waitTime += attacker.attackTime;
 					return false;
 				}
 			}
 			// check for unpassable items
 			if ( !map.canWalk(x, y)) {
+				this.waitTime += this.walkTime;
 				return false;
 			}
 			// move the creature
+			this.waitTime += this.walkTime;
 			owner.x = x;
 			owner.y = y;
 			return true;
@@ -299,6 +328,7 @@ module Game {
 				break;
         		case PlayerAction.WAIT :
         			newTurn = true;
+					this.waitTime += this.walkTime;
         		break;
         		case PlayerAction.GRAB :
         		case PlayerAction.USE_ITEM :
@@ -316,7 +346,6 @@ module Game {
 			if ( newTurn ) {
 				// the player moved or try to move. New game turn
 				ActorManager.instance.resume();
-				this.waitTime += this.walkTime;
 			}
 		}
 
@@ -495,7 +524,6 @@ module Game {
 			map - the game map. Used to check if player is in sight
 		*/
 		searchPlayer(owner: Actor, map: Map) {
-			this.waitTime += this.walkTime;
 			if ( map.isInFov(owner.x, owner.y) ) {
 				// player is visible, go towards him
 				var player: Actor = ActorManager.instance.getPlayer();
@@ -617,6 +645,8 @@ module Game {
 			var bestCell: Yendor.Position = this.findHighestScentCell(owner, map);
 			if ( bestCell ) {
 				this.moveToCell(owner, bestCell, map);
+			} else {
+				this.waitTime += this.walkTime;
 			}
 		}
 	}

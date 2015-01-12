@@ -4,7 +4,10 @@
 
 * GeneRogue
 	- weight based container capacity
-	- creatures speed
+	- creatures have different walking speed
+	- ranged weapons have different loading speed
+	- melee weapons have different attack speed
+	- regeneration potion
 
 * Benchmark
 	- turn by turn and real time scheduler samples

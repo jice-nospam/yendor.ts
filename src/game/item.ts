@@ -420,20 +420,17 @@ module Game {
 		className: string;
 		private slot: string;
 		private equipped: boolean = false;
-		private powerBonus: number = 0;
 		private defenseBonus: number = 0;
 
-		constructor(slot: string, powerBonus: number = 0, defenseBonus: number = 0) {
+		constructor(slot: string, defenseBonus: number = 0) {
 			this.className = "Equipment";
 			this.slot = slot;
-			this.powerBonus = powerBonus;
 			this.defenseBonus = defenseBonus;
 		}
 
 		isEquipped(): boolean { return this.equipped; }
 
 		getSlot(): string { return this.slot; }
-		getPowerBonus(): number { return this.powerBonus; }
 		getDefenseBonus(): number { return this.defenseBonus; }
 
 		/*
