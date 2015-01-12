@@ -4,6 +4,7 @@
 
 * GeneRogue
 	- weight based container capacity
+	- overencumbered condition (when inventory capacity >= 90%, walk time increased by 50%)
 	- creatures have different walking speed
 	- ranged weapons have different loading speed
 	- melee weapons have different attack speed

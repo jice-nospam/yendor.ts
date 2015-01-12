@@ -14,11 +14,13 @@ module Game {
 	 	CONFUSED - moves randomly and attacks anything on path
 	 	STUNNED - don't move or attack, then get confused
 	 	REGENERATION - regain health points over time
+	 	OVERENCUMBERED - walk slower. This also affects all actions relying on walkTime.
 	*/
 	export enum ConditionType {
 		CONFUSED,
 		STUNNED,
 		REGENERATION,
+		OVERENCUMBERED,
 	}
 
 	/*
@@ -38,7 +40,7 @@ module Game {
 		private static condNames = [ "confused", "stunned" ];
 
 		// factory
-		static getCondition(type: ConditionType, owner: Actor, time: number, ...additionalArgs : any[]): Condition {
+		static create(type: ConditionType, owner: Actor, time: number, ...additionalArgs : any[]): Condition {
 			switch ( type ) {
 				case ConditionType.REGENERATION :
 					return new RegenerationCondition(owner, time, <number>additionalArgs[0]);
@@ -130,13 +132,13 @@ module Game {
 		Class: Ai
 		Owned by self-updating actors
 	*/
-	export class Ai implements Persistent {
+	export class Ai implements Persistent, ContainerListener {
 		className: string;
 		private conditions: Condition[];
 		// time until next turn.
 		private _waitTime: number = 0;
 		// time to make a step
-		protected walkTime: number;
+		private _walkTime: number;
 
 		constructor(walkTime: number) {
 			this.className = "Ai";
@@ -146,9 +148,16 @@ module Game {
 		get waitTime() { return this._waitTime; }
 		set waitTime(newValue: number) { this._waitTime = newValue; }
 
+		get walkTime() {
+			return this.hasCondition(ConditionType.OVERENCUMBERED) ? this._walkTime * Constants.OVERENCUMBERED_MULTIPLIER : this._walkTime;
+		}
+		set walkTime(newValue: number) { this._walkTime = newValue; }
+
 		update(owner: Actor, map: Map) {
-			var n: number = this.conditions ? this.conditions.length : 0;
-			for ( var i: number = 0; i < n; i++) {
+			if ( ! this.conditions ) {
+				return;
+			}
+			for ( var i: number = 0, n: number = this.conditions.length; i < n; ++i) {
 				if ( !this.conditions[i].update() ) {
 					this.conditions.splice(i, 1);
 					i--;
@@ -169,6 +178,18 @@ module Game {
 				this.conditions = [];
 			}
 			this.conditions.push(cond);
+		}
+
+		removeCondition(cond: ConditionType) {
+			if ( ! this.conditions ) {
+				return;
+			}
+			for ( var i: number = 0, n: number = this.conditions.length; i < n; ++i) {
+				if ( this.conditions[i].type === cond ) {
+					this.conditions.splice(i, 1);
+					break;
+				}
+			}
 		}
 
 		getConditionDescription(): string {
@@ -263,6 +284,26 @@ module Game {
 			owner.x = x;
 			owner.y = y;
 			return true;
+		}
+
+		// listen to inventory events to manage OVERENCUMBERED condition
+		onAdd(actor: Actor, container: Container) {
+			this.checkOverencumberedCondition(container);
+		}
+
+		onRemove(actor: Actor, container: Container) {
+			this.checkOverencumberedCondition(container);
+		}
+
+		private checkOverencumberedCondition(container: Container) {
+			if ( ! this.hasCondition(ConditionType.OVERENCUMBERED)
+				&& container.computeTotalWeight() >= container.capacity * Constants.OVEREMCUMBERED_THRESHOLD ) {
+				this.addCondition(Condition.create(ConditionType.OVERENCUMBERED, undefined, -1));
+			} else if ( this.hasCondition(ConditionType.OVERENCUMBERED)
+				&& container.computeTotalWeight() < container.capacity * Constants.OVEREMCUMBERED_THRESHOLD ) {
+				this.removeCondition(ConditionType.OVERENCUMBERED);
+			}
+
 		}
 	}
 
@@ -466,20 +507,27 @@ module Game {
 		}
 
 		private pickupItem(owner: Actor, map: Map) {
-			var found: boolean = false;
+			var foundItem: boolean = false;
+			var pickedItem: boolean = false;
 			ActorManager.instance.resume();
 			this.waitTime += this.walkTime;
 			ActorManager.instance.getItems().some(function(item: Actor) {
 				if ( item.pickable && item.x === owner.x && item.y === owner.y ) {
-					found = true;
-					item.pickable.pick(item, owner);
-					return true;
+					foundItem = true;
+					if (owner.container.canContain(item)) {
+						item.pickable.pick(item, owner);
+						pickedItem = true;
+						return true;
+					}
+					return false;
 				} else {
 					return false;
 				}
 			});
-			if (! found) {
+			if (! foundItem) {
 				log("There's nothing to pick here.");
+			} else if (! pickedItem) {
+				log("Your inventory is full.");
 			}
 		}
 	}
@@ -705,7 +753,7 @@ module Game {
 			// player has 30 hit points
 			this.destructible = new PlayerDestructible(30, 0, "your cadaver");
 			// player can carry up to 20 kg
-			this.container = new Container(20);
+			this.container = new Container(20, this.ai);
 		}
 		getNextLevelXp(): number {
 			return Constants.XP_BASE_LEVEL + this._xpLevel * Constants.XP_NEW_LEVEL;

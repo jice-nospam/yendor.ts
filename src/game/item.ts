@@ -215,7 +215,7 @@ module Game {
 			if (!actor.ai) {
 				return false;
 			}
-			actor.ai.addCondition(Condition.getCondition(this.type, actor, Math.floor(coef * this.nbTurns), this.additionalArgs));
+			actor.ai.addCondition(Condition.create(this.type, actor, Math.floor(coef * this.nbTurns), this.additionalArgs));
 			if ( this.message ) {
 				log(transformMessage(this.message, actor));
 			}
@@ -333,8 +333,6 @@ module Game {
 				// tells the engine to remove this actor from main list
 				EventBus.instance.publishEvent(new Event<Actor>(EventType.REMOVE_ACTOR, owner));
 				return true;
-			} else if ( wearer === ActorManager.instance.getPlayer() ) {
-				log("Your inventory is full.");
 			}
 			// wearer is not a container or is full
 			return false;

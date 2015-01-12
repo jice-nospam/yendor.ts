@@ -180,6 +180,9 @@ module Game {
 			var player: Player = ActorManager.instance.getPlayer();
 			this.renderBar(1, 1, Constants.STAT_BAR_WIDTH, "HP", player.destructible.hp,
 				player.destructible.maxHp, Constants.HEALTH_BAR_BACKGROUND, Constants.HEALTH_BAR_FOREGROUND);
+			if ( player.ai.hasCondition(ConditionType.OVERENCUMBERED)) {
+				this.console.print(1, 2, "OVERENCUMBERED");
+			}
 			this.renderBar(1, 5, Constants.STAT_BAR_WIDTH, "XP(" + player.xpLevel + ")", player.destructible.xp,
 				player.getNextLevelXp(), Constants.XP_BAR_BACKGROUND, Constants.XP_BAR_FOREGROUND);
 			this.console.print(0, 0, this.mouseLookText);

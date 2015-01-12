@@ -18,7 +18,7 @@ module Game {
 		to keep the game from trying to load data with an old format.
 		This should be an integer.
 	*/
-	var VERSION: string = "2";
+	var VERSION: string = "3";
 
 	/*
 		Class: Engine

@@ -60,6 +60,11 @@ module Game {
         export var XP_NEW_LEVEL: number = 150;
         // how many turns you are confused after being stunned
         export var AFTER_STUNNED_CONFUSION_DELAY: number = 3;
+        // overencumbered inventory capacity (percentage of capacity)
+        export var OVEREMCUMBERED_THRESHOLD: number = 0.9;
+        // when overencumbered, walkTime is multiplied by this value
+        export var OVERENCUMBERED_MULTIPLIER: number = 1.5;
+
         // equipment slots names
         export var SLOT_RIGHT_HAND: string = "right hand";
         export var SLOT_LEFT_HAND: string = "left hand";

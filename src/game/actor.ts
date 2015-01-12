@@ -755,6 +755,15 @@ module Game {
 	/********************************************************************************
 	 * Group: inventory
 	 ********************************************************************************/
+
+	 /*
+	 	Interface: ContainerListener
+	 	Something that must be notified when an item is added or removed from the container
+	 */
+	 export interface ContainerListener {
+	 	onAdd(item: Actor, container: Container);
+	 	onRemove(item: Actor, container: Container);
+	 }
 	 /*
 	 	Class: Container
 	 	An actor that can contain other actors :
@@ -765,6 +774,7 @@ module Game {
 		className: string;
 	 	private _capacity: number;
 	 	private actors: Actor[] = [];
+	 	private __listener: ContainerListener;
 
 	 	/*
 	 		Constructor: constructor
@@ -772,14 +782,20 @@ module Game {
 	 		Parameters:
 	 		_capacity - this container's maximum weight
 	 	*/
-	 	constructor(_capacity: number = 0) {
+	 	constructor(_capacity: number = 0, listener?: ContainerListener) {
 			this.className = "Container";
 	 		this._capacity = _capacity;
+	 		this.__listener = listener;
 	 	}
 
 	 	get capacity(): number { return this._capacity; }
 	 	set capacity(newValue: number) {this._capacity = newValue; }
 	 	size(): number { return this.actors.length; }
+
+	 	// used to rebuilt listener link after loading
+	 	setListener(listener: ContainerListener) {
+	 		this.__listener = listener;
+	 	}
 
 	 	get(index: number) : Actor {
 	 		return this.actors[index];
@@ -812,6 +828,13 @@ module Game {
 	 		return true;
 	 	}
 
+	 	canContain(item: Actor): boolean {
+	 		if (! item || ! item.pickable ) {
+	 			return false;
+	 		}
+	 		return this.computeTotalWeight() + item.pickable.weight <= this._capacity;
+	 	}
+
 	 	computeTotalWeight(): number {
 	 		var weight: number = 0;
 	 		this.actors.forEach(function(actor: Actor) {
@@ -838,6 +861,9 @@ module Game {
 	 			return false;
 	 		}
 	 		this.actors.push( actor );
+	 		if (this.__listener) {
+	 			this.__listener.onAdd(actor, this);
+	 		}
 	 		return true;
 	 	}
 
@@ -852,6 +878,9 @@ module Game {
 	 		var idx: number = this.actors.indexOf(actor);
 	 		if ( idx !== -1 ) {
 	 			this.actors.splice(idx, 1);
+		 		if (this.__listener) {
+		 			this.__listener.onRemove(actor, this);
+		 		}
 	 		}
 	 	}
 	}
@@ -1071,10 +1100,18 @@ module Game {
 			root.fore[this.x][this.y] = this._col;
 		}
 
+		/*
+			Function: postLoad
+			json.stringify cannot handle cyclic dependencies so we have to rebuild them here
+		*/
 		postLoad() {
-			// rebuild conditions links
+			// rebuild conditions -> creature backlinks
 			if ( this.ai ) {
 				this.ai.setPostLoadOwner(this);
+			}
+			// rebuild container -> listener backlinks
+			if ( this.ai && this.container ) {
+				this.container.setListener(this.ai);
 			}
 		}
 
