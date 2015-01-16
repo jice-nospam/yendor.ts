@@ -107,12 +107,12 @@ module Yendor {
 			// update all entities with wait time <= 0
 			var updatedEntities: TimedEntity[] = [];
 			var entity: TimedEntity = this.entities.peek();
-			while ( entity && entity.waitTime <= 0 ) {
+			while ( ! this.paused && entity && entity.waitTime <= 0 ) {
 				updatedEntities.push(entity);
 				this.entities.pop();
 				var oldWaitTime = entity.waitTime;
 				entity.update();
-				if ( entity.waitTime <= oldWaitTime ) {
+				if ( ! this.paused && entity.waitTime <= oldWaitTime ) {
 					// enforce waitTime to avoid deadlock
 					entity.waitTime = oldWaitTime + 1;
 				}
