@@ -10,12 +10,11 @@ module Game {
 	/*
 		Enum: TargetSelectionMethod
 		Define how we select the actors that are impacted by an effect.
-		The wearer is the actor triggering the effect (by using an item or casting a spell)
 
-		WEARER - the actor using the item or casting the spell
-		WEARER_CLOSEST_ENEMY - the closest enemy 
+		ACTOR_ON_CELL - whatever actor is on the selected cell
+		CLOSEST_ENEMY - the closest non player creature
 		SELECTED_ACTOR - an actor manually selected
-		WEARER_RANGE - all actors close to the wearer
+		ACTORS_RANGE - all actors close to the cell
 		SELECTED_RANGE - all actors close to a manually selected position
 	*/
 	export enum TargetSelectionMethod {
@@ -223,13 +222,10 @@ module Game {
 		}
 	}
 
-	/********************************************************************************
-	 * Group: items
-	 ********************************************************************************/
-	 /*
+	/*
 	 	Class: Effector
 	 	Combines an effect and a target selector. Can also display a message before applying the effect.
-	 */
+	*/
 	export class Effector implements Persistent {
 		className: string;
 		private _effect: Effect;
@@ -269,6 +265,11 @@ module Game {
 			}
 		}
 	}
+
+	/********************************************************************************
+	 * Group: items
+	 ********************************************************************************/
+
 	/*
 		Class: Pickable
 		An actor that can be picked by a creature

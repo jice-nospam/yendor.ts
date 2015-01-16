@@ -107,7 +107,6 @@ module Game {
 		Enum: ActorType
 		enum for all the actors existing in the game.
 	*/
-	// TODO use standard enum
 	export enum ActorType {
 		// creature
 		// 		beast
