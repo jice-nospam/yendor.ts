@@ -216,6 +216,7 @@ module Yendor {
 	export class Console {
 		private _width: number;
 		private _height: number;
+		private __emptyLine: string;
 		/*
 			Property: text
 			Array of <height> strings storing the characters. The character at coordinate x,y is text[y][x].
@@ -248,6 +249,7 @@ module Yendor {
 			this._width = _width;
 			this._height = _height;
 			this.text = [];
+			this.__emptyLine = this.emptyLine();
 			this.clearText();
 			this.fore = this.newColorTable();
 			this.back = this.newColorTable();
@@ -341,7 +343,7 @@ module Yendor {
 		*/
 		clearText() {
 			for (var i = 0; i < this.height; i++) {
-				this.text[i] = this.emptyLine();
+				this.text[i] = this.__emptyLine;
 			}
 		}
 
