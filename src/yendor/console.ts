@@ -11,25 +11,27 @@ module Yendor {
 
 	/*
 		Interface: Color
-		Typesafe string color wrapper. 
-		Stores colors using CSS format #rgb, #rrggbb, rgb(r,g,b) or one of the 17 standard colors :
-		- aqua
-		- black
-		- blue
-		- fuchsia
-		- gray
-		- green
-		- lime
-		- maroon
-		- navy
-		- olive
-		- orange
-		- purple
-		- red
-		- silver
-		- teal
-		- white
-		- yellow
+		Typesafe number or string color wrapper. 
+		Stores colors using a number value between 0 and 0xFFFFFF or a CSS string 
+		format "#rgb", "#rrggbb", "rgb(r,g,b)" or one of the 17 standard colors :
+		- "aqua"
+		- "black"
+		- "blue"
+		- "fuchsia"
+		- "gray"
+		- "green"
+		- "lime"
+		- "maroon"
+		- "navy"
+		- "olive"
+		- "orange"
+		- "purple"
+		- "red"
+		- "silver"
+		- "teal"
+		- "white"
+		- "yellow"
+		The faster format is the number format. Use it as often as possible.
 	*/
 	export type Color = String | number;
 
