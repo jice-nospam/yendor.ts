@@ -31,52 +31,19 @@ module Yendor {
 	        For example with hashmap {"orc":30, "troll":10}, the function returns "orc" with a probability 
 	        of 30/40 and "troll" with a probability of 10/40.
 
+	        You can also use enums as keys :
+	        > enum Type { ORC, TROLL };
+	        hashmap : {Type.ORC: 30, Type.TROLL: 10}
+
 	        Parameters:
-	        chances - hashmap { key: string => number of chances }
+	        chances - hashmap { key: string | number => number of chances }
 
 	        Returns:
-	        the key of the selected entry
+	        the key of the selected entry (either a string or a number depending on the input hashmap key type)
 
 	    */
-		getRandomChance(chances: { [index: string ]: number }): string {
+		getRandomChance(chances: { [index: string ]: number } | { [index: number ]: number }): string | number {
 		    // TODO when typescript 1.4 is out : getRandomChance(chances: { [index: string|number ]: number }): string|number {
-	        var chancesSum: number = 0;
-	        for (var key in chances) {
-	            if ( chances.hasOwnProperty(key) ) {
-	                chancesSum += chances[key];
-	            }
-	        }
-	        // the dice will land on some number between 1 and the sum of the chances
-	        var dice: number = this.getNumber(0, chancesSum);
-	        var currentChanceSum = 0;
-	        for (var key2 in chances) {
-	            if ( chances.hasOwnProperty(key2) ) {
-	                // go through all chances, keeping the sum so far
-	                currentChanceSum += chances[key2];
-	                // see if the dice landed in the part that corresponds to this choice
-	                if ( dice <= currentChanceSum ) {
-	                    return key2;
-	                }
-	            }
-	        }
-	        return undefined;
-	    }
-
-	    /*
-	        Function: getRandomChance
-	        Choose one value from a list, taking chances into account.
-	        For example :
-			> enum Types { ORC, TROLL };
-	        With hashmap {Types.ORC:30, Types.TROLL:10}, the function returns Types.ORC with a probability 
-	        of 30/40 and Types.TROLL with a probability of 10/40.
-
-	        Parameters:
-	        chances - hashmap { key: number => number of chances }
-
-	        Returns:
-	        the key of the selected entry	        
-	    */
-	    getRandomChanceNumber(chances: { [index: number ]: number }): number {
 	        var chancesSum: number = 0;
 	        for (var key in chances) {
 	            if ( chances.hasOwnProperty(key) ) {

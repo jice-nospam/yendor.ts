@@ -90,7 +90,7 @@ module Game {
 			// no trolls before level 3. then probability 10/(60+30+10)=0.1 until level 5, 
 			// 20/(60+30+20)=0.18 until level 7 and 30/(60+30+30)=0.23 beyond
 			probabilities[ActorType.TROLL] = this.getValueForDungeon([[3, 10], [5, 20], [7, 30]]);
-			var monster: ActorType = <ActorType>rng.getRandomChanceNumber(probabilities);
+			var monster: ActorType = <ActorType>rng.getRandomChance(probabilities);
 			return ActorFactory.create(monster, x, y);
 		}
 
@@ -112,7 +112,7 @@ module Game {
 			probabilities[ActorType.LONG_SWORD] = this.getValueForDungeon([[10, 4]]);
 			probabilities[ActorType.IRON_SHIELD] = this.getValueForDungeon([[14, 8]]);
 			probabilities[ActorType.GREAT_SWORD] = this.getValueForDungeon([[14, 4]]);
-			var item: ActorType = <ActorType>rng.getRandomChanceNumber(probabilities);
+			var item: ActorType = <ActorType>rng.getRandomChance(probabilities);
 			return ActorFactory.create(item, x, y);
 		}
 
