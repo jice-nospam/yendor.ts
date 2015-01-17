@@ -13,7 +13,7 @@ module Yendor {
 		CONTINUE - continue the traversal to the next node.
 		STOP - stop the traversal at this node.
 	*/
-	export enum BSPTraversalAction { CONTINUE, STOP }
+	export const enum BSPTraversalAction { CONTINUE, STOP }
 
 
 	/*

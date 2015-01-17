@@ -80,7 +80,7 @@ module Game {
         export var PERSISTENCE_CORPSES_KEY: string = "corpses";
 
 	}
-	export enum GameStatus {
+	export const enum GameStatus {
         // go to next level
         NEXT_LEVEL,
         // game is running
@@ -91,7 +91,7 @@ module Game {
 		DEFEAT
 	}
 
-    export enum PlayerAction {
+    export const enum PlayerAction {
         MOVE_NORTH,
         MOVE_SOUTH,
         MOVE_EAST,
@@ -113,7 +113,7 @@ module Game {
     }
 
 	// key codes
-	export enum KeyEvent {
+	export const enum KeyEvent {
         DOM_VK_CANCEL= 3,
         DOM_VK_HELP= 6,
         DOM_VK_BACK_SPACE= 8,

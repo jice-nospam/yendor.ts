@@ -17,7 +17,7 @@ module Game {
 		ACTORS_RANGE - all actors close to the cell
 		SELECTED_RANGE - all actors close to a manually selected position
 	*/
-	export enum TargetSelectionMethod {
+	export const enum TargetSelectionMethod {
 		ACTOR_ON_CELL,
 		CLOSEST_ENEMY,
 		SELECTED_ACTOR,

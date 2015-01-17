@@ -1,13 +1,13 @@
 module Game {
 	"use strict";
 
-	export enum MouseButton {
+	export const enum MouseButton {
 		LEFT = 1,
 		MIDDLE = 2,
 		RIGHT = 3
 	}
 
-	export enum EventType {
+	export const enum EventType {
 		// change game status. Associated data : GameStatus
 		CHANGE_STATUS,
 		// save the game. no data associated

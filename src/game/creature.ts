@@ -16,7 +16,7 @@ module Game {
 	 	REGENERATION - regain health points over time
 	 	OVERENCUMBERED - walk slower. This also affects all actions relying on walkTime.
 	*/
-	export enum ConditionType {
+	export const enum ConditionType {
 		CONFUSED,
 		STUNNED,
 		REGENERATION,
