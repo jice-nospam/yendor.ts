@@ -351,7 +351,7 @@ module Game {
 		try {
 			Yendor.init();
 			rng = new Yendor.ComplementaryMultiplyWithCarryRandom();
-			root = Yendor.createConsole( Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT, "#ffffff", "#000000", "#console", "terminal.png" );
+			root = Yendor.createConsole( Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT, 0xffffff, 0x000000, "#console", "terminal.png" );
 
 			var engine = new Engine();
 			$(document).keydown(engine.handleKeypress.bind(engine));

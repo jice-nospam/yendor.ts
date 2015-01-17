@@ -11,25 +11,25 @@ module Game {
         export var URL_PARAM_DEBUG: string = "debug";
 
 		// rendering
-		export var DARK_WALL: Yendor.Color = "#000064";
-		export var LIGHT_WALL: Yendor.Color = "#826E32";
-		export var DARK_GROUND: Yendor.Color = "#323296";
-		export var LIGHT_GROUND: Yendor.Color = "#C8B432";
+		export var DARK_WALL: Yendor.Color = 0x000064;
+		export var LIGHT_WALL: Yendor.Color = 0x826E32;
+		export var DARK_GROUND: Yendor.Color = 0x323296;
+		export var LIGHT_GROUND: Yendor.Color = 0xC8B432;
         export var FOV_RADIUS: number = 10;
-        export var MENU_BACKGROUND: Yendor.Color = "#272822";
-        export var MENU_BACKGROUND_ACTIVE: Yendor.Color = "#383830";
-        export var MENU_FOREGROUND: Yendor.Color = "#FD971F";
-        export var MENU_FOREGROUND_ACTIVE: Yendor.Color = "#FFDF90";
-        export var MENU_FOREGROUND_DISABLED: Yendor.Color = "#5C714B";
-        export var HEALTH_BAR_BACKGROUND: Yendor.Color = "#FF3F3F";
-        export var HEALTH_BAR_FOREGROUND: Yendor.Color = "#7F3F3F";
-        export var XP_BAR_BACKGROUND: Yendor.Color = "#9F3FFF";
-        export var XP_BAR_FOREGROUND: Yendor.Color = "#3F007F";
-        export var INVENTORY_BACKGROUND: Yendor.Color = "#272822";
-        export var INVENTORY_BACKGROUND_ACTIVE: Yendor.Color = "#383830";
-        export var INVENTORY_FOREGROUND: Yendor.Color = "#FD971F";
-        export var INVENTORY_FOREGROUND_ACTIVE: Yendor.Color = "#FFDF90";
-        export var INVENTORY_BACKGROUND_EQUIPPED: Yendor.Color = "#585850";
+        export var MENU_BACKGROUND: Yendor.Color = 0x272822;
+        export var MENU_BACKGROUND_ACTIVE: Yendor.Color = 0x383830;
+        export var MENU_FOREGROUND: Yendor.Color = 0xFD971F;
+        export var MENU_FOREGROUND_ACTIVE: Yendor.Color = 0xFFDF90;
+        export var MENU_FOREGROUND_DISABLED: Yendor.Color = 0x5C714B;
+        export var HEALTH_BAR_BACKGROUND: Yendor.Color = 0xFF3F3F;
+        export var HEALTH_BAR_FOREGROUND: Yendor.Color = 0x7F3F3F;
+        export var XP_BAR_BACKGROUND: Yendor.Color = 0x9F3FFF;
+        export var XP_BAR_FOREGROUND: Yendor.Color = 0x3F007F;
+        export var INVENTORY_BACKGROUND: Yendor.Color = 0x272822;
+        export var INVENTORY_BACKGROUND_ACTIVE: Yendor.Color = 0x383830;
+        export var INVENTORY_FOREGROUND: Yendor.Color = 0xFD971F;
+        export var INVENTORY_FOREGROUND_ACTIVE: Yendor.Color = 0xFFDF90;
+        export var INVENTORY_BACKGROUND_EQUIPPED: Yendor.Color = 0x585850;
 
         // gui
         export var STATUS_PANEL_ID: string = "statusPanel";

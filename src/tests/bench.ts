@@ -27,22 +27,15 @@ module Benchmark {
 
 	class PerfSample implements Sample {
 		name: string = "True color";
-		static hexa: string = "0123456789ABCDEF";
 		render(root: Yendor.Console) {
-			for (var x = SAMPLE_SCREEN_X; x < SAMPLE_SCREEN_X + SAMPLE_SCREEN_WIDTH; x++ ) {
-				for ( var y = SAMPLE_SCREEN_Y; y < SAMPLE_SCREEN_Y + SAMPLE_SCREEN_HEIGHT; y++ ) {
-					var r = PerfSample.hexa[rng.getNumber(0, 15)] + PerfSample.hexa[rng.getNumber(0, 15)];
-					var g = PerfSample.hexa[rng.getNumber(0, 15)] + PerfSample.hexa[rng.getNumber(0, 15)];
-					var b = PerfSample.hexa[rng.getNumber(0, 15)] + PerfSample.hexa[rng.getNumber(0, 15)];
-					var col = "#" + r + g + b;
+			for (var x = SAMPLE_SCREEN_X; x < SAMPLE_SCREEN_X + SAMPLE_SCREEN_WIDTH; ++x ) {
+				for ( var y = SAMPLE_SCREEN_Y; y < SAMPLE_SCREEN_Y + SAMPLE_SCREEN_HEIGHT; ++y ) {
+					var col = rng.getNumber(0, 0xFFFFFF);
 					root.back[x][y] = col;
-					r = PerfSample.hexa[rng.getNumber(0, 15)] + PerfSample.hexa[rng.getNumber(0, 15)];
-					g = PerfSample.hexa[rng.getNumber(0, 15)] + PerfSample.hexa[rng.getNumber(0, 15)];
-					b = PerfSample.hexa[rng.getNumber(0, 15)] + PerfSample.hexa[rng.getNumber(0, 15)];
-					col = "#" + r + g + b;
+					col = rng.getNumber(0, 0xFFFFFF);
 					root.fore[x][y] = col;
-					var ch = rng.getNumber(32, 128);
-					root.setChar(x, y, String.fromCharCode(ch));
+					var ch = String.fromCharCode(rng.getNumber(32, 128));
+					root.setChar(x, y, ch);
 				}
 			}
 		}
@@ -54,9 +47,9 @@ module Benchmark {
 		private pathFinder: Yendor.PathFinder;
 		private from: Yendor.Position = new Yendor.Position( 19, 10 );
 		private to: Yendor.Position = new Yendor.Position(0, 0);
-		private static DARK_WALL: Yendor.Color = "#000064";
-		private static LIGHT_WALL: Yendor.Color = "#826E32";
-		private static DARK_GROUND: Yendor.Color = "#323296";
+		private static DARK_WALL: Yendor.Color = 0x000064;
+		private static LIGHT_WALL: Yendor.Color = 0x826E32;
+		private static DARK_GROUND: Yendor.Color = 0x323296;
 		private map: string[] = ["##############################################",
 								"#######################      #################",
 								"#####################    #     ###############",
@@ -227,11 +220,11 @@ module Benchmark {
 			var sample: Sample = samples[i];
 			root.print(1, 40 + i, sample.name);
 			if ( i === currentSampleIndex ) {
-				root.clearBack("#323296", 0, 40 + i, 26, 1);
-				root.clearFore("#FFFFFF", 0, 40 + i, 26, 1);
+				root.clearBack(0x323296, 0, 40 + i, 26, 1);
+				root.clearFore(0xFFFFFF, 0, 40 + i, 26, 1);
 			} else {
-				root.clearBack("#000000", 0, 40 + i, 26, 1);
-				root.clearFore("#D0D0D0", 0, 40 + i, 26, 1);
+				root.clearBack(0x000000, 0, 40 + i, 26, 1);
+				root.clearFore(0xD0D0D0, 0, 40 + i, 26, 1);
 			}
 		}
 		root.print(1, 46, "fps : " + framesPerSecond);
@@ -252,7 +245,7 @@ module Benchmark {
 
 	$(function() {
 		Yendor.init();
-		root = Yendor.createConsole( WIDTH, HEIGHT, "#ffffff", "#000000", "#console", "terminal.png" );
+		root = Yendor.createConsole( WIDTH, HEIGHT, 0xffffff, 0x000000, "#console", "terminal.png" );
 		samples.push(new PerfSample());
 		samples.push(new AStarSample());
 		samples.push(new RealTimeSchedulerSample());
@@ -261,8 +254,8 @@ module Benchmark {
 			if ( event.keyCode === 40 ) {
 				// DOWN
 				root.clearText();
-				root.clearBack("#000000");
-				root.clearFore("#FFFFFF");
+				root.clearBack(0x000000);
+				root.clearFore(0xFFFFFF);
 				currentSampleIndex ++;
 				if (currentSampleIndex >= samples.length ) {
 					currentSampleIndex = 0;
@@ -270,8 +263,8 @@ module Benchmark {
 			} else if (event.keyCode === 38) {
 				// UP
 				root.clearText();
-				root.clearBack("#000000");
-				root.clearFore("#FFFFFF");
+				root.clearBack(0x000000);
+				root.clearFore(0xFFFFFF);
 				currentSampleIndex --;
 				if ( currentSampleIndex < 0 ) {
 					currentSampleIndex = samples.length - 1;

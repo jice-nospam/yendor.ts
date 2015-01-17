@@ -153,9 +153,9 @@ module Game {
 		private static builders: { [index: string]: (x: number, y: number) => Actor } = {
 			// creature
 			// 		beast
-			GOBLIN: (x: number, y: number) => { return ActorFactory.createBeast(x, y, "g", "goblin", "goblin corpse", "#3F7F3F", 3, 1, 0, 10, 4); },
-			ORC: (x: number, y: number) => { return ActorFactory.createBeast(x, y, "o", "orc", "dead orc", "#3F7F3F", 9, 2, 0, 35, 5); },
-			TROLL: (x: number, y: number) => { return ActorFactory.createBeast(x, y, "T", "troll", "troll carcass", "#007F00", 15, 3, 1, 100, 6); },
+			GOBLIN: (x: number, y: number) => { return ActorFactory.createBeast(x, y, "g", "goblin", "goblin corpse", 0x3F7F3F, 3, 1, 0, 10, 4); },
+			ORC: (x: number, y: number) => { return ActorFactory.createBeast(x, y, "o", "orc", "dead orc", 0x3F7F3F, 9, 2, 0, 35, 5); },
+			TROLL: (x: number, y: number) => { return ActorFactory.createBeast(x, y, "T", "troll", "troll carcass", 0x007F00, 15, 3, 1, 100, 6); },
 			// 		human
 			PLAYER: (x: number, y: number) => { return ActorFactory.createPlayer(x, y); },
 			// potion
@@ -200,7 +200,7 @@ module Game {
 			var builder: (x: number, y: number) => Actor = ActorFactory.builders[ ActorType[type] ];
 			var actor: Actor;
 			if ( ! builder ) {
-				log("ERROR : unknown actor type " + type, "#FF0000");
+				log("ERROR : unknown actor type " + type, 0xFF0000);
 			} else {
 				actor = builder(x, y);
 			}
@@ -210,7 +210,7 @@ module Game {
 		// potions
 		private static createEffectPotion(x: number, y: number, name: string, onUseEffect: Effector, onThrowEffect?: Effector): Actor {
 			var effectPotion = new Actor();
-			effectPotion.init(x, y, "!", name, "potion", "#800080", true);
+			effectPotion.init(x, y, "!", name, "potion", 0x800080, true);
 			effectPotion.pickable = new Pickable(0.5);
 			if ( onUseEffect ) {
 				effectPotion.pickable.setOnUseEffector(onUseEffect);
@@ -246,7 +246,7 @@ module Game {
 		// scrolls
 		private static createLightningBoltScroll(x: number, y: number, range: number, damages: number): Actor {
 			var lightningBolt = new Actor();
-			lightningBolt.init(x, y, "#", "scroll of lightning bolt", "scroll", "#FFFF3F", true);
+			lightningBolt.init(x, y, "#", "scroll of lightning bolt", "scroll", 0xFFFF3F, true);
 			lightningBolt.pickable = new Pickable(0.1);
 			lightningBolt.pickable.setOnUseEffect(new InstantHealthEffect(-damages,
 				"A lightning bolt strikes [the actor1] with a loud thunder!\nThe damage is [value1] hit points."),
@@ -256,7 +256,7 @@ module Game {
 
 		private static createFireballScroll(x: number, y: number, range: number, damages: number): Actor {
 			var fireball = new Actor();
-			fireball.init(x, y, "#", "scroll of fireball", "scroll", "#FFFF3F", true);
+			fireball.init(x, y, "#", "scroll of fireball", "scroll", 0xFFFF3F, true);
 			fireball.pickable = new Pickable(0.1);
 			fireball.pickable.setOnUseEffect(new InstantHealthEffect(-damages,
 				"[The actor1] get[s] burned for [value1] hit points."),
@@ -267,7 +267,7 @@ module Game {
 
 		private static createConfusionScroll(x: number, y: number, range: number, nbTurns: number): Actor {
 			var confusionScroll = new Actor();
-			confusionScroll.init(x, y, "#", "scroll of confusion", "scroll", "#FFFF3F", true);
+			confusionScroll.init(x, y, "#", "scroll of confusion", "scroll", 0xFFFF3F, true);
 			confusionScroll.pickable = new Pickable(0.1);
 			confusionScroll.pickable.setOnUseEffect(new ConditionEffect(ConditionType.CONFUSED, nbTurns,
 				"[The actor1's] eyes look vacant,\nas [it] start[s] to stumble around!"),
@@ -278,7 +278,7 @@ module Game {
 		// weapons
 		private static createSword(x: number, y: number, name: string, damages: number, attackTime: number, twoHanded: boolean = false): Actor {
 			var sword = new Actor();
-			sword.init(x, y, "/", name, "weapon|blade", "#F0F0F0", true);
+			sword.init(x, y, "/", name, "weapon|blade", 0xF0F0F0, true);
 			sword.pickable = new Pickable(3);
 			sword.pickable.setOnThrowEffect(new InstantHealthEffect(-damages,
 				"The sword hits [the actor1] for [value1] hit points."),
@@ -291,7 +291,7 @@ module Game {
 		private static createBow(x: number, y: number, name: string, damages: number, projectileTypeName: string,
 			loadTime: number, twoHanded: boolean = false): Actor {
 			var bow = new Actor();
-			bow.init(x, y, ")", name, "weapon|ranged", "#F0F0F0", true);
+			bow.init(x, y, ")", name, "weapon|ranged", 0xF0F0F0, true);
 			bow.pickable = new Pickable(2);
 			bow.equipment = new Equipment(twoHanded ? Constants.SLOT_BOTH_HANDS : Constants.SLOT_RIGHT_HAND);
 			bow.ranged = new Ranged(damages, projectileTypeName, loadTime);
@@ -300,7 +300,7 @@ module Game {
 
 		private static createProjectile(x: number, y: number, name: string, damages: number, projectileTypeName: string): Actor {
 			var projectile = new Actor();
-			projectile.init(x, y, "\\", name, "weapon|projectile|" + projectileTypeName, "#D0D0D0", true);
+			projectile.init(x, y, "\\", name, "weapon|projectile|" + projectileTypeName, 0xD0D0D0, true);
 			projectile.pickable = new Pickable(0.1);
 			projectile.pickable.setOnThrowEffect(new InstantHealthEffect(-damages,
 				"The " + name + " hits [the actor1] for [value1] points."),
@@ -311,7 +311,7 @@ module Game {
 
 		private static createShield(x: number, y: number, name: string, defense: number): Actor {
 			var shield = new Actor();
-			shield.init(x, y, "[", name, "weapon|shield", "#F0F0F0", true);
+			shield.init(x, y, "[", name, "weapon|shield", 0xF0F0F0, true);
 			shield.pickable = new Pickable(5);
 			shield.pickable.setOnThrowEffect(new ConditionEffect(ConditionType.STUNNED, 2,
 				"The shield hits [the actor1] and stuns [it]!"),
@@ -323,7 +323,7 @@ module Game {
 		// miscellaneous
 		private static createStairs(x: number, y: number, character: string, direction: string): Actor {
 			var stairs: Actor = new Actor();
-			stairs.init(x, y, character, "stairs " + direction, undefined, "#FFFFFF", false);
+			stairs.init(x, y, character, "stairs " + direction, undefined, 0xFFFFFF, false);
 			stairs.fovOnly = false;
 			return stairs;
 		}
@@ -331,7 +331,7 @@ module Game {
 		/*
 			creature factories
 		*/
-		private static createBeast(x: number, y: number, character: string, name: string, corpseName: string, color: string,
+		private static createBeast(x: number, y: number, character: string, name: string, corpseName: string, color: Yendor.Color,
 			hp: number, attack: number, defense: number, xp: number, walkTime: number): Actor {
 			var beast: Actor = new Actor();
 			beast.init(x, y, character, name, "creature|beast", color, true);
@@ -345,7 +345,7 @@ module Game {
 
 		private static createPlayer(x: number, y: number): Player {
 			var player = new Player();
-			player.init(x, y, "@", "player", "#FFFFFF");
+			player.init(x, y, "@", "player", 0xFFFFFF);
 			return player;
 		}
 	}

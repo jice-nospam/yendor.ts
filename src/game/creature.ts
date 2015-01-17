@@ -473,7 +473,7 @@ module Game {
 				weapon = owner.container.getFromSlot(Constants.SLOT_LEFT_HAND);
 			}
 			if (! weapon || ! weapon.ranged) {
-				log("You have no ranged weapon equipped.", "#FF0000");
+				log("You have no ranged weapon equipped.", 0xFF0000);
 				return;
 			}
 			weapon.ranged.fire(weapon, owner);
@@ -764,7 +764,7 @@ module Game {
 			if ( this.destructible.xp >= nextLevelXp ) {
 				this._xpLevel ++;
 				this.destructible.xp -= nextLevelXp;
-				log("Your battle skills grow stronger! You reached level " + this.xpLevel, "#FF0000");
+				log("Your battle skills grow stronger! You reached level " + this.xpLevel, 0xFF0000);
 			}
 		}
 

@@ -471,14 +471,14 @@ module Game {
 			}
 			this.equipped = true;
 			if ( wearer === ActorManager.instance.getPlayer()) {
-				log(transformMessage("[The actor1] equip[s] [the actor2] on [its] " + this.slot, wearer, owner), "#FFA500" );
+				log(transformMessage("[The actor1] equip[s] [the actor2] on [its] " + this.slot, wearer, owner), 0xFFA500 );
 			}
 		}
 
 		unequip(owner: Actor, wearer: Actor, beforeDrop: boolean = false) {
 			this.equipped = false;
 			if ( !beforeDrop && wearer === ActorManager.instance.getPlayer()) {
-				log(transformMessage("[The actor1] unequip[s] [the actor2] from [its] " + this.slot, wearer, owner), "#FFA500" );
+				log(transformMessage("[The actor1] unequip[s] [the actor2] from [its] " + this.slot, wearer, owner), 0xFFA500 );
 			}
 		}
 	}
@@ -544,7 +544,7 @@ module Game {
 			if (! projectile) {
 				// no projectile found. cannot fire
 				if ( wearer === ActorManager.instance.getPlayer()) {
-					log("No " + this.projectileType.name + " available.", "#FF0000");
+					log("No " + this.projectileType.name + " available.", 0xFF0000);
 					return;
 				}
 			}

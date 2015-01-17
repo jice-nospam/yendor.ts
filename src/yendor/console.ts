@@ -31,7 +31,7 @@ module Yendor {
 		- white
 		- yellow
 	*/
-	export interface Color extends String {}
+	export type Color = String | number;
 
 	/*
 		Class: ColorUtils
@@ -87,6 +87,22 @@ module Yendor {
 			An array of 3 numbers [r,g,b] between 0 and 255.
 		*/
 		static toRgb(color: Color): number[] {
+			if ( typeof color === "number") {
+				return ColorUtils.toRgbNumber(<number>color);
+			} else {
+				return ColorUtils.toRgbString(<String>color);
+			}
+		}
+
+		static toRgbNumber(color: number): number[] {
+			var r = Math.floor(color / 65536);
+			color -= r * 65536;
+			var g = Math.floor(color / 256);
+			var b = color - g * 256;
+			return [r, g, b];
+		}
+
+		static toRgbString(color: String): number[] {
 			color = color.toLowerCase();
 			var stdColValues: number[] = ColorUtils.stdCol[String(color)];
 			if ( stdColValues ) {
@@ -121,10 +137,14 @@ module Yendor {
 			A number between 0x000000 and 0xFFFFFF.
 		*/
 		static toNumber(color: Color): number {
-			if (color.charAt(0) === "#" && color.length === 7) {
-				return parseInt(color.substr(1), 16);
+			if ( typeof color === "number" ) {
+				return <number>color;
+			}
+			var scol: String = <String> color;
+			if (scol.charAt(0) === "#" && scol.length === 7) {
+				return parseInt(scol.substr(1), 16);
 			} else {
-				var rgb = ColorUtils.toRgb(color);
+				var rgb = ColorUtils.toRgbString(scol);
 				return rgb[0] * 65536 + rgb[1] * 256 + rgb[2];
 			}
 		}
