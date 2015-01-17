@@ -1,4 +1,4 @@
-# 0.3.0 / TBD
+# 0.3.0 / 17-jan-2015
 * Yendor toolkit
 	- added timed entity Scheduler
 
