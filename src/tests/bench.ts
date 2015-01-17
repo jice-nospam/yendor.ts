@@ -30,12 +30,9 @@ module Benchmark {
 		render(root: Yendor.Console) {
 			for (var x = SAMPLE_SCREEN_X; x < SAMPLE_SCREEN_X + SAMPLE_SCREEN_WIDTH; ++x ) {
 				for ( var y = SAMPLE_SCREEN_Y; y < SAMPLE_SCREEN_Y + SAMPLE_SCREEN_HEIGHT; ++y ) {
-					var col = rng.getNumber(0, 0xFFFFFF);
-					root.back[x][y] = col;
-					col = rng.getNumber(0, 0xFFFFFF);
-					root.fore[x][y] = col;
-					var ch = String.fromCharCode(rng.getNumber(32, 128));
-					root.setChar(x, y, ch);
+					root.back[x][y] = rng.getNumber(0, 0xFFFFFF);
+					root.fore[x][y] = rng.getNumber(0, 0xFFFFFF);
+					root.setChar(x, y, String.fromCharCode(rng.getNumber(32, 128)));
 				}
 			}
 		}

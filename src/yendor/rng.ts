@@ -43,7 +43,6 @@ module Yendor {
 
 	    */
 		getRandomChance(chances: { [index: string ]: number } | { [index: number ]: number }): string | number {
-		    // TODO when typescript 1.4 is out : getRandomChance(chances: { [index: string|number ]: number }): string|number {
 	        var chancesSum: number = 0;
 	        for (var key in chances) {
 	            if ( chances.hasOwnProperty(key) ) {
