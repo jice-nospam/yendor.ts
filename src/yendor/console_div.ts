@@ -111,12 +111,12 @@ module Yendor {
 		}
 
 		private getLineHTML( line: number ): string {
-			var currentFore = this.fore[0][line];
-			var currentBack = this.back[0][line];
+			var currentFore = ColorUtils.toWeb(this.fore[0][line]);
+			var currentBack = ColorUtils.toWeb(this.back[0][line]);
 			var s = "<span style='color:" + currentFore + ";background-color:" + currentBack + "'>" + this.text[line][0];
 			for ( var i = 1; i < this.width; i++ ) {
-				var nextFore = this.fore[i][line];
-				var nextBack = this.back[i][line];
+				var nextFore = ColorUtils.toWeb(this.fore[i][line]);
+				var nextBack = ColorUtils.toWeb(this.back[i][line]);
 				if ( nextFore !== currentFore || nextBack !== currentBack ) {
 					currentFore = nextFore;
 					currentBack = nextBack;

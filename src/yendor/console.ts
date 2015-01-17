@@ -88,13 +88,26 @@ module Yendor {
 		*/
 		static toRgb(color: Color): number[] {
 			if ( typeof color === "number") {
-				return ColorUtils.toRgbNumber(<number>color);
+				return ColorUtils.toRgbFromNumber(<number>color);
 			} else {
-				return ColorUtils.toRgbString(<String>color);
+				return ColorUtils.toRgbFromString(<String>color);
 			}
 		}
 
-		static toRgbNumber(color: number): number[] {
+		static toWeb(color: Color): string {
+			if ( typeof color === "number") {
+				var ret: string = color.toString(16);
+				var missingZeroes: number = 6 - ret.length;
+				if ( missingZeroes > 0 ) {
+					ret = "000000".substr(0, missingZeroes) + ret;
+				}
+				return "#" + ret;
+			} else {
+				return <string>color;
+			}
+		}
+
+		static toRgbFromNumber(color: number): number[] {
 			var r = Math.floor(color / 65536);
 			color -= r * 65536;
 			var g = Math.floor(color / 256);
@@ -102,7 +115,7 @@ module Yendor {
 			return [r, g, b];
 		}
 
-		static toRgbString(color: String): number[] {
+		static toRgbFromString(color: String): number[] {
 			color = color.toLowerCase();
 			var stdColValues: number[] = ColorUtils.stdCol[String(color)];
 			if ( stdColValues ) {
@@ -144,7 +157,7 @@ module Yendor {
 			if (scol.charAt(0) === "#" && scol.length === 7) {
 				return parseInt(scol.substr(1), 16);
 			} else {
-				var rgb = ColorUtils.toRgbString(scol);
+				var rgb = ColorUtils.toRgbFromString(scol);
 				return rgb[0] * 65536 + rgb[1] * 256 + rgb[2];
 			}
 		}
@@ -265,7 +278,7 @@ module Yendor {
 			background - *optional* (default : black) default background color
 		*/
 		constructor(_width: number, _height: number,
-			foreground: Color = "white", background: Color = "#000000" ) {
+			foreground: Color = 0xFFFFFF, background: Color = 0x000000 ) {
 			this._width = _width;
 			this._height = _height;
 			this.text = [];
@@ -341,7 +354,7 @@ module Yendor {
 			text - the string to print
 			color - *optional* (default white)
 		*/
-		print(x: number, y: number, text: string, color: Color = "#FFFFFF") {
+		print(x: number, y: number, text: string, color: Color = 0xFFFFFF) {
 			var begin = 0;
 			var end = text.length;
 			if ( x + end > this.width ) {
