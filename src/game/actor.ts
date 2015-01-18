@@ -242,7 +242,7 @@ module Game {
 		private static createEffectPotion(x: number, y: number, name: string, onUseEffect: Effector, onThrowEffect?: Effector): Actor {
 			var effectPotion = new Actor();
 			effectPotion.init(x, y, "!", name, "potion", 0x800080, true);
-			effectPotion.pickable = new Pickable(0.5);
+			effectPotion.pickable = new Pickable(0.5, true);
 			if ( onUseEffect ) {
 				effectPotion.pickable.setOnUseEffector(onUseEffect);
 			}

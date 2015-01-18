@@ -22,3 +22,14 @@ To compile it, run `jake` then open game/index.html in your browser.
 * > : go down the stairs
 * < : go up the stairs
 * ESC : open game menu
+
+# TODO
+
+Reminder for stuff that might be added to the game. Or not.
+
+* wands and staff
+* poison potion and weapon / projectile poisoning (need onHitEffector on Attacker)
+* doors and keys
+* ranges (TilePicker must show the maximum range. Scrolls, ranged weapons and item throwing have max range)
+* shield should block only one hit per turn
+* dual wielding (you attack with the fastest weapon first, then with the slowest one. Total waitTime is smaller than the sum of the weapons waitTimes. watch out for special cases like crossbow + sword)

@@ -294,14 +294,17 @@ module Game {
 		*/
 		private onThrowEffector: Effector;
 		private _weight: number;
-
-		constructor(weight: number) {
-			this.className = "Pickable";
-			this._weight = weight;
-		}
+		private _destroyedWhenThrown: boolean;
 
 		get weight() { return this._weight; }
 		get onThrowEffect() { return this.onThrowEffector ? this.onThrowEffector.effect : undefined; }
+		get destroyedWhenThrown() { return this._destroyedWhenThrown; }
+
+		constructor(weight: number, destroyedWhenThrown: boolean = false) {
+			this.className = "Pickable";
+			this._weight = weight;
+			this._destroyedWhenThrown = destroyedWhenThrown;
+		}
 
 		setOnUseEffect(effect?: Effect, targetSelector?: TargetSelector, message?: string) {
 			this.onUseEffector = new Effector(effect, targetSelector, message);
@@ -409,8 +412,7 @@ module Game {
 					owner.pickable.drop(owner, Engine.instance.actorManager.getPlayer(), pos, "throw", fromFire);
 					if (owner.pickable.onThrowEffector) {
 						owner.pickable.onThrowEffector.apply(owner, wearer, pos, coef);
-						if (! owner.equipment) {
-							// TODO better test to know if the item is destroyed when thrown
+						if (owner.pickable.destroyedWhenThrown) {
 							Engine.instance.eventBus.publishEvent(new Event<Actor>(EventType.REMOVE_ACTOR, owner));
 						}
 					}
