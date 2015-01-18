@@ -7,7 +7,6 @@
 /// <reference path="creature.ts" />
 /// <reference path="map.ts" />
 /// <reference path="gui.ts" />
-var	root: Yendor.Console;
 var rng: Yendor.Random;
 module Game {
 	"use strict";
@@ -30,8 +29,10 @@ module Game {
 		private persister: Persister = new LocalStoragePersister();
 		private dungeonLevel: number = 1;
 		private gameTime : number = 0;
+		private	root: Yendor.Console;
 
 		constructor() {
+			this.root = Yendor.createConsole( Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT, 0xffffff, 0x000000, "#console", "terminal.png" );
 			this.map = new Map();
 			this.initEventBus();
 			GuiManager.instance.createStatusPanel();
@@ -42,12 +43,11 @@ module Game {
 			} else {
 				this.createNewGame();
 			}
-			GuiManager.instance.createOtherGui(this.map);
+			GuiManager.instance.createOtherGui();
 			this.computePlayerFov();
 		}
 
 		private initEventBus() {
-			EventBus.instance.init(this.map);
 			EventBus.instance.registerListener(this, EventType.CHANGE_STATUS);
 			EventBus.instance.registerListener(this, EventType.REMOVE_ACTOR);
 			EventBus.instance.registerListener(this, EventType.NEW_GAME);
@@ -286,12 +286,12 @@ module Game {
 				// update the game only TICKS_PER_SECOND per second
 				this.gameTime = 0;
 				if (!ActorManager.instance.isPaused()) {
-					ActorManager.instance.updateActors(this.map);
+					ActorManager.instance.updateActors();
 				}
 			}
 			// but render every frame to allow background animations (torch flickering, ...)
 			this.render();
-			root.render();
+			this.root.render();
 		}
 
 		/*
@@ -302,7 +302,7 @@ module Game {
 			event - the JQueryMouseEventObject
 		*/
 		handleMouseMove(event: JQueryMouseEventObject) {
-			var pos: Yendor.Position = root.getPositionFromPixels( event.pageX, event.pageY );
+			var pos: Yendor.Position = this.root.getPositionFromPixels( event.pageX, event.pageY );
 			EventBus.instance.publishEvent(new Event<Yendor.Position>( EventType.MOUSE_MOVE, pos));
 		}
 
@@ -326,10 +326,10 @@ module Game {
 			- the GUI
 		*/
 		private render() {
-			root.clearText();
-			this.map.render();
-			ActorManager.instance.renderActors(this.map);
-			GuiManager.instance.renderGui(root, this.map);
+			this.root.clearText();
+			this.map.render(this.root);
+			ActorManager.instance.renderActors(this.root);
+			GuiManager.instance.renderGui(this.root);
 		}
 	}
 
@@ -351,8 +351,6 @@ module Game {
 		try {
 			Yendor.init();
 			rng = new Yendor.ComplementaryMultiplyWithCarryRandom();
-			root = Yendor.createConsole( Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT, 0xffffff, 0x000000, "#console", "terminal.png" );
-
 			var engine = new Engine();
 			$(document).keydown(engine.handleKeypress.bind(engine));
 			$(document).mousemove(engine.handleMouseMove.bind(engine));

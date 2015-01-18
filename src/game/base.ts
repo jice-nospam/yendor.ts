@@ -2,7 +2,7 @@ module Game {
     "use strict";
 
 	export module Constants {
-        export var MAIN_MODULE_NAME = "Game";
+        export var MAIN_MODULE_NAME: string = "Game";
 		// console
 		export var CONSOLE_WIDTH: number = 80;
 		export var CONSOLE_HEIGHT: number = 34;

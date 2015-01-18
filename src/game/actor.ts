@@ -174,7 +174,7 @@ module Game {
 			WOODEN_SHIELD: (x: number, y: number) => { return ActorFactory.createShield(x, y, "wooden shield", 1); },
 			IRON_SHIELD: (x: number, y: number) => { return ActorFactory.createShield(x, y, "iron shield", 2); },
 			// 		ranged
-			SHORT_BOW: (x: number, y: number) => { return ActorFactory.createBow(x, y, "short bow", 3, "arrow", 2, true); },
+			SHORT_BOW: (x: number, y: number) => { return ActorFactory.createBow(x, y, "short bow", 3, "arrow", 4, true); },
 			LONG_BOW: (x: number, y: number) => { return ActorFactory.createBow(x, y, "long bow", 4, "arrow", 6, true); },
 			CROSSBOW: (x: number, y: number) => { return ActorFactory.createBow(x, y, "crossbow", 5, "bolt", 5); },
 			// 		projectile
@@ -405,20 +405,20 @@ module Game {
 			this.scheduler.clear();
 		}
 
-		private renderActorList(actors: Actor[], map: Map) {
+		private renderActorList(actors: Actor[], root: Yendor.Console) {
 			var nbActors: number = actors.length;
 			for (var i: number = 0; i < nbActors; i++) {
 				var actor: Actor = actors[i];
-				if ( map.shouldRenderActor(actor) ) {
-					actor.render();
+				if ( Map.instance.shouldRenderActor(actor) ) {
+					actor.render(root);
 				}
 			}
 		}
 
-		renderActors(map: Map) {
-			this.renderActorList(this.corpses, map);
-			this.renderActorList(this.items, map);
-			this.renderActorList(this.creatures, map);
+		renderActors(root: Yendor.Console) {
+			this.renderActorList(this.corpses, root);
+			this.renderActorList(this.items, root);
+			this.renderActorList(this.creatures, root);
 		}
 
 		isPlayerDead(): boolean {
@@ -430,7 +430,7 @@ module Game {
 			Triggers actors' A.I. during a new game turn.
 			Moves the dead actors from the actor list to the corpse list.
 		*/
-		updateActors(map: Map) {
+		updateActors() {
 			this.scheduler.run();
 			for ( var i: number = 0, len: number = this.creatures.length; i < len; ++i) {
 				var actor: Actor = this.creatures[i];
@@ -1090,11 +1090,11 @@ module Game {
 
 		update() {
 			if ( this._ai ) {
-				this._ai.update(this, Map.instance);
+				this._ai.update(this);
 			}
 		}
 
-		render() {
+		render(root: Yendor.Console) {
 			root.setChar( this.x, this.y, this._ch );
 			root.fore[this.x][this.y] = this._col;
 		}

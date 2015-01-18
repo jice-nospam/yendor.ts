@@ -36,18 +36,12 @@ module Game {
 	export class Event<T> {
 		private _type: EventType;
 		private _data: T;
-		private _map : Map;
 		constructor(_type: EventType, _data?: T) {
 			this._type = _type;
 			this._data = _data;
 		}
 		get type() { return this._type; }
 		get data() { return this._data; }
-		get map() { return this._map; }
-
-		initContext(map: Map) {
-			this._map = map;
-		}
 	}
 	export interface EventListener {
 		processEvent( ev: Event<any> );
@@ -57,11 +51,6 @@ module Game {
 		static get instance() { return EventBus._instance; }
 
 		private listeners: Array<EventListener[]> = [];
-		private map: Map;
-
-		init(map: Map) {
-			this.map = map;
-		}
 
 		registerListener(listener: EventListener, type: EventType) {
 			if (!this.listeners[type]) {
@@ -80,7 +69,6 @@ module Game {
 		}
 
 		publishEvent( event: Event<any>) {
-			event.initContext(this.map);
 			if ( this.listeners[event.type] ) {
 				var selectedListeners: EventListener[] = this.listeners[event.type];
 				for ( var i = 0; i < selectedListeners.length; i++) {

@@ -153,7 +153,7 @@ module Game {
 		}
 		set walkTime(newValue: number) { this._walkTime = newValue; }
 
-		update(owner: Actor, map: Map) {
+		update(owner: Actor) {
 			if ( ! this.conditions ) {
 				return;
 			}
@@ -237,12 +237,11 @@ module Game {
 			owner - the actor owning this Ai
 			x - the destination cell x coordinate
 			y - the destination cell y coordinate
-			map - the game map, used to check for wall collisions
 
 			Returns:
 			true if the owner actually moved to the new cell
 		*/
-		protected moveOrAttack(owner: Actor, x: number, y: number, map: Map): boolean {
+		protected moveOrAttack(owner: Actor, x: number, y: number): boolean {
 			if ( this.hasCondition(ConditionType.STUNNED)) {
 				this.waitTime += this.walkTime;
 				return false;
@@ -257,7 +256,7 @@ module Game {
 				return false;
 			}
 			// cannot move or attack a wall! 
-			if ( map.isWall(x, y)) {
+			if ( Map.instance.isWall(x, y)) {
 				this.waitTime += this.walkTime;
 				return false;
 			}
@@ -275,7 +274,7 @@ module Game {
 				}
 			}
 			// check for unpassable items
-			if ( !map.canWalk(x, y)) {
+			if ( !Map.instance.canWalk(x, y)) {
 				this.waitTime += this.walkTime;
 				return false;
 			}
@@ -342,8 +341,8 @@ module Game {
 			Parameters:
 			owner - the actor owning this PlayerAi (obviously, the player)
 		*/
-		update(owner: Actor, map: Map) {
-			super.update(owner, map);
+		update(owner: Actor) {
+			super.update(owner);
 			// don't update a dead actor
 			if ( owner.destructible && owner.destructible.isDead()) {
 				this._lastAction = undefined;
@@ -362,9 +361,9 @@ module Game {
         			var move: Yendor.Position = convertActionToPosition(this._lastAction);
 					newTurn = true;
 					// move to the target cell or attack if there's a creature
-					if ( this.moveOrAttack(owner, owner.x + move.x, owner.y + move.y, map) ) {
+					if ( this.moveOrAttack(owner, owner.x + move.x, owner.y + move.y) ) {
 						// the player actually move. Recompute the field of view
-						map.computeFov(owner.x, owner.y, Constants.FOV_RADIUS);
+						Map.instance.computeFov(owner.x, owner.y, Constants.FOV_RADIUS);
 					}
 				break;
         		case PlayerAction.WAIT :
@@ -379,7 +378,7 @@ module Game {
         		case PlayerAction.MOVE_UP :
         		case PlayerAction.MOVE_DOWN :
 					if (! this.hasCondition(ConditionType.CONFUSED) && ! this.hasCondition(ConditionType.STUNNED)) {
-						this.handleAction(owner, map);
+						this.handleAction(owner);
 					}
 				break;
 			}
@@ -398,13 +397,12 @@ module Game {
 			owner - the actor owning this Attacker (the player)
 			x - the destination cell x coordinate
 			y - the destination cell y coordinate
-			map - the game map, used to check for wall collisions
 
 			Returns:
 			true if the player actually moved to the new cell
 		*/
-		protected moveOrAttack(owner: Actor, x: number, y: number, map: Map): boolean {
-			if ( !super.moveOrAttack(owner, x, y, map) ) {
+		protected moveOrAttack(owner: Actor, x: number, y: number): boolean {
+			if ( !super.moveOrAttack(owner, x, y) ) {
 				return false;
 			}
 			var cellPos: Yendor.Position = new Yendor.Position(owner.x, owner.y);
@@ -418,10 +416,10 @@ module Game {
 			return true;
 		}
 
-		private handleAction(owner: Actor, map: Map) {
+		private handleAction(owner: Actor) {
 			switch ( this.lastAction ) {
 				case PlayerAction.GRAB :
-					this.pickupItem(owner, map);
+					this.pickupItem(owner);
 				break;
 				case PlayerAction.MOVE_DOWN :
 					var stairsDown: Actor = ActorManager.instance.getStairsDown();
@@ -506,7 +504,7 @@ module Game {
 			this.waitTime += this.walkTime;
 		}
 
-		private pickupItem(owner: Actor, map: Map) {
+		private pickupItem(owner: Actor) {
 			var foundItem: boolean = false;
 			var pickedItem: boolean = false;
 			ActorManager.instance.resume();
@@ -550,17 +548,16 @@ module Game {
 
 			Parameters:
 			owner - the actor owning this MonsterAi (the monster)
-			map - the game map (used to check player line of sight)
 		*/
-		update(owner: Actor, map: Map) {
-			super.update(owner, map);
+		update(owner: Actor) {
+			super.update(owner);
 
 			// don't update a dead monster
 			if ( owner.destructible && owner.destructible.isDead()) {
 				return;
 			}
 			// attack the player when at melee range, else try to track his scent
-			this.searchPlayer(owner, map);
+			this.searchPlayer(owner);
 		}
 
 		/*
@@ -569,10 +566,9 @@ module Game {
 
 			Parameters:
 			owner - the actor owning this MonsterAi (the monster)
-			map - the game map. Used to check if player is in sight
 		*/
-		searchPlayer(owner: Actor, map: Map) {
-			if ( map.isInFov(owner.x, owner.y) ) {
+		searchPlayer(owner: Actor) {
+			if ( Map.instance.isInFov(owner.x, owner.y) ) {
 				// player is visible, go towards him
 				var player: Actor = ActorManager.instance.getPlayer();
 				var dx = player.x - owner.x;
@@ -581,27 +577,27 @@ module Game {
 					if (! this.hasPath()
 						|| this.__path[0].x !== player.x || this.__path[0].y !== player.y) {
 						if (! MonsterAi.__pathFinder) {
-							MonsterAi.__pathFinder = new Yendor.PathFinder(map.width, map.height,
+							MonsterAi.__pathFinder = new Yendor.PathFinder(Map.instance.width, Map.instance.height,
 								function(from: Yendor.Position, to: Yendor.Position): number {
-									return map.canWalk(to.x, to.y) ? 1 : 0;
+									return Map.instance.canWalk(to.x, to.y) ? 1 : 0;
 								});
 						}
 						this.__path = MonsterAi.__pathFinder.getPath(owner, player);
 					}
 					if ( this.__path ) {
-						this.followPath(owner, map);
+						this.followPath(owner);
 					}
 				} else {
 					// at melee range. attack
-					this.move(owner, dx, dy, map);
+					this.move(owner, dx, dy);
 				}
 			} else {
 				if ( this.hasPath() ) {
 					// go to last known position
-					this.followPath(owner, map);
+					this.followPath(owner);
 				} else {
 					// player not visible. Use scent tracking
-					this.trackScent(owner, map);
+					this.trackScent(owner);
 				}
 			}
 		}
@@ -610,19 +606,19 @@ module Game {
 			return this.__path && this.__path.length > 0;
 		}
 
-		private followPath(owner: Actor, map: Map) {
+		private followPath(owner: Actor) {
 			// use precomputed path
 			var pos: Yendor.Position = this.__path.pop();
-			this.moveToCell(owner, pos, map);
+			this.moveToCell(owner, pos);
 		}
 
-		private moveToCell(owner: Actor, pos: Yendor.Position, map: Map) {
+		private moveToCell(owner: Actor, pos: Yendor.Position) {
 			var dx: number = pos.x - owner.x;
 			var dy: number = pos.y - owner.y;
 			// compute the move vector
 			var stepdx: number = dx > 0 ? 1 : (dx < 0 ? -1 : 0);
 			var stepdy: number = dy > 0 ? 1 : (dy < 0 ? -1 : 0);
-			this.move(owner, stepdx, stepdy, map);
+			this.move(owner, stepdx, stepdy);
 		}
 
 		/*
@@ -633,23 +629,22 @@ module Game {
 			owner - the actor owning this MonsterAi (the monster)
 			stepdx - horizontal direction
 			stepdy - vertical direction
-			map - the game map (to check if a cell is walkable)
 		*/
-		private move(owner: Actor, stepdx: number, stepdy: number, map: Map) {
+		private move(owner: Actor, stepdx: number, stepdy: number) {
 			var x: number = owner.x;
 			var y: number = owner.y;
-			if ( map.canWalk(owner.x + stepdx, owner.y + stepdy)) {
+			if ( Map.instance.canWalk(owner.x + stepdx, owner.y + stepdy)) {
 				// can walk
 				x += stepdx;
 				y += stepdy;
-			} else if ( map.canWalk(owner.x + stepdx, owner.y)) {
+			} else if ( Map.instance.canWalk(owner.x + stepdx, owner.y)) {
 				// horizontal slide
 				x += stepdx;
-			} else if ( map.canWalk(owner.x, owner.y + stepdy)) {
+			} else if ( Map.instance.canWalk(owner.x, owner.y + stepdy)) {
 				// vertical slide
 				y += stepdy;
 			}
-			super.moveOrAttack(owner, x, y, map);
+			super.moveOrAttack(owner, x, y);
 		}
 
 		/*
@@ -658,22 +653,21 @@ module Game {
 
 			Parameters:
 			owner - the actor owning this MonsterAi (the monster)
-			map - the game map, used to skip wall cells from the search
 
 			Returns:
 			the cell position or undefined if no adjacent cell has enough scent.
 		*/
-		private findHighestScentCell(owner: Actor, map: Map): Yendor.Position {
+		private findHighestScentCell(owner: Actor): Yendor.Position {
 			var bestScentLevel: number = 0;
 			var bestCell: Yendor.Position;
-			var adjacentCells: Yendor.Position[] = owner.getAdjacentCells(map.width, map.height);
+			var adjacentCells: Yendor.Position[] = owner.getAdjacentCells(Map.instance.width, Map.instance.height);
 			var len: number = adjacentCells.length;
 			// scan all 8 adjacent cells
 			for ( var i: number = 0; i < len; ++i) {
-				if ( !map.isWall(adjacentCells[i].x, adjacentCells[i].y)) {
+				if ( !Map.instance.isWall(adjacentCells[i].x, adjacentCells[i].y)) {
 					// not a wall, check if scent is higher
-					var scentAmount = map.getScent(adjacentCells[i].x, adjacentCells[i].y);
-					if ( scentAmount > map.currentScentValue - Constants.SCENT_THRESHOLD
+					var scentAmount = Map.instance.getScent(adjacentCells[i].x, adjacentCells[i].y);
+					if ( scentAmount > Map.instance.currentScentValue - Constants.SCENT_THRESHOLD
 						&& scentAmount > bestScentLevel ) {
 						// scent is higher. New candidate
 						bestScentLevel = scentAmount;
@@ -688,11 +682,11 @@ module Game {
 			Function: trackScent
 			Move towards the adjacent cell with the highest scent value
 		*/
-		private trackScent(owner: Actor, map: Map) {
+		private trackScent(owner: Actor) {
 			// get the adjacent cell with the highest scent value
-			var bestCell: Yendor.Position = this.findHighestScentCell(owner, map);
+			var bestCell: Yendor.Position = this.findHighestScentCell(owner);
 			if ( bestCell ) {
-				this.moveToCell(owner, bestCell, map);
+				this.moveToCell(owner, bestCell);
 			} else {
 				this.waitTime += this.walkTime;
 			}
@@ -772,7 +766,7 @@ module Game {
 			if ( (<PlayerAi>this.ai).lastAction === undefined ) {
 				ActorManager.instance.pause();
 			} else {
-				this.ai.update(this, Map.instance);
+				this.ai.update(this);
 			}
 		}
 
@@ -801,7 +795,7 @@ module Game {
 			return " your ";
 		}
 		getit(): string {
-			return " you ";
+			return " you";
 		}
 	}
 }

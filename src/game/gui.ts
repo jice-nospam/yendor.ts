@@ -24,12 +24,12 @@ module Game {
 			return this.guis[name];
 		}
 
-		renderGui(rootConsole: Yendor.Console, map: Map) {
+		renderGui(rootConsole: Yendor.Console) {
 			for (var guiName in this.guis) {
 				if ( this.guis.hasOwnProperty(guiName) ) {
 					var gui: Gui = this.guis[guiName];
 					if ( gui.isVisible()) {
-						gui.render(map, rootConsole);
+						gui.render(rootConsole);
 					}
 				}
 			}
@@ -41,11 +41,11 @@ module Game {
 			this.addGui(statusPanel, Constants.STATUS_PANEL_ID, 0, Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT);
 		}
 
-		createOtherGui(map: Map) {
+		createOtherGui() {
 			var inventoryPanel: Gui = new InventoryPanel( Constants.INVENTORY_PANEL_WIDTH, Constants.INVENTORY_PANEL_HEIGHT );
 			this.addGui(inventoryPanel, Constants.INVENTORY_ID, Math.floor(Constants.CONSOLE_WIDTH / 2 - Constants.INVENTORY_PANEL_WIDTH / 2), 0);
 
-			var tilePicker: Gui = new TilePicker(map);
+			var tilePicker: Gui = new TilePicker();
 			this.addGui(tilePicker, Constants.TILE_PICKER_ID);
 
 			var mainMenu: Menu = new MainMenu();
@@ -104,7 +104,7 @@ module Game {
 			Function: render
 			To be overloaded by extending classes.
 		*/
-		render(map: Map, destination: Yendor.Console) {
+		render(destination: Yendor.Console) {
 			this.__console.blit(destination, this.x, this.y);
 		}
 	}
@@ -151,11 +151,11 @@ module Game {
 				break;
 				case EventType.MOUSE_MOVE :
 					var pos: Yendor.Position = event.data;
-					if ( event.map.contains(pos.x, pos.y) && event.map.isExplored(pos.x, pos.y) ) {
+					if ( Map.instance.contains(pos.x, pos.y) && Map.instance.isExplored(pos.x, pos.y) ) {
 						var actorsOnCell: Actor[] = ActorManager.instance.findActorsOnCell(pos, ActorManager.instance.getCreatures());
 						actorsOnCell = actorsOnCell.concat(ActorManager.instance.findActorsOnCell(pos, ActorManager.instance.getItems()));
 						actorsOnCell = actorsOnCell.concat(ActorManager.instance.findActorsOnCell(pos, ActorManager.instance.getCorpses()));
-						this.handleMouseLook( event.map, actorsOnCell );
+						this.handleMouseLook( actorsOnCell );
 					}
 				break;
 			}
@@ -174,7 +174,7 @@ module Game {
 			}
 		}
 
-		render(map: Map, destination: Yendor.Console) {
+		render(destination: Yendor.Console) {
 			this.console.clearBack("black");
 			this.console.clearText();
 			var player: Player = ActorManager.instance.getPlayer();
@@ -187,7 +187,7 @@ module Game {
 				player.getNextLevelXp(), Constants.XP_BAR_BACKGROUND, Constants.XP_BAR_FOREGROUND);
 			this.console.print(0, 0, this.mouseLookText);
 			this.renderMessages();
-			super.render(map, destination);
+			super.render(destination);
 		}
 
 		clear() {
@@ -195,12 +195,12 @@ module Game {
 			this.mouseLookText = "";
 		}
 
-		private handleMouseLook( map: Map, actors: Actor[] ) {
+		private handleMouseLook( actors: Actor[] ) {
 			var len: number = actors.length;
 			this.mouseLookText = "";
 			for ( var i: number = 0; i < len; ++i) {
 				var actor: Actor = actors[i];
-				if (map.shouldRenderActor(actor)) {
+				if (Map.instance.shouldRenderActor(actor)) {
 					if ( i > 0 ) {
 						this.mouseLookText += ",";
 					}
@@ -300,7 +300,7 @@ module Game {
 			this.selectedItem = pos.y - (this.y + 1);
 		}
 
-		render(map: Map, destination: Yendor.Console) {
+		render(destination: Yendor.Console) {
 			this.console.clearBack(Constants.INVENTORY_BACKGROUND);
 			this.console.clearText();
 			this.x = Math.floor( destination.width / 2 - this.width / 2 );
@@ -320,7 +320,7 @@ module Game {
 			var capacity: string = "capacity " + ( Math.floor(10 * player.container.computeTotalWeight()) / 10 )
 				+ "/" + player.container.capacity;
 			this.console.print( Math.floor(this.width / 2 - capacity.length / 2), this.height - 1, capacity);
-			super.render(map, destination);
+			super.render(destination);
 		}
 
 		private renderItem(item: Actor, entryNum: number, y: number, shortcut: number, count: number = 1) {
@@ -385,10 +385,8 @@ module Game {
 		private tilePos : Yendor.Position = new Yendor.Position();
 		private listener: TilePickerListener;
 		private tileIsValid: boolean = false;
-		private map: Map;
-		constructor(map: Map) {
+		constructor() {
 			super(Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT);
-			this.map = map;
 			this.setModal();
 			EventBus.instance.registerListener(this, EventType.PICK_TILE);
 		}
@@ -412,12 +410,12 @@ module Game {
 				var move: Yendor.Position = convertActionToPosition(event.data.action);
 				if ( move.y === -1 && this.tilePos.y > 0 ) {
 					this.tilePos.y --;
-				} else if ( move.y === 1 && this.tilePos.y < this.map.height - 1 ) {
+				} else if ( move.y === 1 && this.tilePos.y < Map.instance.height - 1 ) {
 					this.tilePos.y ++;
 				}
 				if ( move.x === -1 && this.tilePos.x > 0 ) {
 					this.tilePos.x --;
-				} else if ( move.x === 1 && this.tilePos.x < this.map.width - 1 ) {
+				} else if ( move.x === 1 && this.tilePos.x < Map.instance.width - 1 ) {
 					this.tilePos.x ++;
 				}
 				switch ( event.data.action ) {
@@ -431,11 +429,11 @@ module Game {
 						}
 					break;
 				}
-				this.tileIsValid = this.map.isInFov(this.tilePos.x, this.tilePos.y);
+				this.tileIsValid = Map.instance.isInFov(this.tilePos.x, this.tilePos.y);
 			}
 		}
 
-		render(map: Map, console: Yendor.Console) {
+		render(console: Yendor.Console) {
 			if ( console.contains(this.tilePos) ) {
 				console.setChar( this.tilePos.x, this.tilePos.y, this.tileIsValid ? "+" : "x" );
 				console.fore[this.tilePos.x][this.tilePos.y] = this.tileIsValid ? "green" : "red";
@@ -456,7 +454,7 @@ module Game {
 		private updateMousePosition(mousePos: Yendor.Position) {
 			this.tilePos.x = mousePos.x;
 			this.tilePos.y = mousePos.y;
-			this.tileIsValid = this.map.isInFov(this.tilePos.x, this.tilePos.y);
+			this.tileIsValid = Map.instance.isInFov(this.tilePos.x, this.tilePos.y);
 		}
 
 		private deactivate() {
@@ -551,7 +549,7 @@ module Game {
 			EventBus.instance.unregisterListener(this, EventType.KEYBOARD_INPUT);
 		}
 
-		render(map: Map, destination: Yendor.Console) {
+		render(destination: Yendor.Console) {
 			this.console.clearBack(Constants.MENU_BACKGROUND);
 			for ( var i = 0; i < this.items.length; i++ ) {
 				if (this.items[i].disabled) {
@@ -563,7 +561,7 @@ module Game {
 					this.console.clearFore(Constants.MENU_FOREGROUND, 0, i + 1, -1, 1);
 				}
 			}
-			super.render(map, destination);
+			super.render(destination);
 		}
 
 		processEvent( event: Event<any> ) {

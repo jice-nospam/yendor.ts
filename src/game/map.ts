@@ -275,7 +275,7 @@ module Game {
 			this.map.setCell(x, y, false, false);
 		}
 
-		render() {
+		render(root: Yendor.Console) {
 			for (var x = 0; x < this._width; x++) {
 				for (var y = 0; y < this._height; y++) {
 					if ( this.isInFov(x, y) ) {

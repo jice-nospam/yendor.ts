@@ -35,6 +35,8 @@ module Yendor {
 	        > enum Type { ORC, TROLL };
 	        hashmap : {Type.ORC: 30, Type.TROLL: 10}
 
+	        The function will return Type.ORC or Type.TROLL.
+
 	        Parameters:
 	        chances - hashmap { key: string | number => number of chances }
 
@@ -42,7 +44,7 @@ module Yendor {
 	        the key of the selected entry (either a string or a number depending on the input hashmap key type)
 
 	    */
-		getRandomChance(chances: { [index: string ]: number } | { [index: number ]: number }): string | number {
+		getRandomChance(chances: { [index: string ]: number } ): string|number {
 	        var chancesSum: number = 0;
 	        for (var key in chances) {
 	            if ( chances.hasOwnProperty(key) ) {
