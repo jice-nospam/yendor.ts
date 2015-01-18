@@ -1,3 +1,10 @@
+/// <reference path="../game/base.ts" />
+/// <reference path="../game/eventbus.ts" />
+/// <reference path="../game/actor.ts" />
+/// <reference path="../game/item.ts" />
+/// <reference path="../game/creature.ts" />
+/// <reference path="../game/map.ts" />
+/// <reference path="../game/gui.ts" />
 module Game {
 	"use strict";
 

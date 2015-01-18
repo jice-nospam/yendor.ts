@@ -4,6 +4,7 @@
 /// <reference path="fov.ts" />
 /// <reference path="console.ts" />
 /// <reference path="path.ts" />
+/// <reference path="gameplay.ts" />
 $(function() {
 	// new instance of tsUnit
 	var test = new tsUnit.Test();
@@ -14,6 +15,7 @@ $(function() {
 	test.addTestClass(new Tests.FovTests(), "fov");
 	test.addTestClass(new Tests.ConsoleTests(), "console");
 	test.addTestClass(new Tests.PathTests(), "path");
+	test.addTestClass(new Tests.GameplayTests(), "gameplay");
 
 	// Use the built in results display
 	test.showResults($("#console")[0], test.run());

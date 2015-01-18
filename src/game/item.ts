@@ -148,12 +148,15 @@ module Game {
 	*/
 	export class InstantHealthEffect implements Effect {
 		className: string;
-		private amount: number;
+		private _amount: number;
 		private successMessage: string;
 		private failureMessage: string;
+
+		get amount() { return this._amount; }
+
 		constructor( amount: number = 0, successMessage?: string, failureMessage?: string) {
 			this.className = "InstantHealthEffect";
-			this.amount = amount;
+			this._amount = amount;
 			this.successMessage = successMessage;
 			this.failureMessage = failureMessage;
 		}
@@ -162,7 +165,7 @@ module Game {
 			if (! actor.destructible ) {
 				return false;
 			}
-			if ( this.amount > 0 ) {
+			if ( this._amount > 0 ) {
 				return this.applyHealingEffectTo(actor, coef);
 			} else {
 				return this.applyWoundingEffectTo(actor, coef);
@@ -171,7 +174,7 @@ module Game {
 		}
 
 		private applyHealingEffectTo(actor: Actor, coef: number = 1.0): boolean {
-			var healPointsCount: number = actor.destructible.heal( coef * this.amount );
+			var healPointsCount: number = actor.destructible.heal( coef * this._amount );
 			if ( healPointsCount > 0 && this.successMessage ) {
 				log(transformMessage(this.successMessage, actor, undefined, healPointsCount));
 			} else if ( healPointsCount <= 0 && this.failureMessage ) {
@@ -182,13 +185,13 @@ module Game {
 
 		private applyWoundingEffectTo(actor: Actor, coef: number = 1.0) : boolean {
 			var realDefense: number = actor.destructible.computeRealDefense(actor);
-			var damageDealt = -this.amount * coef - realDefense;
+			var damageDealt = -this._amount * coef - realDefense;
 			if ( damageDealt > 0 && this.successMessage ) {
 				log(transformMessage(this.successMessage, actor, undefined, damageDealt));
 			} else if ( damageDealt <= 0 && this.failureMessage ) {
 				log(transformMessage(this.failureMessage, actor));
 			}
-			return actor.destructible.takeDamage(actor, -this.amount * coef) > 0;
+			return actor.destructible.takeDamage(actor, -this._amount * coef) > 0;
 		}
 	}
 
@@ -231,7 +234,11 @@ module Game {
 		private _effect: Effect;
 		private _targetSelector: TargetSelector;
 		private _message: string;
-		private coef: number;
+		private _coef: number;
+
+		get effect() { return this._effect; }
+		get coef() { return this._coef; }
+
 		constructor(_effect?: Effect, _targetSelector?: TargetSelector, _message?: string) {
 			this.className = "Effector";
 			this._effect = _effect;
@@ -240,7 +247,7 @@ module Game {
 		}
 
 		apply(owner: Actor, wearer: Actor, cellPos?: Yendor.Position, coef: number = 1.0) {
-			this.coef = coef;
+			this._coef = coef;
 			this._targetSelector.selectTargets(owner, wearer, cellPos, this.applyEffectToActorList.bind(this));
 			if ( wearer === Engine.instance.actorManager.getPlayer()
 				&& this._targetSelector.method !== TargetSelectionMethod.SELECTED_RANGE
@@ -256,7 +263,7 @@ module Game {
 			}
 
 			for (var i = 0; i < actors.length; ++i) {
-				if (this._effect.applyTo(actors[i], this.coef)) {
+				if (this._effect.applyTo(actors[i], this._coef)) {
 					success = true;
 				}
 			}
@@ -294,6 +301,7 @@ module Game {
 		}
 
 		get weight() { return this._weight; }
+		get onThrowEffect() { return this.onThrowEffector ? this.onThrowEffector.effect : undefined; }
 
 		setOnUseEffect(effect?: Effect, targetSelector?: TargetSelector, message?: string) {
 			this.onUseEffector = new Effector(effect, targetSelector, message);
@@ -500,41 +508,44 @@ module Game {
 	export class Ranged implements Persistent {
 		className: string;
 		/*
-			Property: damageCoef
+			Property: _damageCoef
 			Damage multiplicator when using this weapon to fire a projectile.
 		*/
-		private damageCoef: number;
+		private _damageCoef: number;
 		/*
-			Property: projectileType
+			Property: _projectileType
 			The actor type that this weapon can fire.
 		*/
-		private projectileType: ActorClass;
+		private _projectileType: ActorClass;
 		/*
 			Property: loadTime
 			Time to load this weapon with a projectile
 		*/
 		private _loadTime: number;
-		constructor(damageCoef: number, projectileTypeName: string, loadTime: number) {
-			this.className = "Ranged";
-			this.damageCoef = damageCoef;
-			this.projectileType  = ActorClass.buildClassHierarchy("weapon|projectile|" + projectileTypeName);
-			this._loadTime = loadTime;
-		}
 
 		get loadTime() { return this._loadTime; }
+		get damageCoef() { return this._damageCoef; }
+		get projectileType() { return this._projectileType; }
+
+		constructor(_damageCoef: number, projectileTypeName: string, loadTime: number) {
+			this.className = "Ranged";
+			this._damageCoef = _damageCoef;
+			this._projectileType  = ActorClass.buildClassHierarchy("weapon|projectile|" + projectileTypeName);
+			this._loadTime = loadTime;
+		}
 
 		fire(owner: Actor, wearer: Actor) {
 			var projectile: Actor;
 			if ( wearer.container ) {
 				// if a projectile type is selected (equipped in quiver), use it
 				projectile = wearer.container.getFromSlot(Constants.SLOT_QUIVER);
-				if (! projectile || ! projectile.isA(this.projectileType)) {
+				if (! projectile || ! projectile.isA(this._projectileType)) {
 					// else use the first compatible projectile
 					projectile = undefined;
 					var n: number = wearer.container.size();
 					for ( var i: number = 0; i < n; ++i) {
 						var item: Actor = wearer.container.get(i);
-						if ( item.isA(this.projectileType)) {
+						if ( item.isA(this._projectileType)) {
 							projectile = item;
 							break;
 						}
@@ -544,12 +555,12 @@ module Game {
 			if (! projectile) {
 				// no projectile found. cannot fire
 				if ( wearer === Engine.instance.actorManager.getPlayer()) {
-					log("No " + this.projectileType.name + " available.", 0xFF0000);
+					log("No " + this._projectileType.name + " available.", 0xFF0000);
 					return;
 				}
 			}
 			log(transformMessage("[The actor1] fire[s] [a actor2].", wearer, projectile));
-			projectile.pickable.throw(projectile, wearer, true, this.damageCoef);
+			projectile.pickable.throw(projectile, wearer, true, this._damageCoef);
 		}
 	}
 }

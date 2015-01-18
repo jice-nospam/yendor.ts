@@ -96,7 +96,7 @@ module Game {
 			if ( this._name === type._name ) {
 				return true;
 			}
-			if ( this.father._name === ActorClass.rootClass._name ) {
+			if ( ! this.father || this.father._name === ActorClass.rootClass._name ) {
 				return false;
 			}
 			return this.father.isA(type);
@@ -142,7 +142,8 @@ module Game {
 		BOLT,
 		// miscellaneous (under root class)
 		STAIR_UP,
-		STAIR_DOWN
+		STAIR_DOWN,
+		LAST_ACTOR_TYPE
 	};
 
 	/*
@@ -175,12 +176,12 @@ module Game {
 			IRON_SHIELD: (x: number, y: number) => { return ActorFactory.createShield(x, y, "iron shield", 2); },
 			// 		ranged
 			SHORT_BOW: (x: number, y: number) => { return ActorFactory.createBow(x, y, "short bow", 3, "arrow", 4, true); },
-			LONG_BOW: (x: number, y: number) => { return ActorFactory.createBow(x, y, "long bow", 4, "arrow", 6, true); },
-			CROSSBOW: (x: number, y: number) => { return ActorFactory.createBow(x, y, "crossbow", 5, "bolt", 5); },
+			LONG_BOW: (x: number, y: number) => { return ActorFactory.createBow(x, y, "long bow", 6, "arrow", 6, true); },
+			CROSSBOW: (x: number, y: number) => { return ActorFactory.createBow(x, y, "crossbow", 4, "bolt", 5); },
 			// 		projectile
 			// 			arrow
 			BONE_ARROW: (x: number, y: number) => { return ActorFactory.createProjectile(x, y, "bone arrow", 1, "arrow"); },
-			IRON_ARROW: (x: number, y: number) => { return ActorFactory.createProjectile(x, y, "iron arrow", 2, "arrow"); },
+			IRON_ARROW: (x: number, y: number) => { return ActorFactory.createProjectile(x, y, "iron arrow", 1.25, "arrow"); },
 			// 			bolt
 			BOLT: (x: number, y: number) => { return ActorFactory.createProjectile(x, y, "bolt", 1, "bolt"); },
 			// miscellaneous (under root class)

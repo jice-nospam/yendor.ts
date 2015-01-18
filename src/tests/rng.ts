@@ -37,11 +37,11 @@ module Tests {
 		}
 
 		checkRandomChances() {
-			var a: string = this.rng.getRandomChance({"item_a": 50, "item_b": 50});
+			var a: string|number = this.rng.getRandomChance({"item_a": 50, "item_b": 50});
 			this.isTrue( a === "item_a" || a === "item_b", "a is 'item_a' or 'item_b'");
-			var b: string = this.rng.getRandomChance({"item_a": 0, "item_b": 50});
+			var b: string|number = this.rng.getRandomChance({"item_a": 0, "item_b": 50});
 			this.isTrue( b === "item_b" , "b is 'item_b'");
-			var c: string = this.rng.getRandomChance({"item_a": 10, "item_b": 0});
+			var c: string|number = this.rng.getRandomChance({"item_a": 10, "item_b": 0});
 			this.isTrue( c === "item_a" , "c is 'item_a'");
 		}
 	}

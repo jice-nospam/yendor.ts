@@ -14,6 +14,9 @@ module tsUnit {
         }
 
         isReservedFunctionName(functionName: string): boolean {
+            if ( functionName.indexOf("_") === 0 ) {
+                return true;
+            }
             for (var prop in this.testClass) {
                 if (prop === functionName) {
                     return true;

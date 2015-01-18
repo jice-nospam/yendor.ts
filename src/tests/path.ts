@@ -4,10 +4,8 @@ module Tests {
 	"use strict";
 	export class PathTests extends tsUnit.TestClass {
 		binaryHeap() {
-			var heap = new Yendor.BinaryHeap<number>(function(x: number): number { return x; });
-			[10, 3, 4, 8, 2, 9, 7, 1, 2, 6, 5].forEach(function(n: number) {
-				heap.push(n);
-				});
+			var heap = new Yendor.BinaryHeap<number>((x: number) => { return x; });
+			[10, 3, 4, 8, 2, 9, 7, 1, 2, 6, 5].forEach((n: number) => { heap.push(n); });
 
 			heap.remove(2);
 			var result = "";
