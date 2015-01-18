@@ -97,21 +97,21 @@ module Game {
 		private createItem(x: number, y: number, rng: Yendor.Random) {
 			var probabilities: { [index: string]: number; } = {};
 			probabilities[ActorType.HEALTH_POTION] = this.getValueForDungeon([[0, 40], [5, 30]]);
-			probabilities[ActorType.REGENERATION_POTION] = this.getValueForDungeon([[5, 10]]);
+			probabilities[ActorType.REGENERATION_POTION] = this.getValueForDungeon([[5, 5]]);
 			probabilities[ActorType.LIGHTNING_BOLT_SCROLL] = this.getValueForDungeon([[3, 10]]);
 			probabilities[ActorType.FIREBALL_SCROLL] = 10;
 			probabilities[ActorType.CONFUSION_SCROLL] = 10;
-			probabilities[ActorType.BONE_ARROW] = 10;
-			probabilities[ActorType.IRON_ARROW] = 10;
-			probabilities[ActorType.BOLT] = 10;
-			probabilities[ActorType.SHORT_BOW] = this.getValueForDungeon([[5, 4]]);
-			probabilities[ActorType.LONG_BOW] = this.getValueForDungeon([[8, 4]]);
-			probabilities[ActorType.CROSSBOW] = this.getValueForDungeon([[5, 4]]);
-			probabilities[ActorType.SHORT_SWORD] = this.getValueForDungeon([[5, 4], [12, 0]]);
-			probabilities[ActorType.WOODEN_SHIELD] = this.getValueForDungeon([[8, 8], [12, 0]]);
-			probabilities[ActorType.LONG_SWORD] = this.getValueForDungeon([[10, 4]]);
-			probabilities[ActorType.IRON_SHIELD] = this.getValueForDungeon([[14, 8]]);
-			probabilities[ActorType.GREAT_SWORD] = this.getValueForDungeon([[14, 4]]);
+			probabilities[ActorType.BONE_ARROW] = 5;
+			probabilities[ActorType.IRON_ARROW] = 5;
+			probabilities[ActorType.BOLT] = 5;
+			probabilities[ActorType.SHORT_BOW] = this.getValueForDungeon([[1, 1]]);
+			probabilities[ActorType.LONG_BOW] = this.getValueForDungeon([[5, 1]]);
+			probabilities[ActorType.CROSSBOW] = this.getValueForDungeon([[3, 1]]);
+			probabilities[ActorType.SHORT_SWORD] = this.getValueForDungeon([[4, 1], [12, 0]]);
+			probabilities[ActorType.WOODEN_SHIELD] = this.getValueForDungeon([[2, 1], [12, 0]]);
+			probabilities[ActorType.LONG_SWORD] = this.getValueForDungeon([[6, 1]]);
+			probabilities[ActorType.IRON_SHIELD] = this.getValueForDungeon([[7, 1]]);
+			probabilities[ActorType.GREAT_SWORD] = this.getValueForDungeon([[8, 1]]);
 			var item: ActorType = <ActorType>rng.getRandomChance(probabilities);
 			return ActorFactory.create(item, x, y);
 		}
@@ -221,9 +221,10 @@ module Game {
 			if ( this.isWall(x, y) ) {
 				return false;
 			}
-			var actorsOnCell: Actor[] = Engine.instance.actorManager.findActorsOnCell(new Yendor.Position(x, y), Engine.instance.actorManager.getItems());
-			actorsOnCell = actorsOnCell.concat(Engine.instance.actorManager.findActorsOnCell(
-				new Yendor.Position(x, y), Engine.instance.actorManager.getCreatures()));
+			var pos: Yendor.Position = new Yendor.Position(x, y);
+			var actorManager: ActorManager = Engine.instance.actorManager;
+			var actorsOnCell: Actor[] = actorManager.findActorsOnCell(pos, actorManager.getItems());
+			actorsOnCell = actorsOnCell.concat(actorManager.findActorsOnCell(pos, actorManager.getCreatures()));
 			for ( var i: number = 0; i < actorsOnCell.length; i++) {
 				var actor: Actor = actorsOnCell[i];
 				if ( actor.isBlocking() ) {

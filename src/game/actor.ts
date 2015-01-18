@@ -146,6 +146,27 @@ module Game {
 		LAST_ACTOR_TYPE
 	};
 
+	interface BeastParam {
+		hp: number;
+		attack: number;
+		defense: number;
+		xp: number;
+		walkTime: number;
+	}
+
+	interface BladeParam {
+		damages: number;
+		attackTime: number;
+		twoHanded: boolean;
+	}
+
+	interface RangedParam {
+		damages: number;
+		projectileTypeName: string;
+		loadTime: number;
+		twoHanded: boolean;
+	}
+
 	/*
 		Class: ActorFactory
 		Built an actor.
@@ -154,9 +175,12 @@ module Game {
 		private static builders: { [index: string]: (x: number, y: number) => Actor } = {
 			// creature
 			// 		beast
-			GOBLIN: (x: number, y: number) => { return ActorFactory.createBeast(x, y, "g", "goblin", "goblin corpse", 0x3F7F3F, 3, 1, 0, 10, 4); },
-			ORC: (x: number, y: number) => { return ActorFactory.createBeast(x, y, "o", "orc", "dead orc", 0x3F7F3F, 9, 2, 0, 35, 5); },
-			TROLL: (x: number, y: number) => { return ActorFactory.createBeast(x, y, "T", "troll", "troll carcass", 0x007F00, 15, 3, 1, 100, 6); },
+			GOBLIN: (x: number, y: number) => { return ActorFactory.createBeast(x, y, "g", "goblin", "goblin corpse", 0x3F7F3F,
+				{ hp: 3, attack: 1, defense: 0, xp: 10, walkTime: 4 } ); },
+			ORC: (x: number, y: number) => { return ActorFactory.createBeast(x, y, "o", "orc", "dead orc", 0x3F7F3F,
+				{ hp: 9, attack: 2, defense: 0, xp: 35, walkTime: 5 } ); },
+			TROLL: (x: number, y: number) => { return ActorFactory.createBeast(x, y, "T", "troll", "troll carcass", 0x007F00,
+				{ hp: 15, attack: 3, defense: 1, xp: 100, walkTime: 6 } ); },
 			// 		human
 			PLAYER: (x: number, y: number) => { return ActorFactory.createPlayer(x, y); },
 			// potion
@@ -168,16 +192,22 @@ module Game {
 			CONFUSION_SCROLL: (x: number, y: number) => { return ActorFactory.createConfusionScroll(x, y, 5, 12); },
 			// weapon
 			// 		blade
-			SHORT_SWORD: (x: number, y: number) => { return ActorFactory.createSword(x, y, "short sword", 4, 4); },
-			LONG_SWORD: (x: number, y: number) => { return ActorFactory.createSword(x, y, "longsword", 6, 5); },
-			GREAT_SWORD: (x: number, y: number) => { return ActorFactory.createSword(x, y, "greatsword", 10, 6, true); },
+			SHORT_SWORD: (x: number, y: number) => { return ActorFactory.createBlade(x, y, "short sword",
+				{ damages: 4, attackTime: 4, twoHanded: false } ); },
+			LONG_SWORD: (x: number, y: number) => { return ActorFactory.createBlade(x, y, "longsword",
+				{ damages: 6, attackTime: 5, twoHanded: false } ); },
+			GREAT_SWORD: (x: number, y: number) => { return ActorFactory.createBlade(x, y, "greatsword",
+				{ damages: 10, attackTime: 6, twoHanded: true } ); },
 			// 		shield
 			WOODEN_SHIELD: (x: number, y: number) => { return ActorFactory.createShield(x, y, "wooden shield", 1); },
 			IRON_SHIELD: (x: number, y: number) => { return ActorFactory.createShield(x, y, "iron shield", 2); },
 			// 		ranged
-			SHORT_BOW: (x: number, y: number) => { return ActorFactory.createBow(x, y, "short bow", 3, "arrow", 4, true); },
-			LONG_BOW: (x: number, y: number) => { return ActorFactory.createBow(x, y, "long bow", 6, "arrow", 6, true); },
-			CROSSBOW: (x: number, y: number) => { return ActorFactory.createBow(x, y, "crossbow", 4, "bolt", 5); },
+			SHORT_BOW: (x: number, y: number) => { return ActorFactory.createRanged(x, y, "short bow",
+				{ damages: 3, projectileTypeName: "arrow", loadTime: 4, twoHanded: true } ); },
+			LONG_BOW: (x: number, y: number) => { return ActorFactory.createRanged(x, y, "long bow",
+				{ damages: 6, projectileTypeName: "arrow", loadTime: 6, twoHanded: true } ); },
+			CROSSBOW: (x: number, y: number) => { return ActorFactory.createRanged(x, y, "crossbow",
+				{ damages: 4, projectileTypeName: "bolt", loadTime: 5, twoHanded: false } ); },
 			// 		projectile
 			// 			arrow
 			BONE_ARROW: (x: number, y: number) => { return ActorFactory.createProjectile(x, y, "bone arrow", 1, "arrow"); },
@@ -277,25 +307,24 @@ module Game {
 		}
 
 		// weapons
-		private static createSword(x: number, y: number, name: string, damages: number, attackTime: number, twoHanded: boolean = false): Actor {
+		private static createBlade(x: number, y: number, name: string, swordParam: BladeParam): Actor {
 			var sword = new Actor();
 			sword.init(x, y, "/", name, "weapon|blade", 0xF0F0F0, true);
 			sword.pickable = new Pickable(3);
-			sword.pickable.setOnThrowEffect(new InstantHealthEffect(-damages,
+			sword.pickable.setOnThrowEffect(new InstantHealthEffect(-swordParam.damages,
 				"The sword hits [the actor1] for [value1] hit points."),
 				new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL ));
-			sword.attacker = new Attacker(damages, attackTime);
-			sword.equipment = new Equipment(twoHanded ? Constants.SLOT_BOTH_HANDS : Constants.SLOT_RIGHT_HAND);
+			sword.attacker = new Attacker(swordParam.damages, swordParam.attackTime);
+			sword.equipment = new Equipment(swordParam.twoHanded ? Constants.SLOT_BOTH_HANDS : Constants.SLOT_RIGHT_HAND);
 			return sword;
 		}
 
-		private static createBow(x: number, y: number, name: string, damages: number, projectileTypeName: string,
-			loadTime: number, twoHanded: boolean = false): Actor {
+		private static createRanged(x: number, y: number, name: string, rangedParam: RangedParam): Actor {
 			var bow = new Actor();
 			bow.init(x, y, ")", name, "weapon|ranged", 0xF0F0F0, true);
 			bow.pickable = new Pickable(2);
-			bow.equipment = new Equipment(twoHanded ? Constants.SLOT_BOTH_HANDS : Constants.SLOT_RIGHT_HAND);
-			bow.ranged = new Ranged(damages, projectileTypeName, loadTime);
+			bow.equipment = new Equipment(rangedParam.twoHanded ? Constants.SLOT_BOTH_HANDS : Constants.SLOT_RIGHT_HAND);
+			bow.ranged = new Ranged(rangedParam.damages, rangedParam.projectileTypeName, rangedParam.loadTime);
 			return bow;
 		}
 
@@ -333,14 +362,14 @@ module Game {
 			creature factories
 		*/
 		private static createBeast(x: number, y: number, character: string, name: string, corpseName: string, color: Yendor.Color,
-			hp: number, attack: number, defense: number, xp: number, walkTime: number): Actor {
+			beastParam: BeastParam): Actor {
 			var beast: Actor = new Actor();
 			beast.init(x, y, character, name, "creature|beast", color, true);
-			beast.destructible = new MonsterDestructible(hp, defense, corpseName);
-			beast.attacker = new Attacker(attack, walkTime);
-			beast.ai = new MonsterAi(walkTime);
+			beast.destructible = new MonsterDestructible(beastParam.hp, beastParam.defense, corpseName);
+			beast.attacker = new Attacker(beastParam.attack, beastParam.walkTime);
+			beast.ai = new MonsterAi(beastParam.walkTime);
 			beast.blocks = true;
-			beast.destructible.xp = xp;
+			beast.destructible.xp = beastParam.xp;
 			return beast;
 		}
 
