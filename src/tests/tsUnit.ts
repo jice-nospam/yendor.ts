@@ -1,4 +1,6 @@
 module tsUnit {
+    "use strict";
+
     export interface ITestClass {
 
     }
@@ -104,7 +106,7 @@ module tsUnit {
 
         private encodeHtmlEntities(input: string) {
             var entitiesToReplace = { "&": "&amp;", "<": "&lt;", ">": "&gt;" };
-            input.replace(/[&<>]/g, function (entity) { return entitiesToReplace[entity] || entity; });
+            input.replace(/[&<>]/g, (entity: string) => { return entitiesToReplace[entity] || entity; });
             return input;
         }
     }

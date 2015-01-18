@@ -10,19 +10,31 @@ module Tests {
 		Not really unit tests but tools to help balance the game
 	*/
 	export class GameplayTests extends tsUnit.TestClass {
-		private items: Game.Actor[];
+		private actors: Game.Actor[];
 		setUp() {
 			Yendor.init();
-			this.items = [];
+			this.actors = [];
 			// build a table containing an item of each type
 			for ( var i: number = 0; i < Game.ActorType.LAST_ACTOR_TYPE; ++i) {
 				if (i !== Game.ActorType.PLAYER) {
-					this.items.push(Game.ActorFactory.create(i));
+					this.actors.push(Game.ActorFactory.create(i));
 				}
     		}
 		}
-		_formatNumber(n: number): number {
+		private _formatNumber(n: number): number {
 			return Math.floor(n * 100) / 100;
+		}
+
+		private _sortAndDisplayList(names: string[], minDmg: { [index: string]: number }, maxDmg: { [index: string]: number }) {
+			names = names.sort( (n1: string, n2: string) => { return minDmg[n1] + maxDmg[n1]
+				- minDmg[n2] - maxDmg[n2]; } );
+			names.forEach( (name: string) => {
+				if ( minDmg[name] !== maxDmg[name]) {
+					console.log(name + " : " + this._formatNumber(minDmg[name]) + " - " + this._formatNumber(maxDmg[name]));
+				} else {
+					console.log(name + " : " + this._formatNumber(minDmg[name]));
+				}
+			} );
 		}
 
 		/*
@@ -30,12 +42,12 @@ module Tests {
 			Display on the console the list of weapons sorted by damages (per unit of time)
 		*/
 		weaponBalance() {
-			console.log("Weapon damages");
 			console.log("==============");
+			console.log("Weapon damages");
 			var weaponsMinDps: { [index: string]: number } = {};
 			var weaponsMaxDps: { [index: string]: number } = {};
 			var weapons: string[] = [];
-			this.items.forEach( (item: Game.Actor) => {
+			this.actors.forEach( (item: Game.Actor) => {
 				if ( item.equipment && item.attacker ) {
 					// a melee weapon
 					var dps: number = item.attacker.power / item.attacker.attackTime;
@@ -47,7 +59,7 @@ module Tests {
 					// get range of damage for compatible projectiles
 					var minProjectileDamage: number;
 					var maxProjectileDamage: number;
-					this.items.forEach( (projectile: Game.Actor) => {
+					this.actors.forEach( (projectile: Game.Actor) => {
 						if ( projectile.isA( item.ranged.projectileType ) ) {
 							var effect: Game.InstantHealthEffect = <Game.InstantHealthEffect>projectile.pickable.onThrowEffect;
 							if (! minProjectileDamage || minProjectileDamage > -effect.amount ) {
@@ -63,15 +75,26 @@ module Tests {
 					weapons.push(item.name);
 				}
 			});
-			weapons = weapons.sort( (n1: string, n2: string) => { return weaponsMinDps[n1] + weaponsMaxDps[n1]
-				- weaponsMinDps[n2] - weaponsMaxDps[n2]; } );
-			weapons.forEach( (name: string) => {
-				if ( weaponsMinDps[name] !== weaponsMaxDps[name]) {
-					console.log(name + " : " + this._formatNumber(weaponsMinDps[name]) + " - " + this._formatNumber(weaponsMaxDps[name]));
-				} else {
-					console.log(name + " : " + this._formatNumber(weaponsMinDps[name]));
+			this._sortAndDisplayList(weapons, weaponsMinDps, weaponsMaxDps);
+		}
+
+		/*
+			Function: weaponBalance
+			Display on the console the list of creatures sorted by damages (per unit of time) * max health
+		*/
+		creatureBalance() {
+			console.log("==============");
+			console.log("Creature power");
+			var minDps: { [index: string]: number } = {};
+			var creatures: string[] = [];
+			this.actors.forEach( (actor: Game.Actor) => {
+				if ( actor.ai && actor.attacker && actor.destructible ) {
+					// a creature
+					minDps[actor.name] = actor.attacker.power / actor.attacker.attackTime * actor.destructible.maxHp;
+					creatures.push(actor.name);
 				}
-			} );
+			});
+			this._sortAndDisplayList(creatures, minDps, minDps);
 		}
 	}
 }
