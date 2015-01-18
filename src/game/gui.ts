@@ -9,9 +9,6 @@ module Game {
 	 * Group: generic GUI stuff
 	 ********************************************************************************/
 	export class GuiManager {
-		private static _instance: GuiManager = new GuiManager();
-		static get instance() { return GuiManager._instance; }
-
 		private guis: { [index: string]: Gui; } = {};
 		addGui(gui: Gui, name: string, x?: number, y?: number) {
 			if ( x !== undefined && y !== undefined ) {
@@ -139,8 +136,8 @@ module Game {
 			super(width, height);
 			this.className = "StatusPanel";
 			this.messageHeight = height - 1;
-			EventBus.instance.registerListener(this, EventType.LOG_MESSAGE);
-			EventBus.instance.registerListener(this, EventType.MOUSE_MOVE);
+			Engine.instance.eventBus.registerListener(this, EventType.LOG_MESSAGE);
+			Engine.instance.eventBus.registerListener(this, EventType.MOUSE_MOVE);
 		}
 
 		processEvent( event: Event<any> ) {
@@ -151,10 +148,10 @@ module Game {
 				break;
 				case EventType.MOUSE_MOVE :
 					var pos: Yendor.Position = event.data;
-					if ( Map.instance.contains(pos.x, pos.y) && Map.instance.isExplored(pos.x, pos.y) ) {
-						var actorsOnCell: Actor[] = ActorManager.instance.findActorsOnCell(pos, ActorManager.instance.getCreatures());
-						actorsOnCell = actorsOnCell.concat(ActorManager.instance.findActorsOnCell(pos, ActorManager.instance.getItems()));
-						actorsOnCell = actorsOnCell.concat(ActorManager.instance.findActorsOnCell(pos, ActorManager.instance.getCorpses()));
+					if ( Engine.instance.map.contains(pos.x, pos.y) && Engine.instance.map.isExplored(pos.x, pos.y) ) {
+						var actorsOnCell: Actor[] = Engine.instance.actorManager.findActorsOnCell(pos, Engine.instance.actorManager.getCreatures());
+						actorsOnCell = actorsOnCell.concat(Engine.instance.actorManager.findActorsOnCell(pos, Engine.instance.actorManager.getItems()));
+						actorsOnCell = actorsOnCell.concat(Engine.instance.actorManager.findActorsOnCell(pos, Engine.instance.actorManager.getCorpses()));
 						this.handleMouseLook( actorsOnCell );
 					}
 				break;
@@ -177,7 +174,7 @@ module Game {
 		render(destination: Yendor.Console) {
 			this.console.clearBack("black");
 			this.console.clearText();
-			var player: Player = ActorManager.instance.getPlayer();
+			var player: Player = Engine.instance.actorManager.getPlayer();
 			this.renderBar(1, 1, Constants.STAT_BAR_WIDTH, "HP", player.destructible.hp,
 				player.destructible.maxHp, Constants.HEALTH_BAR_BACKGROUND, Constants.HEALTH_BAR_FOREGROUND);
 			if ( player.ai.hasCondition(ConditionType.OVERENCUMBERED)) {
@@ -200,7 +197,7 @@ module Game {
 			this.mouseLookText = "";
 			for ( var i: number = 0; i < len; ++i) {
 				var actor: Actor = actors[i];
-				if (Map.instance.shouldRenderActor(actor)) {
+				if (Engine.instance.map.shouldRenderActor(actor)) {
 					if ( i > 0 ) {
 						this.mouseLookText += ",";
 					}
@@ -247,7 +244,7 @@ module Game {
 		constructor(width: number, height: number) {
 			super(width, height);
 			this.setModal();
-			EventBus.instance.registerListener(this, EventType.OPEN_INVENTORY);
+			Engine.instance.eventBus.registerListener(this, EventType.OPEN_INVENTORY);
 		}
 
 		processEvent( event: Event<any> ) {
@@ -273,7 +270,7 @@ module Game {
 		}
 
 		private selectItem(index: number) {
-			var player: Actor = ActorManager.instance.getPlayer();
+			var player: Actor = Engine.instance.actorManager.getPlayer();
 			var inventory: Actor[][] = this.buildStackedInventory(player.container);
 			if ( index >= 0 && index < inventory.length ) {
 				this.hide();
@@ -284,16 +281,16 @@ module Game {
 
 		show() {
 			super.show();
-			EventBus.instance.registerListener(this, EventType.KEYBOARD_INPUT);
-			EventBus.instance.registerListener(this, EventType.MOUSE_MOVE);
-			EventBus.instance.registerListener(this, EventType.MOUSE_CLICK);
+			Engine.instance.eventBus.registerListener(this, EventType.KEYBOARD_INPUT);
+			Engine.instance.eventBus.registerListener(this, EventType.MOUSE_MOVE);
+			Engine.instance.eventBus.registerListener(this, EventType.MOUSE_CLICK);
 		}
 
 		hide() {
 			super.hide();
-			EventBus.instance.unregisterListener(this, EventType.KEYBOARD_INPUT);
-			EventBus.instance.unregisterListener(this, EventType.MOUSE_MOVE);
-			EventBus.instance.unregisterListener(this, EventType.MOUSE_CLICK);
+			Engine.instance.eventBus.unregisterListener(this, EventType.KEYBOARD_INPUT);
+			Engine.instance.eventBus.unregisterListener(this, EventType.MOUSE_MOVE);
+			Engine.instance.eventBus.unregisterListener(this, EventType.MOUSE_CLICK);
 		}
 
 		private selectItemAtPos(pos: Yendor.Position) {
@@ -308,7 +305,7 @@ module Game {
 			var shortcut: number = "a".charCodeAt(0);
 			var y: number = 1;
 			this.console.print(Math.floor(this.width / 2 - this.title.length / 2), 0, this.title);
-			var player: Actor = ActorManager.instance.getPlayer();
+			var player: Actor = Engine.instance.actorManager.getPlayer();
 			var inventory: Actor[][] = this.buildStackedInventory(player.container);
 			for ( var i: number = 0; i < inventory.length; i++) {
 				var list: Actor[] = inventory[i];
@@ -342,7 +339,7 @@ module Game {
 		}
 
 		private buildStackedInventory(container: Container): Actor[][] {
-			var player: Actor = ActorManager.instance.getPlayer();
+			var player: Actor = Engine.instance.actorManager.getPlayer();
 			var inventory: Actor[][] = [];
 			for ( var i: number = 0; i < player.container.size(); ++i) {
 				var item: Actor = player.container.get(i);
@@ -388,7 +385,7 @@ module Game {
 		constructor() {
 			super(Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT);
 			this.setModal();
-			EventBus.instance.registerListener(this, EventType.PICK_TILE);
+			Engine.instance.eventBus.registerListener(this, EventType.PICK_TILE);
 		}
 
 		processEvent( event: Event<any> ) {
@@ -410,12 +407,12 @@ module Game {
 				var move: Yendor.Position = convertActionToPosition(event.data.action);
 				if ( move.y === -1 && this.tilePos.y > 0 ) {
 					this.tilePos.y --;
-				} else if ( move.y === 1 && this.tilePos.y < Map.instance.height - 1 ) {
+				} else if ( move.y === 1 && this.tilePos.y < Engine.instance.map.height - 1 ) {
 					this.tilePos.y ++;
 				}
 				if ( move.x === -1 && this.tilePos.x > 0 ) {
 					this.tilePos.x --;
-				} else if ( move.x === 1 && this.tilePos.x < Map.instance.width - 1 ) {
+				} else if ( move.x === 1 && this.tilePos.x < Engine.instance.map.width - 1 ) {
 					this.tilePos.x ++;
 				}
 				switch ( event.data.action ) {
@@ -429,7 +426,7 @@ module Game {
 						}
 					break;
 				}
-				this.tileIsValid = Map.instance.isInFov(this.tilePos.x, this.tilePos.y);
+				this.tileIsValid = Engine.instance.map.isInFov(this.tilePos.x, this.tilePos.y);
 			}
 		}
 
@@ -442,25 +439,25 @@ module Game {
 
 		private activate(listener: TilePickerListener) {
 			this.listener = listener;
-			EventBus.instance.registerListener(this, EventType.MOUSE_MOVE);
-			EventBus.instance.registerListener(this, EventType.MOUSE_CLICK);
-			EventBus.instance.registerListener(this, EventType.KEYBOARD_INPUT);
+			Engine.instance.eventBus.registerListener(this, EventType.MOUSE_MOVE);
+			Engine.instance.eventBus.registerListener(this, EventType.MOUSE_CLICK);
+			Engine.instance.eventBus.registerListener(this, EventType.KEYBOARD_INPUT);
 			this.show();
 			this.tileIsValid = false;
-			var player: Actor = ActorManager.instance.getPlayer();
+			var player: Actor = Engine.instance.actorManager.getPlayer();
 			this.tilePos = new Yendor.Position(player.x, player.y);
 		}
 
 		private updateMousePosition(mousePos: Yendor.Position) {
 			this.tilePos.x = mousePos.x;
 			this.tilePos.y = mousePos.y;
-			this.tileIsValid = Map.instance.isInFov(this.tilePos.x, this.tilePos.y);
+			this.tileIsValid = Engine.instance.map.isInFov(this.tilePos.x, this.tilePos.y);
 		}
 
 		private deactivate() {
-			EventBus.instance.unregisterListener(this, EventType.MOUSE_MOVE);
-			EventBus.instance.unregisterListener(this, EventType.MOUSE_CLICK);
-			EventBus.instance.unregisterListener(this, EventType.KEYBOARD_INPUT);
+			Engine.instance.eventBus.unregisterListener(this, EventType.MOUSE_MOVE);
+			Engine.instance.eventBus.unregisterListener(this, EventType.MOUSE_CLICK);
+			Engine.instance.eventBus.unregisterListener(this, EventType.KEYBOARD_INPUT);
 			this.hide();
 		}
 	}
@@ -537,16 +534,16 @@ module Game {
 			this.resizeConsole();
 			this.drawMenu();
 			super.show();
-			EventBus.instance.registerListener(this, EventType.MOUSE_MOVE);
-			EventBus.instance.registerListener(this, EventType.MOUSE_CLICK);
-			EventBus.instance.registerListener(this, EventType.KEYBOARD_INPUT);
+			Engine.instance.eventBus.registerListener(this, EventType.MOUSE_MOVE);
+			Engine.instance.eventBus.registerListener(this, EventType.MOUSE_CLICK);
+			Engine.instance.eventBus.registerListener(this, EventType.KEYBOARD_INPUT);
 		}
 
 		hide() {
 			super.hide();
-			EventBus.instance.unregisterListener(this, EventType.MOUSE_MOVE);
-			EventBus.instance.unregisterListener(this, EventType.MOUSE_CLICK);
-			EventBus.instance.unregisterListener(this, EventType.KEYBOARD_INPUT);
+			Engine.instance.eventBus.unregisterListener(this, EventType.MOUSE_MOVE);
+			Engine.instance.eventBus.unregisterListener(this, EventType.MOUSE_CLICK);
+			Engine.instance.eventBus.unregisterListener(this, EventType.KEYBOARD_INPUT);
 		}
 
 		render(destination: Yendor.Console) {
@@ -603,7 +600,7 @@ module Game {
 				if (! item.disabled ) {
 					this.hide();
 					if ( item.eventType ) {
-						EventBus.instance.publishEvent(new Event<MenuItem>(item.eventType, item));
+						Engine.instance.eventBus.publishEvent(new Event<MenuItem>(item.eventType, item));
 					}
 				}
 			} else {
@@ -628,7 +625,7 @@ module Game {
 				{label: "Resume game"},
 				{label: "New game", eventType: EventType.NEW_GAME}
 			]);
-			EventBus.instance.registerListener(this, EventType.OPEN_MAIN_MENU);
+			Engine.instance.eventBus.registerListener(this, EventType.OPEN_MAIN_MENU);
 		}
 		processEvent( event: Event<any> ) {
 			if ( event.type === EventType.OPEN_MAIN_MENU ) {

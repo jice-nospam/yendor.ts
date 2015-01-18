@@ -354,9 +354,6 @@ module Game {
 		Stores all the actors in the game.
 	*/
 	export class ActorManager {
-		private static _instance: ActorManager = new ActorManager();
-		static get instance() { return ActorManager._instance; }
-
 		private player: Player;
 		private stairsUp: Actor;
 		private stairsDown: Actor;
@@ -409,7 +406,7 @@ module Game {
 			var nbActors: number = actors.length;
 			for (var i: number = 0; i < nbActors; i++) {
 				var actor: Actor = actors[i];
-				if ( Map.instance.shouldRenderActor(actor) ) {
+				if ( Engine.instance.map.shouldRenderActor(actor) ) {
 					actor.render(root);
 				}
 			}
@@ -451,7 +448,7 @@ module Game {
 
 		pause() {
 			if (! this.isPaused()) {
-				EventBus.instance.publishEvent(new Event<void>( EventType.SAVE_GAME ));
+				Engine.instance.eventBus.publishEvent(new Event<void>( EventType.SAVE_GAME ));
 			}
 			this.scheduler.pause();
 		}

@@ -50,8 +50,8 @@ module Game {
 			this.dig( map, x1, y1, x2, y2 );
 			if ( first ) {
 				// put the player and stairs up in the first room
-				var player: Actor = ActorManager.instance.getPlayer();
-				var stairsUp: Actor = ActorManager.instance.getStairsUp();
+				var player: Actor = Engine.instance.actorManager.getPlayer();
+				var stairsUp: Actor = Engine.instance.actorManager.getStairsUp();
 				player.x = Math.floor((x1 + x2) / 2);
 				player.y = Math.floor((y1 + y2) / 2);
 				stairsUp.x = player.x;
@@ -61,7 +61,7 @@ module Game {
 				this.createMonsters(x1, y1, x2, y2, rng, map);
 				this.createItems(x1, y1, x2, y2, rng, map);
 				// stairs down will be in the last room
-				var stairsDown: Actor = ActorManager.instance.getStairsDown();
+				var stairsDown: Actor = Engine.instance.actorManager.getStairsDown();
 				stairsDown.x = Math.floor((x1 + x2) / 2);
 				stairsDown.y = Math.floor((y1 + y2) / 2);
 			}
@@ -122,7 +122,7 @@ module Game {
 				var x = rng.getNumber(x1, x2);
 				var y = rng.getNumber(y1, y2);
 				if ( map.canWalk(x, y)) {
-					ActorManager.instance.addCreature(this.createMonster(x, y, rng));
+					Engine.instance.actorManager.addCreature(this.createMonster(x, y, rng));
 				}
 				monsterCount --;
 			}
@@ -134,7 +134,7 @@ module Game {
 				var x = rng.getNumber(x1, x2);
 				var y = rng.getNumber(y1, y2);
 				if ( map.canWalk(x, y)) {
-					ActorManager.instance.addItem(this.createItem(x, y, rng));
+					Engine.instance.actorManager.addItem(this.createItem(x, y, rng));
 				}
 				itemCount --;
 			}
@@ -185,9 +185,6 @@ module Game {
 	}
 
 	export class Map implements Persistent {
-		private static _instance: Map;
-		static get instance() { return Map._instance; }
-
 		className: string;
 		private tiles: Tile[][];
 		private map: Yendor.Fov;
@@ -197,7 +194,6 @@ module Game {
 
 		constructor() {
 			this.className = "Map";
-			Map._instance = this;
 		}
 
 		init(_width: number, _height: number) {
@@ -225,9 +221,9 @@ module Game {
 			if ( this.isWall(x, y) ) {
 				return false;
 			}
-			var actorsOnCell: Actor[] = ActorManager.instance.findActorsOnCell(new Yendor.Position(x, y), ActorManager.instance.getItems());
-			actorsOnCell = actorsOnCell.concat(ActorManager.instance.findActorsOnCell(
-				new Yendor.Position(x, y), ActorManager.instance.getCreatures()));
+			var actorsOnCell: Actor[] = Engine.instance.actorManager.findActorsOnCell(new Yendor.Position(x, y), Engine.instance.actorManager.getItems());
+			actorsOnCell = actorsOnCell.concat(Engine.instance.actorManager.findActorsOnCell(
+				new Yendor.Position(x, y), Engine.instance.actorManager.getCreatures()));
 			for ( var i: number = 0; i < actorsOnCell.length; i++) {
 				var actor: Actor = actorsOnCell[i];
 				if ( actor.isBlocking() ) {

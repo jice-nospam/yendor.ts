@@ -47,9 +47,6 @@ module Game {
 		processEvent( ev: Event<any> );
 	}
 	export class EventBus {
-		private static _instance: EventBus = new EventBus();
-		static get instance() { return EventBus._instance; }
-
 		private listeners: Array<EventListener[]> = [];
 
 		registerListener(listener: EventListener, type: EventType) {

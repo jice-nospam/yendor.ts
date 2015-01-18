@@ -1,5 +1,4 @@
 /// <reference path="actor.ts" />
-
 /*
 	Section: creatures
 */
@@ -248,21 +247,21 @@ module Game {
 			}
 			if ( this.hasCondition(ConditionType.CONFUSED)) {
 				// random move
-				x = owner.x + rng.getNumber(-1, 1);
-				y = owner.y + rng.getNumber(-1, 1);
+				x = owner.x + Engine.instance.rng.getNumber(-1, 1);
+				y = owner.y + Engine.instance.rng.getNumber(-1, 1);
 			}
 			if ( x === owner.x && y === owner.y ) {
 				this.waitTime += this.walkTime;
 				return false;
 			}
 			// cannot move or attack a wall! 
-			if ( Map.instance.isWall(x, y)) {
+			if ( Engine.instance.map.isWall(x, y)) {
 				this.waitTime += this.walkTime;
 				return false;
 			}
 			// check for living creatures on the destination cell
 			var cellPos: Yendor.Position = new Yendor.Position(x, y);
-			var actors: Actor[] = ActorManager.instance.findActorsOnCell(cellPos, ActorManager.instance.getCreatures());
+			var actors: Actor[] = Engine.instance.actorManager.findActorsOnCell(cellPos, Engine.instance.actorManager.getCreatures());
 			for (var i = 0; i < actors.length; i++) {
 				var actor: Actor = actors[i];
 				if ( actor.destructible && ! actor.destructible.isDead() ) {
@@ -274,7 +273,7 @@ module Game {
 				}
 			}
 			// check for unpassable items
-			if ( !Map.instance.canWalk(x, y)) {
+			if ( !Engine.instance.map.canWalk(x, y)) {
 				this.waitTime += this.walkTime;
 				return false;
 			}
@@ -315,7 +314,7 @@ module Game {
 		constructor(walkTime: number) {
 			super(walkTime);
 			this.className = "PlayerAi";
-			EventBus.instance.registerListener(this, EventType.KEYBOARD_INPUT);
+			Engine.instance.eventBus.registerListener(this, EventType.KEYBOARD_INPUT);
 		}
 
 		get lastAction() { return this._lastAction; }
@@ -330,7 +329,7 @@ module Game {
 		processEvent(event: Event<any>) {
 			this._lastAction = (<KeyInput>event.data).action;
 			if ( this._lastAction !== undefined) {
-				ActorManager.instance.resume();
+				Engine.instance.actorManager.resume();
 			}
 		}
 
@@ -363,7 +362,7 @@ module Game {
 					// move to the target cell or attack if there's a creature
 					if ( this.moveOrAttack(owner, owner.x + move.x, owner.y + move.y) ) {
 						// the player actually move. Recompute the field of view
-						Map.instance.computeFov(owner.x, owner.y, Constants.FOV_RADIUS);
+						Engine.instance.map.computeFov(owner.x, owner.y, Constants.FOV_RADIUS);
 					}
 				break;
         		case PlayerAction.WAIT :
@@ -385,7 +384,7 @@ module Game {
 			this._lastAction = undefined;
 			if ( newTurn ) {
 				// the player moved or try to move. New game turn
-				ActorManager.instance.resume();
+				Engine.instance.actorManager.resume();
 			}
 		}
 
@@ -407,10 +406,10 @@ module Game {
 			}
 			var cellPos: Yendor.Position = new Yendor.Position(owner.x, owner.y);
 			// no living actor. Log exising corpses and items
-			ActorManager.instance.findActorsOnCell(cellPos, ActorManager.instance.getCorpses()).forEach(function(actor: Actor) {
+			Engine.instance.actorManager.findActorsOnCell(cellPos, Engine.instance.actorManager.getCorpses()).forEach(function(actor: Actor) {
 				log(actor.getTheresaname() + " here.");
 			});
-			ActorManager.instance.findActorsOnCell(cellPos, ActorManager.instance.getItems()).forEach(function(actor: Actor) {
+			Engine.instance.actorManager.findActorsOnCell(cellPos, Engine.instance.actorManager.getItems()).forEach(function(actor: Actor) {
 				log(actor.getTheresaname() + " here.");
 			});
 			return true;
@@ -422,34 +421,34 @@ module Game {
 					this.pickupItem(owner);
 				break;
 				case PlayerAction.MOVE_DOWN :
-					var stairsDown: Actor = ActorManager.instance.getStairsDown();
+					var stairsDown: Actor = Engine.instance.actorManager.getStairsDown();
 					if ( stairsDown.x === owner.x && stairsDown.y === owner.y ) {
-						EventBus.instance.publishEvent(new Event<GameStatus>( EventType.CHANGE_STATUS, GameStatus.NEXT_LEVEL ));
+						Engine.instance.eventBus.publishEvent(new Event<GameStatus>( EventType.CHANGE_STATUS, GameStatus.NEXT_LEVEL ));
 					} else {
 						log("There are no stairs going down here.");
 					}
-					ActorManager.instance.resume();
+					Engine.instance.actorManager.resume();
 				break;
 				case PlayerAction.MOVE_UP :
-					var stairsUp: Actor = ActorManager.instance.getStairsUp();
+					var stairsUp: Actor = Engine.instance.actorManager.getStairsUp();
 					if ( stairsUp.x === owner.x && stairsUp.y === owner.y ) {
 						log("The stairs have collapsed. You can't go up anymore...");
 					} else {
 						log("There are no stairs going up here.");
 					}
 					this.waitTime += this.walkTime;
-					ActorManager.instance.resume();
+					Engine.instance.actorManager.resume();
 				break;
 				case PlayerAction.USE_ITEM :
-					EventBus.instance.publishEvent(new Event<OpenInventoryEventData>(EventType.OPEN_INVENTORY,
+					Engine.instance.eventBus.publishEvent(new Event<OpenInventoryEventData>(EventType.OPEN_INVENTORY,
 						{ title: "use an item", itemListener: this.useItem.bind(this) } ));
 				break;
 				case PlayerAction.DROP_ITEM :
-					EventBus.instance.publishEvent(new Event<OpenInventoryEventData>(EventType.OPEN_INVENTORY,
+					Engine.instance.eventBus.publishEvent(new Event<OpenInventoryEventData>(EventType.OPEN_INVENTORY,
 						{ title: "drop an item", itemListener: this.dropItem.bind(this) } ));
 				break;
 				case PlayerAction.THROW_ITEM :
-					EventBus.instance.publishEvent(new Event<OpenInventoryEventData>(EventType.OPEN_INVENTORY,
+					Engine.instance.eventBus.publishEvent(new Event<OpenInventoryEventData>(EventType.OPEN_INVENTORY,
 						{ title: "throw an item", itemListener: this.throwItem.bind(this) } ));
 				break;
 				case PlayerAction.FIRE :
@@ -482,34 +481,34 @@ module Game {
 		// inventory item listeners
 		private useItem(item: Actor) {
 			if (item.pickable) {
-				item.pickable.use(item, ActorManager.instance.getPlayer());
+				item.pickable.use(item, Engine.instance.actorManager.getPlayer());
 			}
-			ActorManager.instance.resume();
+			Engine.instance.actorManager.resume();
 			this.waitTime += this.walkTime;
 		}
 
 		private dropItem(item: Actor) {
 			if ( item.pickable ) {
-				item.pickable.drop(item, ActorManager.instance.getPlayer());
+				item.pickable.drop(item, Engine.instance.actorManager.getPlayer());
 			}
-			ActorManager.instance.resume();
+			Engine.instance.actorManager.resume();
 			this.waitTime += this.walkTime;
 		}
 
 		private throwItem(item: Actor) {
 			if ( item.pickable ) {
-				item.pickable.throw(item, ActorManager.instance.getPlayer());
+				item.pickable.throw(item, Engine.instance.actorManager.getPlayer());
 			}
-			ActorManager.instance.resume();
+			Engine.instance.actorManager.resume();
 			this.waitTime += this.walkTime;
 		}
 
 		private pickupItem(owner: Actor) {
 			var foundItem: boolean = false;
 			var pickedItem: boolean = false;
-			ActorManager.instance.resume();
+			Engine.instance.actorManager.resume();
 			this.waitTime += this.walkTime;
-			ActorManager.instance.getItems().some(function(item: Actor) {
+			Engine.instance.actorManager.getItems().some(function(item: Actor) {
 				if ( item.pickable && item.x === owner.x && item.y === owner.y ) {
 					foundItem = true;
 					if (owner.container.canContain(item)) {
@@ -568,18 +567,18 @@ module Game {
 			owner - the actor owning this MonsterAi (the monster)
 		*/
 		searchPlayer(owner: Actor) {
-			if ( Map.instance.isInFov(owner.x, owner.y) ) {
+			if ( Engine.instance.map.isInFov(owner.x, owner.y) ) {
 				// player is visible, go towards him
-				var player: Actor = ActorManager.instance.getPlayer();
+				var player: Actor = Engine.instance.actorManager.getPlayer();
 				var dx = player.x - owner.x;
 				var dy = player.y - owner.y;
 				if ( Math.abs(dx) > 1 || Math.abs(dy) > 1) {
 					if (! this.hasPath()
 						|| this.__path[0].x !== player.x || this.__path[0].y !== player.y) {
 						if (! MonsterAi.__pathFinder) {
-							MonsterAi.__pathFinder = new Yendor.PathFinder(Map.instance.width, Map.instance.height,
+							MonsterAi.__pathFinder = new Yendor.PathFinder(Engine.instance.map.width, Engine.instance.map.height,
 								function(from: Yendor.Position, to: Yendor.Position): number {
-									return Map.instance.canWalk(to.x, to.y) ? 1 : 0;
+									return Engine.instance.map.canWalk(to.x, to.y) ? 1 : 0;
 								});
 						}
 						this.__path = MonsterAi.__pathFinder.getPath(owner, player);
@@ -633,14 +632,14 @@ module Game {
 		private move(owner: Actor, stepdx: number, stepdy: number) {
 			var x: number = owner.x;
 			var y: number = owner.y;
-			if ( Map.instance.canWalk(owner.x + stepdx, owner.y + stepdy)) {
+			if ( Engine.instance.map.canWalk(owner.x + stepdx, owner.y + stepdy)) {
 				// can walk
 				x += stepdx;
 				y += stepdy;
-			} else if ( Map.instance.canWalk(owner.x + stepdx, owner.y)) {
+			} else if ( Engine.instance.map.canWalk(owner.x + stepdx, owner.y)) {
 				// horizontal slide
 				x += stepdx;
-			} else if ( Map.instance.canWalk(owner.x, owner.y + stepdy)) {
+			} else if ( Engine.instance.map.canWalk(owner.x, owner.y + stepdy)) {
 				// vertical slide
 				y += stepdy;
 			}
@@ -660,14 +659,14 @@ module Game {
 		private findHighestScentCell(owner: Actor): Yendor.Position {
 			var bestScentLevel: number = 0;
 			var bestCell: Yendor.Position;
-			var adjacentCells: Yendor.Position[] = owner.getAdjacentCells(Map.instance.width, Map.instance.height);
+			var adjacentCells: Yendor.Position[] = owner.getAdjacentCells(Engine.instance.map.width, Engine.instance.map.height);
 			var len: number = adjacentCells.length;
 			// scan all 8 adjacent cells
 			for ( var i: number = 0; i < len; ++i) {
-				if ( !Map.instance.isWall(adjacentCells[i].x, adjacentCells[i].y)) {
+				if ( !Engine.instance.map.isWall(adjacentCells[i].x, adjacentCells[i].y)) {
 					// not a wall, check if scent is higher
-					var scentAmount = Map.instance.getScent(adjacentCells[i].x, adjacentCells[i].y);
-					if ( scentAmount > Map.instance.currentScentValue - Constants.SCENT_THRESHOLD
+					var scentAmount = Engine.instance.map.getScent(adjacentCells[i].x, adjacentCells[i].y);
+					if ( scentAmount > Engine.instance.map.currentScentValue - Constants.SCENT_THRESHOLD
 						&& scentAmount > bestScentLevel ) {
 						// scent is higher. New candidate
 						bestScentLevel = scentAmount;
@@ -708,7 +707,7 @@ module Game {
 
 		die(owner: Actor) {
 			log(owner.getThename() + " is dead. You gain " + this.xp + " xp.");
-			EventBus.instance.publishEvent(new Event<number>( EventType.GAIN_XP, this.xp ));
+			Engine.instance.eventBus.publishEvent(new Event<number>( EventType.GAIN_XP, this.xp ));
 			super.die(owner);
 		}
 	}
@@ -726,7 +725,7 @@ module Game {
 		die(owner: Actor) {
 			log("You died!", "red");
 			super.die(owner);
-			EventBus.instance.publishEvent(new Event<GameStatus>( EventType.CHANGE_STATUS, GameStatus.DEFEAT ));
+			Engine.instance.eventBus.publishEvent(new Event<GameStatus>( EventType.CHANGE_STATUS, GameStatus.DEFEAT ));
 		}
 	}
 
@@ -764,7 +763,7 @@ module Game {
 
 		update() {
 			if ( (<PlayerAi>this.ai).lastAction === undefined ) {
-				ActorManager.instance.pause();
+				Engine.instance.actorManager.pause();
 			} else {
 				this.ai.update(this);
 			}

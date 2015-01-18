@@ -71,26 +71,26 @@ module Game {
 		selectTargets(owner: Actor, wearer: Actor, cellPos: Yendor.Position,
 			applyEffectsFunc: (owner: Actor, wearer: Actor, actors: Actor[]) => void) {
 			var selectedTargets: Actor[] = [];
-			var creatures: Actor[] = ActorManager.instance.getCreatures();
+			var creatures: Actor[] = Engine.instance.actorManager.getCreatures();
 			switch (this._method) {
 				case TargetSelectionMethod.ACTOR_ON_CELL :
 					if ( cellPos ) {
-						selectedTargets = ActorManager.instance.findActorsOnCell(cellPos, creatures);
+						selectedTargets = Engine.instance.actorManager.findActorsOnCell(cellPos, creatures);
 					} else {
 						selectedTargets.push(wearer);
 					}
 				break;
 				case TargetSelectionMethod.CLOSEST_ENEMY :
-					var actor = ActorManager.instance.findClosestActor(cellPos ? cellPos : wearer, this.range, creatures);
+					var actor = Engine.instance.actorManager.findClosestActor(cellPos ? cellPos : wearer, this.range, creatures);
 					if ( actor ) {
 						selectedTargets.push(actor);
 					}
 				break;
 				case TargetSelectionMethod.SELECTED_ACTOR :
 					log("Left-click a target creature,\nor right-click to cancel.", "red");
-					EventBus.instance.publishEvent(new Event<TilePickerListener>(EventType.PICK_TILE,
+					Engine.instance.eventBus.publishEvent(new Event<TilePickerListener>(EventType.PICK_TILE,
 						function(pos: Yendor.Position) {
-							var actors: Actor[] = ActorManager.instance.findActorsOnCell( pos, creatures);
+							var actors: Actor[] = Engine.instance.actorManager.findActorsOnCell( pos, creatures);
 							if (actors.length > 0) {
 								applyEffectsFunc(owner, wearer, actors);
 							}
@@ -98,14 +98,14 @@ module Game {
 					));
 				break;
 				case TargetSelectionMethod.ACTORS_IN_RANGE :
-					selectedTargets = ActorManager.instance.findActorsInRange( cellPos ? cellPos : wearer, this.range, creatures );
+					selectedTargets = Engine.instance.actorManager.findActorsInRange( cellPos ? cellPos : wearer, this.range, creatures );
 				break;
 				case TargetSelectionMethod.SELECTED_RANGE :
 					log("Left-click a target tile,\nor right-click to cancel.", "red");
 					var theRange = this.range;
-					EventBus.instance.publishEvent(new Event<TilePickerListener>(EventType.PICK_TILE,
+					Engine.instance.eventBus.publishEvent(new Event<TilePickerListener>(EventType.PICK_TILE,
 						function(pos: Yendor.Position) {
-							var actors: Actor[] = ActorManager.instance.findActorsInRange( pos, theRange, creatures );
+							var actors: Actor[] = Engine.instance.actorManager.findActorsInRange( pos, theRange, creatures );
 							if (actors.length > 0) {
 								applyEffectsFunc(owner, wearer, actors);
 							}
@@ -242,10 +242,10 @@ module Game {
 		apply(owner: Actor, wearer: Actor, cellPos?: Yendor.Position, coef: number = 1.0) {
 			this.coef = coef;
 			this._targetSelector.selectTargets(owner, wearer, cellPos, this.applyEffectToActorList.bind(this));
-			if ( wearer === ActorManager.instance.getPlayer()
+			if ( wearer === Engine.instance.actorManager.getPlayer()
 				&& this._targetSelector.method !== TargetSelectionMethod.SELECTED_RANGE
 				&& this._targetSelector.method !== TargetSelectionMethod.SELECTED_ACTOR ) {
-				ActorManager.instance.resume();
+				Engine.instance.actorManager.resume();
 			}
 		}
 
@@ -332,7 +332,7 @@ module Game {
 				}
 
 				// tells the engine to remove this actor from main list
-				EventBus.instance.publishEvent(new Event<Actor>(EventType.REMOVE_ACTOR, owner));
+				Engine.instance.eventBus.publishEvent(new Event<Actor>(EventType.REMOVE_ACTOR, owner));
 				return true;
 			}
 			// wearer is not a container or is full
@@ -352,7 +352,7 @@ module Game {
 			wearer.container.remove(owner);
 			owner.x = pos ? pos.x : wearer.x;
 			owner.y = pos ? pos.y : wearer.y;
-			ActorManager.instance.addItem(owner);
+			Engine.instance.actorManager.addItem(owner);
 			if ( owner.equipment ) {
 				owner.equipment.unequip(owner, wearer, true);
 			}
@@ -360,7 +360,7 @@ module Game {
 				log(wearer.getThename() + " " + verb + wearer.getVerbEnd() + owner.getthename());
 			}
 			if ( verb === "drop") {
-				ActorManager.instance.resume();
+				Engine.instance.actorManager.resume();
 			}
 		}
 
@@ -379,7 +379,7 @@ module Game {
 			}
 			if ( owner.equipment ) {
 				owner.equipment.use(owner, wearer);
-				ActorManager.instance.resume();
+				Engine.instance.actorManager.resume();
 			}
 		}
 
@@ -396,14 +396,14 @@ module Game {
 		throw(owner: Actor, wearer: Actor, fromFire: boolean = false, coef: number = 1.0) {
 			log("Left-click where to throw the " + owner.name
 				+ ",\nor right-click to cancel.", "red");
-			EventBus.instance.publishEvent(new Event<TilePickerListener>(EventType.PICK_TILE,
+			Engine.instance.eventBus.publishEvent(new Event<TilePickerListener>(EventType.PICK_TILE,
 				function(pos: Yendor.Position) {
-					owner.pickable.drop(owner, ActorManager.instance.getPlayer(), pos, "throw", fromFire);
+					owner.pickable.drop(owner, Engine.instance.actorManager.getPlayer(), pos, "throw", fromFire);
 					if (owner.pickable.onThrowEffector) {
 						owner.pickable.onThrowEffector.apply(owner, wearer, pos, coef);
 						if (! owner.equipment) {
 							// TODO better test to know if the item is destroyed when thrown
-							EventBus.instance.publishEvent(new Event<Actor>(EventType.REMOVE_ACTOR, owner));
+							Engine.instance.eventBus.publishEvent(new Event<Actor>(EventType.REMOVE_ACTOR, owner));
 						}
 					}
 				}
@@ -470,14 +470,14 @@ module Game {
 				}
 			}
 			this.equipped = true;
-			if ( wearer === ActorManager.instance.getPlayer()) {
+			if ( wearer === Engine.instance.actorManager.getPlayer()) {
 				log(transformMessage("[The actor1] equip[s] [the actor2] on [its] " + this.slot, wearer, owner), 0xFFA500 );
 			}
 		}
 
 		unequip(owner: Actor, wearer: Actor, beforeDrop: boolean = false) {
 			this.equipped = false;
-			if ( !beforeDrop && wearer === ActorManager.instance.getPlayer()) {
+			if ( !beforeDrop && wearer === Engine.instance.actorManager.getPlayer()) {
 				log(transformMessage("[The actor1] unequip[s] [the actor2] from [its] " + this.slot, wearer, owner), 0xFFA500 );
 			}
 		}
@@ -543,7 +543,7 @@ module Game {
 			}
 			if (! projectile) {
 				// no projectile found. cannot fire
-				if ( wearer === ActorManager.instance.getPlayer()) {
+				if ( wearer === Engine.instance.actorManager.getPlayer()) {
 					log("No " + this.projectileType.name + " available.", 0xFF0000);
 					return;
 				}
