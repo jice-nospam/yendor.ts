@@ -10,7 +10,7 @@ module Game {
 	export enum EventType {
 		// change game status. Associated data : GameStatus
 		CHANGE_STATUS,
-		// save the game. no data associated
+		// save the game. no associated data
 		SAVE_GAME,
 		// key press event. Associated data : KeyInput
 		KEYBOARD_INPUT,
@@ -22,12 +22,11 @@ module Game {
 		MOUSE_CLICK,
 		// open the tile picker. Associated data : TilePickerListener
 		PICK_TILE,
-		// open the inventory
+		// open the inventory. Associated data : OpenInventoryEventData
 		OPEN_INVENTORY,
-		// open the main menu
+		// open the main menu. no associated data
 		OPEN_MAIN_MENU,
-		REMOVE_ACTOR,
-		// starts a new game
+		// starts a new game. no associated data
 		NEW_GAME,
 		// player gains xp. Associated data : number (xp amount)
 		GAIN_XP,

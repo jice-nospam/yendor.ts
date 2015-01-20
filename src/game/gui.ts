@@ -139,7 +139,16 @@ module Game {
 		}
 
 		onLOG_MESSAGE(msg: Message) {
-			this.message( msg.color, msg.text );
+			var lines = msg.text.split("\n");
+			if ( this.messages.length + lines.length > this.messageHeight ) {
+				this.messages.splice(0, this.messages.length + lines.length - this.messageHeight );
+			}
+			for ( var i: number = 0; i < this.messages.length; ++i ) {
+				this.messages[i].darkenColor();
+			}
+			for ( var j: number = 0; j < lines.length; ++j ) {
+				this.messages.push(new Message(msg.color, lines[j]));
+			}
 		}
 
 		onMOUSE_MOVE(pos: Yendor.Position) {
@@ -148,19 +157,6 @@ module Game {
 				actorsOnCell = actorsOnCell.concat(Engine.instance.actorManager.findActorsOnCell(pos, Engine.instance.actorManager.getItems()));
 				actorsOnCell = actorsOnCell.concat(Engine.instance.actorManager.findActorsOnCell(pos, Engine.instance.actorManager.getCorpses()));
 				this.handleMouseLook( actorsOnCell );
-			}
-		}
-
-		message(color: Yendor.Color, text: string) {
-			var lines = text.split("\n");
-			if ( this.messages.length + lines.length > this.messageHeight ) {
-				this.messages.splice(0, this.messages.length + lines.length - this.messageHeight );
-			}
-			for ( var i: number = 0; i < this.messages.length; ++i ) {
-				this.messages[i].darkenColor();
-			}
-			for ( var j: number = 0; j < lines.length; ++j ) {
-				this.messages.push(new Message(color, lines[j]));
 			}
 		}
 
@@ -554,8 +550,13 @@ module Game {
 			super.render(destination);
 		}
 
-		onMOUSE_MOVE(pos: Yendor.Position) {
-			this.updateMousePosition(pos);
+		onMOUSE_MOVE(mousePos: Yendor.Position) {
+			if (mousePos.x >= this.x && mousePos.x < this.x + this.width
+				&& mousePos.y >= this.y + 1 && mousePos.y < this.y + this.height - 1) {
+				this.activeItemIndex = mousePos.y - this.y - 1;
+			} else {
+				this.activeItemIndex = undefined;
+			}
 		}
 
 		onMOUSE_CLICK(button: MouseButton) {
@@ -601,15 +602,6 @@ module Game {
 			} else {
 				// close the menu if user clicks out of it
 				this.hide();
-			}
-		}
-
-		private updateMousePosition(mousePos: Yendor.Position) {
-			if (mousePos.x >= this.x && mousePos.x < this.x + this.width
-				&& mousePos.y >= this.y + 1 && mousePos.y < this.y + this.height - 1) {
-				this.activeItemIndex = mousePos.y - this.y - 1;
-			} else {
-				this.activeItemIndex = undefined;
 			}
 		}
 	}

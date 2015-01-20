@@ -342,8 +342,8 @@ module Game {
 					owner.equipment.equip(owner, wearer);
 				}
 
-				// tells the engine to remove this actor from main list
-				Engine.instance.eventBus.publishEvent(EventType.REMOVE_ACTOR, owner);
+				// remove this actor from item list
+				Engine.instance.actorManager.removeItem(owner);
 				return true;
 			}
 			// wearer is not a container or is full
@@ -413,7 +413,7 @@ module Game {
 					if (owner.pickable.onThrowEffector) {
 						owner.pickable.onThrowEffector.apply(owner, wearer, pos, coef);
 						if (owner.pickable.destroyedWhenThrown) {
-							Engine.instance.eventBus.publishEvent(EventType.REMOVE_ACTOR, owner);
+							Engine.instance.actorManager.removeItem(owner);
 						}
 					}
 				}

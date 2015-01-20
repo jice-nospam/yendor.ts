@@ -70,7 +70,6 @@ module Game {
 		private initEventBus() {
 			this._eventBus = new EventBus();
 			this._eventBus.registerListener(this, EventType.CHANGE_STATUS);
-			this._eventBus.registerListener(this, EventType.REMOVE_ACTOR);
 			this._eventBus.registerListener(this, EventType.NEW_GAME);
 			this._eventBus.registerListener(this, EventType.SAVE_GAME);
 			this._eventBus.registerListener(this, EventType.GAIN_XP);
@@ -130,13 +129,6 @@ module Game {
 			this._map.computeFov(this._actorManager.getPlayer().x, this._actorManager.getPlayer().y, Constants.FOV_RADIUS);
 		}
 
-		private newGame() {
-			this.guiManager.getGui(Constants.STATUS_PANEL_ID ).clear();
-			this.dungeonLevel = 1;
-			this.createNewGame();
-			this.computePlayerFov();
-		}
-
 		/*
 			Function: gotoNextLevel
 			Go down one level in the dungeon
@@ -162,12 +154,11 @@ module Game {
 			this.status = status;
 		}
 
-		onREMOVE_ACTOR(actor: Actor) {
-			this._actorManager.removeItem(actor);
-		}
-
 		onNEW_GAME() {
-			this.newGame();
+			this.guiManager.getGui(Constants.STATUS_PANEL_ID ).clear();
+			this.dungeonLevel = 1;
+			this.createNewGame();
+			this.computePlayerFov();
 		}
 
 		onGAIN_XP(amount: number) {
