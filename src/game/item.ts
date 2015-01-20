@@ -88,14 +88,14 @@ module Game {
 				break;
 				case TargetSelectionMethod.SELECTED_ACTOR :
 					log("Left-click a target creature,\nor right-click to cancel.", "red");
-					Engine.instance.eventBus.publishEvent(new Event<TilePickerListener>(EventType.PICK_TILE,
-						function(pos: Yendor.Position) {
+					Engine.instance.eventBus.publishEvent(EventType.PICK_TILE,
+						(pos: Yendor.Position) => {
 							var actors: Actor[] = Engine.instance.actorManager.findActorsOnCell( pos, creatures);
 							if (actors.length > 0) {
 								applyEffectsFunc(owner, wearer, actors);
 							}
 						}
-					));
+					);
 				break;
 				case TargetSelectionMethod.ACTORS_IN_RANGE :
 					selectedTargets = Engine.instance.actorManager.findActorsInRange( cellPos ? cellPos : wearer, this.range, creatures );
@@ -103,14 +103,14 @@ module Game {
 				case TargetSelectionMethod.SELECTED_RANGE :
 					log("Left-click a target tile,\nor right-click to cancel.", "red");
 					var theRange = this.range;
-					Engine.instance.eventBus.publishEvent(new Event<TilePickerListener>(EventType.PICK_TILE,
-						function(pos: Yendor.Position) {
+					Engine.instance.eventBus.publishEvent(EventType.PICK_TILE,
+						(pos: Yendor.Position) => {
 							var actors: Actor[] = Engine.instance.actorManager.findActorsInRange( pos, theRange, creatures );
 							if (actors.length > 0) {
 								applyEffectsFunc(owner, wearer, actors);
 							}
 						}
-					));
+					);
 				break;
 			}
 			if (selectedTargets.length > 0) {
@@ -343,7 +343,7 @@ module Game {
 				}
 
 				// tells the engine to remove this actor from main list
-				Engine.instance.eventBus.publishEvent(new Event<Actor>(EventType.REMOVE_ACTOR, owner));
+				Engine.instance.eventBus.publishEvent(EventType.REMOVE_ACTOR, owner);
 				return true;
 			}
 			// wearer is not a container or is full
@@ -407,17 +407,17 @@ module Game {
 		throw(owner: Actor, wearer: Actor, fromFire: boolean = false, coef: number = 1.0) {
 			log("Left-click where to throw the " + owner.name
 				+ ",\nor right-click to cancel.", "red");
-			Engine.instance.eventBus.publishEvent(new Event<TilePickerListener>(EventType.PICK_TILE,
-				function(pos: Yendor.Position) {
+			Engine.instance.eventBus.publishEvent(EventType.PICK_TILE,
+				(pos: Yendor.Position) => {
 					owner.pickable.drop(owner, Engine.instance.actorManager.getPlayer(), pos, "throw", fromFire);
 					if (owner.pickable.onThrowEffector) {
 						owner.pickable.onThrowEffector.apply(owner, wearer, pos, coef);
 						if (owner.pickable.destroyedWhenThrown) {
-							Engine.instance.eventBus.publishEvent(new Event<Actor>(EventType.REMOVE_ACTOR, owner));
+							Engine.instance.eventBus.publishEvent(EventType.REMOVE_ACTOR, owner);
 						}
 					}
 				}
-			));
+			);
 		}
 	}
 

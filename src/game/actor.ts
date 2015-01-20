@@ -478,7 +478,7 @@ module Game {
 
 		pause() {
 			if (! this.isPaused()) {
-				Engine.instance.eventBus.publishEvent(new Event<void>( EventType.SAVE_GAME ));
+				Engine.instance.eventBus.publishEvent(EventType.SAVE_GAME);
 			}
 			this.scheduler.pause();
 		}

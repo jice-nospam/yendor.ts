@@ -158,35 +158,27 @@ module Game {
 			this.computePlayerFov();
 		}
 
-		/*
-			Function: processEvent
-			Handle <CHANGE_STATUS> events (see <EventListener>)
+		onCHANGE_STATUS(status: GameStatus) {
+			this.status = status;
+		}
 
-			Parameters:
-				event - the CHANGE_STATUS event
-		*/
-		processEvent(event: Event<any>) {
-			switch ( event.type ) {
-				case EventType.CHANGE_STATUS :
-					this.status = event.data;
-					break;
-				case EventType.REMOVE_ACTOR :
-					this._actorManager.removeItem(<Actor>event.data);
-					break;
-				case  EventType.NEW_GAME :
-					this.newGame();
-					break;
-				case EventType.GAIN_XP :
-					this._actorManager.getPlayer().addXp(event.data);
-					break;
-				case EventType.SAVE_GAME :
-					if (!this._actorManager.isPlayerDead()) {
-						this.saveGame();
-					} else {
-						this.deleteSavedGame();
-					}
-					break;
-				default: break;
+		onREMOVE_ACTOR(actor: Actor) {
+			this._actorManager.removeItem(actor);
+		}
+
+		onNEW_GAME() {
+			this.newGame();
+		}
+
+		onGAIN_XP(amount: number) {
+			this._actorManager.getPlayer().addXp(amount);
+		}
+
+		onSAVE_GAME() {
+			if (!this._actorManager.isPlayerDead()) {
+				this.saveGame();
+			} else {
+				this.deleteSavedGame();
 			}
 		}
 
@@ -271,17 +263,17 @@ module Game {
 			};
 			if (! Gui.getActiveModal() ) {
 				if ( !this.handleGlobalShortcuts(input) ) {
-					this._eventBus.publishEvent(new Event<KeyInput>(EventType.KEYBOARD_INPUT, input));
+					this._eventBus.publishEvent(EventType.KEYBOARD_INPUT, input);
 				}
 			} else {
 				// modal gui captures all key events
-				Gui.getActiveModal().processEvent(new Event<KeyInput>(EventType.KEYBOARD_INPUT, input));
+				this._eventBus.postEvent(EventType.KEYBOARD_INPUT, Gui.getActiveModal(), input);
 			}
 		}
 
 		private handleGlobalShortcuts(input: KeyInput): boolean {
 			if ( input.action === PlayerAction.CANCEL ) {
-				this._eventBus.publishEvent(new Event<void>(EventType.OPEN_MAIN_MENU));
+				this._eventBus.publishEvent(EventType.OPEN_MAIN_MENU);
 				return true;
 			}
 			return false;
@@ -324,7 +316,7 @@ module Game {
 		*/
 		handleMouseMove(event: JQueryMouseEventObject) {
 			var pos: Yendor.Position = this.root.getPositionFromPixels( event.pageX, event.pageY );
-			this._eventBus.publishEvent(new Event<Yendor.Position>( EventType.MOUSE_MOVE, pos));
+			this._eventBus.publishEvent(EventType.MOUSE_MOVE, pos);
 		}
 
 		/*
@@ -335,7 +327,7 @@ module Game {
 			event - the JQueryMouseEventObject
 		*/
 		handleMouseClick(event: JQueryMouseEventObject) {
-			this._eventBus.publishEvent(new Event<MouseButton>( EventType.MOUSE_CLICK, <MouseButton>event.which));
+			this._eventBus.publishEvent(EventType.MOUSE_CLICK, <MouseButton>event.which);
 		}
 
 		/*

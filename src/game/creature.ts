@@ -326,8 +326,8 @@ module Game {
 			Parameters:
 			action - the PlayerAction
 		*/
-		processEvent(event: Event<any>) {
-			this._lastAction = (<KeyInput>event.data).action;
+		onKEYBOARD_INPUT(input: KeyInput) {
+			this._lastAction = input.action;
 			if ( this._lastAction !== undefined) {
 				Engine.instance.actorManager.resume();
 			}
@@ -423,7 +423,7 @@ module Game {
 				case PlayerAction.MOVE_DOWN :
 					var stairsDown: Actor = Engine.instance.actorManager.getStairsDown();
 					if ( stairsDown.x === owner.x && stairsDown.y === owner.y ) {
-						Engine.instance.eventBus.publishEvent(new Event<GameStatus>( EventType.CHANGE_STATUS, GameStatus.NEXT_LEVEL ));
+						Engine.instance.eventBus.publishEvent(EventType.CHANGE_STATUS, GameStatus.NEXT_LEVEL);
 					} else {
 						log("There are no stairs going down here.");
 					}
@@ -440,16 +440,13 @@ module Game {
 					Engine.instance.actorManager.resume();
 				break;
 				case PlayerAction.USE_ITEM :
-					Engine.instance.eventBus.publishEvent(new Event<OpenInventoryEventData>(EventType.OPEN_INVENTORY,
-						{ title: "use an item", itemListener: this.useItem.bind(this) } ));
+					Engine.instance.eventBus.publishEvent(EventType.OPEN_INVENTORY, { title: "use an item", itemListener: this.useItem.bind(this) } );
 				break;
 				case PlayerAction.DROP_ITEM :
-					Engine.instance.eventBus.publishEvent(new Event<OpenInventoryEventData>(EventType.OPEN_INVENTORY,
-						{ title: "drop an item", itemListener: this.dropItem.bind(this) } ));
+					Engine.instance.eventBus.publishEvent(EventType.OPEN_INVENTORY, { title: "drop an item", itemListener: this.dropItem.bind(this) } );
 				break;
 				case PlayerAction.THROW_ITEM :
-					Engine.instance.eventBus.publishEvent(new Event<OpenInventoryEventData>(EventType.OPEN_INVENTORY,
-						{ title: "throw an item", itemListener: this.throwItem.bind(this) } ));
+					Engine.instance.eventBus.publishEvent(EventType.OPEN_INVENTORY, { title: "throw an item", itemListener: this.throwItem.bind(this) } );
 				break;
 				case PlayerAction.FIRE :
 					this.fire(owner);
@@ -707,7 +704,7 @@ module Game {
 
 		die(owner: Actor) {
 			log(owner.getThename() + " is dead. You gain " + this.xp + " xp.");
-			Engine.instance.eventBus.publishEvent(new Event<number>( EventType.GAIN_XP, this.xp ));
+			Engine.instance.eventBus.publishEvent(EventType.GAIN_XP, this.xp );
 			super.die(owner);
 		}
 	}
@@ -725,7 +722,7 @@ module Game {
 		die(owner: Actor) {
 			log("You died!", "red");
 			super.die(owner);
-			Engine.instance.eventBus.publishEvent(new Event<GameStatus>( EventType.CHANGE_STATUS, GameStatus.DEFEAT ));
+			Engine.instance.eventBus.publishEvent(EventType.CHANGE_STATUS, GameStatus.DEFEAT);
 		}
 	}
 

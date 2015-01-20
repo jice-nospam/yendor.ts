@@ -95,8 +95,6 @@ module Game {
 
 		clear() {}
 
-		processEvent( event: Event<any> ) {}
-
 		/*
 			Function: render
 			To be overloaded by extending classes.
@@ -140,21 +138,16 @@ module Game {
 			Engine.instance.eventBus.registerListener(this, EventType.MOUSE_MOVE);
 		}
 
-		processEvent( event: Event<any> ) {
-			switch ( event.type ) {
-				case EventType.LOG_MESSAGE :
-					var msg: Message = event.data;
-					this.message( msg.color, msg.text );
-				break;
-				case EventType.MOUSE_MOVE :
-					var pos: Yendor.Position = event.data;
-					if ( Engine.instance.map.contains(pos.x, pos.y) && Engine.instance.map.isExplored(pos.x, pos.y) ) {
-						var actorsOnCell: Actor[] = Engine.instance.actorManager.findActorsOnCell(pos, Engine.instance.actorManager.getCreatures());
-						actorsOnCell = actorsOnCell.concat(Engine.instance.actorManager.findActorsOnCell(pos, Engine.instance.actorManager.getItems()));
-						actorsOnCell = actorsOnCell.concat(Engine.instance.actorManager.findActorsOnCell(pos, Engine.instance.actorManager.getCorpses()));
-						this.handleMouseLook( actorsOnCell );
-					}
-				break;
+		onLOG_MESSAGE(msg: Message) {
+			this.message( msg.color, msg.text );
+		}
+
+		onMOUSE_MOVE(pos: Yendor.Position) {
+			if ( Engine.instance.map.contains(pos.x, pos.y) && Engine.instance.map.isExplored(pos.x, pos.y) ) {
+				var actorsOnCell: Actor[] = Engine.instance.actorManager.findActorsOnCell(pos, Engine.instance.actorManager.getCreatures());
+				actorsOnCell = actorsOnCell.concat(Engine.instance.actorManager.findActorsOnCell(pos, Engine.instance.actorManager.getItems()));
+				actorsOnCell = actorsOnCell.concat(Engine.instance.actorManager.findActorsOnCell(pos, Engine.instance.actorManager.getCorpses()));
+				this.handleMouseLook( actorsOnCell );
 			}
 		}
 
@@ -247,25 +240,28 @@ module Game {
 			Engine.instance.eventBus.registerListener(this, EventType.OPEN_INVENTORY);
 		}
 
-		processEvent( event: Event<any> ) {
-			if ( event.type === EventType.OPEN_INVENTORY ) {
-				var data: OpenInventoryEventData = <OpenInventoryEventData>event.data;
-				this.itemListener = data.itemListener;
-				this.title = "=== " + data.title + " - ESC to close ===";
-				this.show();
-			} else if ( event.type === EventType.KEYBOARD_INPUT ) {
-				if ( event.data.action === PlayerAction.CANCEL ) {
-					this.hide();
-				} else {
-					var index = event.data.keyCode - KeyEvent.DOM_VK_A;
-					this.selectItem(index);
-				}
-			} else if (event.type === EventType.MOUSE_MOVE) {
-				this.selectItemAtPos(event.data);
-			} else if (event.type === EventType.MOUSE_CLICK && event.data === MouseButton.LEFT ) {
-				if ( this.selectedItem !== undefined ) {
-					this.selectItem(this.selectedItem);
-				}
+		onOPEN_INVENTORY(data: OpenInventoryEventData) {
+			this.itemListener = data.itemListener;
+			this.title = "=== " + data.title + " - ESC to close ===";
+			this.show();
+		}
+
+		onKEYBOARD_INPUT(input: KeyInput) {
+			if ( input.action === PlayerAction.CANCEL ) {
+				this.hide();
+			} else {
+				var index = input.keyCode - KeyEvent.DOM_VK_A;
+				this.selectItem(index);
+			}
+		}
+
+		onMOUSE_MOVE(pos: Yendor.Position) {
+			this.selectItemAtPos(pos);
+		}
+
+		onMOUSE_CLICK(button: MouseButton) {
+			if ( button  === MouseButton.LEFT && this.selectedItem !== undefined ) {
+				this.selectItem(this.selectedItem);
 			}
 		}
 
@@ -388,48 +384,6 @@ module Game {
 			Engine.instance.eventBus.registerListener(this, EventType.PICK_TILE);
 		}
 
-		processEvent( event: Event<any> ) {
-			if (event.type === EventType.PICK_TILE ) {
-				this.activate(event.data);
-			} else if (event.type === EventType.MOUSE_MOVE) {
-				this.updateMousePosition(event.data);
-			} else if (event.type === EventType.MOUSE_CLICK) {
-				if ( event.data === MouseButton.LEFT ) {
-					if (! this.tileIsValid ) {
-						// the tile is not in FOV. do nothing
-						return;
-					} else if (this.listener) {
-						this.listener(this.tilePos);
-					}
-				}
-				this.deactivate();
-			} else if (event.type === EventType.KEYBOARD_INPUT) {
-				var move: Yendor.Position = convertActionToPosition(event.data.action);
-				if ( move.y === -1 && this.tilePos.y > 0 ) {
-					this.tilePos.y --;
-				} else if ( move.y === 1 && this.tilePos.y < Engine.instance.map.height - 1 ) {
-					this.tilePos.y ++;
-				}
-				if ( move.x === -1 && this.tilePos.x > 0 ) {
-					this.tilePos.x --;
-				} else if ( move.x === 1 && this.tilePos.x < Engine.instance.map.width - 1 ) {
-					this.tilePos.x ++;
-				}
-				switch ( event.data.action ) {
-					case PlayerAction.CANCEL :
-						this.deactivate();
-					break;
-					case PlayerAction.VALIDATE:
-						if ( this.tileIsValid && this.listener ) {
-							this.listener(this.tilePos);
-							this.deactivate();
-						}
-					break;
-				}
-				this.tileIsValid = Engine.instance.map.isInFov(this.tilePos.x, this.tilePos.y);
-			}
-		}
-
 		render(console: Yendor.Console) {
 			if ( console.contains(this.tilePos) ) {
 				console.setChar( this.tilePos.x, this.tilePos.y, this.tileIsValid ? "+" : "x" );
@@ -437,7 +391,7 @@ module Game {
 			}
 		}
 
-		private activate(listener: TilePickerListener) {
+		onPICK_TILE(listener: TilePickerListener) {
 			this.listener = listener;
 			Engine.instance.eventBus.registerListener(this, EventType.MOUSE_MOVE);
 			Engine.instance.eventBus.registerListener(this, EventType.MOUSE_CLICK);
@@ -445,13 +399,8 @@ module Game {
 			this.show();
 			this.tileIsValid = false;
 			var player: Actor = Engine.instance.actorManager.getPlayer();
-			this.tilePos = new Yendor.Position(player.x, player.y);
-		}
-
-		private updateMousePosition(mousePos: Yendor.Position) {
-			this.tilePos.x = mousePos.x;
-			this.tilePos.y = mousePos.y;
-			this.tileIsValid = Engine.instance.map.isInFov(this.tilePos.x, this.tilePos.y);
+			this.tilePos.x = player.x;
+			this.tilePos.y = player.y;
 		}
 
 		private deactivate() {
@@ -459,6 +408,50 @@ module Game {
 			Engine.instance.eventBus.unregisterListener(this, EventType.MOUSE_CLICK);
 			Engine.instance.eventBus.unregisterListener(this, EventType.KEYBOARD_INPUT);
 			this.hide();
+		}
+
+		onKEYBOARD_INPUT(input: KeyInput) {
+			var move: Yendor.Position = convertActionToPosition(input.action);
+			if ( move.y === -1 && this.tilePos.y > 0 ) {
+				this.tilePos.y --;
+			} else if ( move.y === 1 && this.tilePos.y < Engine.instance.map.height - 1 ) {
+				this.tilePos.y ++;
+			}
+			if ( move.x === -1 && this.tilePos.x > 0 ) {
+				this.tilePos.x --;
+			} else if ( move.x === 1 && this.tilePos.x < Engine.instance.map.width - 1 ) {
+				this.tilePos.x ++;
+			}
+			switch ( input.action ) {
+				case PlayerAction.CANCEL :
+					this.deactivate();
+				break;
+				case PlayerAction.VALIDATE:
+					if ( this.tileIsValid && this.listener ) {
+						this.listener(this.tilePos);
+						this.deactivate();
+					}
+				break;
+			}
+			this.tileIsValid = Engine.instance.map.isInFov(this.tilePos.x, this.tilePos.y);
+		}
+
+		onMOUSE_CLICK(button: MouseButton) {
+			if ( button === MouseButton.LEFT ) {
+				if (! this.tileIsValid ) {
+					// the tile is not in FOV. do nothing
+					return;
+				} else if (this.listener) {
+					this.listener(this.tilePos);
+				}
+			}
+			this.deactivate();
+		}
+
+		onMOUSE_MOVE(mousePos: Yendor.Position) {
+			this.tilePos.x = mousePos.x;
+			this.tilePos.y = mousePos.y;
+			this.tileIsValid = Engine.instance.map.isInFov(this.tilePos.x, this.tilePos.y);
 		}
 	}
 
@@ -561,36 +554,38 @@ module Game {
 			super.render(destination);
 		}
 
-		processEvent( event: Event<any> ) {
-			if (event.type === EventType.MOUSE_MOVE) {
-				this.updateMousePosition(event.data);
-			} else if (event.type === EventType.MOUSE_CLICK) {
-				if ( event.data === MouseButton.LEFT ) {
+		onMOUSE_MOVE(pos: Yendor.Position) {
+			this.updateMousePosition(pos);
+		}
+
+		onMOUSE_CLICK(button: MouseButton) {
+			if ( button === MouseButton.LEFT ) {
+				this.activateActiveItem();
+			}
+		}
+
+		onKEYBOARD_INPUT(input: KeyInput) {
+			switch ( input.action ) {
+				case PlayerAction.CANCEL :
+					this.hide();
+				break;
+				case PlayerAction.MOVE_NORTH:
+					if (this.activeItemIndex) {
+						this.activeItemIndex --;
+					} else {
+						this.activeItemIndex = this.items.length - 1;
+					}
+				break;
+				case PlayerAction.MOVE_SOUTH:
+					if (this.activeItemIndex !== undefined && this.activeItemIndex < this.items.length - 1) {
+						this.activeItemIndex ++;
+					} else {
+						this.activeItemIndex = 0;
+					}
+				break;
+				case PlayerAction.VALIDATE:
 					this.activateActiveItem();
-				}
-			} else if (event.type === EventType.KEYBOARD_INPUT) {
-				switch ( event.data.action ) {
-					case PlayerAction.CANCEL :
-						this.hide();
-					break;
-					case PlayerAction.MOVE_NORTH:
-						if (this.activeItemIndex) {
-							this.activeItemIndex --;
-						} else {
-							this.activeItemIndex = this.items.length - 1;
-						}
-					break;
-					case PlayerAction.MOVE_SOUTH:
-						if (this.activeItemIndex !== undefined && this.activeItemIndex < this.items.length - 1) {
-							this.activeItemIndex ++;
-						} else {
-							this.activeItemIndex = 0;
-						}
-					break;
-					case PlayerAction.VALIDATE:
-						this.activateActiveItem();
-					break;
-				}
+				break;
 			}
 		}
 
@@ -600,7 +595,7 @@ module Game {
 				if (! item.disabled ) {
 					this.hide();
 					if ( item.eventType ) {
-						Engine.instance.eventBus.publishEvent(new Event<MenuItem>(item.eventType, item));
+						Engine.instance.eventBus.publishEvent(item.eventType, item);
 					}
 				}
 			} else {
@@ -627,12 +622,9 @@ module Game {
 			]);
 			Engine.instance.eventBus.registerListener(this, EventType.OPEN_MAIN_MENU);
 		}
-		processEvent( event: Event<any> ) {
-			if ( event.type === EventType.OPEN_MAIN_MENU ) {
-				this.show();
-			} else {
-				super.processEvent(event);
-			}
+
+		onOPEN_MAIN_MENU() {
+			this.show();
 		}
 	}
 }

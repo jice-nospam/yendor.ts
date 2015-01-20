@@ -7,7 +7,7 @@ module Game {
 		RIGHT = 3
 	}
 
-	export const enum EventType {
+	export enum EventType {
 		// change game status. Associated data : GameStatus
 		CHANGE_STATUS,
 		// save the game. no data associated
@@ -33,19 +33,21 @@ module Game {
 		GAIN_XP,
 	}
 
-	export class Event<T> {
-		private _type: EventType;
-		private _data: T;
-		constructor(_type: EventType, _data?: T) {
-			this._type = _type;
-			this._data = _data;
-		}
-		get type() { return this._type; }
-		get data() { return this._data; }
-	}
+	/*
+		Interface: EventListener
+		To get events, register to the type :
+		> eventBus.registerListener(this, EventType.KEYBOARD_INPUT);
+		and implement a handler :
+		> onKEYBOARD_INPUT(input: KeyInput)
+		The handler's parameter type depends on the event type. See <EventType>.
+	*/
 	export interface EventListener {
-		processEvent( ev: Event<any> );
 	}
+
+	/*
+		Class: EventBus
+		Stores event listeners and dispatch events to them.
+	*/
 	export class EventBus {
 		private listeners: Array<EventListener[]> = [];
 
@@ -65,13 +67,27 @@ module Game {
 			}
 		}
 
-		publishEvent( event: Event<any>) {
-			if ( this.listeners[event.type] ) {
-				var selectedListeners: EventListener[] = this.listeners[event.type];
+		publishEvent( type: EventType, data?: any) {
+			if ( this.listeners[type] ) {
+				var selectedListeners: EventListener[] = this.listeners[type];
 				for ( var i = 0; i < selectedListeners.length; i++) {
-					selectedListeners[i].processEvent(event);
+					this.postEvent(type, selectedListeners[i], data);
 				}
 			}
 		}
+
+		postEvent(type: EventType, eventListener: EventListener, data?: any) {
+	        var func: any = eventListener["on" + EventType[type]];
+	        if ( func && typeof func === "function" ) {
+	        	if ( data ) {
+	            	func.call(eventListener, data);
+	            } else {
+	            	func.call(eventListener);
+	            }
+	        } else {
+	            console.log("Warning : object type " + (eventListener["className"] ? eventListener["className"] : "unknown")
+	            + " does not implement handler for event " + EventType[type]);
+	        }
+	    }
 	}
 }

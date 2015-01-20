@@ -243,7 +243,7 @@ module Game {
         Add a log to the status panel by sending a LOG_MESSAGE event on the event bus.
     */
     export var log = function(text: string, color: Yendor.Color = "white") {
-        Engine.instance.eventBus.publishEvent(new Event<Message>(EventType.LOG_MESSAGE, new Message(color, text)));
+        Engine.instance.eventBus.publishEvent(EventType.LOG_MESSAGE, new Message(color, text));
     };
 
     /*
