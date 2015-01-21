@@ -27,6 +27,9 @@ To compile it, run `jake` then open game/index.html in your browser.
 
 Reminder for stuff that might be added to the game. Or not.
 
+* Engine
+	- reduce garbage collector usage
+
 * Gameplay
 	- wands and staff
 	- poison potion and weapon / projectile poisoning (need onHitEffector on Attacker)

@@ -78,7 +78,7 @@ module Game {
 		postEvent(type: EventType, eventListener: EventListener, data?: any) {
 	        var func: any = eventListener["on" + EventType[type]];
 	        if ( func && typeof func === "function" ) {
-	        	if ( data ) {
+	        	if ( data !== undefined ) {
 	            	func.call(eventListener, data);
 	            } else {
 	            	func.call(eventListener);

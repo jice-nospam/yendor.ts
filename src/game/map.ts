@@ -75,7 +75,7 @@ module Game {
 		*/
 		private getValueForDungeon(steps: number[][]): number {
 			var nbSteps = steps.length;
-			for (var step = nbSteps - 1; step >= 0; step --) {
+			for (var step = nbSteps - 1; step >= 0; --step) {
 				if ( this.dungeonLevel >= steps[step][0] ) {
 					return steps[step][1];
 				}
@@ -280,7 +280,7 @@ module Game {
 					} else if ( this.isExplored(x, y) ) {
 						root.back[x][y] = this.isWall(x, y) ? Constants.DARK_WALL : Constants.DARK_GROUND;
 					} else {
-						root.back[x][y] = "black";
+						root.back[x][y] = 0x000000;
 					}
 				}
 			}

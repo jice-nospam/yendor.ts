@@ -720,7 +720,7 @@ module Game {
 		}
 
 		die(owner: Actor) {
-			log("You died!", "red");
+			log("You died!", Constants.LOG_CRIT_COLOR);
 			super.die(owner);
 			Engine.instance.eventBus.publishEvent(EventType.CHANGE_STATUS, GameStatus.DEFEAT);
 		}

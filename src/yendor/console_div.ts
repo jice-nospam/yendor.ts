@@ -53,8 +53,8 @@ module Yendor {
 		*/
 		private computeCharSize() {
 			// insert a single (invisible) character in the console
-			this.setChar(0, 0, "@");
-			this.fore[0][0] = "black";
+			this.text[0][0] = "@".charCodeAt(0);
+			this.fore[0][0] = 0x000000;
 			this.render();
 			// get the resulting span size
 			var oldId = this.div.id;
@@ -65,7 +65,7 @@ module Yendor {
 			console.log("Char size : " + this.charWidth + " x " + this.charHeight);
 			// restore the console
 			this.div.id = oldId;
-			this.setChar(0, 0, " ");
+			this.text[0][0] = 0;
 			this.fore[0][0] = this.fore[0][1];
 			this.render();
 		}
@@ -110,10 +110,18 @@ module Yendor {
 			return s;
 		}
 
+		private getChar(x: number, y:number) {
+			var ascii = this.text[x][y];
+			if ( ascii === 0 ) {
+				return " ";
+			}
+			return String.fromCharCode(ascii);
+		}
+
 		private getLineHTML( line: number ): string {
 			var currentFore = ColorUtils.toWeb(this.fore[0][line]);
 			var currentBack = ColorUtils.toWeb(this.back[0][line]);
-			var s = "<span style='color:" + currentFore + ";background-color:" + currentBack + "'>" + this.text[line][0];
+			var s = "<span style='color:" + currentFore + ";background-color:" + currentBack + "'>" + this.getChar(0, line);
 			for ( var i = 1; i < this.width; i++ ) {
 				var nextFore = ColorUtils.toWeb(this.fore[i][line]);
 				var nextBack = ColorUtils.toWeb(this.back[i][line]);
@@ -122,7 +130,7 @@ module Yendor {
 					currentBack = nextBack;
 					s += "</span><span style='color:" + currentFore + ";background-color:" + currentBack + "'>";
 				}
-				s += this.text[line][i];
+				s += this.getChar(i, line);
 			}
 			s += "</span>";
 			return s;

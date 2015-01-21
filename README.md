@@ -13,6 +13,16 @@ It comes with a simple generic roguelike game to extend and a benchmark showcasi
 * [A* pathfinding](http://en.wikipedia.org/wiki/A*_search_algorithm) toolkit
 * a scheduler to handle the order in which creatures with different speed are updated
 
+# Supported browsers
+
+ * ECMAScript 5 compliant browsers (yendor/div renderer) :
+ 	- Internet Explorer 9+
+ 	- Firefox 4+
+ 	- Safari 6+
+ 	- Chrome 23+
+ 	- Opera 15+
+ * For pixi renderers, check [pixi.js](http://www.pixijs.com/) documentation
+
 # Quick Start
 
 ## pre-requisites

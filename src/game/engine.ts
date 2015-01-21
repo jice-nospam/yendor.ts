@@ -14,7 +14,7 @@ module Game {
 		to keep the game from trying to load data with an old format.
 		This should be an integer.
 	*/
-	var SAVEFILE_VERSION: string = "4";
+	var SAVEFILE_VERSION: string = "5";
 
 	/*
 		Class: Engine
@@ -141,9 +141,9 @@ module Game {
 			var player: Actor = this._actorManager.getPlayer();
 			this._actorManager.addCreature(player);
 			player.destructible.heal(player.destructible.maxHp / 2);
-			log("You take a moment to rest, and recover your strength.", "orange");
-			log("After a rare moment of peace, you descend deeper\ninto the heart of the dungeon...", "orange");
-			log("Level..." + this.dungeonLevel, "red");
+			log("You take a moment to rest, and recover your strength.", Constants.LOG_WARN_COLOR);
+			log("After a rare moment of peace, you descend deeper\ninto the heart of the dungeon...", Constants.LOG_WARN_COLOR);
+			log("Level..." + this.dungeonLevel, Constants.LOG_WARN_COLOR);
 			this._map.init( Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT );
 			var dungeonBuilder: BspDungeonBuilder = new BspDungeonBuilder(this.dungeonLevel);
 			dungeonBuilder.build(this._map);

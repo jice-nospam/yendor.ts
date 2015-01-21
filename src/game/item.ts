@@ -87,7 +87,7 @@ module Game {
 					}
 				break;
 				case TargetSelectionMethod.SELECTED_ACTOR :
-					log("Left-click a target creature,\nor right-click to cancel.", "red");
+					log("Left-click a target creature,\nor right-click to cancel.", Constants.LOG_WARN_COLOR);
 					Engine.instance.eventBus.publishEvent(EventType.PICK_TILE,
 						(pos: Yendor.Position) => {
 							var actors: Actor[] = Engine.instance.actorManager.findActorsOnCell( pos, creatures);
@@ -101,7 +101,7 @@ module Game {
 					selectedTargets = Engine.instance.actorManager.findActorsInRange( cellPos ? cellPos : wearer, this.range, creatures );
 				break;
 				case TargetSelectionMethod.SELECTED_RANGE :
-					log("Left-click a target tile,\nor right-click to cancel.", "red");
+					log("Left-click a target tile,\nor right-click to cancel.", Constants.LOG_WARN_COLOR);
 					var theRange = this.range;
 					Engine.instance.eventBus.publishEvent(EventType.PICK_TILE,
 						(pos: Yendor.Position) => {
@@ -406,7 +406,7 @@ module Game {
 		*/
 		throw(owner: Actor, wearer: Actor, fromFire: boolean = false, coef: number = 1.0) {
 			log("Left-click where to throw the " + owner.name
-				+ ",\nor right-click to cancel.", "red");
+				+ ",\nor right-click to cancel.", Constants.LOG_WARN_COLOR);
 			Engine.instance.eventBus.publishEvent(EventType.PICK_TILE,
 				(pos: Yendor.Position) => {
 					owner.pickable.drop(owner, Engine.instance.actorManager.getPlayer(), pos, "throw", fromFire);

@@ -30,6 +30,11 @@ module Game {
         export var INVENTORY_FOREGROUND: Yendor.Color = 0xFD971F;
         export var INVENTORY_FOREGROUND_ACTIVE: Yendor.Color = 0xFFDF90;
         export var INVENTORY_BACKGROUND_EQUIPPED: Yendor.Color = 0x585850;
+        export var LOG_INFO_COLOR: Yendor.Color = 0xEEEEEE;
+        export var LOG_WARN_COLOR: Yendor.Color = 0xFFA500;
+        export var LOG_CRIT_COLOR: Yendor.Color = 0xFF2222;
+        export var TILEPICKER_OK_COLOR: Yendor.Color = 0x00FF00;
+        export var TILEPICKER_KO_COLOR: Yendor.Color = 0xFF2222;
 
         // gui
         export var STATUS_PANEL_ID: string = "statusPanel";
@@ -242,7 +247,7 @@ module Game {
         Function: log
         Add a log to the status panel by sending a LOG_MESSAGE event on the event bus.
     */
-    export var log = function(text: string, color: Yendor.Color = "white") {
+    export var log = function(text: string, color: Yendor.Color = Constants.LOG_INFO_COLOR) {
         Engine.instance.eventBus.publishEvent(EventType.LOG_MESSAGE, new Message(color, text));
     };
 

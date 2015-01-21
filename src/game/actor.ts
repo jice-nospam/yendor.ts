@@ -762,13 +762,13 @@ module Game {
 			if ( target.destructible && ! target.destructible.isDead() ) {
 				var damage = this._power - target.destructible.computeRealDefense(target);
 				var msg: string = "[The actor1] attack[s] [the actor2]";
-				var msgColor: string;
+				var msgColor: Yendor.Color;
 				if ( damage >= target.destructible.hp ) {
 					msg += " and kill[s] [it2] !";
-					msgColor = "orange";
+					msgColor = Constants.LOG_WARN_COLOR;
 				} else if ( damage > 0 ) {
 					msg += " for " + damage + " hit points.";
-					msgColor = "orange";
+					msgColor = Constants.LOG_WARN_COLOR;
 				} else {
 					msg += " but it has no effect!";
 				}
@@ -921,8 +921,8 @@ module Game {
 	export class Actor extends Yendor.Position implements Persistent, Yendor.TimedEntity {
 		className: string;
 		private _type: ActorClass;
-		// the symbol representing this actor on the map
-		private _ch: string;
+		// the ascii code of the symbol representing this actor on the map
+		private _ch: number;
 		// the name to be used by mouse look or the inventory screen
 		private _name: string;
 		// the color associated with this actor's symbol
@@ -958,7 +958,7 @@ module Game {
 		init(_x: number = 0, _y: number = 0, _ch: string = "", _name: string = "", types: string = "",
 			_col: Yendor.Color = "", singular: boolean = true) {
 			this.moveTo(_x, _y);
-			this._ch = _ch;
+			this._ch = _ch.charCodeAt(0);
 			this._name = _name;
 			this._col = _col;
 			this._singular = singular;
@@ -976,8 +976,8 @@ module Game {
 			return this._type.isA(type);
 		}
 
-		get ch() { return this._ch; }
-		set ch(newValue: string) { this._ch = newValue[0]; }
+		get ch() { return String.fromCharCode(this._ch); }
+		set ch(newValue: string) { this._ch = newValue.charCodeAt(0); }
 
 		get col() { return this._col; }
 		set col(newValue: Yendor.Color) { this._col = newValue; }
@@ -1122,7 +1122,7 @@ module Game {
 		}
 
 		render(root: Yendor.Console) {
-			root.setChar( this.x, this.y, this._ch );
+			root.text[this.x][this.y] = this._ch;
 			root.fore[this.x][this.y] = this._col;
 		}
 

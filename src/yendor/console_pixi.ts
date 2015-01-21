@@ -162,7 +162,7 @@ module Yendor {
 			if (this.loadComplete) {
 				for ( var x = 0; x < this.width; x++) {
 					for ( var y = 0; y < this.height; y++) {
-						var ascii = this.text[y].charCodeAt(x);
+						var ascii = this.text[x][y];
 						this.foreCells[x][y].texture = this.chars[ascii];
 						this.foreCells[x][y].tint = ColorUtils.toNumber(this.fore[x][y]);
 						this.backCells[x][y].tint = ColorUtils.toNumber(this.back[x][y]);

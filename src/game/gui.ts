@@ -161,7 +161,7 @@ module Game {
 		}
 
 		render(destination: Yendor.Console) {
-			this.console.clearBack("black");
+			this.console.clearBack(0x000000);
 			this.console.clearText();
 			var player: Player = Engine.instance.actorManager.getPlayer();
 			this.renderBar(1, 1, Constants.STAT_BAR_WIDTH, "HP", player.destructible.hp,
@@ -382,8 +382,8 @@ module Game {
 
 		render(console: Yendor.Console) {
 			if ( console.contains(this.tilePos) ) {
-				console.setChar( this.tilePos.x, this.tilePos.y, this.tileIsValid ? "+" : "x" );
-				console.fore[this.tilePos.x][this.tilePos.y] = this.tileIsValid ? "green" : "red";
+				console.text[this.tilePos.x][this.tilePos.y] = this.tileIsValid ? "+".charCodeAt(0) : "x".charCodeAt(0);
+				console.fore[this.tilePos.x][this.tilePos.y] = this.tileIsValid ? Constants.TILEPICKER_OK_COLOR : Constants.TILEPICKER_KO_COLOR;
 			}
 		}
 

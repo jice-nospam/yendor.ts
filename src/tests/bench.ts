@@ -32,7 +32,7 @@ module Benchmark {
 				for ( var y = SAMPLE_SCREEN_Y; y < SAMPLE_SCREEN_Y + SAMPLE_SCREEN_HEIGHT; ++y ) {
 					root.back[x][y] = rng.getNumber(0, 0xFFFFFF);
 					root.fore[x][y] = rng.getNumber(0, 0xFFFFFF);
-					root.setChar(x, y, String.fromCharCode(rng.getNumber(32, 128)));
+					root.text[x][y] = rng.getNumber(32, 128);
 				}
 			}
 		}
@@ -116,7 +116,7 @@ module Benchmark {
 		waitTime: number = 0;
 		turnLength: number;
 		position: number = 0;
-		char: string = "r";
+		char: number = "r".charCodeAt(0);
 		constructor(turnLength: number) {
 			this.turnLength = turnLength;
 		}
@@ -133,7 +133,7 @@ module Benchmark {
 		move: boolean = false;
 		constructor(turnLength : number) {
 			super(turnLength);
-			this.char = "@";
+			this.char = "@".charCodeAt(0);
 		}
 		update() {
 			if (this.move) {
@@ -162,7 +162,7 @@ module Benchmark {
 			root.clearText();
 			root.print(SAMPLE_SCREEN_X, SAMPLE_SCREEN_Y + 15, "Press any key to move");
 			this.entities.forEach((entity: ScheduledEntity) => {
-				root.setChar(SAMPLE_SCREEN_X + entity.position, SAMPLE_SCREEN_Y + y, entity.char);
+				root.text[SAMPLE_SCREEN_X + entity.position][SAMPLE_SCREEN_Y + y] = entity.char;
 				y += 2;
 			});
 			this.scheduler.run();

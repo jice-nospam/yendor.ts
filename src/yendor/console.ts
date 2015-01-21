@@ -53,11 +53,24 @@ module Yendor {
 			A new color
 		*/
 		static multiply(color: Color, coef: number): Color {
-			var rgb: number[] = ColorUtils.toRgb(color);
-			var r: number = Math.round(rgb[0] * coef);
-			var g: number = Math.round(rgb[1] * coef);
-			var b: number = Math.round(rgb[2] * coef);
-			return "rgb(" + r + "," + g + "," + b + ")";
+			if ( typeof color === "number" ) {
+				// duplicated toRgbFromNumber code to avoid function call and array allocation
+				var col: number = <number>color;
+				var r: number = Math.floor(col / 65536);
+				col -= r * 65536;
+				var g: number = Math.floor(col / 256);
+				var b: number = col - g * 256;
+				r = Math.floor(r * coef);
+				g = Math.floor(r * coef);
+				b = Math.floor(r * coef);
+				return b + g * 256 + r * 65536;
+			} else {
+				var rgb: number[] = ColorUtils.toRgb(color);
+				var r2: number = Math.round(rgb[0] * coef);
+				var g2: number = Math.round(rgb[1] * coef);
+				var b2: number = Math.round(rgb[2] * coef);
+				return "rgb(" + r2 + "," + g2 + "," + b2 + ")";
+			}
 		}
 		private static stdCol = {
 			"aqua": [0, 255, 255],
@@ -251,12 +264,11 @@ module Yendor {
 	export class Console {
 		private _width: number;
 		private _height: number;
-		private __emptyLine: string;
 		/*
 			Property: text
-			Array of <height> strings storing the characters. The character at coordinate x,y is text[y][x].
+			Matrix of <number> storing the ascii code. The character at coordinate x,y is text[x][y].
 		*/
-		text: string[];
+		text: number[][];
 
 		/*
 			Property: fore
@@ -283,11 +295,10 @@ module Yendor {
 			foreground: Color = 0xFFFFFF, background: Color = 0x000000 ) {
 			this._width = _width;
 			this._height = _height;
-			this.text = [];
-			this.__emptyLine = this.emptyLine();
+			this.text = this.newTable();
+			this.fore = this.newTable();
+			this.back = this.newTable();
 			this.clearText();
-			this.fore = this.newColorTable();
-			this.back = this.newColorTable();
 			this.clearFore(foreground) ;
 			this.clearBack(background);
 		}
@@ -333,20 +344,6 @@ module Yendor {
 		getPositionFromPixels( x: number, y: number ) : Position { return undefined; }
 
 		/*
-			Function: setChar
-			Change a character in the console
-
-			Parameters:
-			x - the column
-			y - the row
-			char - the new character (must be a one character string)
-		*/
-		setChar(x: number, y: number, char: string) {
-			var s = this.text[y].substr(0, x) + char[0] + this.text[y].substr(x + 1);
-			this.text[y] = s;
-		}
-
-		/*
 			Function: print
 			Print a string on the console. If the string starts before the first column (x < 0) or ends after the last rows, it"s truncated.
 
@@ -368,18 +365,24 @@ module Yendor {
 			}
 			this.clearFore(color, x, y, end, 1);
 			for ( var i = begin; i < end; ++i ) {
-				this.setChar(x + i, y, text[i]);
+				this.text[i + x][y] = text.charCodeAt(i);
 			}
 		}
 
 		/*
 			Function: clearText
-			Erase all the text on the console (don't change foreground/background colors)
+			Fill the text on the console (don't change foreground/background colors)
+
+			Parameters:
+			value - ascii code to use to fill
+			x - *optional* (default 0) top left column
+			y - *optional* (default 0) top left row
+			width - *optional* the rectangle width
+			height - *optional* the rectangle height			
 		*/
-		clearText() {
-			for (var i = 0; i < this.height; i++) {
-				this.text[i] = this.__emptyLine;
-			}
+		clearText(value: number = 0,
+			x: number = 0, y: number = 0, width: number = -1, height: number = -1) {
+			this.clearTable( this.text, value, x, y, width, height );
 		}
 
 		/*
@@ -398,7 +401,7 @@ module Yendor {
 		*/
 		clearFore( value: Color,
 			x: number = 0, y: number = 0, width: number = -1, height: number = -1 ) {
-			this.clearColorTable( this.fore, value, x, y, width, height );
+			this.clearTable( this.fore, value, x, y, width, height );
 		}
 
 
@@ -418,7 +421,7 @@ module Yendor {
 		*/
 		clearBack( value: Color,
 			x: number = 0, y: number = 0, width: number = -1, height: number = -1 ) {
-			this.clearColorTable( this.back, value, x, y, width, height );
+			this.clearTable( this.back, value, x, y, width, height );
 		}
 
 		/*
@@ -452,14 +455,14 @@ module Yendor {
 				for ( var destx = x; destx < x + srcWidth; ++destx ) {
 					var sourcex = xSrc + destx - x;
 					var sourcey = ySrc + desty - y;
-					console.setChar(destx, desty, this.text[sourcey][sourcex]);
+					console.text[destx][desty] = this.text[sourcex][sourcey];
 					console.back[destx][desty] = this.back[sourcex][sourcey];
 					console.fore[destx][desty] = this.fore[sourcex][sourcey];
 				}
 			}
 		}
 
-		private clearColorTable( table: Color[][], value: Color,
+		private clearTable<T>( table: T[][], value: T,
 			x: number = 0, y: number = 0, width: number = -1, height: number = -1 ) {
 			if ( width === -1 ) {
 				width = this.width - x;
@@ -474,20 +477,12 @@ module Yendor {
 			}
 		}
 
-		private newColorTable(): Color[][] {
+		private newTable(): any[][] {
 			var table = [];
 			for (var i = 0; i < this.width; ++i) {
 				table[i] = [];
 			}
 			return table;
-		}
-
-		private emptyLine(): string {
-			var s = "";
-			for (var i = 0; i < this.width; ++i) {
-				s += " ";
-			}
-			return s;
 		}
 	}
 }
