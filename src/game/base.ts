@@ -35,6 +35,7 @@ module Game {
         export var LOG_CRIT_COLOR: Yendor.Color = 0xFF2222;
         export var TILEPICKER_OK_COLOR: Yendor.Color = 0x00FF00;
         export var TILEPICKER_KO_COLOR: Yendor.Color = 0xFF2222;
+        export var FROST_COLOR: Yendor.Color = 0xE0E0FF;
 
         // gui
         export var STATUS_PANEL_ID: string = "statusPanel";
@@ -69,6 +70,7 @@ module Game {
         export var OVEREMCUMBERED_THRESHOLD: number = 0.9;
         // when overencumbered, walkTime is multiplied by this value
         export var OVERENCUMBERED_MULTIPLIER: number = 1.5;
+        export var FROZEN_MULTIPLIER: number = 2;
 
         // equipment slots names
         export var SLOT_RIGHT_HAND: string = "right hand";
@@ -113,6 +115,7 @@ module Game {
         DROP_ITEM,
         THROW_ITEM,
         FIRE,
+        ZAP,
         VALIDATE,
         CANCEL
     }
@@ -264,6 +267,7 @@ module Game {
         - [s] - s / <empty>  (verb ending)
         - [it] - it / you
         - [its] - its / your
+        - [is] - is / are
 
         The same variables are available for a second actor :
         - [The actor2's]
@@ -275,6 +279,7 @@ module Game {
         - [s2]
         - [it2]
         - [its2]
+        - [is2]
         
         There are also two numerical values [value1] and [value2].
         Example :
@@ -299,6 +304,7 @@ module Game {
         newText = newText.replace(/\[s\]/g, actor1.getVerbEnd());
         newText = newText.replace(/ \[it\]/g, actor1.getit());
         newText = newText.replace(/ \[its\] /g, actor1.getits());
+        newText = newText.replace(/ \[is\]/g, actor1.getis());
         if ( actor2 ) {
             newText.replace("[The actor2's] ", actor2.getThenames());
             newText = newText.replace(" [the actor2's] ", actor2.getthenames());
@@ -309,6 +315,7 @@ module Game {
             newText = newText.replace(/\[s2\]/g, actor2.getVerbEnd());
             newText = newText.replace(/ \[it2\]/g, actor2.getit());
             newText = newText.replace(/ \[its2\] /g, actor2.getits());
+            newText = newText.replace(/ \[is2\]/g, actor2.getis());
         }
         if ( value1 !== undefined ) {
             newText = newText.replace("[value1]", "" + value1);

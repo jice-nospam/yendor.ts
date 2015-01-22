@@ -224,6 +224,8 @@ module Game {
 					return PlayerAction.CANCEL;
 				case KeyEvent.DOM_VK_F :
 					return PlayerAction.FIRE;
+				case KeyEvent.DOM_VK_Z :
+					return PlayerAction.ZAP;
 				default:
 					if ( event.key === ">" ) {
 						return PlayerAction.MOVE_DOWN;

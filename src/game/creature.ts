@@ -33,7 +33,7 @@ module Game {
 	 		Property: time
 	 		Time before this condition stops, or -1 for permanent conditions
 		*/
-		protected time: number;
+		protected _time: number;
 		protected _type: ConditionType;
 		private static condNames = [ "confused", "stunned" ];
 
@@ -44,6 +44,8 @@ module Game {
 					return new RegenerationCondition(time, <number>additionalArgs[0]);
 				case ConditionType.STUNNED :
 					return new StunnedCondition(time);
+				case ConditionType.FROZEN :
+					return new FrozenCondition(time);
 				default :
 					return new Condition(type, time);
 			}
@@ -51,11 +53,12 @@ module Game {
 
 		constructor(type: ConditionType, time: number) {
 			this.className = "Condition";
-			this.time = time;
+			this._time = time;
 			this._type = type;
 		}
 
 		get type() { return this._type; }
+		get time() { return this._time; }
 		getName() { return Condition.condNames[this._type]; }
 
 		/*
@@ -77,9 +80,9 @@ module Game {
 				false if the condition has ended
 		*/
 		update(owner: Actor): boolean {
-			if ( this.time > 0 ) {
-				this.time --;
-				return (this.time > 0);
+			if ( this._time > 0 ) {
+				this._time --;
+				return (this._time > 0);
 			}
 			return true;
 		}
@@ -120,12 +123,42 @@ module Game {
 				if ( this.type === ConditionType.STUNNED) {
 					// after being stunned, wake up confused
 					this._type = ConditionType.CONFUSED;
-					this.time = Constants.AFTER_STUNNED_CONFUSION_DELAY;
+					this._time = Constants.AFTER_STUNNED_CONFUSION_DELAY;
 				} else {
 					return false;
 				}
 			}
 			return true;
+		}
+	}
+
+	/*
+		Class: FrozenCondition
+		The creature is slowed down
+	*/
+	export class FrozenCondition extends Condition {
+		private startTime: number;
+		private originalColor: Yendor.Color;
+		constructor(nbTurns: number) {
+			super(ConditionType.FROZEN, nbTurns);
+			this.className = "FrozenCondition";
+			this.startTime = nbTurns;
+		}
+
+		onApply(owner: Actor) {
+			this.originalColor = owner.col;
+			owner.col = Constants.FROST_COLOR;
+		}
+
+		onRemove(owner: Actor) {
+			owner.col = this.originalColor;
+		}
+
+		update(owner: Actor): boolean {
+			var progress = (this._time - 1) / this.startTime;
+			owner.col = Yendor.ColorUtils.add(Yendor.ColorUtils.multiply(Constants.FROST_COLOR, progress),
+				Yendor.ColorUtils.multiply(this.originalColor, 1 - progress));
+			return super.update(owner);
 		}
 	}
 
@@ -154,7 +187,14 @@ module Game {
 		set waitTime(newValue: number) { this._waitTime = newValue; }
 
 		get walkTime() {
-			return this.hasCondition(ConditionType.OVERENCUMBERED) ? this._walkTime * Constants.OVERENCUMBERED_MULTIPLIER : this._walkTime;
+			var time = this._walkTime;
+			if (this.hasCondition(ConditionType.OVERENCUMBERED)) {
+				time *= Constants.OVERENCUMBERED_MULTIPLIER;
+			}
+			if (this.hasCondition(ConditionType.FROZEN)) {
+				time *= Constants.FROZEN_MULTIPLIER;
+			}
+			return time;
 		}
 		set walkTime(newValue: number) { this._walkTime = newValue; }
 
@@ -195,6 +235,16 @@ module Game {
 
 		getConditionDescription(): string {
 			return  this.conditions && this.conditions.length > 0 ? this.conditions[0].getName() : undefined;
+		}
+
+		hasActiveConditions(): boolean {
+			var n: number = this.conditions ? this.conditions.length : 0;
+			for ( var i: number = 0; i < n; i++) {
+				if ( this.conditions[i].time > 0 ) {
+					return true;
+				}
+			}
+			return false;
 		}
 
 		hasCondition(type: ConditionType): boolean {
@@ -347,6 +397,7 @@ module Game {
 			// don't update a dead actor
 			if ( owner.destructible && owner.destructible.isDead()) {
 				this._lastAction = undefined;
+				this.waitTime += this.walkTime;
 				return;
 			}
 			var newTurn: boolean = false;
@@ -376,6 +427,7 @@ module Game {
         		case PlayerAction.DROP_ITEM :
         		case PlayerAction.THROW_ITEM :
         		case PlayerAction.FIRE :
+        		case PlayerAction.ZAP :
         		case PlayerAction.MOVE_UP :
         		case PlayerAction.MOVE_DOWN :
 					if (! this.hasCondition(ConditionType.CONFUSED) && ! this.hasCondition(ConditionType.STUNNED)) {
@@ -453,6 +505,9 @@ module Game {
 				case PlayerAction.FIRE :
 					this.fire(owner);
 				break;
+				case PlayerAction.ZAP :
+					this.zap(owner);
+				break;
 			}
 		}
 
@@ -475,6 +530,25 @@ module Game {
 			weapon.ranged.fire(weapon, owner);
 			// note : this time is spent before you select the target. loading the projectile takes time
 			this.waitTime += weapon.ranged.loadTime;
+		}
+
+		/*
+			Function: zap
+			Use a magic wand/staff/rod.
+		*/
+		private zap(owner: Actor) {
+			var staff: Actor = owner.container.getFromSlot(Constants.SLOT_RIGHT_HAND);
+			if (! staff || ! staff.magic) {
+				staff = owner.container.getFromSlot(Constants.SLOT_BOTH_HANDS);
+			}
+			if (! staff || ! staff.magic) {
+				staff = owner.container.getFromSlot(Constants.SLOT_LEFT_HAND);
+			}
+			if (! staff || ! staff.magic) {
+				log("You have no magic item equipped.", 0xFF0000);
+				return;
+			}
+			staff.magic.zap(staff, owner);
 		}
 
 		// inventory item listeners
@@ -552,6 +626,7 @@ module Game {
 
 			// don't update a dead monster
 			if ( owner.destructible && owner.destructible.isDead()) {
+				this.waitTime += this.walkTime;
 				return;
 			}
 			// attack the player when at melee range, else try to track his scent
@@ -584,6 +659,8 @@ module Game {
 					}
 					if ( this.__path ) {
 						this.followPath(owner);
+					} else {
+						this.waitTime += this.walkTime;						
 					}
 				} else {
 					// at melee range. attack
@@ -794,6 +871,9 @@ module Game {
 		}
 		getit(): string {
 			return " you";
+		}
+		getis(): string {
+			return " are";
 		}
 	}
 }

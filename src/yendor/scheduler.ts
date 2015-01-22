@@ -114,7 +114,8 @@ module Yendor {
 				entity.update();
 				if ( ! this.paused && entity.waitTime <= oldWaitTime ) {
 					// enforce waitTime to avoid deadlock
-					entity.waitTime = oldWaitTime + 1;
+					// TODO re-enable this when tile picking is handled in PlayerAi.update
+					// entity.waitTime = oldWaitTime + 1;
 				}
 				entity = this.entities.peek();
 			}

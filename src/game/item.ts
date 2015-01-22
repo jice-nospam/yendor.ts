@@ -210,7 +210,9 @@ module Game {
 			this.type = type;
 			this.nbTurns = nbTurns;
 			this.message = message;
-			this.additionalArgs = additionalArgs;
+			if (additionalArgs && additionalArgs.length > 0 && additionalArgs[0] !== undefined ) {
+				this.additionalArgs = additionalArgs;
+			}
 		}
 
 		applyTo(actor: Actor, coef: number = 1.0): boolean {
@@ -236,19 +238,23 @@ module Game {
 		private _targetSelector: TargetSelector;
 		private _message: string;
 		private _coef: number;
+		private destroyOnEffect: boolean;
+		private __afterEffectCallback: () => void;
 
 		get effect() { return this._effect; }
 		get coef() { return this._coef; }
 
-		constructor(_effect?: Effect, _targetSelector?: TargetSelector, _message?: string) {
+		constructor(_effect?: Effect, _targetSelector?: TargetSelector, _message?: string, destroyOnEffect: boolean = false) {
 			this.className = "Effector";
 			this._effect = _effect;
 			this._targetSelector = _targetSelector;
 			this._message = _message;
+			this.destroyOnEffect = destroyOnEffect;
 		}
 
-		apply(owner: Actor, wearer: Actor, cellPos?: Yendor.Position, coef: number = 1.0) {
+		apply(owner: Actor, wearer: Actor, cellPos?: Yendor.Position, coef: number = 1.0, afterEffectCallback?: () => void) {
 			this._coef = coef;
+			this.__afterEffectCallback = afterEffectCallback;
 			this._targetSelector.selectTargets(owner, wearer, cellPos, this.applyEffectToActorList.bind(this));
 			if ( wearer === Engine.instance.actorManager.getPlayer()
 				&& this._targetSelector.method !== TargetSelectionMethod.SELECTED_RANGE
@@ -260,7 +266,7 @@ module Game {
 		private applyEffectToActorList(owner: Actor, wearer: Actor, actors: Actor[]) {
 			var success: boolean = false;
 			if ( this._message ) {
-				log(this._message);
+				log(transformMessage(this._message, wearer));
 			}
 
 			for (var i = 0; i < actors.length; ++i) {
@@ -268,7 +274,10 @@ module Game {
 					success = true;
 				}
 			}
-			if ( success && wearer && wearer.container ) {
+			if (success && this.__afterEffectCallback) {
+				this.__afterEffectCallback();
+			}
+			if ( this.destroyOnEffect && success && wearer && wearer.container ) {
 				wearer.container.remove( owner, wearer );
 			}
 		}
@@ -307,16 +316,16 @@ module Game {
 			this._destroyedWhenThrown = destroyedWhenThrown;
 		}
 
-		setOnUseEffect(effect?: Effect, targetSelector?: TargetSelector, message?: string) {
-			this.onUseEffector = new Effector(effect, targetSelector, message);
+		setOnUseEffect(effect?: Effect, targetSelector?: TargetSelector, message?: string, destroyOnEffect: boolean = false) {
+			this.onUseEffector = new Effector(effect, targetSelector, message, destroyOnEffect);
 		}
 
 		setOnUseEffector(effector: Effector) {
 			this.onUseEffector = effector;
 		}
 
-		setOnThrowEffect(effect?: Effect, targetSelector?: TargetSelector, message?: string) {
-			this.onThrowEffector = new Effector(effect, targetSelector, message);
+		setOnThrowEffect(effect?: Effect, targetSelector?: TargetSelector, message?: string, destroyOnEffect: boolean = false) {
+			this.onThrowEffector = new Effector(effect, targetSelector, message, destroyOnEffect);
 		}
 
 		setOnThrowEffector(effector: Effector) {
@@ -574,6 +583,7 @@ module Game {
 	export class Magic implements Persistent {
 		className: string;
 		private _maxCharges: number;
+		private _charges: number;
 		private onFireEffector: Effector;
 
 		get maxCharges() { return this._maxCharges; }
@@ -581,11 +591,32 @@ module Game {
 
 		constructor(maxCharges: number) {
 			this.className = "Magic";
-			this.maxCharges = maxCharges;
+			this._maxCharges = maxCharges;
+			this._charges = this._maxCharges;
 		}
 
 		setFireEffector(effect: Effect, targetSelector: TargetSelector, message?: string) {
 			this.onFireEffector = new Effector(effect, targetSelector, message);
+		}
+
+		zap(owner: Actor, wearer: Actor) {
+			if ( this._charges === 0 ) {
+				log(transformMessage("[The actor1's] " + owner.name + " is uncharged", wearer));
+			} else if ( this.onFireEffector ) {
+				this.onFireEffector.apply(owner, wearer, undefined, 1, () => {
+					this._charges --;
+					// TODO add SELECT_TILE PlayerAction to be able to do this in PlayerAI.update
+					if ( wearer.ai ) {
+						wearer.ai.waitTime += wearer.ai.walkTime;
+					}
+					if ( this._charges > 0 ) {
+						log("Remaining charges : " + this._charges );
+					} else {
+						log(transformMessage("[The actor1's] " + owner.name + " is uncharged", wearer));
+					}
+				});
+			}
+
 		}
 	}
 }

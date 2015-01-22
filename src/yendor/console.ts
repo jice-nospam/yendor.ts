@@ -56,14 +56,13 @@ module Yendor {
 			if ( typeof color === "number" ) {
 				// duplicated toRgbFromNumber code to avoid function call and array allocation
 				var col: number = <number>color;
-				var r: number = Math.floor(col / 65536);
-				col -= r * 65536;
-				var g: number = Math.floor(col / 256);
-				var b: number = col - g * 256;
+				var r: number = (col & 0xFF0000) >> 16;
+				var g: number = (col & 0x00FF00) >> 8;
+				var b: number = col & 0x0000FF;
 				r = Math.floor(r * coef);
-				g = Math.floor(r * coef);
-				b = Math.floor(r * coef);
-				return b + g * 256 + r * 65536;
+				g = Math.floor(g * coef);
+				b = Math.floor(b * coef);
+				return b | (g << 8) | (r << 16);
 			} else {
 				var rgb: number[] = ColorUtils.toRgb(color);
 				var r2: number = Math.round(rgb[0] * coef);
@@ -72,6 +71,23 @@ module Yendor {
 				return "rgb(" + r2 + "," + g2 + "," + b2 + ")";
 			}
 		}
+
+		static add(col1: Color, col2: Color): Color {
+			var r = ((<number>col1 & 0xFF0000) >> 16) + ((<number>col2 & 0xFF0000) >> 16);
+			var g = ((<number>col1 & 0x00FF00) >> 8) + ((<number>col2 & 0x00FF00) >> 8);
+			var b = (<number>col1 & 0x0000FF) + (<number>col2 & 0x0000FF);
+			if ( r > 255 ) {
+				r = 255;
+			}
+			if ( g > 255 ) {
+				g = 255;
+			}
+			if ( b > 255 ) {
+				b = 255;
+			}
+			return b | (g << 8) | (r << 16);
+		}
+
 		private static stdCol = {
 			"aqua": [0, 255, 255],
 			"black": [0, 0, 0],

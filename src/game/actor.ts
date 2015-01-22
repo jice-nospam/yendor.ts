@@ -173,11 +173,16 @@ module Game {
 
 	interface StaffParam {
 		maxCharges: number;
-		fireEffect: Effect;
+		fireEffect?: Effect;
 		fireTargetSelectionMethod: TargetSelectionMethod;
 		fireMessage: string;
 		weight: number;
 		twoHanded: boolean;
+		// for condition staffs
+		condType?: ConditionType;
+		additionalArgs?: any[];
+		condMessage?: string;
+		nbTurns?: number;
 	}
 
 	interface InstantHealthPotionParam {
@@ -215,7 +220,7 @@ module Game {
 					throwFailMessage: "The potion explodes on [the actor1] but it has no effect" });
 			},
 			REGENERATION_POTION: (x: number, y: number) => {
-				return	ActorFactory.createConditionPotion(x, y, "regeneration potion", 20, 10,
+				return	ActorFactory.createConditionPotion(x, y, "regeneration potion", 20, [10],
 					ConditionType.REGENERATION, TargetSelectionMethod.ACTOR_ON_CELL,
 					"[The actor1] drink[s] the regeneration potion and feel[s]\nthe life flowing through [it].",
 					"The potion explodes on [the actor1].\nLife is flowing through [it].");
@@ -243,9 +248,11 @@ module Game {
 			CROSSBOW: (x: number, y: number) => { return ActorFactory.createRanged(x, y, "crossbow",
 				{ damages: 4, projectileTypeName: "bolt", loadTime: 5, twoHanded: false } ); },
 			//      staff
-			FROST_WAND: (x: number, y: number) => { return ActorFactory.createStaff(x, y, "wand of frost",
-				{maxCharges: 5, fireEffect: undefined, fireTargetSelectionMethod: TargetSelectionMethod.SELECTED_ACTOR,
-					weight: 0.5, twoHanded: false, fireMessage: "[The actor1] gets covered with frost."} ); },
+			FROST_WAND: (x: number, y: number) => { return ActorFactory.createConditionStaff(x, y, "wand of frost",
+				{	maxCharges: 5, fireTargetSelectionMethod: TargetSelectionMethod.SELECTED_ACTOR,
+					weight: 0.5, twoHanded: false, fireMessage: "[The actor1] zap[s] [its] wand of frost.",
+					condType: ConditionType.FROZEN, nbTurns: 5, condMessage: "[The actor1] [is] covered with frost."
+				} ); },
 			// 		projectile
 			// 			arrow
 			BONE_ARROW: (x: number, y: number) => { return ActorFactory.createProjectile(x, y, "bone arrow", 1, "arrow"); },
@@ -277,38 +284,38 @@ module Game {
 		}
 
 		// potions
-		private static createEffectPotion(x: number, y: number, name: string, onUseEffect: Effector, onThrowEffect?: Effector): Actor {
+		private static createEffectPotion(x: number, y: number, name: string, onUseEffector: Effector, onThrowEffector?: Effector): Actor {
 			var effectPotion = new Actor();
 			effectPotion.init(x, y, "!", name, "potion", 0x800080, true);
 			effectPotion.pickable = new Pickable(0.5, true);
-			if ( onUseEffect ) {
-				effectPotion.pickable.setOnUseEffector(onUseEffect);
+			if ( onUseEffector ) {
+				effectPotion.pickable.setOnUseEffector(onUseEffector);
 			}
-			if (onThrowEffect) {
-				effectPotion.pickable.setOnThrowEffector(onThrowEffect);
+			if (onThrowEffector) {
+				effectPotion.pickable.setOnThrowEffector(onThrowEffector);
 			}
 			return effectPotion;
 		}
 
-		private static createConditionPotion(x: number, y: number, name: string, nbTurns: number, amount: number,
+		private static createConditionPotion(x: number, y: number, name: string, nbTurns: number, additionalArgs: any[],
 			condType: ConditionType, targetSelectionMethod: TargetSelectionMethod,
 			useMessage: string, throwMessage: string) {
 			return ActorFactory.createEffectPotion(x, y, name,
 				new Effector(new ConditionEffect(condType, nbTurns,
-					useMessage, [amount]),
-					new TargetSelector( targetSelectionMethod )),
+					useMessage, additionalArgs),
+					new TargetSelector( targetSelectionMethod ), undefined, true),
 				new Effector(new ConditionEffect(condType, nbTurns,
-					throwMessage, [amount]),
-					new TargetSelector( targetSelectionMethod ))
+					throwMessage, additionalArgs),
+					new TargetSelector( targetSelectionMethod ), undefined, true)
 				);
 		}
 
 		private static createInstantHealthPotion(x: number, y: number, name: string, param: InstantHealthPotionParam): Actor {
 			return ActorFactory.createEffectPotion(x, y, name,
 				new Effector(new InstantHealthEffect(param.amount, param.useMessage, param.useFailMessage),
-					new TargetSelector( param.targetSelectionMethod )),
+					new TargetSelector( param.targetSelectionMethod ), undefined, true),
 				new Effector(new InstantHealthEffect(param.amount, param.throwMessage, param.throwFailMessage),
-					new TargetSelector( param.targetSelectionMethod ))
+					new TargetSelector( param.targetSelectionMethod ), undefined, true)
 				);
 		}
 
@@ -319,7 +326,7 @@ module Game {
 			lightningBolt.pickable = new Pickable(0.1);
 			lightningBolt.pickable.setOnUseEffect(new InstantHealthEffect(-damages,
 				"A lightning bolt strikes [the actor1] with a loud thunder!\nThe damage is [value1] hit points."),
-				new TargetSelector( TargetSelectionMethod.CLOSEST_ENEMY, range));
+				new TargetSelector( TargetSelectionMethod.CLOSEST_ENEMY, range), undefined, true);
 			return lightningBolt;
 		}
 
@@ -330,7 +337,7 @@ module Game {
 			fireball.pickable.setOnUseEffect(new InstantHealthEffect(-damages,
 				"[The actor1] get[s] burned for [value1] hit points."),
 				new TargetSelector( TargetSelectionMethod.SELECTED_RANGE, range),
-				"A fireball explodes, burning everything within " + range + " tiles.");
+				"A fireball explodes, burning everything within " + range + " tiles.", true);
 			return fireball;
 		}
 
@@ -340,7 +347,7 @@ module Game {
 			confusionScroll.pickable = new Pickable(0.1);
 			confusionScroll.pickable.setOnUseEffect(new ConditionEffect(ConditionType.CONFUSED, nbTurns,
 				"[The actor1's] eyes look vacant,\nas [it] start[s] to stumble around!"),
-				new TargetSelector( TargetSelectionMethod.SELECTED_ACTOR, range));
+				new TargetSelector( TargetSelectionMethod.SELECTED_ACTOR, range), undefined, true);
 			return confusionScroll;
 		}
 
@@ -375,6 +382,11 @@ module Game {
 			staff.magic.setFireEffector(staffParam.fireEffect, new TargetSelector(staffParam.fireTargetSelectionMethod),
 				staffParam.fireMessage);
 			return staff;
+		}
+
+		private static createConditionStaff(x: number, y: number, name: string, staffParam: StaffParam): Actor {
+			staffParam.fireEffect = new ConditionEffect(staffParam.condType, staffParam.nbTurns, staffParam.condMessage, staffParam.additionalArgs);
+			return ActorFactory.createStaff(x, y, name, staffParam);
 		}
 
 		private static createProjectile(x: number, y: number, name: string, damages: number, projectileTypeName: string): Actor {
@@ -510,8 +522,10 @@ module Game {
 			this.scheduler.run();
 			for ( var i: number = 0, len: number = this.creatures.length; i < len; ++i) {
 				var actor: Actor = this.creatures[i];
-				if ( actor.destructible && actor.destructible.isDead() ) {
+				if ( actor.destructible && actor.destructible.isDead() && ! actor.ai.hasActiveConditions() ) {
 					// actor is dead. move it to corpse list
+					// note that corpses must still be updated until they have no active conditions
+					// for example, to make it possible for corpses to unfreeze.
 					this.scheduler.remove(actor);
 					this.creatures.splice( this.creatures.indexOf(actor), 1);
 					i--;
@@ -1150,6 +1164,10 @@ module Game {
 
 		getit(): string {
 			return " it";
+		}
+
+		getis(): string {
+			return this.isSingular() ? " is" : " are";
 		}
 
 		getVerbEnd(): string {

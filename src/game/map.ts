@@ -108,6 +108,7 @@ module Game {
 			probabilities[ActorType.LONG_BOW] = this.getValueForDungeon([[5, 1]]);
 			probabilities[ActorType.CROSSBOW] = this.getValueForDungeon([[3, 1]]);
 			probabilities[ActorType.SHORT_SWORD] = this.getValueForDungeon([[4, 1], [12, 0]]);
+			probabilities[ActorType.FROST_WAND] = this.getValueForDungeon([[4, 1]]);
 			probabilities[ActorType.WOODEN_SHIELD] = this.getValueForDungeon([[2, 1], [12, 0]]);
 			probabilities[ActorType.LONG_SWORD] = this.getValueForDungeon([[6, 1]]);
 			probabilities[ActorType.IRON_SHIELD] = this.getValueForDungeon([[7, 1]]);
