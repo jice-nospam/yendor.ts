@@ -217,7 +217,8 @@ module Game {
 			if (!actor.ai) {
 				return false;
 			}
-			actor.ai.addCondition(Condition.create(this.type, actor, Math.floor(coef * this.nbTurns), this.additionalArgs));
+			actor.ai.addCondition(Condition.create(this.type, Math.floor(coef * this.nbTurns), this.additionalArgs),
+				actor);
 			if ( this.message ) {
 				log(transformMessage(this.message, actor));
 			}
@@ -268,7 +269,7 @@ module Game {
 				}
 			}
 			if ( success && wearer && wearer.container ) {
-				wearer.container.remove( owner );
+				wearer.container.remove( owner, wearer );
 			}
 		}
 	}
@@ -334,7 +335,7 @@ module Game {
 			true if the operation succeeded
 		*/
 		pick(owner: Actor, wearer: Actor): boolean {
-			if ( wearer.container && wearer.container.add(owner)) {
+			if ( wearer.container && wearer.container.add(owner, wearer)) {
 				log(transformMessage("[The actor1] pick[s] [the actor2].", wearer, owner));
 
 				if ( owner.equipment && wearer.container.isSlotEmpty(owner.equipment.getSlot())) {
@@ -360,7 +361,7 @@ module Game {
 			pos - coordinate if the position is not the wearer's position
 		*/
 		drop(owner: Actor, wearer: Actor, pos?: Yendor.Position, verb: string = "drop", fromFire: boolean = false) {
-			wearer.container.remove(owner);
+			wearer.container.remove(owner, wearer);
 			owner.x = pos ? pos.x : wearer.x;
 			owner.y = pos ? pos.y : wearer.y;
 			Engine.instance.actorManager.addItem(owner);
@@ -563,6 +564,28 @@ module Game {
 			}
 			log(transformMessage("[The actor1] fire[s] [a actor2].", wearer, projectile));
 			projectile.pickable.throw(projectile, wearer, true, this._damageCoef);
+		}
+	}
+
+	/*
+		Class: Magic
+		Item with magic properties (staff wands, ...)
+	*/
+	export class Magic implements Persistent {
+		className: string;
+		private _maxCharges: number;
+		private onFireEffector: Effector;
+
+		get maxCharges() { return this._maxCharges; }
+		set maxCharges(newValue: number) { this._maxCharges = newValue; }
+
+		constructor(maxCharges: number) {
+			this.className = "Magic";
+			this.maxCharges = maxCharges;
+		}
+
+		setFireEffector(effect: Effect, targetSelector: TargetSelector, message?: string) {
+			this.onFireEffector = new Effector(effect, targetSelector, message);
 		}
 	}
 }

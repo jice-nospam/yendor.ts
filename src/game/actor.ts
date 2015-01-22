@@ -22,6 +22,7 @@ module Game {
 		>        blade
 		>        shield
 		>        ranged
+		>        staff
 		>        projectile
 		>        	arrow
 		>        	bolt
@@ -123,7 +124,7 @@ module Game {
 		FIREBALL_SCROLL,
 		CONFUSION_SCROLL,
 		// weapon
-		// 		blade
+		// 		blades
 		SHORT_SWORD,
 		LONG_SWORD,
 		GREAT_SWORD,
@@ -134,6 +135,8 @@ module Game {
 		SHORT_BOW,
 		LONG_BOW,
 		CROSSBOW,
+		// 		staffs, wands and rods
+		FROST_WAND,
 		// 		projectile
 		// 			arrow	
 		BONE_ARROW,
@@ -158,6 +161,7 @@ module Game {
 		damages: number;
 		attackTime: number;
 		twoHanded: boolean;
+		weight: number;
 	}
 
 	interface RangedParam {
@@ -165,6 +169,24 @@ module Game {
 		projectileTypeName: string;
 		loadTime: number;
 		twoHanded: boolean;
+	}
+
+	interface StaffParam {
+		maxCharges: number;
+		fireEffect: Effect;
+		fireTargetSelectionMethod: TargetSelectionMethod;
+		fireMessage: string;
+		weight: number;
+		twoHanded: boolean;
+	}
+
+	interface InstantHealthPotionParam {
+		amount: number;
+		targetSelectionMethod: TargetSelectionMethod;
+		useMessage: string;
+		useFailMessage: string;
+		throwMessage: string;
+		throwFailMessage: string;
 	}
 
 	/*
@@ -184,8 +206,20 @@ module Game {
 			// 		human
 			PLAYER: (x: number, y: number) => { return ActorFactory.createPlayer(x, y); },
 			// potion
-			HEALTH_POTION: (x: number, y: number) => { return ActorFactory.createHealthPotion(x, y, "health potion", 5); },
-			REGENERATION_POTION: (x: number, y: number) => { return ActorFactory.createRegenerationPotion(x, y, "regeneration potion", 20, 10); },
+			HEALTH_POTION: (x: number, y: number) => {
+				return ActorFactory.createInstantHealthPotion(x, y, "health potion",
+					{amount: 5, targetSelectionMethod: TargetSelectionMethod.ACTOR_ON_CELL,
+					useMessage: "[The actor1] drink[s] the health potion and regain[s] [value1] hit points.",
+					useFailMessage: "[The actor1] drink[s] the health potion but it has no effect",
+					throwMessage: "The potion explodes on [the actor1], healing [it] for [value1] hit points.",
+					throwFailMessage: "The potion explodes on [the actor1] but it has no effect" });
+			},
+			REGENERATION_POTION: (x: number, y: number) => {
+				return	ActorFactory.createConditionPotion(x, y, "regeneration potion", 20, 10,
+					ConditionType.REGENERATION, TargetSelectionMethod.ACTOR_ON_CELL,
+					"[The actor1] drink[s] the regeneration potion and feel[s]\nthe life flowing through [it].",
+					"The potion explodes on [the actor1].\nLife is flowing through [it].");
+			},
 			// scroll
 			LIGHTNING_BOLT_SCROLL: (x: number, y: number) => { return ActorFactory.createLightningBoltScroll(x, y, 5, 20); },
 			FIREBALL_SCROLL: (x: number, y: number) => { return ActorFactory.createFireballScroll(x, y, 3, 12); },
@@ -193,11 +227,11 @@ module Game {
 			// weapon
 			// 		blade
 			SHORT_SWORD: (x: number, y: number) => { return ActorFactory.createBlade(x, y, "short sword",
-				{ damages: 4, attackTime: 4, twoHanded: false } ); },
+				{ damages: 4, attackTime: 4, twoHanded: false, weight: 2 } ); },
 			LONG_SWORD: (x: number, y: number) => { return ActorFactory.createBlade(x, y, "longsword",
-				{ damages: 6, attackTime: 5, twoHanded: false } ); },
+				{ damages: 6, attackTime: 5, twoHanded: false, weight: 3 } ); },
 			GREAT_SWORD: (x: number, y: number) => { return ActorFactory.createBlade(x, y, "greatsword",
-				{ damages: 10, attackTime: 6, twoHanded: true } ); },
+				{ damages: 10, attackTime: 6, twoHanded: true, weight: 4 } ); },
 			// 		shield
 			WOODEN_SHIELD: (x: number, y: number) => { return ActorFactory.createShield(x, y, "wooden shield", 1); },
 			IRON_SHIELD: (x: number, y: number) => { return ActorFactory.createShield(x, y, "iron shield", 2); },
@@ -208,6 +242,10 @@ module Game {
 				{ damages: 6, projectileTypeName: "arrow", loadTime: 6, twoHanded: true } ); },
 			CROSSBOW: (x: number, y: number) => { return ActorFactory.createRanged(x, y, "crossbow",
 				{ damages: 4, projectileTypeName: "bolt", loadTime: 5, twoHanded: false } ); },
+			//      staff
+			FROST_WAND: (x: number, y: number) => { return ActorFactory.createStaff(x, y, "wand of frost",
+				{maxCharges: 5, fireEffect: undefined, fireTargetSelectionMethod: TargetSelectionMethod.SELECTED_ACTOR,
+					weight: 0.5, twoHanded: false, fireMessage: "[The actor1] gets covered with frost."} ); },
 			// 		projectile
 			// 			arrow
 			BONE_ARROW: (x: number, y: number) => { return ActorFactory.createProjectile(x, y, "bone arrow", 1, "arrow"); },
@@ -252,25 +290,25 @@ module Game {
 			return effectPotion;
 		}
 
-		private static createRegenerationPotion(x: number, y: number, name: string, nbTurns: number, amount: number) {
+		private static createConditionPotion(x: number, y: number, name: string, nbTurns: number, amount: number,
+			condType: ConditionType, targetSelectionMethod: TargetSelectionMethod,
+			useMessage: string, throwMessage: string) {
 			return ActorFactory.createEffectPotion(x, y, name,
-				new Effector(new ConditionEffect(ConditionType.REGENERATION, nbTurns,
-					"[The actor1] drink[s] the " + name + " and feel[s]\nthe life flowing through [it].", [amount]),
-					new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL )),
-				new Effector(new ConditionEffect(ConditionType.REGENERATION, nbTurns,
-					"The potion explodes on [the actor1].\nLife is flowing through [it].", [amount]),
-					new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL ))
+				new Effector(new ConditionEffect(condType, nbTurns,
+					useMessage, [amount]),
+					new TargetSelector( targetSelectionMethod )),
+				new Effector(new ConditionEffect(condType, nbTurns,
+					throwMessage, [amount]),
+					new TargetSelector( targetSelectionMethod ))
 				);
 		}
 
-		private static createHealthPotion(x: number, y: number, name: string, amount: number): Actor {
+		private static createInstantHealthPotion(x: number, y: number, name: string, param: InstantHealthPotionParam): Actor {
 			return ActorFactory.createEffectPotion(x, y, name,
-				new Effector(new InstantHealthEffect(amount, "[The actor1] drink[s] the " + name + " and regain[s] [value1] hit points.",
-					"[The actor1] drink[s] the " + name + " but it has no effect"),
-					new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL )),
-				new Effector(new InstantHealthEffect(amount, "The potion explodes on [the actor1], healing [it] for [value1] hit points.",
-					"The potion explodes on [the actor1] but it has no effect"),
-					new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL ))
+				new Effector(new InstantHealthEffect(param.amount, param.useMessage, param.useFailMessage),
+					new TargetSelector( param.targetSelectionMethod )),
+				new Effector(new InstantHealthEffect(param.amount, param.throwMessage, param.throwFailMessage),
+					new TargetSelector( param.targetSelectionMethod ))
 				);
 		}
 
@@ -310,7 +348,7 @@ module Game {
 		private static createBlade(x: number, y: number, name: string, swordParam: BladeParam): Actor {
 			var sword = new Actor();
 			sword.init(x, y, "/", name, "weapon|blade", 0xF0F0F0, true);
-			sword.pickable = new Pickable(3);
+			sword.pickable = new Pickable(swordParam.weight);
 			sword.pickable.setOnThrowEffect(new InstantHealthEffect(-swordParam.damages,
 				"The sword hits [the actor1] for [value1] hit points."),
 				new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL ));
@@ -326,6 +364,17 @@ module Game {
 			bow.equipment = new Equipment(rangedParam.twoHanded ? Constants.SLOT_BOTH_HANDS : Constants.SLOT_RIGHT_HAND);
 			bow.ranged = new Ranged(rangedParam.damages, rangedParam.projectileTypeName, rangedParam.loadTime);
 			return bow;
+		}
+
+		private static createStaff(x: number, y: number, name: string, staffParam: StaffParam): Actor {
+			var staff = new Actor();
+			staff.init(x, y, "/", name, "weapon|staff", 0xF0E020, true);
+			staff.pickable = new Pickable(staffParam.weight);
+			staff.equipment = new Equipment(staffParam.twoHanded ? Constants.SLOT_BOTH_HANDS : Constants.SLOT_RIGHT_HAND);
+			staff.magic = new Magic(staffParam.maxCharges);
+			staff.magic.setFireEffector(staffParam.fireEffect, new TargetSelector(staffParam.fireTargetSelectionMethod),
+				staffParam.fireMessage);
+			return staff;
 		}
 
 		private static createProjectile(x: number, y: number, name: string, damages: number, projectileTypeName: string): Actor {
@@ -787,8 +836,8 @@ module Game {
 	 	Something that must be notified when an item is added or removed from the container
 	 */
 	 export interface ContainerListener {
-	 	onAdd(item: Actor, container: Container);
-	 	onRemove(item: Actor, container: Container);
+	 	onAdd(item: Actor, container: Container, owner: Actor);
+	 	onRemove(item: Actor, container: Container, owner: Actor);
 	 }
 	 /*
 	 	Class: Container
@@ -881,14 +930,14 @@ module Game {
 	 		Returns:
 	 		false if the operation failed because the container is full
 	 	*/
-	 	add(actor: Actor) {
+	 	add(actor: Actor, owner: Actor) {
 	 		var weight: number = this.computeTotalWeight();
 	 		if ( actor.pickable.weight + weight > this._capacity ) {
 	 			return false;
 	 		}
 	 		this.actors.push( actor );
 	 		if (this.__listener) {
-	 			this.__listener.onAdd(actor, this);
+	 			this.__listener.onAdd(actor, this, owner);
 	 		}
 	 		return true;
 	 	}
@@ -899,13 +948,14 @@ module Game {
 
 	 		Parameters:
 	 		actor - the actor to remove
+	 		owner - the actor owning the container
 	 	*/
-	 	remove(actor: Actor) {
+	 	remove(actor: Actor, owner: Actor) {
 	 		var idx: number = this.actors.indexOf(actor);
 	 		if ( idx !== -1 ) {
 	 			this.actors.splice(idx, 1);
 		 		if (this.__listener) {
-		 			this.__listener.onRemove(actor, this);
+		 			this.__listener.onRemove(actor, this, owner);
 		 		}
 	 		}
 	 	}
@@ -942,6 +992,8 @@ module Game {
 		private _equipment: Equipment;
 		// can throw away some type of actors
 		private _ranged: Ranged;
+		// has magic properties
+		private _magic: Magic;
 
 		// whether you can walk on the tile where this actor is
 		private _blocks: boolean = false;
@@ -1023,6 +1075,9 @@ module Game {
 
 		get ranged() { return this._ranged; }
 		set ranged(newValue: Ranged) { this._ranged = newValue; }
+
+		get magic() { return this._magic; }
+		set magic(newValue: Magic) { this._magic = newValue; }
 
 		/*
 			Function: getaname
@@ -1131,10 +1186,6 @@ module Game {
 			json.stringify cannot handle cyclic dependencies so we have to rebuild them here
 		*/
 		postLoad() {
-			// rebuild conditions -> creature backlinks
-			if ( this.ai ) {
-				this.ai.setPostLoadOwner(this);
-			}
 			// rebuild container -> listener backlinks
 			if ( this.ai && this.container ) {
 				this.container.setListener(this.ai);

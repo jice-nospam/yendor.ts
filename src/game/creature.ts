@@ -18,6 +18,7 @@ module Game {
 	export const enum ConditionType {
 		CONFUSED,
 		STUNNED,
+		FROZEN,
 		REGENERATION,
 		OVERENCUMBERED,
 	}
@@ -34,43 +35,48 @@ module Game {
 		*/
 		protected time: number;
 		protected _type: ConditionType;
-		// not persisted to avoid cyclic dependency
-		protected __owner: Actor;
 		private static condNames = [ "confused", "stunned" ];
 
 		// factory
-		static create(type: ConditionType, owner: Actor, time: number, ...additionalArgs : any[]): Condition {
+		static create(type: ConditionType, time: number, ...additionalArgs : any[]): Condition {
 			switch ( type ) {
 				case ConditionType.REGENERATION :
-					return new RegenerationCondition(owner, time, <number>additionalArgs[0]);
+					return new RegenerationCondition(time, <number>additionalArgs[0]);
 				case ConditionType.STUNNED :
-					return new StunnedCondition(owner, time);
+					return new StunnedCondition(time);
 				default :
-					return new Condition(type, owner, time);
+					return new Condition(type, time);
 			}
 		}
 
-		constructor(type: ConditionType, owner: Actor, time: number) {
+		constructor(type: ConditionType, time: number) {
 			this.className = "Condition";
 			this.time = time;
-			this.__owner = owner;
 			this._type = type;
 		}
 
 		get type() { return this._type; }
-		setOwner(actor: Actor) {
-			// used to rebuilt owner link after loading
-			this.__owner = actor;
-		}
-
 		getName() { return Condition.condNames[this._type]; }
 
 		/*
+			Function: onApply
+			What happens when an actor gets this condition
+		*/
+		onApply(owner: Actor) {}
+		/*
+			Function: onApply
+			What happens when this condition is removed from an actor
+		*/
+		onRemove(owner: Actor) {}
+
+		/*
 			Function: update
+			What happens every turn when an actor has this condition
+
 			Returns:
 				false if the condition has ended
 		*/
-		update(): boolean {
+		update(owner: Actor): boolean {
 			if ( this.time > 0 ) {
 				this.time --;
 				return (this.time > 0);
@@ -85,17 +91,17 @@ module Game {
 	*/
 	export class RegenerationCondition extends Condition {
 		private hpPerTurn: number;
-		constructor(owner: Actor, nbTurns: number, nbHP : number) {
-			super(ConditionType.REGENERATION, owner, nbTurns);
+		constructor(nbTurns: number, nbHP : number) {
+			super(ConditionType.REGENERATION, nbTurns);
 			this.className = "RegenerationCondition";
 			this.hpPerTurn = nbHP / nbTurns;
 		}
 
-		update(): boolean {
-			if (this.__owner.destructible) {
-				this.__owner.destructible.heal(this.hpPerTurn);
+		update(owner: Actor): boolean {
+			if (owner.destructible) {
+				owner.destructible.heal(this.hpPerTurn);
 			}
-			return super.update();
+			return super.update(owner);
 		}
 	}
 
@@ -104,13 +110,13 @@ module Game {
 		The creature cannot move or attack while stunned. Then it gets confused for a few turns
 	*/
 	export class StunnedCondition extends Condition {
-		constructor(owner: Actor, nbTurns: number) {
-			super(ConditionType.STUNNED, owner, nbTurns);
+		constructor(nbTurns: number) {
+			super(ConditionType.STUNNED, nbTurns);
 			this.className = "StunnedCondition";
 		}
 
-		update(): boolean {
-			if (! super.update()) {
+		update(owner: Actor): boolean {
+			if (! super.update(owner)) {
 				if ( this.type === ConditionType.STUNNED) {
 					// after being stunned, wake up confused
 					this._type = ConditionType.CONFUSED;
@@ -157,7 +163,9 @@ module Game {
 				return;
 			}
 			for ( var i: number = 0, n: number = this.conditions.length; i < n; ++i) {
-				if ( !this.conditions[i].update() ) {
+				var cond: Condition = this.conditions[i];
+				if ( !cond.update(owner) ) {
+					cond.onRemove(owner);
 					this.conditions.splice(i, 1);
 					i--;
 					n--;
@@ -165,18 +173,12 @@ module Game {
 			}
 		}
 
-		setPostLoadOwner(owner: Actor) {
-			// rebuild conditions links
-			if ( this.conditions ) {
-				this.conditions.forEach( (cond: Condition) => { cond.setOwner(owner); });
-			}
-		}
-
-		addCondition(cond: Condition) {
+		addCondition(cond: Condition, owner: Actor) {
 			if ( ! this.conditions ) {
 				this.conditions = [];
 			}
 			this.conditions.push(cond);
+			cond.onApply(owner);
 		}
 
 		removeCondition(cond: ConditionType) {
@@ -285,18 +287,18 @@ module Game {
 		}
 
 		// listen to inventory events to manage OVERENCUMBERED condition
-		onAdd(actor: Actor, container: Container) {
-			this.checkOverencumberedCondition(container);
+		onAdd(actor: Actor, container: Container, owner: Actor) {
+			this.checkOverencumberedCondition(container, owner);
 		}
 
-		onRemove(actor: Actor, container: Container) {
-			this.checkOverencumberedCondition(container);
+		onRemove(actor: Actor, container: Container, owner: Actor) {
+			this.checkOverencumberedCondition(container, owner);
 		}
 
-		private checkOverencumberedCondition(container: Container) {
+		private checkOverencumberedCondition(container: Container, owner: Actor) {
 			if ( ! this.hasCondition(ConditionType.OVERENCUMBERED)
 				&& container.computeTotalWeight() >= container.capacity * Constants.OVEREMCUMBERED_THRESHOLD ) {
-				this.addCondition(Condition.create(ConditionType.OVERENCUMBERED, undefined, -1));
+				this.addCondition(Condition.create(ConditionType.OVERENCUMBERED, -1), owner);
 			} else if ( this.hasCondition(ConditionType.OVERENCUMBERED)
 				&& container.computeTotalWeight() < container.capacity * Constants.OVEREMCUMBERED_THRESHOLD ) {
 				this.removeCondition(ConditionType.OVERENCUMBERED);
