@@ -450,6 +450,7 @@ module Game {
 		private stairsDown: Actor;
 		private creatures: Actor[];
 		private corpses: Actor[];
+		private updatingCorpses: Actor[];
 		private items: Actor[];
 		private scheduler: Yendor.Scheduler = new Yendor.Scheduler();
 
@@ -489,6 +490,7 @@ module Game {
 		clear() {
 			this.creatures = [];
 			this.corpses = [];
+			this.updatingCorpses = [];
 			this.items = [];
 			this.scheduler.clear();
 		}
@@ -520,17 +522,38 @@ module Game {
 		*/
 		updateActors() {
 			this.scheduler.run();
+			this.moveDeadToCorpse();
+			this.updateCorpses();
+		}
+
+		private moveDeadToCorpse() {
 			for ( var i: number = 0, len: number = this.creatures.length; i < len; ++i) {
 				var actor: Actor = this.creatures[i];
-				if ( actor.destructible && actor.destructible.isDead() && ! actor.ai.hasActiveConditions() ) {
+				if ( actor.destructible && actor.destructible.isDead() ) {
 					// actor is dead. move it to corpse list
 					// note that corpses must still be updated until they have no active conditions
 					// for example, to make it possible for corpses to unfreeze.
-					this.scheduler.remove(actor);
-					this.creatures.splice( this.creatures.indexOf(actor), 1);
+					if (! actor.ai.hasActiveConditions()) {
+						this.scheduler.remove(actor);
+					} else {
+						this.updatingCorpses.push(actor);
+					}
+					this.creatures.splice( i, 1);
 					i--;
 					len--;
 					this.corpses.push(actor);
+				}
+			}
+		}
+
+		private updateCorpses() {
+			for ( var i: number = 0, len: number = this.updatingCorpses.length; i < len; --i) {
+				var actor: Actor = this.updatingCorpses[i];
+				if ( ! actor.ai.hasActiveConditions()) {
+					this.scheduler.remove(actor);
+					this.updatingCorpses.splice(i, 1);
+					i--;
+					len--;
 				}
 			}
 		}
@@ -541,7 +564,7 @@ module Game {
 
 		pause() {
 			if (! this.isPaused()) {
-				Engine.instance.eventBus.publishEvent(EventType.SAVE_GAME);
+				Engine.instance.saveGame();
 			}
 			this.scheduler.pause();
 		}
@@ -581,18 +604,21 @@ module Game {
 			this.stairsUp = this.items[0];
 			this.stairsDown = this.items[1];
 			this.corpses = persister.loadFromKey(Constants.PERSISTENCE_CORPSES_KEY);
+			this.updatingCorpses = persister.loadFromKey(Constants.PERSISTENCE_UPDATING_CORPSES_KEY);
 		}
 
 		save(persister: Persister) {
 			persister.saveToKey(Constants.PERSISTENCE_ACTORS_KEY, this.creatures);
 			persister.saveToKey(Constants.PERSISTENCE_ITEMS_KEY, this.items);
 			persister.saveToKey(Constants.PERSISTENCE_CORPSES_KEY, this.corpses);
+			persister.saveToKey(Constants.PERSISTENCE_UPDATING_CORPSES_KEY, this.updatingCorpses);
 		}
 
 		deleteSavedGame(persister: Persister) {
 			persister.deleteKey(Constants.PERSISTENCE_ACTORS_KEY);
 			persister.deleteKey(Constants.PERSISTENCE_ITEMS_KEY);
 			persister.deleteKey(Constants.PERSISTENCE_CORPSES_KEY);
+			persister.deleteKey(Constants.PERSISTENCE_UPDATING_CORPSES_KEY);
 		}
 		/*
 			Function: findClosestActor

@@ -10,8 +10,6 @@ module Game {
 	export enum EventType {
 		// change game status. Associated data : GameStatus
 		CHANGE_STATUS,
-		// save the game. no associated data
-		SAVE_GAME,
 		// key press event. Associated data : KeyInput
 		KEYBOARD_INPUT,
 		// sends a message to the log. Associated data : Message containing the text and the color
@@ -20,13 +18,15 @@ module Game {
 		MOUSE_MOVE,
 		// mouse button press event. Associated data : MouseButton
 		MOUSE_CLICK,
-		// open the tile picker. Associated data : TilePickerListener
+		// open the tile picker. No associated data
 		PICK_TILE,
+		// A tile has been selected by the TilePicker. Associated data : the Yendor.Position of the tile
+		TILE_SELECTED,
 		// open the inventory. Associated data : OpenInventoryEventData
 		OPEN_INVENTORY,
-		// open the main menu. no associated data
+		// open the main menu. No associated data
 		OPEN_MAIN_MENU,
-		// starts a new game. no associated data
+		// starts a new game. No associated data
 		NEW_GAME,
 		// player gains xp. Associated data : number (xp amount)
 		GAIN_XP,

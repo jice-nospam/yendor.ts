@@ -14,7 +14,7 @@ module Game {
 		to keep the game from trying to load data with an old format.
 		This should be an integer.
 	*/
-	var SAVEFILE_VERSION: string = "5";
+	var SAVEFILE_VERSION: string = "6";
 
 	/*
 		Class: Engine
@@ -71,7 +71,6 @@ module Game {
 			this._eventBus = new EventBus();
 			this._eventBus.registerListener(this, EventType.CHANGE_STATUS);
 			this._eventBus.registerListener(this, EventType.NEW_GAME);
-			this._eventBus.registerListener(this, EventType.SAVE_GAME);
 			this._eventBus.registerListener(this, EventType.GAIN_XP);
 		}
 
@@ -105,12 +104,16 @@ module Game {
 			this.status = GameStatus.RUNNING;
 		}
 
-		private saveGame() {
-			this.persister.saveToKey(Constants.PERSISTENCE_DUNGEON_LEVEL, this.dungeonLevel);
-			this.persister.saveToKey(Constants.PERSISTENCE_VERSION_KEY, SAVEFILE_VERSION);
-			this.persister.saveToKey(Constants.PERSISTENCE_MAP_KEY, this._map);
-			this._actorManager.save(this.persister);
-			this.persister.saveToKey(Constants.STATUS_PANEL_ID, this.guiManager.getGui(Constants.STATUS_PANEL_ID));
+		saveGame() {
+			if (this._actorManager.isPlayerDead()) {
+				this.deleteSavedGame();
+			} else {
+				this.persister.saveToKey(Constants.PERSISTENCE_DUNGEON_LEVEL, this.dungeonLevel);
+				this.persister.saveToKey(Constants.PERSISTENCE_VERSION_KEY, SAVEFILE_VERSION);
+				this.persister.saveToKey(Constants.PERSISTENCE_MAP_KEY, this._map);
+				this._actorManager.save(this.persister);
+				this.persister.saveToKey(Constants.STATUS_PANEL_ID, this.guiManager.getGui(Constants.STATUS_PANEL_ID));
+			}
 		}
 
 		private deleteSavedGame() {
@@ -159,14 +162,6 @@ module Game {
 
 		onGAIN_XP(amount: number) {
 			this._actorManager.getPlayer().addXp(amount);
-		}
-
-		onSAVE_GAME() {
-			if (!this._actorManager.isPlayerDead()) {
-				this.saveGame();
-			} else {
-				this.deleteSavedGame();
-			}
 		}
 
 		/*

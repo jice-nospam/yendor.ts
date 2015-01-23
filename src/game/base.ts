@@ -85,6 +85,7 @@ module Game {
         export var PERSISTENCE_ACTORS_KEY: string = "actors";
         export var PERSISTENCE_ITEMS_KEY: string = "items";
         export var PERSISTENCE_CORPSES_KEY: string = "corpses";
+        export var PERSISTENCE_UPDATING_CORPSES_KEY: string = "updatingCorpses";
 
 	}
 	export const enum GameStatus {
@@ -116,6 +117,8 @@ module Game {
         THROW_ITEM,
         FIRE,
         ZAP,
+        SELECT_TILE,
+        SELECT_ITEM,
         VALIDATE,
         CANCEL
     }

@@ -359,20 +359,14 @@ module Game {
 	/********************************************************************************
 	 * Group: tilePicker
 	 ********************************************************************************/
-
-	export interface TilePickerListener {
-		(pos: Yendor.Position): void;
-	}
-
 	/*
 		Class: TilePicker
 		A background Gui that sleeps until it receives a PICK_TILE event containing a TilePickerListener.
 		It then listens to mouse events until the player left-clicks a tile.
-		Then it calls the TilePickerListener with the selected tile position.
+		Then it sends a TILE_SELECTED event containing the tile position.
 	*/
 	export class TilePicker extends Gui implements EventListener {
 		private tilePos : Yendor.Position = new Yendor.Position();
-		private listener: TilePickerListener;
 		private tileIsValid: boolean = false;
 		constructor() {
 			super(Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT);
@@ -387,8 +381,7 @@ module Game {
 			}
 		}
 
-		onPICK_TILE(listener: TilePickerListener) {
-			this.listener = listener;
+		onPICK_TILE() {
 			Engine.instance.eventBus.registerListener(this, EventType.MOUSE_MOVE);
 			Engine.instance.eventBus.registerListener(this, EventType.MOUSE_CLICK);
 			Engine.instance.eventBus.registerListener(this, EventType.KEYBOARD_INPUT);
@@ -423,8 +416,8 @@ module Game {
 					this.deactivate();
 				break;
 				case PlayerAction.VALIDATE:
-					if ( this.tileIsValid && this.listener ) {
-						this.listener(this.tilePos);
+					if ( this.tileIsValid ) {
+						this.doSelectTile(this.tilePos);
 						this.deactivate();
 					}
 				break;
@@ -437,8 +430,8 @@ module Game {
 				if (! this.tileIsValid ) {
 					// the tile is not in FOV. do nothing
 					return;
-				} else if (this.listener) {
-					this.listener(this.tilePos);
+				} else {
+					this.doSelectTile(this.tilePos);
 				}
 			}
 			this.deactivate();
@@ -448,6 +441,10 @@ module Game {
 			this.tilePos.x = mousePos.x;
 			this.tilePos.y = mousePos.y;
 			this.tileIsValid = Engine.instance.map.isInFov(this.tilePos.x, this.tilePos.y);
+		}
+
+		private doSelectTile(pos: Yendor.Position) {
+			Engine.instance.eventBus.publishEvent(EventType.TILE_SELECTED, pos);
 		}
 	}
 
