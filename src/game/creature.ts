@@ -365,6 +365,7 @@ module Game {
 		private __lastAction: PlayerAction;
 		private __nextAction: PlayerAction;
 		private __lastActionItem: Actor;
+		private __lastActionPos: Yendor.Position;
 		constructor(walkTime: number) {
 			super(walkTime);
 			this.className = "PlayerAi";
@@ -390,26 +391,8 @@ module Game {
 			if (! this.__lastAction ) {
 				return;
 			}
+			this.__lastActionPos = pos;
 			Engine.instance.actorManager.resume();
-			// TODO move this to update()
-			switch (this.__lastAction) {
-				case PlayerAction.FIRE :
-					this.__lastActionItem.pickable.throwOnPos(this.__lastActionItem.ranged.projectile,
-						Engine.instance.actorManager.getPlayer(), true, pos, this.__lastActionItem.ranged.damageCoef);
-				break;
-				case PlayerAction.ZAP :
-					this.__lastActionItem.magic.zapOnPos(this.__lastActionItem,
-						Engine.instance.actorManager.getPlayer(), pos);
-				break;
-				case PlayerAction.THROW_ITEM :
-					this.__lastActionItem.pickable.throwOnPos(this.__lastActionItem,
-						Engine.instance.actorManager.getPlayer(), false, pos);
-				break;
-				case PlayerAction.USE_ITEM :
-					this.__lastActionItem.pickable.useOnPos(this.__lastActionItem,
-						Engine.instance.actorManager.getPlayer(), pos);
-				break;
-			}
 		}
 
 		/*
@@ -421,6 +404,11 @@ module Game {
 		*/
 		update(owner: Actor) {
 			if (this.__nextAction === undefined) {
+				if ( this.__lastActionPos ) {
+					this.handleAction(owner, this.__lastAction );
+					this.clearLastAction();
+					return;
+				}
 				Engine.instance.actorManager.pause();
 				return;
 			}
@@ -431,7 +419,6 @@ module Game {
 				this.waitTime += this.walkTime;
 				return;
 			}
-			var newTurn: boolean = false;
 			switch ( this.__nextAction ) {
 				case PlayerAction.MOVE_NORTH :
         		case PlayerAction.MOVE_SOUTH :
@@ -442,7 +429,6 @@ module Game {
         		case PlayerAction.MOVE_SW :
         		case PlayerAction.MOVE_SE :
         			var move: Yendor.Position = convertActionToPosition(this.__nextAction);
-					newTurn = true;
 					// move to the target cell or attack if there's a creature
 					if ( this.moveOrAttack(owner, owner.x + move.x, owner.y + move.y) ) {
 						// the player actually move. Recompute the field of view
@@ -450,7 +436,6 @@ module Game {
 					}
 				break;
         		case PlayerAction.WAIT :
-        			newTurn = true;
 					this.waitTime += this.walkTime;
         		break;
         		case PlayerAction.GRAB :
@@ -462,16 +447,12 @@ module Game {
         		case PlayerAction.MOVE_UP :
         		case PlayerAction.MOVE_DOWN :
 					if (! this.hasCondition(ConditionType.CONFUSED) && ! this.hasCondition(ConditionType.STUNNED)) {
-						this.handleAction(owner);
+						this.handleAction(owner, this.__nextAction);
 					}
 				break;
 			}
 			this.__lastAction = this.__nextAction;
 			this.__nextAction = undefined;
-			if ( newTurn ) {
-				// the player moved or try to move. New game turn
-				Engine.instance.actorManager.resume();
-			}
 		}
 
 		/*
@@ -501,8 +482,8 @@ module Game {
 			return true;
 		}
 
-		private handleAction(owner: Actor) {
-			switch ( this.__nextAction ) {
+		private handleAction(owner: Actor, action: PlayerAction) {
+			switch ( action ) {
 				case PlayerAction.GRAB :
 					this.pickupItem(owner);
 				break;
@@ -526,13 +507,29 @@ module Game {
 					Engine.instance.actorManager.resume();
 				break;
 				case PlayerAction.USE_ITEM :
-					Engine.instance.eventBus.publishEvent(EventType.OPEN_INVENTORY, { title: "use an item", itemListener: this.useItem.bind(this) } );
+					if ( this.__lastActionPos ) {
+						// use on selected pos
+						this.__lastActionItem.pickable.useOnPos(this.__lastActionItem,
+							Engine.instance.actorManager.getPlayer(), this.__lastActionPos);
+						this.clearLastAction();
+						this.waitTime += this.walkTime;
+					} else {
+						Engine.instance.eventBus.publishEvent(EventType.OPEN_INVENTORY, { title: "use an item", itemListener: this.useItem.bind(this) } );
+					}
 				break;
 				case PlayerAction.DROP_ITEM :
 					Engine.instance.eventBus.publishEvent(EventType.OPEN_INVENTORY, { title: "drop an item", itemListener: this.dropItem.bind(this) } );
 				break;
 				case PlayerAction.THROW_ITEM :
-					Engine.instance.eventBus.publishEvent(EventType.OPEN_INVENTORY, { title: "throw an item", itemListener: this.throwItem.bind(this) } );
+					if ( this.__lastActionPos ) {
+						// throw on selected pos
+						this.__lastActionItem.pickable.throwOnPos(this.__lastActionItem,
+								Engine.instance.actorManager.getPlayer(), false, this.__lastActionPos);
+						this.clearLastAction();
+						this.waitTime += this.walkTime;
+					} else {
+						Engine.instance.eventBus.publishEvent(EventType.OPEN_INVENTORY, { title: "throw an item", itemListener: this.throwItem.bind(this) } );
+					}
 				break;
 				case PlayerAction.FIRE :
 					this.fire(owner);
@@ -543,26 +540,40 @@ module Game {
 			}
 		}
 
+		private clearLastAction() {
+			this.__lastActionPos = undefined;
+			this.__lastActionItem = undefined;
+			this.__lastAction = undefined;
+		}
+
 		/*
 			Function: fire
 			Fire a projectile using a ranged weapon.
 		*/
 		private fire(owner: Actor) {
-			var weapon: Actor = owner.container.getFromSlot(Constants.SLOT_RIGHT_HAND);
-			if (! weapon || ! weapon.ranged) {
-				weapon = owner.container.getFromSlot(Constants.SLOT_BOTH_HANDS);
+			if ( this.__lastActionPos ) {
+				// throw the projectile
+				this.__lastActionItem.pickable.throwOnPos(this.__lastActionItem.ranged.projectile,
+					Engine.instance.actorManager.getPlayer(), true, this.__lastActionPos, this.__lastActionItem.ranged.damageCoef);
+				this.clearLastAction();
+			} else {
+				// load the weapon and starts the tile picker
+				var weapon: Actor = owner.container.getFromSlot(Constants.SLOT_RIGHT_HAND);
+				if (! weapon || ! weapon.ranged) {
+					weapon = owner.container.getFromSlot(Constants.SLOT_BOTH_HANDS);
+				}
+				if (! weapon || ! weapon.ranged) {
+					weapon = owner.container.getFromSlot(Constants.SLOT_LEFT_HAND);
+				}
+				if (! weapon || ! weapon.ranged) {
+					log("You have no ranged weapon equipped.", 0xFF0000);
+					return;
+				}
+				this.__lastActionItem = weapon;
+				weapon.ranged.fire(weapon, owner);
+				// note : this time is spent before you select the target. loading the projectile takes time
+				this.waitTime += weapon.ranged.loadTime;
 			}
-			if (! weapon || ! weapon.ranged) {
-				weapon = owner.container.getFromSlot(Constants.SLOT_LEFT_HAND);
-			}
-			if (! weapon || ! weapon.ranged) {
-				log("You have no ranged weapon equipped.", 0xFF0000);
-				return;
-			}
-			this.__lastActionItem = weapon;
-			weapon.ranged.fire(weapon, owner);
-			// note : this time is spent before you select the target. loading the projectile takes time
-			this.waitTime += weapon.ranged.loadTime;
 		}
 
 		/*
@@ -570,41 +581,45 @@ module Game {
 			Use a magic wand/staff/rod.
 		*/
 		private zap(owner: Actor) {
-			var staff: Actor = owner.container.getFromSlot(Constants.SLOT_RIGHT_HAND);
-			if (! staff || ! staff.magic) {
-				staff = owner.container.getFromSlot(Constants.SLOT_BOTH_HANDS);
+			if ( this.__lastActionPos ) {
+				// zap on selected position
+				this.__lastActionItem.magic.zapOnPos(this.__lastActionItem, Engine.instance.actorManager.getPlayer(), this.__lastActionPos);
+				this.clearLastAction();
+				this.waitTime += this.walkTime;
+			} else {
+				var staff: Actor = owner.container.getFromSlot(Constants.SLOT_RIGHT_HAND);
+				if (! staff || ! staff.magic) {
+					staff = owner.container.getFromSlot(Constants.SLOT_BOTH_HANDS);
+				}
+				if (! staff || ! staff.magic) {
+					staff = owner.container.getFromSlot(Constants.SLOT_LEFT_HAND);
+				}
+				if (! staff || ! staff.magic) {
+					log("You have no magic item equipped.", 0xFF0000);
+					return;
+				}
+				this.__lastActionItem = staff;
+				staff.magic.zap(staff, owner);
 			}
-			if (! staff || ! staff.magic) {
-				staff = owner.container.getFromSlot(Constants.SLOT_LEFT_HAND);
-			}
-			if (! staff || ! staff.magic) {
-				log("You have no magic item equipped.", 0xFF0000);
-				return;
-			}
-			this.__lastActionItem = staff;
-			staff.magic.zap(staff, owner);
 		}
 
-		// inventory item listeners
 		private useItem(item: Actor) {
 			if (item.pickable) {
 				this.__lastActionItem = item;
 				item.pickable.use(item, Engine.instance.actorManager.getPlayer());
 			}
-			Engine.instance.actorManager.resume();
-			this.waitTime += this.walkTime;
 		}
 
 		private dropItem(item: Actor) {
 			if ( item.pickable ) {
 				item.pickable.drop(item, Engine.instance.actorManager.getPlayer());
 			}
-			Engine.instance.actorManager.resume();
 			this.waitTime += this.walkTime;
 		}
 
 		private throwItem(item: Actor) {
 			if ( item.pickable ) {
+				// open the tile picker
 				this.__lastActionItem = item;
 				item.pickable.throw(item);
 			}
@@ -613,7 +628,6 @@ module Game {
 		private pickupItem(owner: Actor) {
 			var foundItem: boolean = false;
 			var pickedItem: boolean = false;
-			Engine.instance.actorManager.resume();
 			this.waitTime += this.walkTime;
 			Engine.instance.actorManager.getItems().some(function(item: Actor) {
 				if ( item.pickable && item.x === owner.x && item.y === owner.y ) {

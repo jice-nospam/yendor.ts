@@ -61,7 +61,7 @@ module Game {
 
 		/*
 			Function: selectTargets
-			Return all the actors matching the selection criteria
+			Populates the selectedTargets field, or triggers the tile picker
 
 			Parameters:
 			owner - the actor owning the effect (the magic item or the scroll)
@@ -69,7 +69,7 @@ module Game {
 			cellPos - the cell where the effect applies (= the wearer position when used from inventory, or a different position when thrown)
 
 			Returns:
-			true if targets have been selected (else wait for TILE_SELECTED event)
+			true if targets have been selected (else wait for TILE_SELECTED event, then call <onTileSelected>)
 		*/
 		selectTargets(owner: Actor, wearer: Actor, cellPos: Yendor.Position): boolean {
 			this.selectedTargets = [];
@@ -102,6 +102,10 @@ module Game {
 			}
 		}
 
+		/*
+			Function: onTileSelected
+			Populates the selectedTargets field for selection methods that require a tile selection
+		*/
 		onTileSelected(pos: Yendor.Position) {
 			var creatures: Actor[] = Engine.instance.actorManager.getCreatures();
 			switch (this._method) {
@@ -247,6 +251,13 @@ module Game {
 			this.destroyOnEffect = destroyOnEffect;
 		}
 
+		/*
+			Function: apply
+			Select targets and apply the effect.
+
+			Returns:
+			false if a tile needs to be selected (in that case, wait for TILE_SELECTED event, then call <applyOnPos>)
+		*/
 		apply(owner: Actor, wearer: Actor, cellPos?: Yendor.Position, coef: number = 1.0): boolean {
 			this._coef = coef;
 			if (this.targetSelector.selectTargets(owner, wearer, cellPos)) {
@@ -256,6 +267,13 @@ module Game {
 			return false;
 		}
 
+		/*
+			Function: applyOnPos
+			Select targets and apply the effect once a tile has been selected.
+
+			Returns:
+			false if no target has been selected
+		*/
 		applyOnPos(owner: Actor, wearer: Actor, pos: Yendor.Position): boolean {
 			this.targetSelector.onTileSelected(pos);
 			if ( this.targetSelector.selectedTargets.length > 0 ) {
@@ -410,7 +428,7 @@ module Game {
 
 		/*
 			Function: throw
-			Throw this item. If it has a onUseEffector, apply the effect and destroy the item.
+			Throw this item. If it has a onUseEffector, apply the effect.
 
 			Parameters:
 			owner - the actor owning this Pickable (the item)
@@ -551,23 +569,7 @@ module Game {
 		}
 
 		fire(owner: Actor, wearer: Actor) {
-			this._projectile = undefined;
-			if ( wearer.container ) {
-				// if a projectile type is selected (equipped in quiver), use it
-				this._projectile = wearer.container.getFromSlot(Constants.SLOT_QUIVER);
-				if (! this._projectile || ! this._projectile.isA(this._projectileType)) {
-					// else use the first compatible projectile
-					this._projectile = undefined;
-					var n: number = wearer.container.size();
-					for ( var i: number = 0; i < n; ++i) {
-						var item: Actor = wearer.container.get(i);
-						if ( item.isA(this._projectileType)) {
-							this._projectile = item;
-							break;
-						}
-					}
-				}
-			}
+			this._projectile = this.findCompatibleProjectile(wearer);
 			if (! this._projectile) {
 				// no projectile found. cannot fire
 				if ( wearer === Engine.instance.actorManager.getPlayer()) {
@@ -577,6 +579,27 @@ module Game {
 			}
 			log(transformMessage("[The actor1] fire[s] [a actor2].", wearer, this._projectile));
 			this._projectile.pickable.throw(this._projectile);
+		}
+
+		private findCompatibleProjectile(wearer: Actor): Actor {
+			var projectile = undefined;
+			if ( wearer.container ) {
+				// if a projectile type is selected (equipped in quiver), use it
+				projectile = wearer.container.getFromSlot(Constants.SLOT_QUIVER);
+				if (! projectile || ! projectile.isA(this._projectileType)) {
+					// else use the first compatible projectile
+					projectile = undefined;
+					var n: number = wearer.container.size();
+					for ( var i: number = 0; i < n; ++i) {
+						var item: Actor = wearer.container.get(i);
+						if ( item.isA(this._projectileType)) {
+							projectile = item;
+							break;
+						}
+					}
+				}
+			}
+			return projectile;
 		}
 	}
 
@@ -621,7 +644,7 @@ module Game {
 			}
 		}
 
-		doPostZap(owner: Actor, wearer: Actor) {
+		private doPostZap(owner: Actor, wearer: Actor) {
 			this._charges --;
 			if ( this._charges > 0 ) {
 				log("Remaining charges : " + this._charges );
