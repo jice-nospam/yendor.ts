@@ -130,6 +130,7 @@ module Game {
 	 	STUNNED - don't move or attack, then get confused
 	 	REGENERATION - regain health points over time
 	 	OVERENCUMBERED - walk slower. This also affects all actions relying on walkTime.
+	 	DETECT_LIFE - detect nearby living creatures
 	*/
 	export const enum ConditionType {
 		CONFUSED,
@@ -137,6 +138,7 @@ module Game {
 		FROZEN,
 		REGENERATION,
 		OVERENCUMBERED,
+		DETECT_LIFE,
 	}
 
 	/*
@@ -162,6 +164,8 @@ module Game {
 					return new StunnedCondition(time);
 				case ConditionType.FROZEN :
 					return new FrozenCondition(time);
+				case ConditionType.DETECT_LIFE :
+					return new DetectLifeCondition(time, <number>additionalArgs[0]);
 				default :
 					return new Condition(type, time);
 			}
@@ -245,6 +249,24 @@ module Game {
 				}
 			}
 			return true;
+		}
+	}
+
+
+	/*
+		Class: DetectLifeCondition
+		Detect creatures through walls
+	*/
+	export class DetectLifeCondition extends Condition {
+		// above this range, creatures are not detected
+		private _range: number;
+
+		get range() { return this._range; }
+
+		constructor(nbTurns: number, range: number) {
+			super(ConditionType.DETECT_LIFE, nbTurns);
+			this.className = "DetectLifeCondition";
+			this._range = range;
 		}
 	}
 

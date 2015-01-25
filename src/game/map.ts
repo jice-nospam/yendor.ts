@@ -253,8 +253,12 @@ module Game {
 		}
 
 		shouldRenderActor(actor: Actor): boolean {
+			var player: Actor = Engine.instance.actorManager.getPlayer();
+			var detectLifeCond: DetectLifeCondition = <DetectLifeCondition>player.ai.getCondition(ConditionType.DETECT_LIFE);
+			var detectRange = detectLifeCond ? detectLifeCond.range : 0;
 			return this.isInFov( actor.x, actor.y)
-				|| (!actor.isFovOnly() && this.isExplored( actor.x, actor.y));
+				|| (!actor.isFovOnly() && this.isExplored( actor.x, actor.y))
+				|| (actor.ai && actor.destructible && !actor.destructible.isDead() && Yendor.Position.distance(player, actor) < detectRange);
 		}
 
 		getScent(x: number, y: number): number {

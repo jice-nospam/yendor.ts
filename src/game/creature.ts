@@ -90,14 +90,18 @@ module Game {
 			return false;
 		}
 
-		hasCondition(type: ConditionType): boolean {
+		getCondition(type: ConditionType): Condition {
 			var n: number = this.conditions ? this.conditions.length : 0;
 			for ( var i: number = 0; i < n; i++) {
 				if ( this.conditions[i].type === type ) {
-					return true;
+					return this.conditions[i];
 				}
 			}
-			return false;
+			return undefined;
+		}
+
+		hasCondition(type: ConditionType): boolean {
+			return this.getCondition(type) !== undefined;
 		}
 
 		/*

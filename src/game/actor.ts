@@ -138,6 +138,7 @@ module Game {
 		// 		staffs, wands and rods
 		FROST_WAND,
 		TELEPORT_STAFF,
+		LIFE_DETECT_STAFF,
 		// 		projectile
 		// 			arrow	
 		BONE_ARROW,
@@ -267,8 +268,13 @@ module Game {
 					condType: ConditionType.FROZEN, nbTurns: 5, condMessage: "[The actor1] [is] covered with frost."
 				} ); },
 			TELEPORT_STAFF: (x: number, y: number) => { return ActorFactory.createStaff(x, y, "staff of teleportation",
-				{	maxCharges: 10, fireTargetSelectionMethod: TargetSelectionMethod.SELECTED_ACTOR,
+				{	maxCharges: 5, fireTargetSelectionMethod: TargetSelectionMethod.SELECTED_ACTOR,
 					weight: 2, twoHanded: true, fireEffect: new TeleportEffect("[The actor1] disappear[s] suddenly.") } ); },
+			LIFE_DETECT_STAFF: (x: number, y: number) => { return ActorFactory.createConditionStaff(x, y, "staff of life detection",
+				{	maxCharges: 5, fireTargetSelectionMethod: TargetSelectionMethod.ACTOR_ON_CELL,
+					weight: 2, twoHanded: true, additionalArgs: [15],
+					condType: ConditionType.DETECT_LIFE, nbTurns: 10, condMessage: "[The actor1] [is] aware of life around [it]."
+				} ); },
 			// 		projectile
 			// 			arrow
 			BONE_ARROW: (x: number, y: number) => { return ActorFactory.createProjectile(x, y, "bone arrow", 1, "arrow"); },
