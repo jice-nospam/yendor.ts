@@ -17,6 +17,8 @@ module Yendor {
 		private _inFov: boolean[][];
 		private startAngle: number[];
 		private endAngle: number[];
+		private _width: number;
+		private _height: number;
 
 		/*
 			Constructor: constructor
@@ -25,7 +27,9 @@ module Yendor {
 			width - the map width
 			height - the map height
 		*/
-		constructor(private _width: number, private _height: number) {
+		constructor(_width: number, _height: number) {
+			this._width = _width;
+			this._height = _height;
 			this._walkable = [];
 			this._transparent = [];
 			this._inFov = [];

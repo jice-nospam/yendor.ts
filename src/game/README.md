@@ -32,10 +32,12 @@ Reminder for stuff that might be added to the game. Or not.
 	- reduce garbage collector usage
 
 * Gameplay
+	- humanoid A.I. (can use weapons and wear armors)
 	- poison potion and weapon / projectile poisoning (need onHitEffector on Attacker)
 	- doors and keys
 	- armors
 	- lighting
+	- spells and spellbooks
 	- static containers (chests, corpses) + loot GUI
 	- jewelry (necklace, rings)
 	- ranges (TilePicker must show the maximum range. Scrolls, ranged weapons and item throwing have max range)

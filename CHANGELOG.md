@@ -1,6 +1,6 @@
 # 0.4.0 / TBD
 * Yendor toolkit
-	- improved performance (Console.setChar removed, Console.text is now a matrix of ascii codes)
+	- improved console rendering performance (Console.setChar removed, Console.text is now a matrix of ascii codes)
 
 * GeneRogue
 	- added frozen and life detection condition

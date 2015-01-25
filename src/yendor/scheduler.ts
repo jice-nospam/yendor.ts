@@ -29,7 +29,7 @@ module Yendor {
 		Every entity with 0 wait time is pulled out of the list, updated (which should increase its wait time again),
 		then put back in the list.
 
-		<TimedEntity.waitTime> should ne be modified outside of the <update()> function, else the scheduler's list is not sorted anymore.
+		<TimedEntity.waitTime> should not be modified outside of the <update()> function, else the scheduler's list is not sorted anymore.
 
 		The update function should always increase the entity wait time, else it will stay at first position forever,
 		keeping other entities from updating.
