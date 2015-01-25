@@ -137,6 +137,7 @@ module Game {
 		CROSSBOW,
 		// 		staffs, wands and rods
 		FROST_WAND,
+		TELEPORT_STAFF,
 		// 		projectile
 		// 			arrow	
 		BONE_ARROW,
@@ -171,27 +172,38 @@ module Game {
 		twoHanded: boolean;
 	}
 
-	interface StaffParam {
-		maxCharges: number;
-		fireEffect?: Effect;
-		fireTargetSelectionMethod: TargetSelectionMethod;
-		fireMessage: string;
-		weight: number;
-		twoHanded: boolean;
-		// for condition staffs
+	interface ConditionParam {
 		condType?: ConditionType;
 		additionalArgs?: any[];
 		condMessage?: string;
 		nbTurns?: number;
 	}
 
-	interface InstantHealthPotionParam {
-		amount: number;
+	interface StaffParam {
+		maxCharges: number;
+		fireEffect?: Effect;
+		fireTargetSelectionMethod: TargetSelectionMethod;
+		fireMessage?: string;
+		weight: number;
+		twoHanded: boolean;
+	}
+
+	interface StaffConditionParam extends ConditionParam, StaffParam {
+	}
+
+	interface PotionParam {
 		targetSelectionMethod: TargetSelectionMethod;
 		useMessage: string;
-		useFailMessage: string;
 		throwMessage: string;
+	}
+
+	interface InstantHealthPotionParam extends PotionParam {
+		amount: number;
+		useFailMessage: string;
 		throwFailMessage: string;
+	}
+
+	interface ConditionPotionParam extends ConditionParam, PotionParam {
 	}
 
 	/*
@@ -220,10 +232,11 @@ module Game {
 					throwFailMessage: "The potion explodes on [the actor1] but it has no effect" });
 			},
 			REGENERATION_POTION: (x: number, y: number) => {
-				return	ActorFactory.createConditionPotion(x, y, "regeneration potion", 20, [10],
-					ConditionType.REGENERATION, TargetSelectionMethod.ACTOR_ON_CELL,
-					"[The actor1] drink[s] the regeneration potion and feel[s]\nthe life flowing through [it].",
-					"The potion explodes on [the actor1].\nLife is flowing through [it].");
+				return	ActorFactory.createConditionPotion(x, y, "regeneration potion", {
+					nbTurns: 20, additionalArgs: [10],
+					condType: ConditionType.REGENERATION, targetSelectionMethod: TargetSelectionMethod.ACTOR_ON_CELL,
+					useMessage: "[The actor1] drink[s] the regeneration potion and feel[s]\nthe life flowing through [it].",
+					throwMessage: "The potion explodes on [the actor1].\nLife is flowing through [it]."} );
 			},
 			// scroll
 			LIGHTNING_BOLT_SCROLL: (x: number, y: number) => { return ActorFactory.createLightningBoltScroll(x, y, 5, 20); },
@@ -253,6 +266,9 @@ module Game {
 					weight: 0.5, twoHanded: false, fireMessage: "[The actor1] zap[s] [its] wand of frost.",
 					condType: ConditionType.FROZEN, nbTurns: 5, condMessage: "[The actor1] [is] covered with frost."
 				} ); },
+			TELEPORT_STAFF: (x: number, y: number) => { return ActorFactory.createStaff(x, y, "staff of teleportation",
+				{	maxCharges: 10, fireTargetSelectionMethod: TargetSelectionMethod.SELECTED_ACTOR,
+					weight: 2, twoHanded: true, fireEffect: new TeleportEffect("[The actor1] disappear[s] suddenly.") } ); },
 			// 		projectile
 			// 			arrow
 			BONE_ARROW: (x: number, y: number) => { return ActorFactory.createProjectile(x, y, "bone arrow", 1, "arrow"); },
@@ -297,16 +313,14 @@ module Game {
 			return effectPotion;
 		}
 
-		private static createConditionPotion(x: number, y: number, name: string, nbTurns: number, additionalArgs: any[],
-			condType: ConditionType, targetSelectionMethod: TargetSelectionMethod,
-			useMessage: string, throwMessage: string) {
+		private static createConditionPotion(x: number, y: number, name: string, param: ConditionPotionParam) {
 			return ActorFactory.createEffectPotion(x, y, name,
-				new Effector(new ConditionEffect(condType, nbTurns,
-					useMessage, additionalArgs),
-					new TargetSelector( targetSelectionMethod ), undefined, true),
-				new Effector(new ConditionEffect(condType, nbTurns,
-					throwMessage, additionalArgs),
-					new TargetSelector( targetSelectionMethod ), undefined, true)
+				new Effector(new ConditionEffect(param.condType, param.nbTurns,
+					param.useMessage, param.additionalArgs),
+					new TargetSelector( param.targetSelectionMethod ), undefined, true),
+				new Effector(new ConditionEffect(param.condType, param.nbTurns,
+					param.throwMessage, param.additionalArgs),
+					new TargetSelector( param.targetSelectionMethod ), undefined, true)
 				);
 		}
 
@@ -384,7 +398,7 @@ module Game {
 			return staff;
 		}
 
-		private static createConditionStaff(x: number, y: number, name: string, staffParam: StaffParam): Actor {
+		private static createConditionStaff(x: number, y: number, name: string, staffParam: StaffConditionParam): Actor {
 			staffParam.fireEffect = new ConditionEffect(staffParam.condType, staffParam.nbTurns, staffParam.condMessage, staffParam.additionalArgs);
 			return ActorFactory.createStaff(x, y, name, staffParam);
 		}
@@ -521,9 +535,15 @@ module Game {
 			Moves the dead actors from the actor list to the corpse list.
 		*/
 		updateActors() {
+			var oldPlayerX: number = this.player.x;
+			var oldPlayerY: number = this.player.y;
 			this.scheduler.run();
 			this.moveDeadToCorpse();
 			this.updateCorpses();
+			if ( this.player.x !== oldPlayerX || this.player.y !== oldPlayerY) {
+				// the player moved. Recompute the field of view
+				Engine.instance.map.computeFov(this.player.x, this.player.y, Constants.FOV_RADIUS);
+			}
 		}
 
 		private moveDeadToCorpse() {

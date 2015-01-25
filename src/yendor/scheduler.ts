@@ -24,7 +24,15 @@ module Yendor {
 	}
 	/*
 		Class: Scheduler
-		Handles timed entities and the order in which they are updated
+		Handles timed entities and the order in which they are updated. This class stores a sorted list of entities by waitTime.
+		Each time <run> is called, the game time advances by the lowest entity wait time amount.
+		Every entity with 0 wait time is pulled out of the list, updated (which should increase its wait time again),
+		then put back in the list.
+
+		<TimedEntity.waitTime> should ne be modified outside of the <update()> function, else the scheduler's list is not sorted anymore.
+
+		The update function should always increase the entity wait time, else it will stay at first position forever,
+		keeping other entities from updating.
 	*/
 	export class Scheduler {
 		private entities: BinaryHeap<TimedEntity>;
@@ -110,13 +118,7 @@ module Yendor {
 			while ( ! this.paused && entity && entity.waitTime <= 0 ) {
 				updatedEntities.push(entity);
 				this.entities.pop();
-				var oldWaitTime = entity.waitTime;
 				entity.update();
-				if ( ! this.paused && entity.waitTime <= oldWaitTime ) {
-					// enforce waitTime to avoid deadlock
-					// TODO re-enable this when tile picking is handled in PlayerAi.update
-					// entity.waitTime = oldWaitTime + 1;
-				}
 				entity = this.entities.peek();
 			}
 			// push updated entities back to the heap

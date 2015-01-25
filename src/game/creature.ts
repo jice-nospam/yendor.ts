@@ -430,10 +430,7 @@ module Game {
         		case PlayerAction.MOVE_SE :
         			var move: Yendor.Position = convertActionToPosition(this.__nextAction);
 					// move to the target cell or attack if there's a creature
-					if ( this.moveOrAttack(owner, owner.x + move.x, owner.y + move.y) ) {
-						// the player actually move. Recompute the field of view
-						Engine.instance.map.computeFov(owner.x, owner.y, Constants.FOV_RADIUS);
-					}
+					this.moveOrAttack(owner, owner.x + move.x, owner.y + move.y);
 				break;
         		case PlayerAction.WAIT :
 					this.waitTime += this.walkTime;
@@ -555,7 +552,6 @@ module Game {
 				// throw the projectile
 				this.__lastActionItem.pickable.throwOnPos(this.__lastActionItem.ranged.projectile,
 					Engine.instance.actorManager.getPlayer(), true, this.__lastActionPos, this.__lastActionItem.ranged.damageCoef);
-				this.clearLastAction();
 			} else {
 				// load the weapon and starts the tile picker
 				var weapon: Actor = owner.container.getFromSlot(Constants.SLOT_RIGHT_HAND);
@@ -584,7 +580,6 @@ module Game {
 			if ( this.__lastActionPos ) {
 				// zap on selected position
 				this.__lastActionItem.magic.zapOnPos(this.__lastActionItem, Engine.instance.actorManager.getPlayer(), this.__lastActionPos);
-				this.clearLastAction();
 				this.waitTime += this.walkTime;
 			} else {
 				var staff: Actor = owner.container.getFromSlot(Constants.SLOT_RIGHT_HAND);
@@ -599,14 +594,18 @@ module Game {
 					return;
 				}
 				this.__lastActionItem = staff;
-				staff.magic.zap(staff, owner);
+				if (staff.magic.zap(staff, owner)) {
+					this.waitTime += this.walkTime;
+				}
 			}
 		}
 
 		private useItem(item: Actor) {
 			if (item.pickable) {
 				this.__lastActionItem = item;
-				item.pickable.use(item, Engine.instance.actorManager.getPlayer());
+				if (item.pickable.use(item, Engine.instance.actorManager.getPlayer())) {
+					this.waitTime += this.walkTime;
+				}
 			}
 		}
 

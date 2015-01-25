@@ -33,7 +33,7 @@ module Game {
 		className: string;
 		private _method: TargetSelectionMethod;
 		private _range: number;
-		selectedTargets: Actor[];
+		__selectedTargets: Actor[];
 		/*
 			Constructor: constructor
 
@@ -61,7 +61,7 @@ module Game {
 
 		/*
 			Function: selectTargets
-			Populates the selectedTargets field, or triggers the tile picker
+			Populates the __selectedTargets field, or triggers the tile picker
 
 			Parameters:
 			owner - the actor owning the effect (the magic item or the scroll)
@@ -72,24 +72,24 @@ module Game {
 			true if targets have been selected (else wait for TILE_SELECTED event, then call <onTileSelected>)
 		*/
 		selectTargets(owner: Actor, wearer: Actor, cellPos: Yendor.Position): boolean {
-			this.selectedTargets = [];
+			this.__selectedTargets = [];
 			var creatures: Actor[] = Engine.instance.actorManager.getCreatures();
 			switch (this._method) {
 				case TargetSelectionMethod.ACTOR_ON_CELL :
 					if ( cellPos ) {
-						this.selectedTargets = Engine.instance.actorManager.findActorsOnCell(cellPos, creatures);
+						this.__selectedTargets = Engine.instance.actorManager.findActorsOnCell(cellPos, creatures);
 					} else {
-						this.selectedTargets.push(wearer);
+						this.__selectedTargets.push(wearer);
 					}
 					return true;
 				case TargetSelectionMethod.CLOSEST_ENEMY :
 					var actor = Engine.instance.actorManager.findClosestActor(cellPos ? cellPos : wearer, this.range, creatures);
 					if ( actor ) {
-						this.selectedTargets.push(actor);
+						this.__selectedTargets.push(actor);
 					}
 					return true;
 				case TargetSelectionMethod.ACTORS_IN_RANGE :
-					this.selectedTargets = Engine.instance.actorManager.findActorsInRange( cellPos ? cellPos : wearer, this.range, creatures );
+					this.__selectedTargets = Engine.instance.actorManager.findActorsInRange( cellPos ? cellPos : wearer, this.range, creatures );
 					return true;
 				case TargetSelectionMethod.SELECTED_ACTOR :
 					log("Left-click a target creature,\nor right-click to cancel.", Constants.LOG_WARN_COLOR);
@@ -104,16 +104,16 @@ module Game {
 
 		/*
 			Function: onTileSelected
-			Populates the selectedTargets field for selection methods that require a tile selection
+			Populates the __selectedTargets field for selection methods that require a tile selection
 		*/
 		onTileSelected(pos: Yendor.Position) {
 			var creatures: Actor[] = Engine.instance.actorManager.getCreatures();
 			switch (this._method) {
 				case TargetSelectionMethod.SELECTED_ACTOR :
-					this.selectedTargets = Engine.instance.actorManager.findActorsOnCell( pos, creatures);
+					this.__selectedTargets = Engine.instance.actorManager.findActorsOnCell( pos, creatures);
 				break;
 				case TargetSelectionMethod.SELECTED_RANGE :
-					this.selectedTargets = Engine.instance.actorManager.findActorsInRange( pos, this._range, creatures );
+					this.__selectedTargets = Engine.instance.actorManager.findActorsInRange( pos, this._range, creatures );
 				break;
 			}
 		}
@@ -196,6 +196,41 @@ module Game {
 	}
 
 	/*
+		Class: TeleportEffect
+		Teleport the target at a random location.
+	*/
+	export class TeleportEffect implements Effect {
+		className: string;
+		private successMessage: string;
+
+		constructor(successMessage?: string) {
+			this.className = "TeleportEffect";
+			this.successMessage = successMessage;
+		}
+
+		applyTo(actor: Actor, coef: number = 1.0): boolean {
+			var x: number = Engine.instance.rng.getNumber(0, Engine.instance.map.width - 1);
+			var y: number = Engine.instance.rng.getNumber(0, Engine.instance.map.height - 1);
+			while (! Engine.instance.map.canWalk(x, y)) {
+				x++;
+				if ( x === Engine.instance.map.width ) {
+					x = 0;
+					y++;
+					if ( y === Engine.instance.map.height ) {
+						y = 0;
+					}
+				}
+			}
+			actor.x = x;
+			actor.y = y;
+			if ( this.successMessage) {
+				log(transformMessage(this.successMessage, actor));
+			}
+			return true;
+		}
+	}
+
+	/*
 		Class: ConditionEffect
 		Add a condition to an actor.
 	*/
@@ -261,7 +296,7 @@ module Game {
 		apply(owner: Actor, wearer: Actor, cellPos?: Yendor.Position, coef: number = 1.0): boolean {
 			this._coef = coef;
 			if (this.targetSelector.selectTargets(owner, wearer, cellPos)) {
-				this.applyEffectToActorList(owner, wearer, this.targetSelector.selectedTargets);
+				this.applyEffectToActorList(owner, wearer, this.targetSelector.__selectedTargets);
 				return true;
 			}
 			return false;
@@ -276,8 +311,8 @@ module Game {
 		*/
 		applyOnPos(owner: Actor, wearer: Actor, pos: Yendor.Position): boolean {
 			this.targetSelector.onTileSelected(pos);
-			if ( this.targetSelector.selectedTargets.length > 0 ) {
-				this.applyEffectToActorList(owner, wearer, this.targetSelector.selectedTargets);
+			if ( this.targetSelector.__selectedTargets.length > 0 ) {
+				this.applyEffectToActorList(owner, wearer, this.targetSelector.__selectedTargets);
 				return true;
 			} else {
 				return false;
@@ -411,15 +446,18 @@ module Game {
 			Parameters:
 			owner - the actor owning this Pickable (the item)
 			wearer - the container (the creature using the item)
+
+			Returns:
+			true if this effect was applied, false if it only triggered the tile picker						
 		*/
-		use(owner: Actor, wearer: Actor) {
+		use(owner: Actor, wearer: Actor): boolean {
 			if ( this.onUseEffector ) {
-				this.onUseEffector.apply(owner, wearer);
+				return this.onUseEffector.apply(owner, wearer);
 			}
 			if ( owner.equipment ) {
 				owner.equipment.use(owner, wearer);
-				Engine.instance.actorManager.resume();
 			}
+			return true;
 		}
 
 		useOnPos(owner: Actor, wearer: Actor, pos: Yendor.Position) {
@@ -626,14 +664,23 @@ module Game {
 			this.onFireEffector = new Effector(effect, targetSelector, message);
 		}
 
-		zap(owner: Actor, wearer: Actor) {
+		/*
+			Function: zap
+			Use the magic power of the item
+
+			Returns:
+			true if this effect was applied, false if it only triggered the tile picker
+		*/
+		zap(owner: Actor, wearer: Actor): boolean {
 			if ( this._charges === 0 ) {
 				log(transformMessage("[The actor1's] " + owner.name + " is uncharged", wearer));
 			} else if ( this.onFireEffector ) {
 				if (this.onFireEffector.apply(owner, wearer)) {
 					this.doPostZap(owner, wearer);
+					return true;
 				}
 			}
+			return false;
 		}
 
 		zapOnPos(owner: Actor, wearer: Actor, pos: Yendor.Position) {

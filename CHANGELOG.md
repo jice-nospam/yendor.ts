@@ -3,8 +3,8 @@
 	- improved performance (Console.setChar removed, Console.text is now a matrix of ascii codes)
 
 * GeneRogue
-	- frozen condition
-	- added wand of frost
+	- frozen condition, teleport effect
+	- added wand of frost, staff of teleportation
 
 # 0.3.0 / 17-jan-2015
 * Yendor toolkit

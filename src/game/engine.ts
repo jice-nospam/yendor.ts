@@ -87,11 +87,9 @@ module Game {
 			if ( Yendor.urlParams[Constants.URL_PARAM_DEBUG] ) {
 				var player: Actor = this._actorManager.getPlayer();
 				[	ActorType.FROST_WAND, ActorType.SHORT_SWORD,
-					ActorType.WOODEN_SHIELD, ActorType.IRON_SHIELD,
+					ActorType.WOODEN_SHIELD, ActorType.TELEPORT_STAFF,
 					ActorType.HEALTH_POTION, ActorType.REGENERATION_POTION,
-					ActorType.LONG_SWORD, ActorType.GREAT_SWORD,
-					ActorType.SHORT_BOW, ActorType.LONG_BOW,
-					ActorType.CROSSBOW
+					ActorType.SHORT_BOW
 				].forEach((type: ActorType) => { this._actorManager.addItem(ActorFactory.create(type, player.x, player.y)); });
 			}
 		}

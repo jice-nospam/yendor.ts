@@ -18,7 +18,8 @@ To compile it, run `jake` then open game/index.html in your browser.
 * i : use an item from your inventory
 * d : drop an item from your inventory
 * t : throw an item
-* f : fire a missile using a ranged weapon
+* f : fire a projectile using a ranged weapon
+* z : zap a magic wand or staff
 * > : go down the stairs
 * < : go up the stairs
 * ESC : open game menu
@@ -35,6 +36,7 @@ Reminder for stuff that might be added to the game. Or not.
 	- poison potion and weapon / projectile poisoning (need onHitEffector on Attacker)
 	- doors and keys
 	- armors
+	- lighting
 	- jewelry (necklace, rings)
 	- ranges (TilePicker must show the maximum range. Scrolls, ranged weapons and item throwing have max range)
 	- shield should block only one hit per turn

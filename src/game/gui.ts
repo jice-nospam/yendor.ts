@@ -386,7 +386,7 @@ module Game {
 			Engine.instance.eventBus.registerListener(this, EventType.MOUSE_CLICK);
 			Engine.instance.eventBus.registerListener(this, EventType.KEYBOARD_INPUT);
 			this.show();
-			this.tileIsValid = false;
+			this.tileIsValid = true;
 			var player: Actor = Engine.instance.actorManager.getPlayer();
 			this.tilePos.x = player.x;
 			this.tilePos.y = player.y;
