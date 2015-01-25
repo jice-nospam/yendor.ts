@@ -4,163 +4,6 @@
 */
 module Game {
 	"use strict";
-	/********************************************************************************
-	 * Group: creatures conditions
-	 ********************************************************************************/
-	/*
-		Enum: ConditionType
-
-	 	CONFUSED - moves randomly and attacks anything on path
-	 	STUNNED - don't move or attack, then get confused
-	 	REGENERATION - regain health points over time
-	 	OVERENCUMBERED - walk slower. This also affects all actions relying on walkTime.
-	*/
-	export const enum ConditionType {
-		CONFUSED,
-		STUNNED,
-		FROZEN,
-		REGENERATION,
-		OVERENCUMBERED,
-	}
-
-	/*
-	 	Class: Condition
-	 	Permanent or temporary effect affecting a creature
-	*/
-	export class Condition implements Persistent {
-		className: string;
-		/*
-	 		Property: time
-	 		Time before this condition stops, or -1 for permanent conditions
-		*/
-		protected _time: number;
-		protected _type: ConditionType;
-		private static condNames = [ "confused", "stunned" ];
-
-		// factory
-		static create(type: ConditionType, time: number, ...additionalArgs : any[]): Condition {
-			switch ( type ) {
-				case ConditionType.REGENERATION :
-					return new RegenerationCondition(time, <number>additionalArgs[0]);
-				case ConditionType.STUNNED :
-					return new StunnedCondition(time);
-				case ConditionType.FROZEN :
-					return new FrozenCondition(time);
-				default :
-					return new Condition(type, time);
-			}
-		}
-
-		constructor(type: ConditionType, time: number) {
-			this.className = "Condition";
-			this._time = time;
-			this._type = type;
-		}
-
-		get type() { return this._type; }
-		get time() { return this._time; }
-		getName() { return Condition.condNames[this._type]; }
-
-		/*
-			Function: onApply
-			What happens when an actor gets this condition
-		*/
-		onApply(owner: Actor) {}
-		/*
-			Function: onApply
-			What happens when this condition is removed from an actor
-		*/
-		onRemove(owner: Actor) {}
-
-		/*
-			Function: update
-			What happens every turn when an actor has this condition
-
-			Returns:
-				false if the condition has ended
-		*/
-		update(owner: Actor): boolean {
-			if ( this._time > 0 ) {
-				this._time --;
-				return (this._time > 0);
-			}
-			return true;
-		}
-	}
-
-	/*
-		Class: RegenerationCondition
-		The creature gain health points over time
-	*/
-	export class RegenerationCondition extends Condition {
-		private hpPerTurn: number;
-		constructor(nbTurns: number, nbHP : number) {
-			super(ConditionType.REGENERATION, nbTurns);
-			this.className = "RegenerationCondition";
-			this.hpPerTurn = nbHP / nbTurns;
-		}
-
-		update(owner: Actor): boolean {
-			if (owner.destructible) {
-				owner.destructible.heal(this.hpPerTurn);
-			}
-			return super.update(owner);
-		}
-	}
-
-	/*
-		Class: StunnedCondition
-		The creature cannot move or attack while stunned. Then it gets confused for a few turns
-	*/
-	export class StunnedCondition extends Condition {
-		constructor(nbTurns: number) {
-			super(ConditionType.STUNNED, nbTurns);
-			this.className = "StunnedCondition";
-		}
-
-		update(owner: Actor): boolean {
-			if (! super.update(owner)) {
-				if ( this.type === ConditionType.STUNNED) {
-					// after being stunned, wake up confused
-					this._type = ConditionType.CONFUSED;
-					this._time = Constants.AFTER_STUNNED_CONFUSION_DELAY;
-				} else {
-					return false;
-				}
-			}
-			return true;
-		}
-	}
-
-	/*
-		Class: FrozenCondition
-		The creature is slowed down
-	*/
-	export class FrozenCondition extends Condition {
-		private startTime: number;
-		private originalColor: Yendor.Color;
-		constructor(nbTurns: number) {
-			super(ConditionType.FROZEN, nbTurns);
-			this.className = "FrozenCondition";
-			this.startTime = nbTurns;
-		}
-
-		onApply(owner: Actor) {
-			this.originalColor = owner.col;
-			owner.col = Constants.FROST_COLOR;
-		}
-
-		onRemove(owner: Actor) {
-			owner.col = this.originalColor;
-		}
-
-		update(owner: Actor): boolean {
-			var progress = (this._time - 1) / this.startTime;
-			owner.col = Yendor.ColorUtils.add(Yendor.ColorUtils.multiply(Constants.FROST_COLOR, progress),
-				Yendor.ColorUtils.multiply(this.originalColor, 1 - progress));
-			return super.update(owner);
-		}
-	}
 
 	/********************************************************************************
 	 * Group: articifial intelligence
@@ -491,7 +334,6 @@ module Game {
 					} else {
 						log("There are no stairs going down here.");
 					}
-					Engine.instance.actorManager.resume();
 				break;
 				case PlayerAction.MOVE_UP :
 					var stairsUp: Actor = Engine.instance.actorManager.getStairsUp();
@@ -501,7 +343,6 @@ module Game {
 						log("There are no stairs going up here.");
 					}
 					this.waitTime += this.walkTime;
-					Engine.instance.actorManager.resume();
 				break;
 				case PlayerAction.USE_ITEM :
 					if ( this.__lastActionPos ) {

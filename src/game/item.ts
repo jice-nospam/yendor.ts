@@ -5,340 +5,315 @@ module Game {
 	"use strict";
 
 	/********************************************************************************
-	 * Group: target selection
+	 * Group: items
 	 ********************************************************************************/
-	/*
-		Enum: TargetSelectionMethod
-		Define how we select the actors that are impacted by an effect.
-
-		ACTOR_ON_CELL - whatever actor is on the selected cell
-		CLOSEST_ENEMY - the closest non player creature
-		SELECTED_ACTOR - an actor manually selected
-		ACTORS_RANGE - all actors close to the cell
-		SELECTED_RANGE - all actors close to a manually selected position
-	*/
-	export const enum TargetSelectionMethod {
-		ACTOR_ON_CELL,
-		CLOSEST_ENEMY,
-		SELECTED_ACTOR,
-		ACTORS_IN_RANGE,
-		SELECTED_RANGE
-	}
 
 	/*
-		Class: TargetSelector
-		Various ways to select actors
+		Class: Destructible
+		Something that can take damages and heal/repair.
 	*/
-	export class TargetSelector implements Persistent {
+	export class Destructible implements Persistent {
 		className: string;
-		private _method: TargetSelectionMethod;
-		private _range: number;
-		__selectedTargets: Actor[];
+		private _maxHp: number;
+		private _defense: number;
+		private _hp: number;
+		private _corpseName: string;
+		private _xp: number = 0;
 		/*
 			Constructor: constructor
 
 			Parameters:
-			_method - the target selection method
-			_range - for methods requiring a range
+			_maxHp - initial amount of health points
+			_defense - when attacked, how much hit points are deflected
+			_corpseName - new name of the actor when its health points reach 0
 		*/
-		constructor(_method: TargetSelectionMethod = undefined, _range: number = 0) {
-			this.className = "TargetSelector";
-			this._method = _method;
-			this._range = _range;
+		constructor(_maxHp: number = 0, _defense: number = 0, _corpseName: string = "") {
+			this.className = "Destructible";
+			this._hp = _maxHp;
+			this._maxHp = _maxHp;
+			this._defense = _defense;
+			this._corpseName = _corpseName;
+		}
+
+		get hp() { return this._hp; }
+		set hp(newValue: number) { this._hp = newValue; }
+
+		get xp() { return this._xp; }
+		set xp(newValue: number) { this._xp = newValue; }
+
+		get maxHp() { return this._maxHp; }
+
+		get defense() { return this._defense; }
+		set defense(newValue: number) { this._defense = newValue; }
+
+		isDead(): boolean {
+			return this._hp <= 0;
+		}
+
+		public computeRealDefense(owner: Actor): number {
+			var realDefense = this.defense;
+			if ( owner.container ) {
+				// add bonus from equipped items
+				// TODO shield can block only one attack per turn
+				var n: number = owner.container.size();
+				for ( var i: number = 0; i < n; i++) {
+					var item: Actor = owner.container.get(i);
+					if ( item.equipment && item.equipment.isEquipped() ) {
+						realDefense += item.equipment.getDefenseBonus();
+					}
+				}
+			}
+			return realDefense;
 		}
 
 		/*
-			Property: method
-			The target selection method (read-only)
-		*/
-		get method() { return this._method; }
-
-		/*
-			Property: range
-			The selection range (read-only)
-		*/
-		get range() { return this._range; }
-
-		/*
-			Function: selectTargets
-			Populates the __selectedTargets field, or triggers the tile picker
+			Function: takeDamage
+			Deals damages to this actor. If health points reach 0, call the die function.
 
 			Parameters:
-			owner - the actor owning the effect (the magic item or the scroll)
-			wearer - the actor using the item
-			cellPos - the cell where the effect applies (= the wearer position when used from inventory, or a different position when thrown)
+			owner - the actor owning this Destructible
+			damage - amount of damages to deal
 
 			Returns:
-			true if targets have been selected (else wait for TILE_SELECTED event, then call <onTileSelected>)
+			the actual amount of damage taken
 		*/
-		selectTargets(owner: Actor, wearer: Actor, cellPos: Yendor.Position): boolean {
-			this.__selectedTargets = [];
-			var creatures: Actor[] = Engine.instance.actorManager.getCreatures();
-			switch (this._method) {
-				case TargetSelectionMethod.ACTOR_ON_CELL :
-					if ( cellPos ) {
-						this.__selectedTargets = Engine.instance.actorManager.findActorsOnCell(cellPos, creatures);
-					} else {
-						this.__selectedTargets.push(wearer);
-					}
-					return true;
-				case TargetSelectionMethod.CLOSEST_ENEMY :
-					var actor = Engine.instance.actorManager.findClosestActor(cellPos ? cellPos : wearer, this.range, creatures);
-					if ( actor ) {
-						this.__selectedTargets.push(actor);
-					}
-					return true;
-				case TargetSelectionMethod.ACTORS_IN_RANGE :
-					this.__selectedTargets = Engine.instance.actorManager.findActorsInRange( cellPos ? cellPos : wearer, this.range, creatures );
-					return true;
-				case TargetSelectionMethod.SELECTED_ACTOR :
-					log("Left-click a target creature,\nor right-click to cancel.", Constants.LOG_WARN_COLOR);
-					Engine.instance.eventBus.publishEvent(EventType.PICK_TILE);
-					return false;
-				case TargetSelectionMethod.SELECTED_RANGE :
-					log("Left-click a target tile,\nor right-click to cancel.", Constants.LOG_WARN_COLOR);
-					Engine.instance.eventBus.publishEvent(EventType.PICK_TILE);
-					return false;
+		takeDamage(owner: Actor, damage: number): number {
+			damage -= this.computeRealDefense(owner);
+			if ( damage > 0 ) {
+				this._hp -= damage;
+				if ( this.isDead() ) {
+					this._hp = 0;
+					this.die(owner);
+				}
+			} else {
+				damage = 0;
 			}
+			return damage;
 		}
 
 		/*
-			Function: onTileSelected
-			Populates the __selectedTargets field for selection methods that require a tile selection
+			Function: heal
+			Recover some health points
+
+			Parameters:
+			amount - amount of health points to recover
+
+			Returns:
+			the actual amount of health points recovered
 		*/
-		onTileSelected(pos: Yendor.Position) {
-			var creatures: Actor[] = Engine.instance.actorManager.getCreatures();
-			switch (this._method) {
-				case TargetSelectionMethod.SELECTED_ACTOR :
-					this.__selectedTargets = Engine.instance.actorManager.findActorsOnCell( pos, creatures);
-				break;
-				case TargetSelectionMethod.SELECTED_RANGE :
-					this.__selectedTargets = Engine.instance.actorManager.findActorsInRange( pos, this._range, creatures );
-				break;
+		heal(amount: number): number {
+			this._hp += amount;
+			if ( this._hp > this._maxHp ) {
+				amount -= this._hp - this._maxHp;
+				this._hp = this._maxHp;
+			}
+			return amount;
+		}
+
+		/*
+			Function: die
+			Turn this actor into a corpse
+
+			Parameters:
+			owner - the actor owning this Destructible
+		*/
+		die(owner: Actor) {
+			owner.ch = "%";
+			owner.name = this._corpseName;
+			owner.blocks = false;
+		}
+	}
+
+	/*
+		Class: Attacker
+		An actor that can deal damages to another one
+	*/
+	export class Attacker implements Persistent {
+		className: string;
+		private _power: number;
+		private _attackTime: number;
+		/*
+			Constructor: constructor
+
+			Parameters:
+			_power : amount of damages given
+		*/
+		constructor(_power: number = 0, attackTime: number = Constants.PLAYER_WALK_TIME) {
+			this.className = "Attacker";
+			this._power = _power;
+			this._attackTime = attackTime;
+		}
+
+		/*
+			Property: power
+			Amount of damages given
+		*/
+		get power() { return this._power; }
+		set power(newValue: number) { this._power = newValue; }
+
+		get attackTime() { return this._attackTime; }
+
+		/*
+			Function: attack
+			Deal damages to another actor
+
+			Parameters:
+			owner - the actor owning this Attacker
+			target - the actor being attacked
+		*/
+		attack(owner: Actor, target: Actor) {
+			if ( target.destructible && ! target.destructible.isDead() ) {
+				var damage = this._power - target.destructible.computeRealDefense(target);
+				var msg: string = "[The actor1] attack[s] [the actor2]";
+				var msgColor: Yendor.Color;
+				if ( damage >= target.destructible.hp ) {
+					msg += " and kill[s] [it2] !";
+					msgColor = Constants.LOG_WARN_COLOR;
+				} else if ( damage > 0 ) {
+					msg += " for " + damage + " hit points.";
+					msgColor = Constants.LOG_WARN_COLOR;
+				} else {
+					msg += " but it has no effect!";
+				}
+				log(transformMessage(msg, owner, target), msgColor);
+				target.destructible.takeDamage(target, this._power);
 			}
 		}
 	}
 
 	/********************************************************************************
-	 * Group: effects
+	 * Group: inventory
 	 ********************************************************************************/
 
-	/*
-		Interface: Effect
-		Some effect that can be applied to actors. The effect might be triggered by using an item or casting a spell.
-	*/
-	export interface Effect extends Persistent {
-		/*
-			Function: applyTo
-			Apply an effect to an actor
-
-			Parameters:
-			actor - the actor this effect is applied to
-			coef - a multiplicator to apply to the effect
-
-			Returns:
-			false if effect cannot be applied
-		*/
-		applyTo(actor: Actor, coef: number): boolean;
-	}
-
-	/*
-		Class: InstantHealthEffect
-		Add or remove health points.
-	*/
-	export class InstantHealthEffect implements Effect {
+	 /*
+	 	Interface: ContainerListener
+	 	Something that must be notified when an item is added or removed from the container
+	 */
+	 export interface ContainerListener {
+	 	onAdd(item: Actor, container: Container, owner: Actor);
+	 	onRemove(item: Actor, container: Container, owner: Actor);
+	 }
+	 /*
+	 	Class: Container
+	 	An actor that can contain other actors :
+	 	- creatures with inventory
+	 	- chests, barrels, ...
+	 */
+	 export class Container implements Persistent {
 		className: string;
-		private _amount: number;
-		private successMessage: string;
-		private failureMessage: string;
+	 	private _capacity: number;
+	 	private actors: Actor[] = [];
+	 	private __listener: ContainerListener;
 
-		get amount() { return this._amount; }
+	 	/*
+	 		Constructor: constructor
 
-		constructor( amount: number = 0, successMessage?: string, failureMessage?: string) {
-			this.className = "InstantHealthEffect";
-			this._amount = amount;
-			this.successMessage = successMessage;
-			this.failureMessage = failureMessage;
-		}
+	 		Parameters:
+	 		_capacity - this container's maximum weight
+	 	*/
+	 	constructor(_capacity: number = 0, listener?: ContainerListener) {
+			this.className = "Container";
+	 		this._capacity = _capacity;
+	 		this.__listener = listener;
+	 	}
 
-		applyTo(actor: Actor, coef: number = 1.0): boolean {
-			if (! actor.destructible ) {
-				return false;
-			}
-			if ( this._amount > 0 ) {
-				return this.applyHealingEffectTo(actor, coef);
-			} else {
-				return this.applyWoundingEffectTo(actor, coef);
-			}
-			return false;
-		}
+	 	get capacity(): number { return this._capacity; }
+	 	set capacity(newValue: number) {this._capacity = newValue; }
+	 	size(): number { return this.actors.length; }
 
-		private applyHealingEffectTo(actor: Actor, coef: number = 1.0): boolean {
-			var healPointsCount: number = actor.destructible.heal( coef * this._amount );
-			if ( healPointsCount > 0 && this.successMessage ) {
-				log(transformMessage(this.successMessage, actor, undefined, healPointsCount));
-			} else if ( healPointsCount <= 0 && this.failureMessage ) {
-				log(transformMessage(this.failureMessage, actor));
-			}
-			return true;
-		}
+	 	// used to rebuilt listener link after loading
+	 	setListener(listener: ContainerListener) {
+	 		this.__listener = listener;
+	 	}
 
-		private applyWoundingEffectTo(actor: Actor, coef: number = 1.0) : boolean {
-			var realDefense: number = actor.destructible.computeRealDefense(actor);
-			var damageDealt = -this._amount * coef - realDefense;
-			if ( damageDealt > 0 && this.successMessage ) {
-				log(transformMessage(this.successMessage, actor, undefined, damageDealt));
-			} else if ( damageDealt <= 0 && this.failureMessage ) {
-				log(transformMessage(this.failureMessage, actor));
-			}
-			return actor.destructible.takeDamage(actor, -this._amount * coef) > 0;
-		}
+	 	get(index: number) : Actor {
+	 		return this.actors[index];
+	 	}
+
+	 	getFromSlot(slot: string): Actor {
+	 		var n: number = this.size();
+	 		for ( var i: number = 0; i < n; i++) {
+	 			var actor: Actor = this.get(i);
+	 			if ( actor.equipment && actor.equipment.isEquipped() && actor.equipment.getSlot() === slot ) {
+	 				return actor;
+	 			}
+	 		}
+	 		return undefined;
+	 	}
+
+	 	isSlotEmpty(slot: string): boolean {
+	 		if ( this.getFromSlot(slot)) {
+	 			return false;
+	 		}
+	 		if ( slot === Constants.SLOT_RIGHT_HAND || slot === Constants.SLOT_LEFT_HAND ) {
+	 			if ( this.getFromSlot(Constants.SLOT_BOTH_HANDS)) {
+	 				return false;
+	 			}
+	 		} else if ( slot === Constants.SLOT_BOTH_HANDS ) {
+	 			if ( this.getFromSlot(Constants.SLOT_LEFT_HAND) || this.getFromSlot(Constants.SLOT_RIGHT_HAND) ) {
+	 				return false;
+	 			}
+	 		}
+	 		return true;
+	 	}
+
+	 	canContain(item: Actor): boolean {
+	 		if (! item || ! item.pickable ) {
+	 			return false;
+	 		}
+	 		return this.computeTotalWeight() + item.pickable.weight <= this._capacity;
+	 	}
+
+	 	computeTotalWeight(): number {
+	 		var weight: number = 0;
+	 		this.actors.forEach(function(actor: Actor) {
+	 			if ( actor.pickable ) {
+	 				weight += actor.pickable.weight;
+	 			}
+	 		});
+	 		return weight;
+	 	}
+
+	 	/*
+	 		Function: add
+	 		add a new actor in this container
+
+	 		Parameters:
+	 		actor - the actor to add
+
+	 		Returns:
+	 		false if the operation failed because the container is full
+	 	*/
+	 	add(actor: Actor, owner: Actor) {
+	 		var weight: number = this.computeTotalWeight();
+	 		if ( actor.pickable.weight + weight > this._capacity ) {
+	 			return false;
+	 		}
+	 		this.actors.push( actor );
+	 		if (this.__listener) {
+	 			this.__listener.onAdd(actor, this, owner);
+	 		}
+	 		return true;
+	 	}
+
+	 	/*
+	 		Function: remove
+	 		remove an actor from this container
+
+	 		Parameters:
+	 		actor - the actor to remove
+	 		owner - the actor owning the container
+	 	*/
+	 	remove(actor: Actor, owner: Actor) {
+	 		var idx: number = this.actors.indexOf(actor);
+	 		if ( idx !== -1 ) {
+	 			this.actors.splice(idx, 1);
+		 		if (this.__listener) {
+		 			this.__listener.onRemove(actor, this, owner);
+		 		}
+	 		}
+	 	}
 	}
-
-	/*
-		Class: TeleportEffect
-		Teleport the target at a random location.
-	*/
-	export class TeleportEffect implements Effect {
-		className: string;
-		private successMessage: string;
-
-		constructor(successMessage?: string) {
-			this.className = "TeleportEffect";
-			this.successMessage = successMessage;
-		}
-
-		applyTo(actor: Actor, coef: number = 1.0): boolean {
-			var x: number = Engine.instance.rng.getNumber(0, Engine.instance.map.width - 1);
-			var y: number = Engine.instance.rng.getNumber(0, Engine.instance.map.height - 1);
-			while (! Engine.instance.map.canWalk(x, y)) {
-				x++;
-				if ( x === Engine.instance.map.width ) {
-					x = 0;
-					y++;
-					if ( y === Engine.instance.map.height ) {
-						y = 0;
-					}
-				}
-			}
-			actor.x = x;
-			actor.y = y;
-			if ( this.successMessage) {
-				log(transformMessage(this.successMessage, actor));
-			}
-			return true;
-		}
-	}
-
-	/*
-		Class: ConditionEffect
-		Add a condition to an actor.
-	*/
-	export class ConditionEffect implements Effect {
-		className: string;
-		private type: ConditionType;
-		private nbTurns: number;
-		private message: string;
-		private additionalArgs: any[];
-		constructor( type: ConditionType, nbTurns: number, message?: string, ...additionalArgs: any[] ) {
-			this.className = "ConditionEffect";
-			this.type = type;
-			this.nbTurns = nbTurns;
-			this.message = message;
-			if (additionalArgs && additionalArgs.length > 0 && additionalArgs[0] !== undefined ) {
-				this.additionalArgs = additionalArgs;
-			}
-		}
-
-		applyTo(actor: Actor, coef: number = 1.0): boolean {
-			if (!actor.ai) {
-				return false;
-			}
-			actor.ai.addCondition(Condition.create(this.type, Math.floor(coef * this.nbTurns), this.additionalArgs),
-				actor);
-			if ( this.message ) {
-				log(transformMessage(this.message, actor));
-			}
-			return true;
-		}
-	}
-
-	/*
-	 	Class: Effector
-	 	Combines an effect and a target selector. Can also display a message before applying the effect.
-	*/
-	export class Effector implements Persistent {
-		className: string;
-		private _effect: Effect;
-		private targetSelector: TargetSelector;
-		private message: string;
-		private _coef: number;
-		private destroyOnEffect: boolean;
-
-		get effect() { return this._effect; }
-		get coef() { return this._coef; }
-
-		constructor(_effect?: Effect, _targetSelector?: TargetSelector, _message?: string, destroyOnEffect: boolean = false) {
-			this.className = "Effector";
-			this._effect = _effect;
-			this.targetSelector = _targetSelector;
-			this.message = _message;
-			this.destroyOnEffect = destroyOnEffect;
-		}
-
-		/*
-			Function: apply
-			Select targets and apply the effect.
-
-			Returns:
-			false if a tile needs to be selected (in that case, wait for TILE_SELECTED event, then call <applyOnPos>)
-		*/
-		apply(owner: Actor, wearer: Actor, cellPos?: Yendor.Position, coef: number = 1.0): boolean {
-			this._coef = coef;
-			if (this.targetSelector.selectTargets(owner, wearer, cellPos)) {
-				this.applyEffectToActorList(owner, wearer, this.targetSelector.__selectedTargets);
-				return true;
-			}
-			return false;
-		}
-
-		/*
-			Function: applyOnPos
-			Select targets and apply the effect once a tile has been selected.
-
-			Returns:
-			false if no target has been selected
-		*/
-		applyOnPos(owner: Actor, wearer: Actor, pos: Yendor.Position): boolean {
-			this.targetSelector.onTileSelected(pos);
-			if ( this.targetSelector.__selectedTargets.length > 0 ) {
-				this.applyEffectToActorList(owner, wearer, this.targetSelector.__selectedTargets);
-				return true;
-			} else {
-				return false;
-			}
-		}
-
-		private applyEffectToActorList(owner: Actor, wearer: Actor, actors: Actor[]) {
-			var success: boolean = false;
-			if ( this.message ) {
-				log(transformMessage(this.message, wearer));
-			}
-
-			for (var i: number = 0, len: number = actors.length; i < len; ++i) {
-				if (this._effect.applyTo(actors[i], this._coef)) {
-					success = true;
-				}
-			}
-			if ( this.destroyOnEffect && success && wearer && wearer.container ) {
-				wearer.container.remove( owner, wearer );
-			}
-		}
-	}
-
-	/********************************************************************************
-	 * Group: items
-	 ********************************************************************************/
 
 	/*
 		Class: Pickable
@@ -432,9 +407,6 @@ module Game {
 			}
 			if (! fromFire) {
 				log(wearer.getThename() + " " + verb + wearer.getVerbEnd() + owner.getthename());
-			}
-			if ( verb === "drop") {
-				Engine.instance.actorManager.resume();
 			}
 		}
 
