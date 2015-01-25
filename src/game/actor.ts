@@ -175,7 +175,7 @@ module Game {
 
 	interface ConditionParam {
 		condType?: ConditionType;
-		additionalArgs?: any[];
+		additionalArgs?: ConditionAdditionalParam;
 		condMessage?: string;
 		nbTurns?: number;
 	}
@@ -193,7 +193,6 @@ module Game {
 	}
 
 	interface PotionParam {
-		targetSelectionMethod: TargetSelectionMethod;
 		useMessage: string;
 		throwMessage: string;
 	}
@@ -226,7 +225,7 @@ module Game {
 			// potion
 			HEALTH_POTION: (x: number, y: number) => {
 				return ActorFactory.createInstantHealthPotion(x, y, "health potion",
-					{amount: 5, targetSelectionMethod: TargetSelectionMethod.ACTOR_ON_CELL,
+					{amount: 5,
 					useMessage: "[The actor1] drink[s] the health potion and regain[s] [value1] hit points.",
 					useFailMessage: "[The actor1] drink[s] the health potion but it has no effect",
 					throwMessage: "The potion explodes on [the actor1], healing [it] for [value1] hit points.",
@@ -234,8 +233,8 @@ module Game {
 			},
 			REGENERATION_POTION: (x: number, y: number) => {
 				return	ActorFactory.createConditionPotion(x, y, "regeneration potion", {
-					nbTurns: 20, additionalArgs: [10],
-					condType: ConditionType.REGENERATION, targetSelectionMethod: TargetSelectionMethod.ACTOR_ON_CELL,
+					nbTurns: 20, additionalArgs: {amount: 10},
+					condType: ConditionType.REGENERATION,
 					useMessage: "[The actor1] drink[s] the regeneration potion and feel[s]\nthe life flowing through [it].",
 					throwMessage: "The potion explodes on [the actor1].\nLife is flowing through [it]."} );
 			},
@@ -265,14 +264,14 @@ module Game {
 			FROST_WAND: (x: number, y: number) => { return ActorFactory.createConditionStaff(x, y, "wand of frost",
 				{	maxCharges: 5, fireTargetSelectionMethod: TargetSelectionMethod.SELECTED_ACTOR,
 					weight: 0.5, twoHanded: false, fireMessage: "[The actor1] zap[s] [its] wand of frost.",
-					condType: ConditionType.FROZEN, nbTurns: 5, condMessage: "[The actor1] [is] covered with frost."
+					condType: ConditionType.FROZEN, nbTurns: 10, condMessage: "[The actor1] [is] covered with frost."
 				} ); },
 			TELEPORT_STAFF: (x: number, y: number) => { return ActorFactory.createStaff(x, y, "staff of teleportation",
 				{	maxCharges: 5, fireTargetSelectionMethod: TargetSelectionMethod.SELECTED_ACTOR,
-					weight: 2, twoHanded: true, fireEffect: new TeleportEffect("[The actor1] disappear[s] suddenly.") } ); },
+					weight: 3, twoHanded: true, fireEffect: new TeleportEffect("[The actor1] disappear[s] suddenly.") } ); },
 			LIFE_DETECT_STAFF: (x: number, y: number) => { return ActorFactory.createConditionStaff(x, y, "staff of life detection",
 				{	maxCharges: 5, fireTargetSelectionMethod: TargetSelectionMethod.ACTOR_ON_CELL,
-					weight: 2, twoHanded: true, additionalArgs: [15],
+					weight: 3, twoHanded: true, additionalArgs: {range: 15},
 					condType: ConditionType.DETECT_LIFE, nbTurns: 10, condMessage: "[The actor1] [is] aware of life around [it]."
 				} ); },
 			// 		projectile
@@ -323,19 +322,19 @@ module Game {
 			return ActorFactory.createEffectPotion(x, y, name,
 				new Effector(new ConditionEffect(param.condType, param.nbTurns,
 					param.useMessage, param.additionalArgs),
-					new TargetSelector( param.targetSelectionMethod ), undefined, true),
+					new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL ), undefined, true),
 				new Effector(new ConditionEffect(param.condType, param.nbTurns,
 					param.throwMessage, param.additionalArgs),
-					new TargetSelector( param.targetSelectionMethod ), undefined, true)
+					new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL ), undefined, true)
 				);
 		}
 
 		private static createInstantHealthPotion(x: number, y: number, name: string, param: InstantHealthPotionParam): Actor {
 			return ActorFactory.createEffectPotion(x, y, name,
 				new Effector(new InstantHealthEffect(param.amount, param.useMessage, param.useFailMessage),
-					new TargetSelector( param.targetSelectionMethod ), undefined, true),
+					new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL ), undefined, true),
 				new Effector(new InstantHealthEffect(param.amount, param.throwMessage, param.throwFailMessage),
-					new TargetSelector( param.targetSelectionMethod ), undefined, true)
+					new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL ), undefined, true)
 				);
 		}
 

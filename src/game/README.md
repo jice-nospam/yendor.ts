@@ -18,8 +18,8 @@ To compile it, run `jake` then open game/index.html in your browser.
 * i : use an item from your inventory
 * d : drop an item from your inventory
 * t : throw an item
-* f : fire a projectile using a ranged weapon
-* z : zap a magic wand or staff
+* f : fire a projectile using an equipped ranged weapon
+* z : zap an equipped magic wand or staff
 * > : go down the stairs
 * < : go up the stairs
 * ESC : open game menu
@@ -32,11 +32,11 @@ Reminder for stuff that might be added to the game. Or not.
 	- reduce garbage collector usage
 
 * Gameplay
-	- wands and staff
 	- poison potion and weapon / projectile poisoning (need onHitEffector on Attacker)
 	- doors and keys
 	- armors
 	- lighting
+	- static containers (chests, corpses) + loot GUI
 	- jewelry (necklace, rings)
 	- ranges (TilePicker must show the maximum range. Scrolls, ranged weapons and item throwing have max range)
 	- shield should block only one hit per turn

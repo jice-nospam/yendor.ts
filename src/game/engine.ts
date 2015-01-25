@@ -15,7 +15,7 @@ module Game {
 		to keep the game from trying to load data with an old format.
 		This should be an integer.
 	*/
-	var SAVEFILE_VERSION: string = "6";
+	var SAVEFILE_VERSION: string = "7";
 
 	/*
 		Class: Engine
@@ -89,7 +89,7 @@ module Game {
 				var player: Actor = this._actorManager.getPlayer();
 				[	ActorType.FROST_WAND, ActorType.SHORT_SWORD,
 					ActorType.WOODEN_SHIELD, ActorType.TELEPORT_STAFF,
-					ActorType.LIFE_DETECT_STAFF,
+					ActorType.LIFE_DETECT_STAFF, ActorType.REGENERATION_POTION,
 					ActorType.SHORT_BOW
 				].forEach((type: ActorType) => { this._actorManager.addItem(ActorFactory.create(type, player.x, player.y)); });
 			}

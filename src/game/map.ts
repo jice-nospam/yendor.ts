@@ -258,7 +258,8 @@ module Game {
 			var detectRange = detectLifeCond ? detectLifeCond.range : 0;
 			return this.isInFov( actor.x, actor.y)
 				|| (!actor.isFovOnly() && this.isExplored( actor.x, actor.y))
-				|| (actor.ai && actor.destructible && !actor.destructible.isDead() && Yendor.Position.distance(player, actor) < detectRange);
+				|| (detectRange > 0 && actor.ai && actor.destructible && !actor.destructible.isDead()
+					&& Yendor.Position.distance(player, actor) < detectRange);
 		}
 
 		getScent(x: number, y: number): number {

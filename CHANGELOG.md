@@ -3,7 +3,8 @@
 	- improved performance (Console.setChar removed, Console.text is now a matrix of ascii codes)
 
 * GeneRogue
-	- frozen, life detection condition, teleport effect
+	- added frozen and life detection condition
+	- added teleport effect
 	- added wand of frost, staff of teleportation, staff of life detection
 
 # 0.3.0 / 17-jan-2015

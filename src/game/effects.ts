@@ -141,6 +141,11 @@ module Game {
 		DETECT_LIFE,
 	}
 
+	export interface ConditionAdditionalParam {
+		amount?: number;
+		range?: number;
+	}
+
 	/*
 	 	Class: Condition
 	 	Permanent or temporary effect affecting a creature
@@ -156,16 +161,16 @@ module Game {
 		private static condNames = [ "confused", "stunned" ];
 
 		// factory
-		static create(type: ConditionType, time: number, ...additionalArgs : any[]): Condition {
+		static create(type: ConditionType, time: number, additionalArgs?: ConditionAdditionalParam): Condition {
 			switch ( type ) {
 				case ConditionType.REGENERATION :
-					return new RegenerationCondition(time, <number>additionalArgs[0]);
+					return new RegenerationCondition(time, additionalArgs.amount);
 				case ConditionType.STUNNED :
 					return new StunnedCondition(time);
 				case ConditionType.FROZEN :
 					return new FrozenCondition(time);
 				case ConditionType.DETECT_LIFE :
-					return new DetectLifeCondition(time, <number>additionalArgs[0]);
+					return new DetectLifeCondition(time, additionalArgs.range);
 				default :
 					return new Condition(type, time);
 			}
@@ -420,13 +425,13 @@ module Game {
 		private type: ConditionType;
 		private nbTurns: number;
 		private message: string;
-		private additionalArgs: any[];
-		constructor( type: ConditionType, nbTurns: number, message?: string, ...additionalArgs: any[] ) {
+		private additionalArgs: ConditionAdditionalParam;
+		constructor( type: ConditionType, nbTurns: number, message?: string, additionalArgs?: ConditionAdditionalParam ) {
 			this.className = "ConditionEffect";
 			this.type = type;
 			this.nbTurns = nbTurns;
 			this.message = message;
-			if (additionalArgs && additionalArgs.length > 0 && additionalArgs[0] !== undefined ) {
+			if (additionalArgs) {
 				this.additionalArgs = additionalArgs;
 			}
 		}
