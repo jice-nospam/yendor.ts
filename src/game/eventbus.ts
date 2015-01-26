@@ -18,7 +18,7 @@ module Game {
 		MOUSE_MOVE,
 		// mouse button press event. Associated data : MouseButton
 		MOUSE_CLICK,
-		// open the tile picker. No associated data
+		// open the tile picker. Associated data : optional TilePickerEventData
 		PICK_TILE,
 		// A tile has been selected by the TilePicker. Associated data : the Yendor.Position of the tile
 		TILE_SELECTED,

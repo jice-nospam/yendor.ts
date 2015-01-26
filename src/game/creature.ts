@@ -465,7 +465,7 @@ module Game {
 			if ( item.pickable ) {
 				// open the tile picker
 				this.__lastActionItem = item;
-				item.pickable.throw(item);
+				item.pickable.throw(item, Engine.instance.actorManager.getPlayer());
 			}
 		}
 

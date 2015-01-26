@@ -171,6 +171,7 @@ module Game {
 		projectileTypeName: string;
 		loadTime: number;
 		twoHanded: boolean;
+		range: number;
 	}
 
 	interface ConditionParam {
@@ -187,6 +188,7 @@ module Game {
 		fireMessage?: string;
 		weight: number;
 		twoHanded: boolean;
+		range?: number;
 	}
 
 	interface StaffConditionParam extends ConditionParam, StaffParam {
@@ -255,20 +257,22 @@ module Game {
 			IRON_SHIELD: (x: number, y: number) => { return ActorFactory.createShield(x, y, "iron shield", 2); },
 			// 		ranged
 			SHORT_BOW: (x: number, y: number) => { return ActorFactory.createRanged(x, y, "short bow",
-				{ damages: 3, projectileTypeName: "arrow", loadTime: 4, twoHanded: true } ); },
+				{ damages: 3, projectileTypeName: "arrow", loadTime: 4, twoHanded: true, range: 15 } ); },
 			LONG_BOW: (x: number, y: number) => { return ActorFactory.createRanged(x, y, "long bow",
-				{ damages: 6, projectileTypeName: "arrow", loadTime: 6, twoHanded: true } ); },
+				{ damages: 6, projectileTypeName: "arrow", loadTime: 6, twoHanded: true, range: 30 } ); },
 			CROSSBOW: (x: number, y: number) => { return ActorFactory.createRanged(x, y, "crossbow",
-				{ damages: 4, projectileTypeName: "bolt", loadTime: 5, twoHanded: false } ); },
+				{ damages: 4, projectileTypeName: "bolt", loadTime: 5, twoHanded: false, range: 10 } ); },
 			//      staff
 			FROST_WAND: (x: number, y: number) => { return ActorFactory.createConditionStaff(x, y, "wand of frost",
 				{	maxCharges: 5, fireTargetSelectionMethod: TargetSelectionMethod.SELECTED_ACTOR,
 					weight: 0.5, twoHanded: false, fireMessage: "[The actor1] zap[s] [its] wand of frost.",
-					condType: ConditionType.FROZEN, nbTurns: 10, condMessage: "[The actor1] [is] covered with frost."
+					condType: ConditionType.FROZEN, nbTurns: 10, condMessage: "[The actor1] [is] covered with frost.",
+					range: 5
 				} ); },
 			TELEPORT_STAFF: (x: number, y: number) => { return ActorFactory.createStaff(x, y, "staff of teleportation",
 				{	maxCharges: 5, fireTargetSelectionMethod: TargetSelectionMethod.SELECTED_ACTOR,
-					weight: 3, twoHanded: true, fireEffect: new TeleportEffect("[The actor1] disappear[s] suddenly.") } ); },
+					weight: 3, twoHanded: true, fireEffect: new TeleportEffect("[The actor1] disappear[s] suddenly."),
+					range: 5 } ); },
 			LIFE_DETECT_STAFF: (x: number, y: number) => { return ActorFactory.createConditionStaff(x, y, "staff of life detection",
 				{	maxCharges: 5, fireTargetSelectionMethod: TargetSelectionMethod.ACTOR_ON_CELL,
 					weight: 3, twoHanded: true, additionalArgs: {range: 15},
@@ -388,7 +392,8 @@ module Game {
 			bow.init(x, y, ")", name, "weapon|ranged", 0xF0F0F0, true);
 			bow.pickable = new Pickable(2);
 			bow.equipment = new Equipment(rangedParam.twoHanded ? Constants.SLOT_BOTH_HANDS : Constants.SLOT_RIGHT_HAND);
-			bow.ranged = new Ranged(rangedParam.damages, rangedParam.projectileTypeName, rangedParam.loadTime);
+			bow.ranged = new Ranged(rangedParam.damages, rangedParam.projectileTypeName,
+				rangedParam.loadTime, rangedParam.range);
 			return bow;
 		}
 
@@ -398,8 +403,8 @@ module Game {
 			staff.pickable = new Pickable(staffParam.weight);
 			staff.equipment = new Equipment(staffParam.twoHanded ? Constants.SLOT_BOTH_HANDS : Constants.SLOT_RIGHT_HAND);
 			staff.magic = new Magic(staffParam.maxCharges);
-			staff.magic.setFireEffector(staffParam.fireEffect, new TargetSelector(staffParam.fireTargetSelectionMethod),
-				staffParam.fireMessage);
+			staff.magic.setFireEffector(staffParam.fireEffect, new TargetSelector(staffParam.fireTargetSelectionMethod,
+				staffParam.range),	staffParam.fireMessage);
 			return staff;
 		}
 

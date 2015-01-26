@@ -442,11 +442,21 @@ module Game {
 
 			Parameters:
 			owner - the actor owning this Pickable (the item)
+			wearer - the actor throwing the item
 		*/
-		throw(owner: Actor) {
+		throw(owner: Actor, wearer: Actor, maxRange?: number) {
 			log("Left-click where to throw the " + owner.name
 				+ ",\nor right-click to cancel.", Constants.LOG_WARN_COLOR);
-			Engine.instance.eventBus.publishEvent(EventType.PICK_TILE);
+			if (! maxRange) {
+				var weight: number = owner.pickable.weight;
+				maxRange = weight < 0.5 ? 3 : 15 / weight;
+				if ( owner.equipment && owner.equipment.getSlot() === Constants.SLOT_QUIVER) {
+					// increase projectile throw range
+					maxRange *= 2.5;
+				}
+			}
+			var data: TilePickerEventData = { range: maxRange, origin: new Yendor.Position(wearer.x, wearer.y) };
+			Engine.instance.eventBus.publishEvent(EventType.PICK_TILE, data);
 		}
 
 		throwOnPos(owner: Actor, wearer: Actor, fromFire: boolean, pos: Yendor.Position, coef: number = 1) {
@@ -544,7 +554,6 @@ module Game {
 		A ranged weapon can throw several type of projectiles (for example dwarven and elven arrows). 
 		The projectileType property makes it possible to look for an adequate item in the inventory.
 		If a compatible type is equipped (on quiver), it will be used. Else the first compatible item will be used.
-		So far, the weapon has no impact on the range but this could be done easily.
 	*/
 	export class Ranged implements Persistent {
 		className: string;
@@ -559,10 +568,15 @@ module Game {
 		*/
 		private _projectileType: ActorClass;
 		/*
-			Property: loadTime
+			Property: _loadTime
 			Time to load this weapon with a projectile
 		*/
 		private _loadTime: number;
+		/*
+			Property:  _range
+			This weapon's maximum firing distance
+		*/
+		private _range: number;
 
 		private _projectile: Actor;
 
@@ -570,12 +584,14 @@ module Game {
 		get damageCoef() { return this._damageCoef; }
 		get projectileType() { return this._projectileType; }
 		get projectile() { return this._projectile; }
+		get range() { return this._range; }
 
-		constructor(_damageCoef: number, projectileTypeName: string, loadTime: number) {
+		constructor(_damageCoef: number, projectileTypeName: string, loadTime: number, range: number) {
 			this.className = "Ranged";
 			this._damageCoef = _damageCoef;
 			this._projectileType  = ActorClass.buildClassHierarchy("weapon|projectile|" + projectileTypeName);
 			this._loadTime = loadTime;
+			this._range = range;
 		}
 
 		fire(owner: Actor, wearer: Actor) {
@@ -588,7 +604,7 @@ module Game {
 				}
 			}
 			log(transformMessage("[The actor1] fire[s] [a actor2].", wearer, this._projectile));
-			this._projectile.pickable.throw(this._projectile);
+			this._projectile.pickable.throw(this._projectile, wearer, this._range);
 		}
 
 		private findCompatibleProjectile(wearer: Actor): Actor {

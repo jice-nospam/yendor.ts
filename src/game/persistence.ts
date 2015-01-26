@@ -143,12 +143,13 @@ module Game {
 		}
 
 		private loadObjectFromData(jsonData: any, object?: any): any {
-			if (! jsonData.className ) {
-				throw new Error("Missing object className in json data :" + jsonData);
-			}
 			if (! object) {
-				object = Object.create(window[Constants.MAIN_MODULE_NAME][jsonData.className].prototype);
-				object.constructor.apply(object, []);
+				if (! jsonData.className ) {
+					object = {};
+				} else {
+					object = Object.create(window[Constants.MAIN_MODULE_NAME][jsonData.className].prototype);
+					object.constructor.apply(object, []);
+				}
 			}
 			if ( object.load ) {
 				// use custom loading method

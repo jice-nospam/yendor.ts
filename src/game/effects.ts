@@ -75,6 +75,7 @@ module Game {
 		selectTargets(owner: Actor, wearer: Actor, cellPos: Yendor.Position): boolean {
 			this.__selectedTargets = [];
 			var creatures: Actor[] = Engine.instance.actorManager.getCreatures();
+			var data: TilePickerEventData;
 			switch (this._method) {
 				case TargetSelectionMethod.ACTOR_ON_CELL :
 					if ( cellPos ) {
@@ -94,11 +95,15 @@ module Game {
 					return true;
 				case TargetSelectionMethod.SELECTED_ACTOR :
 					log("Left-click a target creature,\nor right-click to cancel.", Constants.LOG_WARN_COLOR);
-					Engine.instance.eventBus.publishEvent(EventType.PICK_TILE);
+					if ( this._range > 0 ) {
+						data = {origin: new Yendor.Position(wearer.x, wearer.y), range: this._range};
+					}
+					Engine.instance.eventBus.publishEvent(EventType.PICK_TILE, data);
 					return false;
 				case TargetSelectionMethod.SELECTED_RANGE :
 					log("Left-click a target tile,\nor right-click to cancel.", Constants.LOG_WARN_COLOR);
-					Engine.instance.eventBus.publishEvent(EventType.PICK_TILE);
+					data = {radius: this._range};
+					Engine.instance.eventBus.publishEvent(EventType.PICK_TILE, data);
 					return false;
 			}
 		}

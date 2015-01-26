@@ -359,6 +359,14 @@ module Game {
 	/********************************************************************************
 	 * Group: tilePicker
 	 ********************************************************************************/
+
+	export interface TilePickerEventData {
+		origin?: Yendor.Position;
+		// maximum distance from origin
+		range?: number;
+		// display some blast radius indicator around selected position
+		radius?: number;
+	}
 	/*
 		Class: TilePicker
 		A background Gui that sleeps until it receives a PICK_TILE event containing a TilePickerListener.
@@ -368,6 +376,7 @@ module Game {
 	export class TilePicker extends Gui implements EventListener {
 		private tilePos : Yendor.Position = new Yendor.Position();
 		private tileIsValid: boolean = false;
+		private data: TilePickerEventData;
 		constructor() {
 			super(Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT);
 			this.setModal();
@@ -379,12 +388,27 @@ module Game {
 				console.text[this.tilePos.x][this.tilePos.y] = this.tileIsValid ? "+".charCodeAt(0) : "x".charCodeAt(0);
 				console.fore[this.tilePos.x][this.tilePos.y] = this.tileIsValid ? Constants.TILEPICKER_OK_COLOR : Constants.TILEPICKER_KO_COLOR;
 			}
+			if ( this.data && this.data.range && this.data.origin ) {
+				// render the range
+				var pos: Yendor.Position = new Yendor.Position();
+				for ( var x: number = 0; x < Engine.instance.map.width; ++x) {
+					pos.x = x;
+					for ( var y: number = 0; y < Engine.instance.map.height; ++y) {
+						pos.y = y;
+						if ( Yendor.Position.distance(this.data.origin, pos) > this.data.range) {
+							console.back[pos.x][pos.y] = Yendor.ColorUtils.multiply(console.back[pos.x][pos.y], 0.8);
+							console.fore[pos.x][pos.y] = Yendor.ColorUtils.multiply(console.fore[pos.x][pos.y], 0.8);
+						}
+					}
+				}
+			}
 		}
 
-		onPICK_TILE() {
+		onPICK_TILE(data?: TilePickerEventData) {
 			Engine.instance.eventBus.registerListener(this, EventType.MOUSE_MOVE);
 			Engine.instance.eventBus.registerListener(this, EventType.MOUSE_CLICK);
 			Engine.instance.eventBus.registerListener(this, EventType.KEYBOARD_INPUT);
+			this.data = data;
 			this.show();
 			this.tileIsValid = true;
 			var player: Actor = Engine.instance.actorManager.getPlayer();
@@ -422,7 +446,7 @@ module Game {
 					}
 				break;
 			}
-			this.tileIsValid = Engine.instance.map.isInFov(this.tilePos.x, this.tilePos.y);
+			this.tileIsValid = this.checkTileValidity();
 		}
 
 		onMOUSE_CLICK(button: MouseButton) {
@@ -440,7 +464,18 @@ module Game {
 		onMOUSE_MOVE(mousePos: Yendor.Position) {
 			this.tilePos.x = mousePos.x;
 			this.tilePos.y = mousePos.y;
-			this.tileIsValid = Engine.instance.map.isInFov(this.tilePos.x, this.tilePos.y);
+			this.tileIsValid = this.checkTileValidity();
+		}
+
+		private checkTileValidity(): boolean {
+			if (! Engine.instance.map.isInFov(this.tilePos.x, this.tilePos.y)) {
+				return false;
+			}
+			if ( this.data && this.data.origin && this.data.range
+				&& Yendor.Position.distance(this.data.origin, this.tilePos) > this.data.range) {
+				return false;
+			}
+			return true;
 		}
 
 		private doSelectTile(pos: Yendor.Position) {

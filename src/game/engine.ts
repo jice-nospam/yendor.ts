@@ -163,6 +163,11 @@ module Game {
 			this._actorManager.getPlayer().addXp(amount);
 		}
 
+		private hasBackgroundAnimation(): boolean {
+			// TODO
+			return false;
+		}
+
 		/*
 			Function: convertKeyToAction
 			This function maps keyboard input into actual game actions.
@@ -285,9 +290,11 @@ module Game {
 					this._actorManager.updateActors();
 				}
 			}
-			// but render every frame to allow background animations (torch flickering, ...)
-			this.render();
-			this.root.render();
+			if (this.gameTime === 0 || this.hasBackgroundAnimation()) {
+				// but render every frame to allow background animations (torch flickering, ...)
+				this.render();
+				this.root.render();
+			}
 		}
 
 		/*
