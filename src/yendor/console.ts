@@ -56,10 +56,9 @@ module Yendor {
 			var r, g, b: number;
 			if ( typeof color === "number" ) {
 				// duplicated toRgbFromNumber code to avoid function call and array allocation
-				var col: number = <number>color;
-				r = (col & 0xFF0000) >> 16;
-				g = (col & 0x00FF00) >> 8;
-				b = col & 0x0000FF;
+				r = (<number>color & 0xFF0000) >> 16;
+				g = (<number>color & 0x00FF00) >> 8;
+				b = <number>color & 0x0000FF;
 			} else {
 				var rgb: number[] = ColorUtils.toRgb(color);
 				r = Math.round(rgb[0] * coef);
@@ -142,10 +141,9 @@ module Yendor {
 		}
 
 		static toRgbFromNumber(color: number): number[] {
-			var r = Math.floor(color / 65536);
-			color -= r * 65536;
-			var g = Math.floor(color / 256);
-			var b = color - g * 256;
+			var r = (color & 0xFF0000) >> 16;
+			var g = (color & 0x00FF00) >> 8;
+			var b = color & 0x0000FF;
 			return [r, g, b];
 		}
 

@@ -266,7 +266,7 @@ module Game {
 
 	 	computeTotalWeight(): number {
 	 		var weight: number = 0;
-	 		this.actors.forEach(function(actor: Actor) {
+	 		this.actors.forEach((actor: Actor) => {
 	 			if ( actor.pickable ) {
 	 				weight += actor.pickable.weight;
 	 			}
@@ -290,6 +290,7 @@ module Game {
 	 			return false;
 	 		}
 	 		this.actors.push( actor );
+	 		actor.pickable.shortcut = undefined;
 	 		if (this.__listener) {
 	 			this.__listener.onAdd(actor, this, owner);
 	 		}
@@ -333,6 +334,11 @@ module Game {
 		private onThrowEffector: Effector;
 		private _weight: number;
 		private _destroyedWhenThrown: boolean;
+		/*
+			Property: _shortcut
+			Inventory shortcut between 0 (a) and 25 (z)
+		*/
+		shortcut: number;
 
 		get weight() { return this._weight; }
 		get onThrowEffect() { return this.onThrowEffector ? this.onThrowEffector.effect : undefined; }

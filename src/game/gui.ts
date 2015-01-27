@@ -229,6 +229,11 @@ module Game {
 		private title: string = "=== inventory - ESC to close ===";
 		private selectedItem: number;
 		private itemListener: ItemListener;
+		/*
+			Property: inventory
+			Stacked list of items
+		*/
+		private inventory: Actor[][];
 
 		constructor(width: number, height: number) {
 			super(width, height);
@@ -246,8 +251,11 @@ module Game {
 			if ( input.action === PlayerAction.CANCEL ) {
 				this.hide();
 			} else {
-				var index = input.keyCode - KeyEvent.DOM_VK_A;
-				this.selectItem(index);
+				var shortcut = input.keyCode - KeyEvent.DOM_VK_A;
+				var item: Actor = this.getByShortcut(shortcut);
+				if ( item ) {
+					this.selectItem(item);
+				}
 			}
 		}
 
@@ -257,18 +265,20 @@ module Game {
 
 		onMOUSE_CLICK(button: MouseButton) {
 			if ( button  === MouseButton.LEFT && this.selectedItem !== undefined ) {
-				this.selectItem(this.selectedItem);
+				this.selectItemByIndex(this.selectedItem);
 			}
 		}
 
-		private selectItem(index: number) {
-			var player: Actor = Engine.instance.actorManager.getPlayer();
-			var inventory: Actor[][] = this.buildStackedInventory(player.container);
-			if ( index >= 0 && index < inventory.length ) {
-				this.hide();
-				var item: Actor = inventory[index][0];
-				this.itemListener(item);
+		private selectItemByIndex(index: number) {
+			if ( index >= 0 && index < this.inventory.length ) {
+				var item: Actor = this.inventory[index][0];
+				this.selectItem(item);
 			}
+		}
+
+		private selectItem(item: Actor) {
+			this.hide();
+			this.itemListener(item);
 		}
 
 		show() {
@@ -276,6 +286,8 @@ module Game {
 			Engine.instance.eventBus.registerListener(this, EventType.KEYBOARD_INPUT);
 			Engine.instance.eventBus.registerListener(this, EventType.MOUSE_MOVE);
 			Engine.instance.eventBus.registerListener(this, EventType.MOUSE_CLICK);
+			var player: Actor = Engine.instance.actorManager.getPlayer();
+			this.buildStackedInventory(player.container);
 		}
 
 		hide() {
@@ -294,17 +306,13 @@ module Game {
 			this.console.clearText();
 			this.x = Math.floor( destination.width / 2 - this.width / 2 );
 			this.y = Math.floor( destination.height / 2 - this.height / 2 );
-			var shortcut: number = "a".charCodeAt(0);
 			var y: number = 1;
 			this.console.print(Math.floor(this.width / 2 - this.title.length / 2), 0, this.title);
 			var player: Actor = Engine.instance.actorManager.getPlayer();
-			var inventory: Actor[][] = this.buildStackedInventory(player.container);
-			for ( var i: number = 0; i < inventory.length; i++) {
-				var list: Actor[] = inventory[i];
-				this.renderItem(list[0], i, y, shortcut, list.length);
+			for ( var i: number = 0; i < this.inventory.length; i++) {
+				var list: Actor[] = this.inventory[i];
+				this.renderItem(list[0], i, y, list.length);
 				y++;
-				shortcut++;
-
 			}
 			var capacity: string = "capacity " + ( Math.floor(10 * player.container.computeTotalWeight()) / 10 )
 				+ "/" + player.container.capacity;
@@ -312,8 +320,8 @@ module Game {
 			super.render(destination);
 		}
 
-		private renderItem(item: Actor, entryNum: number, y: number, shortcut: number, count: number = 1) {
-			var itemDescription = "(" + String.fromCharCode(shortcut) + ") " + item.ch + " ";
+		private renderItem(item: Actor, entryNum: number, y: number, count: number = 1) {
+			var itemDescription = "(" + String.fromCharCode(item.pickable.shortcut + "a".charCodeAt(0)) + ") " + item.ch + " ";
 			if ( count > 1 ) {
 				itemDescription += count + " ";
 			}
@@ -330,16 +338,44 @@ module Game {
 			this.console.fore[6][y] = item.col;
 		}
 
-		private buildStackedInventory(container: Container): Actor[][] {
+	 	private getByShortcut(shortcut: number): Actor {
+ 			for ( var i: number = 0; i < this.inventory.length; i++) {
+				var list: Actor[] = this.inventory[i];
+				if ( list[0].pickable.shortcut === shortcut ) {
+ 					return list[0];
+ 				}
+ 			}
+ 			return undefined;
+	 	}
+
+	 	/*
+	 		Function: getFreeShortcut
+
+	 		Returns:
+	 		the first available shortcut
+	 	*/
+	 	private getFreeShortcut(): number {
+	 		var shortcut: number = 0;
+	 		var available: boolean = true;
+	 		do {
+	 			available = (this.getByShortcut(shortcut) === undefined);
+	 			if (! available) {
+	 				shortcut++;
+	 			}
+	 		} while (! available);
+	 		return shortcut;
+	 	}
+
+		private buildStackedInventory(container: Container) {
 			var player: Actor = Engine.instance.actorManager.getPlayer();
-			var inventory: Actor[][] = [];
+			this.inventory = [];
 			for ( var i: number = 0; i < player.container.size(); ++i) {
 				var item: Actor = player.container.get(i);
 				var found: boolean = false;
 				if (item.isStackable()) {
-					for ( var j: number = 0; j < inventory.length; ++j) {
-						if ( inventory[j][0].isStackable() && inventory[j][0].name === item.name ) {
-							inventory[j].push(item);
+					for ( var j: number = 0; j < this.inventory.length; ++j) {
+						if ( this.inventory[j][0].isStackable() && this.inventory[j][0].name === item.name ) {
+							this.inventory[j].push(item);
 							found = true;
 							break;
 						}
@@ -348,11 +384,20 @@ module Game {
 				if (! found) {
 					var itemTab: Actor[] = [];
 					itemTab.push(item);
-					inventory.push(itemTab);
+					this.inventory.push(itemTab);
 				}
 			}
-			inventory.sort(function(a: Actor[], b: Actor[]) { return a[0].name.localeCompare(b[0].name); });
-			return inventory;
+			this.inventory.sort(function(a: Actor[], b: Actor[]) { return a[0].name.localeCompare(b[0].name); });
+			this.defineShortcuts();
+		}
+
+		private defineShortcuts() {
+			for ( var i: number = 0; i < this.inventory.length; i++) {
+				var list: Actor[] = this.inventory[i];
+				if ( list[0].pickable.shortcut === undefined ) {
+					list[0].pickable.shortcut = this.getFreeShortcut();
+				}
+			}
 		}
 	}
 

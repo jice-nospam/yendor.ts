@@ -552,7 +552,7 @@ module Game {
 					if ( this.__path ) {
 						this.followPath(owner);
 					} else {
-						this.waitTime += this.walkTime;						
+						this.waitTime += this.walkTime;
 					}
 				} else {
 					// at melee range. attack
