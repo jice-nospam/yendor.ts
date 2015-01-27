@@ -87,7 +87,7 @@ module Game {
 			// this helps debugging items
 			if ( Yendor.urlParams[Constants.URL_PARAM_DEBUG] ) {
 				var player: Actor = this._actorManager.getPlayer();
-				[	ActorType.FROST_WAND, ActorType.SHORT_SWORD,
+				[	ActorType.FROST_WAND, ActorType.SHORT_SWORD, ActorType.FIREBALL_SCROLL, ActorType.CONFUSION_SCROLL,
 					ActorType.WOODEN_SHIELD, ActorType.TELEPORT_STAFF,
 					ActorType.LIFE_DETECT_STAFF, ActorType.REGENERATION_POTION,
 					ActorType.SHORT_BOW

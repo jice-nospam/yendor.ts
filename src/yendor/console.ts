@@ -53,29 +53,32 @@ module Yendor {
 			A new color
 		*/
 		static multiply(color: Color, coef: number): Color {
+			var r, g, b: number;
 			if ( typeof color === "number" ) {
 				// duplicated toRgbFromNumber code to avoid function call and array allocation
 				var col: number = <number>color;
-				var r: number = (col & 0xFF0000) >> 16;
-				var g: number = (col & 0x00FF00) >> 8;
-				var b: number = col & 0x0000FF;
-				r = Math.floor(r * coef);
-				g = Math.floor(g * coef);
-				b = Math.floor(b * coef);
-				return b | (g << 8) | (r << 16);
+				r = (col & 0xFF0000) >> 16;
+				g = (col & 0x00FF00) >> 8;
+				b = col & 0x0000FF;
 			} else {
 				var rgb: number[] = ColorUtils.toRgb(color);
-				var r2: number = Math.round(rgb[0] * coef);
-				var g2: number = Math.round(rgb[1] * coef);
-				var b2: number = Math.round(rgb[2] * coef);
-				return "rgb(" + r2 + "," + g2 + "," + b2 + ")";
+				r = Math.round(rgb[0] * coef);
+				g = Math.round(rgb[1] * coef);
+				b = Math.round(rgb[2] * coef);
 			}
+			r = Math.round(r * coef);
+			g = Math.round(g * coef);
+			b = Math.round(b * coef);
+			r = r < 0 ? 0 : r > 255 ? 255 : r;
+			g = g < 0 ? 0 : g > 255 ? 255 : g;
+			b = b < 0 ? 0 : b > 255 ? 255 : b;
+			return b | (g << 8) | (r << 16);
 		}
 
 		static add(col1: Color, col2: Color): Color {
-			var r = ((<number>col1 & 0xFF0000) >> 16) + ((<number>col2 & 0xFF0000) >> 16);
-			var g = ((<number>col1 & 0x00FF00) >> 8) + ((<number>col2 & 0x00FF00) >> 8);
-			var b = (<number>col1 & 0x0000FF) + (<number>col2 & 0x0000FF);
+			var r = ( ( <number>col1 & 0xFF0000) >> 16) + ( ( <number>col2 & 0xFF0000) >> 16);
+			var g = ( ( <number>col1 & 0x00FF00) >> 8) + ( ( <number>col2 & 0x00FF00) >> 8);
+			var b = ( <number>col1 & 0x0000FF) + ( <number>col2 & 0x0000FF);
 			if ( r > 255 ) {
 				r = 255;
 			}

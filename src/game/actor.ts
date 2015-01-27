@@ -242,7 +242,7 @@ module Game {
 			},
 			// scroll
 			LIGHTNING_BOLT_SCROLL: (x: number, y: number) => { return ActorFactory.createLightningBoltScroll(x, y, 5, 20); },
-			FIREBALL_SCROLL: (x: number, y: number) => { return ActorFactory.createFireballScroll(x, y, 3, 12); },
+			FIREBALL_SCROLL: (x: number, y: number) => { return ActorFactory.createFireballScroll(x, y, 10, 3, 12); },
 			CONFUSION_SCROLL: (x: number, y: number) => { return ActorFactory.createConfusionScroll(x, y, 5, 12); },
 			// weapon
 			// 		blade
@@ -353,14 +353,14 @@ module Game {
 			return lightningBolt;
 		}
 
-		private static createFireballScroll(x: number, y: number, range: number, damages: number): Actor {
+		private static createFireballScroll(x: number, y: number, range: number, radius: number, damages: number): Actor {
 			var fireball = new Actor();
 			fireball.init(x, y, "#", "scroll of fireball", "scroll", 0xFFFF3F, true);
 			fireball.pickable = new Pickable(0.1);
 			fireball.pickable.setOnUseEffect(new InstantHealthEffect(-damages,
 				"[The actor1] get[s] burned for [value1] hit points."),
-				new TargetSelector( TargetSelectionMethod.SELECTED_RANGE, range),
-				"A fireball explodes, burning everything within " + range + " tiles.", true);
+				new TargetSelector( TargetSelectionMethod.SELECTED_RANGE, range, radius),
+				"A fireball explodes, burning everything within " + radius + " tiles.", true);
 			return fireball;
 		}
 

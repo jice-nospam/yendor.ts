@@ -6,6 +6,7 @@
 	- added frozen and life detection condition
 	- added teleport effect
 	- added wand of frost, staff of teleportation, staff of life detection
+	- limit range of effects, ranged weapons, item throwing
 
 # 0.3.0 / 17-jan-2015
 * Yendor toolkit

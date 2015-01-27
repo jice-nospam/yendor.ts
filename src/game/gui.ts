@@ -388,16 +388,19 @@ module Game {
 				console.text[this.tilePos.x][this.tilePos.y] = this.tileIsValid ? "+".charCodeAt(0) : "x".charCodeAt(0);
 				console.fore[this.tilePos.x][this.tilePos.y] = this.tileIsValid ? Constants.TILEPICKER_OK_COLOR : Constants.TILEPICKER_KO_COLOR;
 			}
-			if ( this.data && this.data.range && this.data.origin ) {
-				// render the range
+			var hasRange: boolean = (this.data && this.data.range && this.data.origin) ? true : false;
+			var hasRadius: boolean = (this.data && this.data.radius) ? true : false;
+			if ( hasRange || hasRadius ) {
+				// render the range and/or radius
 				var pos: Yendor.Position = new Yendor.Position();
-				for ( var x: number = 0; x < Engine.instance.map.width; ++x) {
-					pos.x = x;
-					for ( var y: number = 0; y < Engine.instance.map.height; ++y) {
-						pos.y = y;
-						if ( Yendor.Position.distance(this.data.origin, pos) > this.data.range) {
-							console.back[pos.x][pos.y] = Yendor.ColorUtils.multiply(console.back[pos.x][pos.y], 0.8);
-							console.fore[pos.x][pos.y] = Yendor.ColorUtils.multiply(console.fore[pos.x][pos.y], 0.8);
+				for ( pos.x = 0; pos.x < Engine.instance.map.width; ++pos.x) {
+					for ( pos.y = 0; pos.y < Engine.instance.map.height; ++pos.y) {
+						var atRange: boolean = hasRange ? Yendor.Position.distance(this.data.origin, pos) <= this.data.range : true;
+						var inRadius: boolean = this.tileIsValid && hasRadius ? Yendor.Position.distance(this.tilePos, pos) <= this.data.radius : false;
+						var coef = inRadius ? 1.2 : atRange ? 1 : 0.8;
+						if ( coef !== 1 ) {
+							console.back[pos.x][pos.y] = Yendor.ColorUtils.multiply(console.back[pos.x][pos.y], coef);
+							console.fore[pos.x][pos.y] = Yendor.ColorUtils.multiply(console.fore[pos.x][pos.y], coef);
 						}
 					}
 				}

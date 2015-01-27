@@ -34,18 +34,21 @@ module Game {
 		className: string;
 		private _method: TargetSelectionMethod;
 		private _range: number;
+		private _radius: number;
 		__selectedTargets: Actor[];
 		/*
 			Constructor: constructor
 
 			Parameters:
 			_method - the target selection method
-			_range - for methods requiring a range
+			_range - *optional* for methods requiring a range
+			_radius - *optional* for methods having a radius of effect
 		*/
-		constructor(_method: TargetSelectionMethod = undefined, _range: number = 0) {
+		constructor(_method: TargetSelectionMethod = undefined, _range?: number, _radius?: number) {
 			this.className = "TargetSelector";
 			this._method = _method;
 			this._range = _range;
+			this._radius = _radius;
 		}
 
 		/*
@@ -59,6 +62,12 @@ module Game {
 			The selection range (read-only)
 		*/
 		get range() { return this._range; }
+
+		/*
+			Property: radius
+			Radius of effect around the selected position
+		*/
+		get radius() { return this._radius; }
 
 		/*
 			Function: selectTargets
@@ -95,14 +104,12 @@ module Game {
 					return true;
 				case TargetSelectionMethod.SELECTED_ACTOR :
 					log("Left-click a target creature,\nor right-click to cancel.", Constants.LOG_WARN_COLOR);
-					if ( this._range > 0 ) {
-						data = {origin: new Yendor.Position(wearer.x, wearer.y), range: this._range};
-					}
+					data = {origin: new Yendor.Position(wearer.x, wearer.y), range: this._range, radius: this._radius};
 					Engine.instance.eventBus.publishEvent(EventType.PICK_TILE, data);
 					return false;
 				case TargetSelectionMethod.SELECTED_RANGE :
 					log("Left-click a target tile,\nor right-click to cancel.", Constants.LOG_WARN_COLOR);
-					data = {radius: this._range};
+					data = {origin: new Yendor.Position(wearer.x, wearer.y), range: this._range, radius: this._radius};
 					Engine.instance.eventBus.publishEvent(EventType.PICK_TILE, data);
 					return false;
 			}
@@ -119,7 +126,7 @@ module Game {
 					this.__selectedTargets = Engine.instance.actorManager.findActorsOnCell( pos, creatures);
 				break;
 				case TargetSelectionMethod.SELECTED_RANGE :
-					this.__selectedTargets = Engine.instance.actorManager.findActorsInRange( pos, this._range, creatures );
+					this.__selectedTargets = Engine.instance.actorManager.findActorsInRange( pos, this._radius, creatures );
 				break;
 			}
 		}
