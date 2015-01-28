@@ -164,14 +164,12 @@ module Game {
 			this.console.clearBack(0x000000);
 			this.console.clearText();
 			var player: Player = Engine.instance.actorManager.getPlayer();
+			this.console.print(0, 0, this.mouseLookText);
 			this.renderBar(1, 1, Constants.STAT_BAR_WIDTH, "HP", player.destructible.hp,
 				player.destructible.maxHp, Constants.HEALTH_BAR_BACKGROUND, Constants.HEALTH_BAR_FOREGROUND);
-			if ( player.ai.hasCondition(ConditionType.OVERENCUMBERED)) {
-				this.console.print(1, 2, "OVERENCUMBERED");
-			}
-			this.renderBar(1, 5, Constants.STAT_BAR_WIDTH, "XP(" + player.xpLevel + ")", player.destructible.xp,
+			this.renderBar(1, 2, Constants.STAT_BAR_WIDTH, "XP(" + player.xpLevel + ")", player.destructible.xp,
 				player.getNextLevelXp(), Constants.XP_BAR_BACKGROUND, Constants.XP_BAR_FOREGROUND);
-			this.console.print(0, 0, this.mouseLookText);
+			this.renderConditions(player.ai.conditions);
 			this.renderMessages();
 			super.render(destination);
 		}
@@ -179,6 +177,18 @@ module Game {
 		clear() {
 			this.messages = [];
 			this.mouseLookText = "";
+		}
+
+		private renderConditions(conditions: Condition[]) {
+			if ( !conditions ) {
+				return;
+			}
+			for ( var i: number = 0, len: number = conditions.length; i < len && i < 4; ++i) {
+				var cond: Condition = conditions[i];
+				this.renderBar(1, 3 + i, Constants.STAT_BAR_WIDTH, cond.getName(),
+					cond.time, cond.initialTime, Constants.CONDITION_BAR_BACKGROUND,
+					Constants.CONDITION_BAR_FOREGROUND, false);
+			}
 		}
 
 		private handleMouseLook( actors: Actor[] ) {
@@ -203,13 +213,16 @@ module Game {
 		}
 
 		private renderBar(x: number, y: number, width: number, name: string, value: number,
-			maxValue: number, foreColor: Yendor.Color, backColor: Yendor.Color) {
+			maxValue: number, foreColor: Yendor.Color, backColor: Yendor.Color, displayValues: boolean = true) {
 			this.console.clearBack(backColor, x, y, width, 1);
 			var barWidth = Math.floor(value / maxValue * width);
 			if ( barWidth > 0 ) {
 				this.console.clearBack(foreColor, x, y, barWidth, 1);
 			}
-			var label: string = name + " : " + Math.floor(value) + "/" + Math.floor(maxValue);
+			var label: string = name;
+			if ( displayValues && maxValue !== -1) {
+				label += " : " + Math.floor(value) + "/" + Math.floor(maxValue);
+			}
 			this.console.print(x + Math.floor(( width - label.length) / 2), y, label);
 		}
 	}

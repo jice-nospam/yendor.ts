@@ -15,9 +15,9 @@ module Game {
 	*/
 	export class Ai implements Persistent, ContainerListener {
 		className: string;
-		private conditions: Condition[];
+		private _conditions: Condition[];
 		// time until next turn.
-		private _waitTime: number = 0;
+		waitTime: number = 0;
 		// time to make a step
 		private _walkTime: number;
 
@@ -26,8 +26,7 @@ module Game {
 			this.walkTime = walkTime;
 		}
 
-		get waitTime() { return this._waitTime; }
-		set waitTime(newValue: number) { this._waitTime = newValue; }
+		get conditions() { return this._conditions; }
 
 		get walkTime() {
 			var time = this._walkTime;
@@ -42,14 +41,14 @@ module Game {
 		set walkTime(newValue: number) { this._walkTime = newValue; }
 
 		update(owner: Actor) {
-			if ( ! this.conditions ) {
+			if ( ! this._conditions ) {
 				return;
 			}
-			for ( var i: number = 0, n: number = this.conditions.length; i < n; ++i) {
-				var cond: Condition = this.conditions[i];
+			for ( var i: number = 0, n: number = this._conditions.length; i < n; ++i) {
+				var cond: Condition = this._conditions[i];
 				if ( !cond.update(owner) ) {
 					cond.onRemove(owner);
-					this.conditions.splice(i, 1);
+					this._conditions.splice(i, 1);
 					i--;
 					n--;
 				}
@@ -57,33 +56,33 @@ module Game {
 		}
 
 		addCondition(cond: Condition, owner: Actor) {
-			if ( ! this.conditions ) {
-				this.conditions = [];
+			if ( ! this._conditions ) {
+				this._conditions = [];
 			}
-			this.conditions.push(cond);
+			this._conditions.push(cond);
 			cond.onApply(owner);
 		}
 
 		removeCondition(cond: ConditionType) {
-			if ( ! this.conditions ) {
+			if ( ! this._conditions ) {
 				return;
 			}
-			for ( var i: number = 0, n: number = this.conditions.length; i < n; ++i) {
-				if ( this.conditions[i].type === cond ) {
-					this.conditions.splice(i, 1);
+			for ( var i: number = 0, n: number = this._conditions.length; i < n; ++i) {
+				if ( this._conditions[i].type === cond ) {
+					this._conditions.splice(i, 1);
 					break;
 				}
 			}
 		}
 
 		getConditionDescription(): string {
-			return  this.conditions && this.conditions.length > 0 ? this.conditions[0].getName() : undefined;
+			return  this._conditions && this._conditions.length > 0 ? this._conditions[0].getName() : undefined;
 		}
 
 		hasActiveConditions(): boolean {
-			var n: number = this.conditions ? this.conditions.length : 0;
+			var n: number = this._conditions ? this._conditions.length : 0;
 			for ( var i: number = 0; i < n; i++) {
-				if ( this.conditions[i].time > 0 ) {
+				if ( this._conditions[i].time > 0 ) {
 					return true;
 				}
 			}
@@ -91,10 +90,10 @@ module Game {
 		}
 
 		getCondition(type: ConditionType): Condition {
-			var n: number = this.conditions ? this.conditions.length : 0;
+			var n: number = this._conditions ? this._conditions.length : 0;
 			for ( var i: number = 0; i < n; i++) {
-				if ( this.conditions[i].type === type ) {
-					return this.conditions[i];
+				if ( this._conditions[i].type === type ) {
+					return this._conditions[i];
 				}
 			}
 			return undefined;

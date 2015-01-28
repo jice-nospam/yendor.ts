@@ -164,13 +164,15 @@ module Game {
 	*/
 	export class Condition implements Persistent {
 		className: string;
+
 		/*
 	 		Property: time
 	 		Time before this condition stops, or -1 for permanent conditions
 		*/
 		protected _time: number;
 		protected _type: ConditionType;
-		private static condNames = [ "confused", "stunned" ];
+		protected _initialTime: number;
+		private static condNames = [ "confused", "stunned", "frozen", "regeneration", "overencumbered", "life detec" ];
 
 		// factory
 		static create(type: ConditionType, time: number, additionalArgs?: ConditionAdditionalParam): Condition {
@@ -190,12 +192,14 @@ module Game {
 
 		constructor(type: ConditionType, time: number) {
 			this.className = "Condition";
+			this._initialTime = time;
 			this._time = time;
 			this._type = type;
 		}
 
 		get type() { return this._type; }
 		get time() { return this._time; }
+		get initialTime() { return this._initialTime; }
 		getName() { return Condition.condNames[this._type]; }
 
 		/*
@@ -292,12 +296,10 @@ module Game {
 		The creature is slowed down
 	*/
 	export class FrozenCondition extends Condition {
-		private startTime: number;
 		private originalColor: Yendor.Color;
 		constructor(nbTurns: number) {
 			super(ConditionType.FROZEN, nbTurns);
 			this.className = "FrozenCondition";
-			this.startTime = nbTurns;
 		}
 
 		onApply(owner: Actor) {
@@ -310,7 +312,7 @@ module Game {
 		}
 
 		update(owner: Actor): boolean {
-			var progress = (this._time - 1) / this.startTime;
+			var progress = (this._time - 1) / this._initialTime;
 			owner.col = Yendor.ColorUtils.add(Yendor.ColorUtils.multiply(Constants.FROST_COLOR, progress),
 				Yendor.ColorUtils.multiply(this.originalColor, 1 - progress));
 			return super.update(owner);

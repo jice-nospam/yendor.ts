@@ -577,7 +577,7 @@ module Game {
 		}
 
 		private updateCorpses() {
-			for ( var i: number = 0, len: number = this.updatingCorpses.length; i < len; --i) {
+			for ( var i: number = 0, len: number = this.updatingCorpses.length; i < len; ++i) {
 				var actor: Actor = this.updatingCorpses[i];
 				if ( ! actor.ai.hasActiveConditions()) {
 					this.scheduler.remove(actor);

@@ -25,6 +25,8 @@ module Game {
         export var HEALTH_BAR_FOREGROUND: Yendor.Color = 0x7F3F3F;
         export var XP_BAR_BACKGROUND: Yendor.Color = 0x9F3FFF;
         export var XP_BAR_FOREGROUND: Yendor.Color = 0x3F007F;
+        export var CONDITION_BAR_BACKGROUND: Yendor.Color = 0x3F9F3F;
+        export var CONDITION_BAR_FOREGROUND: Yendor.Color = 0x007F3F;
         export var INVENTORY_BACKGROUND: Yendor.Color = 0x272822;
         export var INVENTORY_BACKGROUND_ACTIVE: Yendor.Color = 0x383830;
         export var INVENTORY_FOREGROUND: Yendor.Color = 0xFD971F;
