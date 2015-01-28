@@ -1,12 +1,12 @@
-# 0.4.0 / TBD
+# 0.4.0 / 28-jan-2015
 * Yendor toolkit
-	- improved console rendering performance (Console.setChar removed, Console.text is now a matrix of ascii codes)
+	- improved Pixi console rendering performance (Console.setChar removed, Console.text is now a matrix of ascii codes)
 
 * GeneRogue
 	- added frozen and life detection condition
 	- added teleport effect
 	- added wand of frost, staff of teleportation, staff of life detection
-	- limit range of effects, ranged weapons, item throwing
+	- effects, ranged weapons and item throwing have a max range
 
 # 0.3.0 / 17-jan-2015
 * Yendor toolkit
