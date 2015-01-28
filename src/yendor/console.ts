@@ -61,9 +61,9 @@ module Yendor {
 				b = <number>color & 0x0000FF;
 			} else {
 				var rgb: number[] = ColorUtils.toRgb(color);
-				r = Math.round(rgb[0] * coef);
-				g = Math.round(rgb[1] * coef);
-				b = Math.round(rgb[2] * coef);
+				r = rgb[0];
+				g = rgb[1];
+				b = rgb[2];
 			}
 			r = Math.round(r * coef);
 			g = Math.round(g * coef);
