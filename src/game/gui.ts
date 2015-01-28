@@ -388,6 +388,7 @@ module Game {
 				if (item.isStackable()) {
 					for ( var j: number = 0; j < this.inventory.length; ++j) {
 						if ( this.inventory[j][0].isStackable() && this.inventory[j][0].name === item.name ) {
+							item.pickable.shortcut = this.inventory[j][0].pickable.shortcut;
 							this.inventory[j].push(item);
 							found = true;
 							break;
