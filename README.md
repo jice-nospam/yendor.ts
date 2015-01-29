@@ -23,6 +23,12 @@ It comes with a simple generic roguelike game to extend and a benchmark showcasi
  	- Opera 15+
  * For pixi renderers, check [pixi.js](http://www.pixijs.com/) documentation
 
+# Links
+* [yendor.ts documentation](http://roguecentral.org/doryen/yendor.ts/doc/yendor/index.html)
+* [GeneRogue documentation](http://roguecentral.org/doryen/yendor.ts/doc/game/index.html)
+* [Play GeneRogue online](http://roguecentral.org/doryen/yendor.ts/game/index.html)
+* [Run the benchmark online](http://roguecentral.org/doryen/yendor.ts/bench/index.html)
+
 # Quick Start
 
 ## pre-requisites
@@ -52,12 +58,6 @@ Then open game/index.html in your favorite browser.
 `jake benchmark`
 
 Then open game/index.html in your favorite browser.
-
-# Links
-* [yendor.ts documentation](http://roguecentral.org/doryen/yendor.ts/doc/yendor/index.html)
-* [GeneRogue documentation](http://roguecentral.org/doryen/yendor.ts/doc/game/index.html)
-* [Play GeneRogue online](http://roguecentral.org/doryen/yendor.ts/game/index.html)
-* [Run the benchmark online](http://roguecentral.org/doryen/yendor.ts/bench/index.html)
 
 # Troubleshooting
 

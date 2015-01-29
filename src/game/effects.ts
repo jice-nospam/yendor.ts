@@ -172,7 +172,7 @@ module Game {
 		protected _time: number;
 		protected _type: ConditionType;
 		protected _initialTime: number;
-		private static condNames = [ "confused", "stunned", "frozen", "regeneration", "overencumbered", "life detec" ];
+		private static condNames = [ "confused", "stunned", "frozen", "regeneration", "overencumbered", "life detection" ];
 
 		// factory
 		static create(type: ConditionType, time: number, additionalArgs?: ConditionAdditionalParam): Condition {

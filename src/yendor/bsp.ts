@@ -194,6 +194,9 @@ module Yendor {
 
 		/*
 			Group: traversing the tree
+		*/
+
+		/*
 			Function: traversePreOrder
 			Traverse the tree in pre-order (node, left child, right child).
 

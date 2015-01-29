@@ -50,7 +50,7 @@ module Yendor {
 			coef - the factor
 
 			Returns:
-			A new color
+			A new color as a number between 0x000000 and 0xFFFFFF
 		*/
 		static multiply(color: Color, coef: number): Color {
 			var r, g, b: number;
@@ -74,6 +74,18 @@ module Yendor {
 			return b | (g << 8) | (r << 16);
 		}
 
+		/*
+			Function: add
+			Add two colors.
+			> (r1,g1,b1) + (r2,g2,b2) = (r1+r2,g1+g2,b1+b2)
+
+			Parameters:
+			col1 - the first color
+			col2 - the second color
+
+			Returns:
+			A new color as a number between 0x000000 and 0xFFFFFF
+		*/
 		static add(col1: Color, col2: Color): Color {
 			var r = ( ( <number>col1 & 0xFF0000) >> 16) + ( ( <number>col2 & 0xFF0000) >> 16);
 			var g = ( ( <number>col1 & 0x00FF00) >> 8) + ( ( <number>col2 & 0x00FF00) >> 8);
@@ -127,6 +139,10 @@ module Yendor {
 			}
 		}
 
+		/*
+			Function: toWeb
+			Convert a color into a CSS color format (as a string)
+		*/
 		static toWeb(color: Color): string {
 			if ( typeof color === "number") {
 				var ret: string = color.toString(16);
@@ -140,14 +156,14 @@ module Yendor {
 			}
 		}
 
-		static toRgbFromNumber(color: number): number[] {
+		private static toRgbFromNumber(color: number): number[] {
 			var r = (color & 0xFF0000) >> 16;
 			var g = (color & 0x00FF00) >> 8;
 			var b = color & 0x0000FF;
 			return [r, g, b];
 		}
 
-		static toRgbFromString(color: String): number[] {
+		private static toRgbFromString(color: String): number[] {
 			color = color.toLowerCase();
 			var stdColValues: number[] = ColorUtils.stdCol[String(color)];
 			if ( stdColValues ) {
@@ -199,6 +215,11 @@ module Yendor {
 		Interface: Comparable
 	*/
 	export interface Comparable {
+		/*
+			Function: equals
+			Returns:
+			true if two Comparable are equals
+		*/
 		equals(c: Comparable): boolean;
 	}
 
@@ -250,6 +271,11 @@ module Yendor {
 			return this.x === pos.x && this.y === pos.y;
 		}
 
+		/*
+			Function: distance
+			Returns : 
+			the distance between two Position
+		*/
 		static distance(p1: Position, p2: Position): number {
 			var dx: number = p1.x - p2.x;
 			var dy: number = p1.y - p2.y;
@@ -259,6 +285,17 @@ module Yendor {
 		// static arrays to help scan adjacent cells
 		private static TDX: number[] = [-1, 0, 1, -1, 1, -1, 0, 1];
 		private static TDY: number[] = [-1, -1, -1, 0, 0, 1, 1, 1];
+		/*
+			Function: getAdjacentCells
+			Returns all cells adjacent to this position. The map width/height are used to handle border cases.
+
+			Parameters:
+			mapWidth - the width of the map
+			mapHeight - the height of the map
+
+			Returns:
+			an array of Position containing all adjacent cells
+		*/
 		getAdjacentCells(mapWidth: number, mapHeight: number): Position[] {
 			var adjacents : Position[] = [];
 			for ( var i: number = 0; i < 8; ++i) {
