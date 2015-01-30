@@ -139,6 +139,7 @@ module Game {
 		FROST_WAND,
 		TELEPORT_STAFF,
 		LIFE_DETECT_STAFF,
+		MAP_REVEAL_STAFF,
 		// 		projectile
 		// 			arrow	
 		BONE_ARROW,
@@ -278,6 +279,9 @@ module Game {
 					weight: 3, twoHanded: true, additionalArgs: {range: 15},
 					condType: ConditionType.DETECT_LIFE, nbTurns: 10, condMessage: "[The actor1] [is] aware of life around [it]."
 				} ); },
+			MAP_REVEAL_STAFF: (x: number, y: number) => { return ActorFactory.createStaff(x, y, "staff of mapping",
+				{	maxCharges: 5, fireTargetSelectionMethod: TargetSelectionMethod.ACTOR_ON_CELL,
+					weight: 3, twoHanded: true, fireEffect: new MapRevealEffect() } ); },
 			// 		projectile
 			// 			arrow
 			BONE_ARROW: (x: number, y: number) => { return ActorFactory.createProjectile(x, y, "bone arrow", 1, "arrow"); },

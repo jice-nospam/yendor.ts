@@ -463,6 +463,21 @@ module Game {
 		}
 	}
 
+	export class MapRevealEffect implements Effect {
+		className: string;
+		constructor() {
+			this.className = "MapRevealEffect";
+		}
+
+		applyTo(actor: Actor, coef: number = 1.0): boolean {
+			if ( actor === Engine.instance.actorManager.getPlayer() ) {
+				Engine.instance.map.reveal();
+				return true;
+			}
+			return false;
+		}
+	}
+
 	/*
 	 	Class: Effector
 	 	Combines an effect and a target selector. Can also display a message before applying the effect.

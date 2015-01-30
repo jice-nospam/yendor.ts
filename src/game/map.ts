@@ -150,6 +150,21 @@ module Game {
 			super(dungeonLevel);
 		}
 
+		private findFloorTile(node: Yendor.BSPNode, map: Map): Yendor.Position {
+			var pos: Yendor.Position = new Yendor.Position(Math.floor(node.x + node.w / 2), Math.floor(node.y + node.h / 2));
+			while ( map.isWall(pos.x, pos.y) ) {
+				pos.x ++;
+				if ( pos.x === node.x + node.w ) {
+					pos.x = node.x;
+					pos.y ++;
+					if ( pos.y === node.y + node.h ) {
+						pos.y = 0;
+					}
+				}
+			}
+			return pos;
+		}
+
 		private createRandomRoom(node: Yendor.BSPNode, map: Map) {
 			var x, y, w, h: number;
 			var rng: Yendor.Random = new Yendor.ComplementaryMultiplyWithCarryRandom();
@@ -180,10 +195,10 @@ module Game {
 		private connectChildren(node: Yendor.BSPNode, map: Map) {
 			var left: Yendor.BSPNode = node.leftChild;
 			var right: Yendor.BSPNode = node.rightChild;
-			this.dig(map, Math.floor(left.x + left.w / 2), Math.floor(left.y + left.h / 2),
-				Math.floor(left.x + left.w / 2), Math.floor(right.y + right.h / 2));
-			this.dig(map, Math.floor(left.x + left.w / 2), Math.floor(right.y + right.h / 2),
-				Math.floor(right.x + right.w / 2), Math.floor(right.y + right.h / 2));
+			var leftPos: Yendor.Position = this.findFloorTile(left, map);
+			var rightPos: Yendor.Position = this.findFloorTile(right, map);
+			this.dig(map, leftPos.x, leftPos.y, leftPos.x, rightPos.y);
+			this.dig(map, leftPos.x, rightPos.y, rightPos.x, rightPos.y);
 		}
 
 		private visitNode(node: Yendor.BSPNode, userData: any): Yendor.BSPTraversalAction {
@@ -294,6 +309,14 @@ module Game {
 		}
 		setWall(x: number, y: number) {
 			this.map.setCell(x, y, false, false);
+		}
+
+		reveal() {
+			for (var x = 0; x < this._width; x++) {
+				for (var y = 0; y < this._height; y++) {
+					this.tiles[x][y].explored = true;
+				}
+			}
 		}
 
 		render(root: Yendor.Console) {
