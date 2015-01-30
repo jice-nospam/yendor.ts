@@ -42,14 +42,13 @@ module Yendor {
 			w - the node region's width
 			h - the node region's height
 		*/
-		constructor(x: number, y: number, w: number, h: number, level?: number) {
+		constructor(x: number, y: number, w: number, h: number, level?: number, parent?: BSPNode) {
 			this.x = x;
 			this.y = y;
 			this.w = w;
 			this.h = h;
-			if ( level ) {
-				this.level = level;
-			}
+			this.level = level;
+			this.parent = parent;
 		}
 
 		/*
@@ -145,11 +144,11 @@ module Yendor {
 			this.horiz = horiz;
 			this.splitPos = splitPos;
 			if ( horiz ) {
-				this.leftChild = new BSPNode(this.x, this.y, this.splitPos, this.h, this.level + 1);
-				this.rightChild = new BSPNode(this.x + this.splitPos, this.y, this.w - this.splitPos, this.h, this.level + 1);
+				this.leftChild = new BSPNode(this.x, this.y, this.splitPos, this.h, this.level + 1, this);
+				this.rightChild = new BSPNode(this.x + this.splitPos, this.y, this.w - this.splitPos, this.h, this.level + 1, this);
 			} else {
-				this.leftChild = new BSPNode(this.x, this.y, this.w, this.splitPos, this.level + 1);
-				this.rightChild = new BSPNode(this.x, this.y + this.splitPos, this.w, this.h - this.splitPos, this.level + 1);
+				this.leftChild = new BSPNode(this.x, this.y, this.w, this.splitPos, this.level + 1, this);
+				this.rightChild = new BSPNode(this.x, this.y + this.splitPos, this.w, this.h - this.splitPos, this.level + 1, this);
 			}
 		}
 

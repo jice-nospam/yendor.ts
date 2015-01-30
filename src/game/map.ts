@@ -145,8 +145,7 @@ module Game {
 	}
 
 	export class BspDungeonBuilder extends AbstractDungeonBuilder {
-		private lastx: number;
-		private lasty: number;
+		private firstRoom: boolean = true;
 		constructor(dungeonLevel: number) {
 			super(dungeonLevel);
 		}
@@ -154,27 +153,45 @@ module Game {
 		private createRandomRoom(node: Yendor.BSPNode, map: Map) {
 			var x, y, w, h: number;
 			var rng: Yendor.Random = new Yendor.ComplementaryMultiplyWithCarryRandom();
-			var firstRoom: boolean = (this.lastx === undefined);
-			w = rng.getNumber(Constants.ROOM_MIN_SIZE, node.w);
-			h = rng.getNumber(Constants.ROOM_MIN_SIZE, node.h);
-			x = rng.getNumber(node.x, node.x + node.w - w);
-			y = rng.getNumber(node.y, node.y + node.h - h);
-			this.createRoom( map, firstRoom, x, y, x + w - 1, y + h - 1 );
-			if ( ! firstRoom ) {
-				// build a corridor from previous room
-				this.dig(map, this.lastx, this.lasty,
-					Math.floor(x + w / 2), this.lasty);
-				this.dig(map, Math.floor(x + w / 2), this.lasty,
-					Math.floor(x + w / 2), Math.floor(y + h / 2));
+			var horiz: boolean = node.parent.horiz;
+			if ( horiz ) {
+				w = rng.getNumber(Constants.ROOM_MIN_SIZE, node.w - 1);
+				h = rng.getNumber(Constants.ROOM_MIN_SIZE, node.h - 2);
+				if (node === node.parent.leftChild) {
+					x = rng.getNumber(node.x + 1, node.x + node.w - w);
+				} else {
+					x = rng.getNumber(node.x, node.x + node.w - w);
+				}
+				y = rng.getNumber(node.y + 1, node.y + node.h - h);
+			} else {
+				w = rng.getNumber(Constants.ROOM_MIN_SIZE, node.w - 2);
+				h = rng.getNumber(Constants.ROOM_MIN_SIZE, node.h - 1);
+				if (node === node.parent.leftChild) {
+					y = rng.getNumber(node.y + 1, node.y + node.h - h);
+				} else {
+					y = rng.getNumber(node.y, node.y + node.h - h);
+				}
+				x = rng.getNumber(node.x + 1, node.x + node.w - w);
 			}
-			this.lastx = Math.floor(x + w / 2);
-			this.lasty = Math.floor(y + h / 2);
+			this.createRoom( map, this.firstRoom, x, y, x + w - 1, y + h - 1 );
+			this.firstRoom = false;
+		}
+
+		private connectChildren(node: Yendor.BSPNode, map: Map) {
+			var left: Yendor.BSPNode = node.leftChild;
+			var right: Yendor.BSPNode = node.rightChild;
+			this.dig(map, Math.floor(left.x + left.w / 2), Math.floor(left.y + left.h / 2),
+				Math.floor(left.x + left.w / 2), Math.floor(right.y + right.h / 2));
+			this.dig(map, Math.floor(left.x + left.w / 2), Math.floor(right.y + right.h / 2),
+				Math.floor(right.x + right.w / 2), Math.floor(right.y + right.h / 2));
 		}
 
 		private visitNode(node: Yendor.BSPNode, userData: any): Yendor.BSPTraversalAction {
 			var map: Map = <Map>userData;
 			if ( node.isLeaf() ) {
 				this.createRandomRoom(node, map);
+			} else {
+				this.connectChildren(node, map);
 			}
 			return Yendor.BSPTraversalAction.CONTINUE;
 		}
