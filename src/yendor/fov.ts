@@ -69,6 +69,20 @@ module Yendor {
 		}
 
 		/*
+			Function: setWalkable
+
+			Parameters:
+			x - x coordinate in the map
+			y - y coordinate in the map
+			value - whether this cell is walkable or not
+		*/
+		setWalkable(x: number, y: number, value: boolean) {
+			if (this._walkable[x] && this._walkable[x][y]) {
+				this._walkable[x][y] = value;
+			}
+		}
+
+		/*
 			Function: isTransparent
 
 			Parameters:
@@ -80,6 +94,20 @@ module Yendor {
 		*/
 		isTransparent(x: number, y: number): boolean {
 			return this._transparent[x] ? this._transparent[x][y] : false;
+		}
+
+		/*
+			Function: setTransparent
+
+			Parameters:
+			x - x coordinate in the map
+			y - y coordinate in the map
+			value - whether this cell is transparent or not
+		*/
+		setTransparent(x: number, y: number, value: boolean) {
+			if (this._transparent[x]) {
+				this._transparent[x][y] = value;
+			}
 		}
 
 

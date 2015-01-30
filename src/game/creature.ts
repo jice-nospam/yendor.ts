@@ -177,8 +177,7 @@ module Game {
 			}
 			// move the creature
 			this.waitTime += this.walkTime;
-			owner.x = x;
-			owner.y = y;
+			owner.moveTo(x, y);
 			return true;
 		}
 
@@ -726,6 +725,12 @@ module Game {
 				this.destructible.xp -= nextLevelXp;
 				log("Your battle skills grow stronger! You reached level " + this.xpLevel, 0xFF0000);
 			}
+		}
+
+		moveTo(x: number, y: number) {
+			super.moveTo(x, y);
+			Engine.instance.map.setDirty();
+			Engine.instance.map.updateScentField(x, y);
 		}
 
 		update() {

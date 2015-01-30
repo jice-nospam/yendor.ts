@@ -225,6 +225,8 @@ module Game {
 		private _currentScentValue: number = Constants.SCENT_THRESHOLD;
 		private _width: number;
 		private _height: number;
+		// whether we must recompute fov
+		private _dirty: boolean = true;
 
 		constructor() {
 			this.className = "Map";
@@ -246,6 +248,7 @@ module Game {
 		get width() { return this._width; }
 		get height() { return this._height; }
 		get currentScentValue() { return this._currentScentValue; }
+		setDirty() { this._dirty = true; }
 
 		isWall(x: number, y: number): boolean {
 			return !this.map.isWalkable(x, y);
@@ -299,16 +302,23 @@ module Game {
 		}
 
 		computeFov(x: number, y: number, radius: number) {
-			this.map.computeFov(x, y, radius);
-			this._currentScentValue ++;
-			this.updateScentField(x, y);
+			if ( this._dirty ) {
+				this.map.computeFov(x, y, radius);
+			}
+			this._dirty = false;
 		}
 
 		setFloor(x: number, y: number) {
 			this.map.setCell(x, y, true, true);
+			this._dirty = true;
 		}
 		setWall(x: number, y: number) {
 			this.map.setCell(x, y, false, false);
+			this._dirty = true;
+		}
+		setTransparent(x: number, y: number, value: boolean) {
+			this.map.setTransparent(x, y, value);
+			this._dirty = true;
 		}
 
 		reveal() {
@@ -351,7 +361,8 @@ module Game {
 			return true;
 		}
 
-		private updateScentField(xPlayer: number, yPlayer: number) {
+		updateScentField(xPlayer: number, yPlayer: number) {
+			this._currentScentValue ++;
 			for (var x: number = 0; x < this._width; x++) {
 		        for (var y: number = 0; y < this._height; y++) {
 		            if (this.isInFov(x, y)) {

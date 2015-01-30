@@ -15,7 +15,7 @@ module Game {
 		to keep the game from trying to load data with an old format.
 		This should be an integer.
 	*/
-	var SAVEFILE_VERSION: string = "8";
+	var SAVEFILE_VERSION: string = "9";
 
 	/*
 		Class: Engine
@@ -65,7 +65,6 @@ module Game {
 				this.createNewGame();
 			}
 			this.guiManager.createOtherGui();
-			this.computePlayerFov();
 		}
 
 		private initEventBus() {
@@ -145,7 +144,6 @@ module Game {
 			this._map.init( Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT );
 			var dungeonBuilder: BspDungeonBuilder = new BspDungeonBuilder(this.dungeonLevel);
 			dungeonBuilder.build(this._map);
-			this.computePlayerFov();
 		}
 
 		onCHANGE_STATUS(status: GameStatus) {
@@ -156,7 +154,6 @@ module Game {
 			this.guiManager.getGui(Constants.STATUS_PANEL_ID ).clear();
 			this.dungeonLevel = 1;
 			this.createNewGame();
-			this.computePlayerFov();
 		}
 
 		onGAIN_XP(amount: number) {
@@ -330,6 +327,7 @@ module Game {
 		*/
 		private render() {
 			this.root.clearText();
+			this.computePlayerFov();
 			this._map.render(this.root);
 			this._actorManager.renderActors(this.root);
 			this.guiManager.renderGui(this.root);

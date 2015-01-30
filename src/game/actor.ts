@@ -158,6 +158,8 @@ module Game {
 		defense: number;
 		xp: number;
 		walkTime: number;
+		// really big creatures block fov
+		transparent: boolean;
 	}
 
 	interface BladeParam {
@@ -218,11 +220,11 @@ module Game {
 			// creature
 			// 		beast
 			GOBLIN: (x: number, y: number) => { return ActorFactory.createBeast(x, y, "g", "goblin", "goblin corpse", 0x3F7F3F,
-				{ hp: 3, attack: 1, defense: 0, xp: 10, walkTime: 4 } ); },
+				{ hp: 3, attack: 1, defense: 0, xp: 10, walkTime: 4, transparent: true } ); },
 			ORC: (x: number, y: number) => { return ActorFactory.createBeast(x, y, "o", "orc", "dead orc", 0x3F7F3F,
-				{ hp: 9, attack: 2, defense: 0, xp: 35, walkTime: 5 } ); },
+				{ hp: 9, attack: 2, defense: 0, xp: 35, walkTime: 5, transparent: true } ); },
 			TROLL: (x: number, y: number) => { return ActorFactory.createBeast(x, y, "T", "troll", "troll carcass", 0x007F00,
-				{ hp: 15, attack: 3, defense: 1, xp: 100, walkTime: 6 } ); },
+				{ hp: 15, attack: 3, defense: 1, xp: 100, walkTime: 6, transparent: false } ); },
 			// 		human
 			PLAYER: (x: number, y: number) => { return ActorFactory.createPlayer(x, y); },
 			// potion
@@ -459,6 +461,7 @@ module Game {
 			beast.ai = new MonsterAi(beastParam.walkTime);
 			beast.blocks = true;
 			beast.destructible.xp = beastParam.xp;
+			beast.transparent = beastParam.transparent;
 			return beast;
 		}
 
@@ -489,10 +492,14 @@ module Game {
 		addCreature( actor: Actor ) {
 			this.creatures.push(actor);
 			this.scheduler.add(actor);
+			// possibly set the map transparency
+			actor.moveTo(actor.x, actor.y);
 		}
 
 		addItem( actor: Actor ) {
 			this.items.push(actor);
+			// possibly set the map transparency
+			actor.moveTo(actor.x, actor.y);
 		}
 
 		getCreatures(): Actor[] {
@@ -760,6 +767,8 @@ module Game {
 
 		// whether you can walk on the tile where this actor is
 		private _blocks: boolean = false;
+		// whether light goes through this actor
+		private _transparent: boolean = true;
 		// whether you can see this actor only if it's in your field of view
 		private _fovOnly: boolean = true;
 		// whether this actor name is singular (you can write "a <name>")
@@ -778,6 +787,16 @@ module Game {
 			this._col = _col;
 			this._singular = singular;
 			this._type = types ? ActorClass.buildClassHierarchy(types) : ActorClass.getRoot();
+		}
+
+		moveTo(x: number, y: number) {
+			if (! this._transparent) {
+				Engine.instance.map.setTransparent(this.x, this.y, true);
+				super.moveTo(x, y);
+				Engine.instance.map.setTransparent(this.x, this.y, false);
+			} else {
+				super.moveTo(x, y);
+			}
 		}
 
 		get waitTime() { return this.ai ? this.ai.waitTime : undefined ; }
@@ -812,6 +831,11 @@ module Game {
 			return this._blocks;
 		}
 		set blocks(newValue: boolean) { this._blocks = newValue; }
+
+		isTransparent(): boolean {
+			return this._transparent;
+		}
+		set transparent(newValue: boolean) { this._transparent = newValue; }
 
 		isFovOnly(): boolean {
 			return this._fovOnly;

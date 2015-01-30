@@ -121,6 +121,10 @@ module Game {
 			owner.ch = "%";
 			owner.name = this._corpseName;
 			owner.blocks = false;
+			if (! owner.transparent) {
+				Engine.instance.map.setTransparent(owner.x, owner.y, true);
+				owner.transparent = true;
+			}
 		}
 	}
 

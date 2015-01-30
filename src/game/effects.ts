@@ -421,8 +421,7 @@ module Game {
 					}
 				}
 			}
-			actor.x = x;
-			actor.y = y;
+			actor.moveTo(x, y);
 			if ( this.successMessage) {
 				log(transformMessage(this.successMessage, actor));
 			}
