@@ -747,6 +747,11 @@ module Game {
 		}
 
 		close(owner: Actor) {
+			// don't close if there's a living actor on the cell
+			if (! Engine.instance.map.canWalk(owner.x, owner.y)) {
+				log(transformMessage("Cannot close [the actor1]", owner));
+				return;
+			}
 			this.closed = true;
 			owner.ch = "+";
 			owner.blocks = true;
