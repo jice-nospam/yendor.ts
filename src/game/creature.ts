@@ -288,6 +288,7 @@ module Game {
         		case PlayerAction.ZAP :
         		case PlayerAction.MOVE_UP :
         		case PlayerAction.MOVE_DOWN :
+        		case PlayerAction.ACTIVATE :
 					if (! this.hasCondition(ConditionType.CONFUSED) && ! this.hasCondition(ConditionType.STUNNED)) {
 						this.handleAction(owner, this.__nextAction);
 					}
@@ -376,6 +377,9 @@ module Game {
 				break;
 				case PlayerAction.ZAP :
 					this.zap(owner);
+				break;
+				case PlayerAction.ACTIVATE :
+					this.activate(owner);
 				break;
 			}
 		}
@@ -488,6 +492,15 @@ module Game {
 				log("There's nothing to pick here.");
 			} else if (! pickedItem) {
 				log("Your inventory is full.");
+			}
+		}
+
+		private activate(owner: Actor) {
+			// check if there's an adjacent lever
+			var lever: Actor = Engine.instance.actorManager.findAdjacentLever(owner);
+			if ( lever ) {
+				lever.lever.activate();
+				this.waitTime += this.walkTime;
 			}
 		}
 	}

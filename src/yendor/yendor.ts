@@ -14,7 +14,7 @@
 module Yendor {
 	"use strict";
 
-	export var VERSION = "0.4.1";
+	export var VERSION = "0.5.0";
 
 	/*
 		Property: urlParams

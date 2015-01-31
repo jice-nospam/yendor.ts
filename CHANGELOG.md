@@ -1,4 +1,6 @@
-# 0.4.1 / TBD
+# 0.5.0 / TBD
+* Yendor toolkit
+	- the Fov class does not handle the 'isWalkable' property anymore
 
 # 0.4.0 / 28-jan-2015
 * Yendor toolkit

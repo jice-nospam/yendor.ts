@@ -698,4 +698,70 @@ module Game {
 			}
 		}
 	}
+
+	export interface LeverAction {
+		(): void;
+	}
+
+	/*
+		Class: Lever
+		Can be activated with E key when standing on an adjacent cell.
+		This can be used to open/close doors, turn wall torchs on/off, or implement actual levers...
+	*/
+	export class Lever implements ActorFeature {
+		className: string;
+		action: LeverAction;
+		constructor(action: LeverAction) {
+			this.className = "Lever";
+			this.action = action;
+		}
+
+		activate() {
+			this.action();
+		}
+	}
+
+	/*
+		Class: Door
+		Can be open/closed. Does not necessarily block sight (portcullis).
+	*/
+	export class Door implements ActorFeature {
+		className: string;
+		private closed: boolean = true;
+		private seeThrough: boolean;
+		constructor(seeThrough: boolean) {
+			this.className = "Door";
+			this.seeThrough = seeThrough;
+		}
+
+		isClosed(): boolean { return this.closed; }
+
+		open(owner: Actor) {
+			this.closed = false;
+			owner.ch = "/";
+			owner.blocks = false;
+			owner.transparent = true;
+			Engine.instance.map.setWalkable(owner.x, owner.y, true);
+			Engine.instance.map.setTransparent(owner.x, owner.y, true);
+			log(transformMessage("[The actor1] is open.", owner));
+		}
+
+		close(owner: Actor) {
+			this.closed = true;
+			owner.ch = "+";
+			owner.blocks = true;
+			owner.transparent = this.seeThrough;
+			Engine.instance.map.setWalkable(owner.x, owner.y, false);
+			Engine.instance.map.setTransparent(owner.x, owner.y, this.seeThrough);
+			log(transformMessage("[The actor1] is closed.", owner));
+		}
+
+		openOrClose(owner: Actor) {
+			if ( this.closed ) {
+				this.open(owner);
+			} else {
+				this.close(owner);
+			}
+		}
+	}
 }

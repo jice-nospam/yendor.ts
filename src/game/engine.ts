@@ -91,6 +91,7 @@ module Game {
 					ActorType.LIFE_DETECT_STAFF, ActorType.REGENERATION_POTION,
 					ActorType.SHORT_BOW
 				].forEach((type: ActorType) => { this._actorManager.addItem(ActorFactory.create(type, player.x, player.y)); });
+				this._actorManager.addItem(ActorFactory.create(ActorType.WOODEN_DOOR, player.x + 2, player.y));
 			}
 		}
 
@@ -222,6 +223,8 @@ module Game {
 					return PlayerAction.FIRE;
 				case KeyEvent.DOM_VK_Z :
 					return PlayerAction.ZAP;
+				case KeyEvent.DOM_VK_E :
+					return PlayerAction.ACTIVATE;
 				default:
 					if ( event.key === ">" ) {
 						return PlayerAction.MOVE_DOWN;

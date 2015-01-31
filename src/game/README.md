@@ -22,6 +22,7 @@ To compile it, run `jake` then open game/index.html in your browser.
 * t : throw an item
 * f : fire a projectile using an equipped ranged weapon
 * z : zap an equipped magic wand or staff
+* e : activate an adjacent mechanism (lever, torch, door, ...)
 * > : go down the stairs
 * < : go up the stairs
 * ESC : open game menu
@@ -41,6 +42,7 @@ Reminder for stuff that might be added to the game. Or not.
 	- armors
 	- lighting
 	- spells and spellbooks
+	- gems and weapons/armors slots
 	- static containers (chests, corpses) + loot GUI
 	- jewelry (necklace, rings)
 	- shield should block only one hit per turn

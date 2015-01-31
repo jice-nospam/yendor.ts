@@ -4,6 +4,8 @@ module Game {
 
 	export class Tile {
 		explored: boolean = false;
+		isWall: boolean = true;
+		isWalkable: boolean = false;
 		scentAmount: number = 0;
 	}
 
@@ -251,7 +253,7 @@ module Game {
 		setDirty() { this._dirty = true; }
 
 		isWall(x: number, y: number): boolean {
-			return !this.map.isWalkable(x, y);
+			return this.tiles[x] ? this.tiles[x][y].isWall : true;
 		}
 
 		canWalk(x: number, y: number): boolean {
@@ -309,11 +311,19 @@ module Game {
 		}
 
 		setFloor(x: number, y: number) {
-			this.map.setCell(x, y, true, true);
+			this.map.setTransparent(x, y, true);
+			this.tiles[x][y].isWall = false;
+			this.tiles[x][y].isWalkable = true;
 			this._dirty = true;
 		}
 		setWall(x: number, y: number) {
-			this.map.setCell(x, y, false, false);
+			this.map.setTransparent(x, y, false);
+			this.tiles[x][y].isWall = true;
+			this.tiles[x][y].isWalkable = false;
+			this._dirty = true;
+		}
+		setWalkable(x: number, y: number, value: boolean) {
+			this.tiles[x][y].isWalkable = value;
 			this._dirty = true;
 		}
 		setTransparent(x: number, y: number, value: boolean) {
@@ -355,7 +365,9 @@ module Game {
 					this.tiles[x][y] = new Tile();
 					this.tiles[x][y].explored = jsonData.tiles[x][y].explored;
 					this.tiles[x][y].scentAmount = jsonData.tiles[x][y].scentAmount;
-					this.map.setCell(x, y, jsonData.map._walkable[x][y], jsonData.map._transparent[x][y]);
+					this.tiles[x][y].isWall = jsonData.tiles[x][y].isWall;
+					this.tiles[x][y].isWalkable = jsonData.tiles[x][y].isWalkable;
+					this.map.setTransparent(x, y, jsonData.map._transparent[x][y]);
 				}
 			}
 			return true;

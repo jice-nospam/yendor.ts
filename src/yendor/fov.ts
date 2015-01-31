@@ -12,7 +12,6 @@ module Yendor {
 		Stores the map properties and compute the field of view from a point.
 	*/
 	export class Fov {
-		private _walkable: boolean[][];
 		private _transparent: boolean[][];
 		private _inFov: boolean[][];
 		private startAngle: number[];
@@ -30,11 +29,9 @@ module Yendor {
 		constructor(_width: number, _height: number) {
 			this._width = _width;
 			this._height = _height;
-			this._walkable = [];
 			this._transparent = [];
 			this._inFov = [];
 			for ( var x = 0; x < _width; x++) {
-				this._walkable[x] = [];
 				this._transparent[x] = [];
 				this._inFov[x] = [];
 			}
@@ -53,34 +50,6 @@ module Yendor {
 			Return the map height (read-only)
 		*/
 		get height() { return this._height; }
-
-		/*
-			Function: isWalkable
-
-			Parameters:
-			x - x coordinate in the map
-			y - y coordinate in the map
-
-			Returns:
-			true if the cell at coordinate x,y is walkable
-		*/
-		isWalkable(x: number, y: number): boolean {
-			return this._walkable[x] ? this._walkable[x][y] : false;
-		}
-
-		/*
-			Function: setWalkable
-
-			Parameters:
-			x - x coordinate in the map
-			y - y coordinate in the map
-			value - whether this cell is walkable or not
-		*/
-		setWalkable(x: number, y: number, value: boolean) {
-			if (this._walkable[x] && this._walkable[x][y]) {
-				this._walkable[x][y] = value;
-			}
-		}
 
 		/*
 			Function: isTransparent
@@ -124,21 +93,6 @@ module Yendor {
 		*/
 		isInFov(x: number, y: number): boolean {
 			return this._inFov[x] ? this._inFov[x][y] : false;
-		}
-
-		/*
-			Function: setCell
-			Define the properties of a map cell
-
-			Parameters:
-			x - x coordinate in the map
-			y - y coordinate in the map
-			walkable - whether a creature can walk on this cell
-			transparent - whether a creature can see through this cell
-		*/
-		setCell(x: number, y: number, walkable: boolean, transparent: boolean) {
-			this._walkable[x][y] = walkable;
-			this._transparent[x][y] = transparent;
 		}
 
 		/*

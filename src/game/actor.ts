@@ -149,6 +149,7 @@ module Game {
 		// miscellaneous (under root class)
 		STAIR_UP,
 		STAIR_DOWN,
+		WOODEN_DOOR,
 		LAST_ACTOR_TYPE
 	};
 
@@ -211,6 +212,22 @@ module Game {
 	interface ConditionPotionParam extends ConditionParam, PotionParam {
 	}
 
+	interface DoorParam {
+		seeThrough: boolean;
+		color: Yendor.Color;
+	}
+
+	interface ShieldParam {
+		defense: number;
+		color: Yendor.Color;
+	}
+
+	interface ProjectileParam {
+		damages: number;
+		projectileTypeName: string;
+		color: Yendor.Color;
+	}
+
 	/*
 		Class: ActorFactory
 		Built an actor.
@@ -256,8 +273,10 @@ module Game {
 			GREAT_SWORD: (x: number, y: number) => { return ActorFactory.createBlade(x, y, "greatsword",
 				{ damages: 10, attackTime: 6, twoHanded: true, weight: 4 } ); },
 			// 		shield
-			WOODEN_SHIELD: (x: number, y: number) => { return ActorFactory.createShield(x, y, "wooden shield", 1); },
-			IRON_SHIELD: (x: number, y: number) => { return ActorFactory.createShield(x, y, "iron shield", 2); },
+			WOODEN_SHIELD: (x: number, y: number) => { return ActorFactory.createShield(x, y, "wooden shield",
+				{ defense: 1, color: Constants.WOOD_COLOR } ); },
+			IRON_SHIELD: (x: number, y: number) => { return ActorFactory.createShield(x, y, "iron shield",
+				{ defense: 2, color: Constants.METAL_COLOR } ); },
 			// 		ranged
 			SHORT_BOW: (x: number, y: number) => { return ActorFactory.createRanged(x, y, "short bow",
 				{ damages: 3, projectileTypeName: "arrow", loadTime: 4, twoHanded: true, range: 15 } ); },
@@ -286,13 +305,18 @@ module Game {
 					weight: 3, twoHanded: true, fireEffect: new MapRevealEffect() } ); },
 			// 		projectile
 			// 			arrow
-			BONE_ARROW: (x: number, y: number) => { return ActorFactory.createProjectile(x, y, "bone arrow", 1, "arrow"); },
-			IRON_ARROW: (x: number, y: number) => { return ActorFactory.createProjectile(x, y, "iron arrow", 1.25, "arrow"); },
+			BONE_ARROW: (x: number, y: number) => { return ActorFactory.createProjectile(x, y, "bone arrow",
+				{ damages: 1, projectileTypeName: "arrow", color: Constants.BONE_COLOR } ); },
+			IRON_ARROW: (x: number, y: number) => { return ActorFactory.createProjectile(x, y, "iron arrow",
+				{ damages: 1.25, projectileTypeName: "arrow", color: Constants.WOOD_COLOR } ); },
 			// 			bolt
-			BOLT: (x: number, y: number) => { return ActorFactory.createProjectile(x, y, "bolt", 1, "bolt"); },
+			BOLT: (x: number, y: number) => { return ActorFactory.createProjectile(x, y, "bolt",
+				{ damages: 1, projectileTypeName: "bolt", color: Constants.METAL_COLOR } ); },
 			// miscellaneous (under root class)
 			STAIR_UP: (x: number, y: number) => { return ActorFactory.createStairs(x, y, "<", "up"); },
-			STAIR_DOWN: (x: number, y: number) => { return ActorFactory.createStairs(x, y, ">", "down"); }
+			STAIR_DOWN: (x: number, y: number) => { return ActorFactory.createStairs(x, y, ">", "down"); },
+			WOODEN_DOOR: (x: number, y: number) => { return ActorFactory.createDoor(x, y, "wooden door",
+				{ seeThrough: false, color: Constants.WOOD_COLOR } ); }
 		};
 		/*
 			Function: create
@@ -351,7 +375,7 @@ module Game {
 		// scrolls
 		private static createLightningBoltScroll(x: number, y: number, range: number, damages: number): Actor {
 			var lightningBolt = new Actor();
-			lightningBolt.init(x, y, "#", "scroll of lightning bolt", "scroll", 0xFFFF3F, true);
+			lightningBolt.init(x, y, "#", "scroll of lightning bolt", "scroll", Constants.PAPER_COLOR, true);
 			lightningBolt.pickable = new Pickable(0.1);
 			lightningBolt.pickable.setOnUseEffect(new InstantHealthEffect(-damages,
 				"A lightning bolt strikes [the actor1] with a loud thunder!\nThe damage is [value1] hit points."),
@@ -361,7 +385,7 @@ module Game {
 
 		private static createFireballScroll(x: number, y: number, range: number, radius: number, damages: number): Actor {
 			var fireball = new Actor();
-			fireball.init(x, y, "#", "scroll of fireball", "scroll", 0xFFFF3F, true);
+			fireball.init(x, y, "#", "scroll of fireball", "scroll", Constants.PAPER_COLOR, true);
 			fireball.pickable = new Pickable(0.1);
 			fireball.pickable.setOnUseEffect(new InstantHealthEffect(-damages,
 				"[The actor1] get[s] burned for [value1] hit points."),
@@ -372,7 +396,7 @@ module Game {
 
 		private static createConfusionScroll(x: number, y: number, range: number, nbTurns: number): Actor {
 			var confusionScroll = new Actor();
-			confusionScroll.init(x, y, "#", "scroll of confusion", "scroll", 0xFFFF3F, true);
+			confusionScroll.init(x, y, "#", "scroll of confusion", "scroll", Constants.PAPER_COLOR, true);
 			confusionScroll.pickable = new Pickable(0.1);
 			confusionScroll.pickable.setOnUseEffect(new ConditionEffect(ConditionType.CONFUSED, nbTurns,
 				"[The actor1's] eyes look vacant,\nas [it] start[s] to stumble around!"),
@@ -383,7 +407,7 @@ module Game {
 		// weapons
 		private static createBlade(x: number, y: number, name: string, swordParam: BladeParam): Actor {
 			var sword = new Actor();
-			sword.init(x, y, "/", name, "weapon|blade", 0xF0F0F0, true);
+			sword.init(x, y, "/", name, "weapon|blade", Constants.METAL_COLOR, true);
 			sword.pickable = new Pickable(swordParam.weight);
 			sword.pickable.setOnThrowEffect(new InstantHealthEffect(-swordParam.damages,
 				"The sword hits [the actor1] for [value1] hit points."),
@@ -395,7 +419,7 @@ module Game {
 
 		private static createRanged(x: number, y: number, name: string, rangedParam: RangedParam): Actor {
 			var bow = new Actor();
-			bow.init(x, y, ")", name, "weapon|ranged", 0xF0F0F0, true);
+			bow.init(x, y, ")", name, "weapon|ranged", Constants.METAL_COLOR, true);
 			bow.pickable = new Pickable(2);
 			bow.equipment = new Equipment(rangedParam.twoHanded ? Constants.SLOT_BOTH_HANDS : Constants.SLOT_RIGHT_HAND);
 			bow.ranged = new Ranged(rangedParam.damages, rangedParam.projectileTypeName,
@@ -419,25 +443,25 @@ module Game {
 			return ActorFactory.createStaff(x, y, name, staffParam);
 		}
 
-		private static createProjectile(x: number, y: number, name: string, damages: number, projectileTypeName: string): Actor {
+		private static createProjectile(x: number, y: number, name: string, projectileParam: ProjectileParam): Actor {
 			var projectile = new Actor();
-			projectile.init(x, y, "\\", name, "weapon|projectile|" + projectileTypeName, 0xD0D0D0, true);
+			projectile.init(x, y, "\\", name, "weapon|projectile|" + projectileParam.projectileTypeName, projectileParam.color, true);
 			projectile.pickable = new Pickable(0.1);
-			projectile.pickable.setOnThrowEffect(new InstantHealthEffect(-damages,
+			projectile.pickable.setOnThrowEffect(new InstantHealthEffect(-projectileParam.damages,
 				"The " + name + " hits [the actor1] for [value1] points."),
 				new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL));
 			projectile.equipment = new Equipment(Constants.SLOT_QUIVER);
 			return projectile;
 		}
 
-		private static createShield(x: number, y: number, name: string, defense: number): Actor {
+		private static createShield(x: number, y: number, name: string, shieldParam: ShieldParam): Actor {
 			var shield = new Actor();
-			shield.init(x, y, "[", name, "weapon|shield", 0xF0F0F0, true);
+			shield.init(x, y, "[", name, "weapon|shield", shieldParam.color, true);
 			shield.pickable = new Pickable(5);
 			shield.pickable.setOnThrowEffect(new ConditionEffect(ConditionType.STUNNED, 2,
 				"The shield hits [the actor1] and stuns [it]!"),
 				new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL));
-			shield.equipment = new Equipment(Constants.SLOT_LEFT_HAND, defense);
+			shield.equipment = new Equipment(Constants.SLOT_LEFT_HAND, shieldParam.defense);
 			return shield;
 		}
 
@@ -449,6 +473,14 @@ module Game {
 			return stairs;
 		}
 
+		private static createDoor(x: number, y: number, name: string, doorParam: DoorParam): Actor {
+			var door: Actor = new Actor();
+			door.init(x, y, "+", name, undefined, doorParam.color, true);
+			door.door = new Door(doorParam.seeThrough);
+			door.door.close(door);
+			door.lever = new Lever(function() { door.door.openOrClose(door); } );
+			return door;
+		}
 		/*
 			creature factories
 		*/
@@ -729,6 +761,30 @@ module Game {
 			}
 			return actorsInRange;
 		}
+
+		/*
+			Function: findAdjacentLever
+			Return the first adjacent item having the lever feature
+
+			Parameters:
+			pos - a position on the map
+		*/
+		findAdjacentLever( pos: Yendor.Position ): Actor {
+			var adjacentCells: Yendor.Position[] = pos.getAdjacentCells(Engine.instance.map.width, Engine.instance.map.height);
+			var len: number = adjacentCells.length;
+			// scan all 8 adjacent cells
+			for ( var i: number = 0; i < len; ++i) {
+				if ( !Engine.instance.map.isWall(adjacentCells[i].x, adjacentCells[i].y)) {
+					var items: Actor[] = this.findActorsOnCell(adjacentCells[i], this.items);
+					for ( var j: number = 0, jlen: number = items.length; j < jlen; ++j) {
+						if ( items[j].lever ) {
+							return items[j];
+						}
+					}
+				}
+			}
+			return undefined;
+		}
 	}
 
 	/********************************************************************************
@@ -751,7 +807,11 @@ module Game {
 		// can throw away some type of actors
 		RANGED,
 		// has magic properties
-		MAGIC
+		MAGIC,
+		// can be open/closed, locked/unlocked
+		DOOR,
+		// can be triggered by pressing E when standing on an adjacent cell
+		LEVER,
 	}
 
 	export interface ActorFeature extends Persistent {
@@ -875,6 +935,12 @@ module Game {
 		get magic(): Magic { return <Magic>this.features[ActorFeatureType.MAGIC]; }
 		set magic(newValue: Magic) { this.features[ActorFeatureType.MAGIC] = newValue; }
 
+		get door(): Door { return <Door>this.features[ActorFeatureType.DOOR]; }
+		set door(newValue: Door) { this.features[ActorFeatureType.DOOR] = newValue; }
+
+		get lever(): Lever { return <Lever>this.features[ActorFeatureType.LEVER]; }
+		set lever(newValue: Lever) { this.features[ActorFeatureType.LEVER] = newValue; }
+
 		/*
 			Function: getaname
 			Returns " a <name>" or " an <name>" or " <name>"
@@ -989,6 +1055,11 @@ module Game {
 			// rebuild container -> listener backlinks
 			if ( this.ai && this.container ) {
 				this.container.setListener(this.ai);
+			}
+			// rebuild lever->door links
+			if ( this.door && this.lever ) {
+				var thisDoor: Actor = this;
+				this.lever.action = function() {thisDoor.door.openOrClose(thisDoor); };
 			}
 		}
 

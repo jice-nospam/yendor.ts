@@ -39,6 +39,12 @@ module Game {
         export var TILEPICKER_KO_COLOR: Yendor.Color = 0xFF2222;
         export var FROST_COLOR: Yendor.Color = 0xE0E0FF;
 
+        // some material colors
+        export var WOOD_COLOR: Yendor.Color = 0x7F3300;
+        export var PAPER_COLOR: Yendor.Color = 0xC4D67E;
+        export var BONE_COLOR: Yendor.Color = 0xD2D8BC;
+        export var METAL_COLOR: Yendor.Color = 0xF0F0F0;
+
         // gui
         export var STATUS_PANEL_ID: string = "statusPanel";
         export var INVENTORY_ID: string = "inventory";
@@ -121,6 +127,7 @@ module Game {
         ZAP,
         SELECT_TILE,
         SELECT_ITEM,
+        ACTIVATE,
         VALIDATE,
         CANCEL
     }

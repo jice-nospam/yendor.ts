@@ -8,7 +8,7 @@ module Game {
 	/*
 		Interface: Persistent
 		Anything that can be saved and restored.
-		Must have a 0 parameter constructor that initializes the className field.
+		The constructor must initialize the className field.
 		Fields starting with two underscores are not persisted.
 		Watch out for cycling dependencies!
 	*/
