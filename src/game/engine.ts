@@ -91,7 +91,6 @@ module Game {
 					ActorType.LIFE_DETECT_STAFF, ActorType.REGENERATION_POTION,
 					ActorType.SHORT_BOW
 				].forEach((type: ActorType) => { this._actorManager.addItem(ActorFactory.create(type, player.x, player.y)); });
-				this._actorManager.addItem(ActorFactory.create(ActorType.WOODEN_DOOR, player.x + 2, player.y));
 			}
 		}
 

@@ -43,7 +43,9 @@ module Game {
 			// dig
 			for (var tilex: number = x1; tilex <= x2; tilex++) {
 				for (var tiley: number = y1; tiley <= y2; tiley++) {
-					map.setFloor(tilex, tiley);
+					if ( map.isWall(tilex, tiley)) {
+						map.setFloor(tilex, tiley);
+					}
 				}
 			}
 		}
@@ -67,6 +69,48 @@ module Game {
 				stairsDown.x = Math.floor((x1 + x2) / 2);
 				stairsDown.y = Math.floor((y1 + y2) / 2);
 			}
+		}
+
+		protected createDoor(pos: Yendor.Position) {
+			var probabilities: { [index: string]: number; } = {};
+			probabilities[ActorType.WOODEN_DOOR] = 100;
+			Engine.instance.actorManager.addItem(ActorFactory.create(ActorType.WOODEN_DOOR, pos.x, pos.y));
+		}
+
+		protected findVDoorPosition(map: Map, x: number, y1: number, y2: number) {
+			var y = y1 < y2 ? y1 : y2;
+			var endy = y1 < y2 ? y2 : y1;
+			do {
+				if ( this.isAVDoorPosition(map, x, y) ) {
+					return new Yendor.Position(x, y);
+				}
+				y ++;
+			} while ( y !== endy + 1);
+			return undefined;
+		}
+
+		protected findHDoorPosition(map: Map, x1: number, x2: number, y: number) {
+			var x = x1 < x2 ? x1 : x2;
+			var endx = x1 < x2 ? x2 : x1;
+			do {
+				if ( this.isAHDoorPosition(map, x, y) ) {
+					return new Yendor.Position(x, y);
+				}
+				x ++;
+			} while ( x !== endx + 1 );
+			return undefined;
+		}
+
+		private isAHDoorPosition(map: Map, x: number, y: number): boolean {
+			return map.isWall(x, y - 1) && map.isWall(x, y + 1) && map.canWalk(x, y);
+		}
+
+		private isAVDoorPosition(map: Map, x: number, y: number): boolean {
+			return map.isWall(x - 1, y) && map.isWall(x + 1, y) && map.canWalk(x, y);
+		}
+
+		protected isADoorPosition(map: Map, x: number, y: number) {
+			return this.isAHDoorPosition(map, x, y) || this.isAVDoorPosition(map, x, y);
 		}
 
 		/*
@@ -143,11 +187,11 @@ module Game {
 				itemCount --;
 			}
 		}
-
 	}
 
 	export class BspDungeonBuilder extends AbstractDungeonBuilder {
 		private firstRoom: boolean = true;
+		private potentialDoorPos: Yendor.Position[] = [];
 		constructor(dungeonLevel: number) {
 			super(dungeonLevel);
 		}
@@ -201,6 +245,25 @@ module Game {
 			var rightPos: Yendor.Position = this.findFloorTile(right, map);
 			this.dig(map, leftPos.x, leftPos.y, leftPos.x, rightPos.y);
 			this.dig(map, leftPos.x, rightPos.y, rightPos.x, rightPos.y);
+			// try to find a potential door position
+			var doorPos: Yendor.Position = this.findVDoorPosition(map, leftPos.x, leftPos.y, rightPos.y);
+			if ( !doorPos ) {
+				doorPos = this.findHDoorPosition(map, leftPos.x, rightPos.x, rightPos.y);
+			}
+			if ( doorPos ) {
+				// we can't place the door right now as wall can still be digged
+				// the door might end in the middle of a room.
+				this.potentialDoorPos.push(doorPos);
+			}
+		}
+
+		private createDoors(map: Map) {
+			for (var i: number = 0, len: number = this.potentialDoorPos.length; i < len; ++i) {
+				var pos: Yendor.Position = this.potentialDoorPos[i];
+				if ( this.isADoorPosition(map, pos.x, pos.y)) {
+					this.createDoor(pos);
+				}
+			}
 		}
 
 		private visitNode(node: Yendor.BSPNode, userData: any): Yendor.BSPTraversalAction {
@@ -217,6 +280,7 @@ module Game {
 			var bsp: Yendor.BSPNode = new Yendor.BSPNode( 0, 0, map.width, map.height );
 			bsp.splitRecursive(undefined, 8, Constants.ROOM_MIN_SIZE, 1.5 );
 			bsp.traverseInvertedLevelOrder( this.visitNode.bind(this), map );
+			this.createDoors(map);
 		}
 	}
 
@@ -253,7 +317,10 @@ module Game {
 		setDirty() { this._dirty = true; }
 
 		isWall(x: number, y: number): boolean {
-			return this.tiles[x] ? this.tiles[x][y].isWall : true;
+			if ( this.tiles[x] && this.tiles[x][y] ) {
+				return this.tiles[x][y].isWall;
+			}
+			return true;
 		}
 
 		canWalk(x: number, y: number): boolean {

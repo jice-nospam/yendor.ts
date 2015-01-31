@@ -477,7 +477,9 @@ module Game {
 			var door: Actor = new Actor();
 			door.init(x, y, "+", name, undefined, doorParam.color, true);
 			door.door = new Door(doorParam.seeThrough);
-			door.door.close(door);
+			door.fovOnly = false;
+			door.blocks = true;
+			door.transparent = doorParam.seeThrough;
 			door.lever = new Lever(function() { door.door.openOrClose(door); } );
 			return door;
 		}
