@@ -2,6 +2,9 @@
 * Yendor toolkit
 	- the Fov class does not handle the 'isWalkable' property anymore
 
+* GeneRogue
+	- added doors
+
 # 0.4.0 / 28-jan-2015
 * Yendor toolkit
 	- improved Pixi console rendering performance (Console.setChar removed, Console.text is now a matrix of ascii codes)

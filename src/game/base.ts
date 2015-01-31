@@ -43,7 +43,8 @@ module Game {
         export var WOOD_COLOR: Yendor.Color = 0x7F3300;
         export var PAPER_COLOR: Yendor.Color = 0xC4D67E;
         export var BONE_COLOR: Yendor.Color = 0xD2D8BC;
-        export var METAL_COLOR: Yendor.Color = 0xF0F0F0;
+        export var IRON_COLOR: Yendor.Color = 0x7C8081;
+        export var STEEL_COLOR: Yendor.Color = 0x867F70;
 
         // gui
         export var STATUS_PANEL_ID: string = "statusPanel";

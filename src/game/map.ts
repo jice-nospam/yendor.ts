@@ -71,10 +71,12 @@ module Game {
 			}
 		}
 
-		protected createDoor(pos: Yendor.Position) {
+		protected createDoor(pos: Yendor.Position, rng: Yendor.Random) {
 			var probabilities: { [index: string]: number; } = {};
-			probabilities[ActorType.WOODEN_DOOR] = 100;
-			Engine.instance.actorManager.addItem(ActorFactory.create(ActorType.WOODEN_DOOR, pos.x, pos.y));
+			probabilities[ActorType.WOODEN_DOOR] = 80;
+			probabilities[ActorType.IRON_PORTCULLIS] = 20;
+			var doorType: ActorType = <ActorType>rng.getRandomChance(probabilities);
+			Engine.instance.actorManager.addItem(ActorFactory.create(doorType, pos.x, pos.y));
 		}
 
 		protected findVDoorPosition(map: Map, x: number, y1: number, y2: number) {
@@ -101,12 +103,23 @@ module Game {
 			return undefined;
 		}
 
+		private isEmptyCell(map: Map, x: number, y: number): boolean {
+			if (!map.canWalk(x, y)) {
+				return false;
+			}
+			var items: Actor[] = Engine.instance.actorManager.findActorsOnCell(new Yendor.Position(x, y), Engine.instance.actorManager.getItems());
+			if (items.length === 0) {
+				return true;
+			}
+			return false;
+		}
+
 		private isAHDoorPosition(map: Map, x: number, y: number): boolean {
-			return map.isWall(x, y - 1) && map.isWall(x, y + 1) && map.canWalk(x, y);
+			return map.isWall(x, y - 1) && map.isWall(x, y + 1) && this.isEmptyCell(map, x, y);
 		}
 
 		private isAVDoorPosition(map: Map, x: number, y: number): boolean {
-			return map.isWall(x - 1, y) && map.isWall(x + 1, y) && map.canWalk(x, y);
+			return map.isWall(x - 1, y) && map.isWall(x + 1, y) && this.isEmptyCell(map, x, y);
 		}
 
 		protected isADoorPosition(map: Map, x: number, y: number) {
@@ -211,9 +224,8 @@ module Game {
 			return pos;
 		}
 
-		private createRandomRoom(node: Yendor.BSPNode, map: Map) {
+		private createRandomRoom(node: Yendor.BSPNode, map: Map, rng: Yendor.Random) {
 			var x, y, w, h: number;
-			var rng: Yendor.Random = new Yendor.ComplementaryMultiplyWithCarryRandom();
 			var horiz: boolean = node.parent.horiz;
 			if ( horiz ) {
 				w = rng.getNumber(Constants.ROOM_MIN_SIZE, node.w - 1);
@@ -257,19 +269,20 @@ module Game {
 			}
 		}
 
-		private createDoors(map: Map) {
+		private createDoors(map: Map, rng: Yendor.Random) {
 			for (var i: number = 0, len: number = this.potentialDoorPos.length; i < len; ++i) {
 				var pos: Yendor.Position = this.potentialDoorPos[i];
 				if ( this.isADoorPosition(map, pos.x, pos.y)) {
-					this.createDoor(pos);
+					this.createDoor(pos, rng);
 				}
 			}
 		}
 
 		private visitNode(node: Yendor.BSPNode, userData: any): Yendor.BSPTraversalAction {
-			var map: Map = <Map>userData;
+			var map: Map = <Map>userData[0];
+			var rng: Yendor.Random = <Yendor.Random>userData[1];
 			if ( node.isLeaf() ) {
-				this.createRandomRoom(node, map);
+				this.createRandomRoom(node, map, rng);
 			} else {
 				this.connectChildren(node, map);
 			}
@@ -277,10 +290,11 @@ module Game {
 		}
 
 		build(map : Map) {
+			var rng: Yendor.Random = new Yendor.ComplementaryMultiplyWithCarryRandom();
 			var bsp: Yendor.BSPNode = new Yendor.BSPNode( 0, 0, map.width, map.height );
 			bsp.splitRecursive(undefined, 8, Constants.ROOM_MIN_SIZE, 1.5 );
-			bsp.traverseInvertedLevelOrder( this.visitNode.bind(this), map );
-			this.createDoors(map);
+			bsp.traverseInvertedLevelOrder( this.visitNode.bind(this), [map, rng] );
+			this.createDoors(map, rng);
 		}
 	}
 

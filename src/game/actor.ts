@@ -150,6 +150,7 @@ module Game {
 		STAIR_UP,
 		STAIR_DOWN,
 		WOODEN_DOOR,
+		IRON_PORTCULLIS,
 		LAST_ACTOR_TYPE
 	};
 
@@ -276,7 +277,7 @@ module Game {
 			WOODEN_SHIELD: (x: number, y: number) => { return ActorFactory.createShield(x, y, "wooden shield",
 				{ defense: 1, color: Constants.WOOD_COLOR } ); },
 			IRON_SHIELD: (x: number, y: number) => { return ActorFactory.createShield(x, y, "iron shield",
-				{ defense: 2, color: Constants.METAL_COLOR } ); },
+				{ defense: 2, color: Constants.IRON_COLOR } ); },
 			// 		ranged
 			SHORT_BOW: (x: number, y: number) => { return ActorFactory.createRanged(x, y, "short bow",
 				{ damages: 3, projectileTypeName: "arrow", loadTime: 4, twoHanded: true, range: 15 } ); },
@@ -311,12 +312,14 @@ module Game {
 				{ damages: 1.25, projectileTypeName: "arrow", color: Constants.WOOD_COLOR } ); },
 			// 			bolt
 			BOLT: (x: number, y: number) => { return ActorFactory.createProjectile(x, y, "bolt",
-				{ damages: 1, projectileTypeName: "bolt", color: Constants.METAL_COLOR } ); },
+				{ damages: 1, projectileTypeName: "bolt", color: Constants.IRON_COLOR } ); },
 			// miscellaneous (under root class)
 			STAIR_UP: (x: number, y: number) => { return ActorFactory.createStairs(x, y, "<", "up"); },
 			STAIR_DOWN: (x: number, y: number) => { return ActorFactory.createStairs(x, y, ">", "down"); },
 			WOODEN_DOOR: (x: number, y: number) => { return ActorFactory.createDoor(x, y, "wooden door",
-				{ seeThrough: false, color: Constants.WOOD_COLOR } ); }
+				{ seeThrough: false, color: Constants.WOOD_COLOR } ); },
+			IRON_PORTCULLIS: (x: number, y: number) => { return ActorFactory.createDoor(x, y, "iron portcullis",
+				{ seeThrough: true, color: Constants.IRON_COLOR } ); }
 		};
 		/*
 			Function: create
@@ -407,7 +410,7 @@ module Game {
 		// weapons
 		private static createBlade(x: number, y: number, name: string, swordParam: BladeParam): Actor {
 			var sword = new Actor();
-			sword.init(x, y, "/", name, "weapon|blade", Constants.METAL_COLOR, true);
+			sword.init(x, y, "/", name, "weapon|blade", Constants.STEEL_COLOR, true);
 			sword.pickable = new Pickable(swordParam.weight);
 			sword.pickable.setOnThrowEffect(new InstantHealthEffect(-swordParam.damages,
 				"The sword hits [the actor1] for [value1] hit points."),
@@ -419,7 +422,7 @@ module Game {
 
 		private static createRanged(x: number, y: number, name: string, rangedParam: RangedParam): Actor {
 			var bow = new Actor();
-			bow.init(x, y, ")", name, "weapon|ranged", Constants.METAL_COLOR, true);
+			bow.init(x, y, ")", name, "weapon|ranged", Constants.WOOD_COLOR, true);
 			bow.pickable = new Pickable(2);
 			bow.equipment = new Equipment(rangedParam.twoHanded ? Constants.SLOT_BOTH_HANDS : Constants.SLOT_RIGHT_HAND);
 			bow.ranged = new Ranged(rangedParam.damages, rangedParam.projectileTypeName,
