@@ -2,6 +2,10 @@
 module Game {
 	"use strict";
 
+	/*
+		Class: Tile
+		Properties of a map cell. The 'isTransparent' property is stored in the Yendor.Fov class.
+	*/
 	export class Tile {
 		explored: boolean = false;
 		isWall: boolean = true;
@@ -9,8 +13,202 @@ module Game {
 		scentAmount: number = 0;
 	}
 
+
+	class TopologyObject {
+		id: number;
+		constructor(id: number) {
+			this.id = id;
+		}
+		getDescription(): string {
+			return "?";
+		}
+	}
+	/*
+		Class: Connector
+		Represent a map cell connecting two sectors (generally a door)
+	*/
+	export class Connector extends TopologyObject {
+		pos: Yendor.Position;
+		sector1Id: number;
+		sector2Id: number;
+		constructor(id: number, pos: Yendor.Position, sector1Id: number) {
+			super(id);
+			this.pos = pos;
+			this.sector1Id = sector1Id;
+		}
+		getDescription(): string {
+			return "connector " + this.id + " : " + this.pos.x + "-" + this.pos.y + " between " + this.sector1Id + " and " + this.sector2Id;
+		}
+	}
+
+	/*
+		Class: Sector
+		Represent a group of connected map cells. There exists a path between any two cells of this sector.
+	*/
+	export class Sector extends TopologyObject {
+		/*
+			Property: seed
+			Any cell of the sector. This is used to start the floodfilling algorithm.
+		*/
+		seed: Yendor.Position;
+		nbCells: number = 0;
+		constructor(id: number, seed: Yendor.Position) {
+			super(id);
+			this.seed = seed;
+		}
+		getDescription(): string {
+			return "sector " + this.id + " : " + this.seed.x + "-" + this.seed.y + " (" + this.nbCells + " cells)";
+		}
+	}
+
+	/*
+		Class: TopologyMap
+		Represents the map as a list of sectors separated by connectors.
+		This is used to generate door/key puzzles.
+	*/
+	export class TopologyMap {
+		/*
+			Property: sectorMap
+			Associate a topology object to each walkable map cell (either a sector or a connector)
+		*/
+		sectorMap: number[][];
+		/*
+			Property: objects
+			All existing sectors and connectors
+		*/
+		objects: TopologyObject[];
+
+		constructor(width: number, height: number) {
+			this.objects = [];
+			this.sectorMap = [];
+			for (var x = 0; x < width; ++x) {
+				this.sectorMap[x] = [];
+				for (var y = 0; y < width; ++y) {
+					this.sectorMap[x][y] = -1;
+				}
+			}
+		}
+	}
+
+	export class TopologyAnalyzer {
+		private topologyMap: TopologyMap;
+		private objectId: number = 0;
+		private sectorSeeds: Yendor.Position[] = [];
+
+		private floodFill(map: Map, x: number, y: number, id: number) {
+			var cellsToVisit: Yendor.Position[] = [];
+			var seed: Yendor.Position = new Yendor.Position(x, y);
+			var sector: Sector = new Sector(id, seed);
+			this.topologyMap.objects.push(sector);
+			this.topologyMap.sectorMap[seed.x][seed.y] = id;
+			sector.nbCells ++;
+			cellsToVisit.push(seed);
+			console.log("detecting sector " + id + " from " + seed.x + "-" + seed.y + "...");
+			while ( cellsToVisit.length !== 0 ) {
+				var pos: Yendor.Position = cellsToVisit.shift();
+				var adjacentCells: Yendor.Position[] = pos.getAdjacentCells(map.width, map.height);
+				for (var i: number = 0, len: number = adjacentCells.length; i < len; ++i ) {
+					var curpos: Yendor.Position = adjacentCells[i];
+					if (map.isWall(curpos.x, curpos.y) || this.topologyMap.sectorMap[curpos.x][curpos.y] === id) {
+						continue;
+					}
+					if ( this.topologyMap.sectorMap[curpos.x][curpos.y] === -1) {
+						if ( map.canWalk(curpos.x, curpos.y) ) {
+							// this cell belongs to the same sector
+							this.topologyMap.sectorMap[curpos.x][curpos.y] = id;
+							sector.nbCells ++;
+							cellsToVisit.push(curpos);
+						} else if ((curpos.x === pos.x || curpos.y === pos.y) && this.hasDoor(map, curpos)) {
+							// a new connector
+							this.topologyMap.sectorMap[curpos.x][curpos.y] = this.newConnector(pos, curpos, id);
+						}
+					} else if (this.hasDoor(map, curpos)) {
+						// connect to an existing connector ?
+						var connector: Connector = this.getConnector(curpos);
+						if ( connector.sector1Id !== id && connector.sector2Id === undefined ) {
+							connector.sector2Id = id;
+							console.log("Connector " + connector.id + " connecting sectors " + connector.sector1Id + " and " + connector.sector2Id
+								+ " at " + connector.pos.x + "-" + connector.pos.y);
+						}
+					}
+				}
+			}
+			console.log("done. " + sector.nbCells + " cells.");
+		}
+
+		private hasDoor(map: Map, pos: Yendor.Position): boolean {
+			var items: Actor[] = Engine.instance.actorManager.findActorsOnCell(pos, Engine.instance.actorManager.getItems());
+			if (items.length === 0) {
+				return false;
+			}
+			for (var i: number = 0, len: number = items.length; i < len; ++i) {
+				if ( items[i].door ) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		private newConnector(from: Yendor.Position, pos: Yendor.Position, sector1Id: number): number {
+			this.objectId++;
+			var connector: Connector = new Connector(this.objectId, pos, sector1Id);
+			this.topologyMap.objects.push(connector);
+			// add a new sector seed on the other side of the door
+			// note that this cell might be in the same sector as from
+			// this could be used to remove useless doors
+			var sectorSeed: Yendor.Position;
+			if ( from.x === pos.x - 1 ) {
+				sectorSeed = new Yendor.Position(pos.x + 1, pos.y);
+			} else if ( from.x === pos.x + 1 ) {
+				sectorSeed = new Yendor.Position(pos.x - 1, pos.y);
+			} else if ( from.y === pos.y - 1 ) {
+				sectorSeed = new Yendor.Position(pos.x , pos.y + 1);
+			} else if ( from.y === pos.y + 1 ) {
+				sectorSeed = new Yendor.Position(pos.x, pos.y - 1);
+			}
+			this.sectorSeeds.push(sectorSeed);
+			console.log("Connector " + this.objectId + " detected at " + pos.x + "-" + pos.y);
+			return this.objectId;
+		}
+
+		private getConnector(pos: Yendor.Position): Connector {
+			for (var i: number = 0, len: number = this.topologyMap.objects.length; i < len; ++i) {
+				var obj: TopologyObject = this.topologyMap.objects[i];
+				if ( obj instanceof Connector ) {
+					if ((<Connector>obj).pos.equals(pos)) {
+						return <Connector>obj;
+					}
+				}
+			}
+			return undefined;
+		}
+
+		buildTopologyMap(map: Map, seed: Yendor.Position) {
+			this.topologyMap = new TopologyMap(map.width, map.height);
+			this.sectorSeeds.push(seed);
+			while ( this.sectorSeeds.length !== 0 ) {
+				var pos: Yendor.Position = this.sectorSeeds.shift();
+				// in case of doors not connecting two sectors, the other side of the door is already visited
+				if ( this.topologyMap.sectorMap[pos.x][pos.y] === -1) {
+					this.floodFill(map, pos.x, pos.y, this.objectId);
+					this.objectId++;
+				} else {
+					console.log("Skipping dummy sector at " + pos.x + "-" + pos.y);
+				}
+			}
+			// here, connectors with an undefined sector2id represents useless doors
+			// we keep them for the fun
+			for (var i: number = 0, len: number = this.topologyMap.objects.length; i < len; ++i) {
+				var obj: TopologyObject = this.topologyMap.objects[i];
+				console.log(obj.getDescription());
+			}
+		}
+
+	}
+
 	export class AbstractDungeonBuilder {
 		private dungeonLevel: number;
+
 		constructor(dungeonLevel: number) {
 			this.dungeonLevel = dungeonLevel;
 		}
@@ -115,15 +313,32 @@ module Game {
 		}
 
 		private isAHDoorPosition(map: Map, x: number, y: number): boolean {
-			return map.isWall(x, y - 1) && map.isWall(x, y + 1) && this.isEmptyCell(map, x, y);
+			return map.isWall(x, y - 1) && map.isWall(x, y + 1) && this.isEmptyCell(map, x, y)
+				&& this.isEmptyCell(map, x + 1, y) && this.isEmptyCell(map, x - 1, y);
 		}
 
 		private isAVDoorPosition(map: Map, x: number, y: number): boolean {
-			return map.isWall(x - 1, y) && map.isWall(x + 1, y) && this.isEmptyCell(map, x, y);
+			return map.isWall(x - 1, y) && map.isWall(x + 1, y) && this.isEmptyCell(map, x, y)
+				&& this.isEmptyCell(map, x, y + 1) && this.isEmptyCell(map, x, y - 1);
 		}
 
 		protected isADoorPosition(map: Map, x: number, y: number) {
 			return this.isAHDoorPosition(map, x, y) || this.isAVDoorPosition(map, x, y);
+		}
+
+		protected findFloorTile(x: number, y: number, w: number, h: number, map: Map): Yendor.Position {
+			var pos: Yendor.Position = new Yendor.Position(Math.floor(x + w / 2), Math.floor(y + h / 2));
+			while ( map.isWall(pos.x, pos.y) ) {
+				pos.x ++;
+				if ( pos.x === x + w ) {
+					pos.x = x;
+					pos.y ++;
+					if ( pos.y === y + h ) {
+						pos.y = 0;
+					}
+				}
+			}
+			return pos;
 		}
 
 		/*
@@ -209,21 +424,6 @@ module Game {
 			super(dungeonLevel);
 		}
 
-		private findFloorTile(node: Yendor.BSPNode, map: Map): Yendor.Position {
-			var pos: Yendor.Position = new Yendor.Position(Math.floor(node.x + node.w / 2), Math.floor(node.y + node.h / 2));
-			while ( map.isWall(pos.x, pos.y) ) {
-				pos.x ++;
-				if ( pos.x === node.x + node.w ) {
-					pos.x = node.x;
-					pos.y ++;
-					if ( pos.y === node.y + node.h ) {
-						pos.y = 0;
-					}
-				}
-			}
-			return pos;
-		}
-
 		private createRandomRoom(node: Yendor.BSPNode, map: Map, rng: Yendor.Random) {
 			var x, y, w, h: number;
 			var horiz: boolean = node.parent.horiz;
@@ -253,8 +453,8 @@ module Game {
 		private connectChildren(node: Yendor.BSPNode, map: Map) {
 			var left: Yendor.BSPNode = node.leftChild;
 			var right: Yendor.BSPNode = node.rightChild;
-			var leftPos: Yendor.Position = this.findFloorTile(left, map);
-			var rightPos: Yendor.Position = this.findFloorTile(right, map);
+			var leftPos: Yendor.Position = this.findFloorTile(left.x, left.y, left.w, left.h, map);
+			var rightPos: Yendor.Position = this.findFloorTile(right.x, right.y, right.w, right.h, map);
 			this.dig(map, leftPos.x, leftPos.y, leftPos.x, rightPos.y);
 			this.dig(map, leftPos.x, rightPos.y, rightPos.x, rightPos.y);
 			// try to find a potential door position
@@ -295,6 +495,8 @@ module Game {
 			bsp.splitRecursive(undefined, 8, Constants.ROOM_MIN_SIZE, 1.5 );
 			bsp.traverseInvertedLevelOrder( this.visitNode.bind(this), [map, rng] );
 			this.createDoors(map, rng);
+			var analyzer: TopologyAnalyzer = new TopologyAnalyzer();
+			analyzer.buildTopologyMap(map, Engine.instance.actorManager.getStairsDown());
 		}
 	}
 
