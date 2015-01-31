@@ -12,7 +12,7 @@ module Game {
 		Class: Destructible
 		Something that can take damages and heal/repair.
 	*/
-	export class Destructible implements Persistent {
+	export class Destructible implements ActorFeature {
 		className: string;
 		private _maxHp: number;
 		private _defense: number;
@@ -132,7 +132,7 @@ module Game {
 		Class: Attacker
 		An actor that can deal damages to another one
 	*/
-	export class Attacker implements Persistent {
+	export class Attacker implements ActorFeature {
 		className: string;
 		private _power: number;
 		private _attackTime: number;
@@ -203,7 +203,7 @@ module Game {
 	 	- creatures with inventory
 	 	- chests, barrels, ...
 	 */
-	 export class Container implements Persistent {
+	 export class Container implements ActorFeature {
 		className: string;
 	 	private _capacity: number;
 	 	private actors: Actor[] = [];
@@ -324,7 +324,7 @@ module Game {
 		Class: Pickable
 		An actor that can be picked by a creature
 	*/
-	export class Pickable implements Persistent {
+	export class Pickable implements ActorFeature {
 		className: string;
 		/*
 			Property: onUseEffector
@@ -484,7 +484,7 @@ module Game {
 		Class: Equipment
 		An item that can be equipped
 	*/
-	export class Equipment implements Persistent {
+	export class Equipment implements ActorFeature {
 		className: string;
 		private slot: string;
 		private equipped: boolean = false;
@@ -565,7 +565,7 @@ module Game {
 		The projectileType property makes it possible to look for an adequate item in the inventory.
 		If a compatible type is equipped (on quiver), it will be used. Else the first compatible item will be used.
 	*/
-	export class Ranged implements Persistent {
+	export class Ranged implements ActorFeature {
 		className: string;
 		/*
 			Property: _damageCoef
@@ -643,7 +643,7 @@ module Game {
 		Class: Magic
 		Item with magic properties (staff wands, ...)
 	*/
-	export class Magic implements Persistent {
+	export class Magic implements ActorFeature {
 		className: string;
 		private _maxCharges: number;
 		private _charges: number;

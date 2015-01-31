@@ -734,6 +734,29 @@ module Game {
 	/********************************************************************************
 	 * Group: actors
 	 ********************************************************************************/
+
+	export enum ActorFeatureType {
+		// can be destroyed/killed
+		DESTRUCTIBLE,
+		// can deal damages
+		ATTACKER,
+		// updates itself
+		AI,
+		// can be picked (put inside a container actor)
+		PICKABLE,
+		// can contain other actors
+		CONTAINER,
+		// can be equipped on a slot
+		EQUIPMENT,
+		// can throw away some type of actors
+		RANGED,
+		// has magic properties
+		MAGIC
+	}
+
+	export interface ActorFeature extends Persistent {
+	}
+
 	 /*
 	 	Class: Actor
 	 	The base class for all actors
@@ -748,22 +771,7 @@ module Game {
 		// the color associated with this actor's symbol
 		private _col: Yendor.Color;
 
-		// can be destroyed/killed
-		private _destructible: Destructible;
-		// can deal damages
-		private _attacker: Attacker;
-		// can think
-		private _ai: Ai;
-		// can be picked (put inside a container actor)
-		private _pickable: Pickable;
-		// can contain other actors
-		private _container: Container;
-		// can be equipped on a slot
-		private _equipment: Equipment;
-		// can throw away some type of actors
-		private _ranged: Ranged;
-		// has magic properties
-		private _magic: Magic;
+		private features: { [index: number]: ActorFeature} = {};
 
 		// whether you can walk on the tile where this actor is
 		private _blocks: boolean = false;
@@ -842,29 +850,30 @@ module Game {
 		}
 		set fovOnly(newValue: boolean) { this._fovOnly = newValue; }
 
-		get destructible() { return this._destructible; }
-		set destructible(newValue: Destructible) { this._destructible = newValue; }
+		// feature getters & setters
+		get destructible(): Destructible { return <Destructible>this.features[ActorFeatureType.DESTRUCTIBLE]; }
+		set destructible(newValue: Destructible) { this.features[ActorFeatureType.DESTRUCTIBLE] = newValue; }
 
-		get attacker() { return this._attacker; }
-		set attacker(newValue: Attacker) { this._attacker = newValue; }
+		get attacker(): Attacker { return <Attacker>this.features[ActorFeatureType.ATTACKER]; }
+		set attacker(newValue: Attacker) { this.features[ActorFeatureType.ATTACKER] = newValue; }
 
-		get ai() { return this._ai; }
-		set ai(newValue: Ai) { this._ai = newValue; }
+		get ai(): Ai { return <Ai>this.features[ActorFeatureType.AI]; }
+		set ai(newValue: Ai) { this.features[ActorFeatureType.AI] = newValue; }
 
-		get pickable() {return this._pickable; }
-		set pickable(newValue: Pickable) { this._pickable = newValue; }
+		get pickable(): Pickable {return <Pickable>this.features[ActorFeatureType.PICKABLE]; }
+		set pickable(newValue: Pickable) { this.features[ActorFeatureType.PICKABLE] = newValue; }
 
-		get container() {return this._container; }
-		set container(newValue: Container) {this._container = newValue; }
+		get container(): Container {return <Container>this.features[ActorFeatureType.CONTAINER]; }
+		set container(newValue: Container) {this.features[ActorFeatureType.CONTAINER] = newValue; }
 
-		get equipment() {return this._equipment; }
-		set equipment(newValue: Equipment) {this._equipment = newValue; }
+		get equipment(): Equipment {return <Equipment>this.features[ActorFeatureType.EQUIPMENT]; }
+		set equipment(newValue: Equipment) {this.features[ActorFeatureType.EQUIPMENT] = newValue; }
 
-		get ranged() { return this._ranged; }
-		set ranged(newValue: Ranged) { this._ranged = newValue; }
+		get ranged(): Ranged { return <Ranged>this.features[ActorFeatureType.RANGED]; }
+		set ranged(newValue: Ranged) { this.features[ActorFeatureType.RANGED] = newValue; }
 
-		get magic() { return this._magic; }
-		set magic(newValue: Magic) { this._magic = newValue; }
+		get magic(): Magic { return <Magic>this.features[ActorFeatureType.MAGIC]; }
+		set magic(newValue: Magic) { this.features[ActorFeatureType.MAGIC] = newValue; }
 
 		/*
 			Function: getaname
@@ -949,11 +958,11 @@ module Game {
 
 		getDescription(): string {
 			var desc = this.name;
-			if ( this._equipment && this._equipment.isEquipped()) {
-				desc += " (on " + this._equipment.getSlot() + ")";
+			if ( this.equipment && this.equipment.isEquipped()) {
+				desc += " (on " + this.equipment.getSlot() + ")";
 			}
-			if ( this._ai ) {
-				var condDesc: string = this._ai.getConditionDescription();
+			if ( this.ai ) {
+				var condDesc: string = this.ai.getConditionDescription();
 				if ( condDesc ) {
 					desc += " (" + condDesc + ")";
 				}
@@ -962,8 +971,8 @@ module Game {
 		}
 
 		update() {
-			if ( this._ai ) {
-				this._ai.update(this);
+			if ( this.ai ) {
+				this.ai.update(this);
 			}
 		}
 

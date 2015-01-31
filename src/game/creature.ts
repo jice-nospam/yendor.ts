@@ -13,7 +13,7 @@ module Game {
 		Class: Ai
 		Owned by self-updating actors
 	*/
-	export class Ai implements Persistent, ContainerListener {
+	export class Ai implements ActorFeature, ContainerListener {
 		className: string;
 		private _conditions: Condition[];
 		// time until next turn.
