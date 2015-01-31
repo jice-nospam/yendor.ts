@@ -334,7 +334,7 @@ module Game {
 					pos.x = x;
 					pos.y ++;
 					if ( pos.y === y + h ) {
-						pos.y = 0;
+						pos.y = y;
 					}
 				}
 			}
