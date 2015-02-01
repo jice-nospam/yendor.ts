@@ -59,7 +59,7 @@ module Yendor {
 	                // go through all chances, keeping the sum so far
 	                currentChanceSum += chances[key2];
 	                // see if the dice landed in the part that corresponds to this choice
-	                if ( dice <= currentChanceSum ) {
+	                if ( dice < currentChanceSum ) {
 	                    return key2;
 	                }
 	            }
