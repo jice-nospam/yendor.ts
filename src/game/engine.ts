@@ -15,7 +15,7 @@ module Game {
 		to keep the game from trying to load data with an old format.
 		This should be an integer.
 	*/
-	var SAVEFILE_VERSION: string = "10";
+	var SAVEFILE_VERSION: string = "11";
 
 	/*
 		Class: Engine
@@ -97,6 +97,7 @@ module Game {
 		private loadGame() {
 			this.dungeonLevel = this.persister.loadFromKey(Constants.PERSISTENCE_DUNGEON_LEVEL);
 			this.persister.loadFromKey(Constants.PERSISTENCE_MAP_KEY, this._map);
+			ActorFactory.load(this.persister);
 			this._actorManager.load(this.persister);
 			this.persister.loadFromKey(Constants.STATUS_PANEL_ID, this.guiManager.getGui(Constants.STATUS_PANEL_ID));
 			this.status = GameStatus.RUNNING;
@@ -109,6 +110,7 @@ module Game {
 				this.persister.saveToKey(Constants.PERSISTENCE_DUNGEON_LEVEL, this.dungeonLevel);
 				this.persister.saveToKey(Constants.PERSISTENCE_VERSION_KEY, SAVEFILE_VERSION);
 				this.persister.saveToKey(Constants.PERSISTENCE_MAP_KEY, this._map);
+				ActorFactory.save(this.persister);
 				this._actorManager.save(this.persister);
 				this.persister.saveToKey(Constants.STATUS_PANEL_ID, this.guiManager.getGui(Constants.STATUS_PANEL_ID));
 			}
@@ -118,6 +120,7 @@ module Game {
 			this.persister.deleteKey(Constants.PERSISTENCE_DUNGEON_LEVEL);
 			this.persister.deleteKey(Constants.PERSISTENCE_VERSION_KEY);
 			this.persister.deleteKey(Constants.PERSISTENCE_MAP_KEY);
+			ActorFactory.deleteSavedGame(this.persister);
 			this._actorManager.deleteSavedGame(this.persister);
 			this.persister.deleteKey(Constants.STATUS_PANEL_ID);
 		}

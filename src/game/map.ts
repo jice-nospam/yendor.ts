@@ -103,7 +103,9 @@ module Game {
 			this.topologyMap.sectorMap[seed.x][seed.y] = id;
 			sector.nbCells ++;
 			cellsToVisit.push(seed);
-			console.log("detecting sector " + id + " from " + seed.x + "-" + seed.y + "...");
+			if ( Yendor.urlParams[Constants.URL_PARAM_DEBUG] ) {
+				console.log("detecting sector " + id + " from " + seed.x + "-" + seed.y + "...");
+			}
 			while ( cellsToVisit.length !== 0 ) {
 				var pos: Yendor.Position = cellsToVisit.shift();
 				var adjacentCells: Yendor.Position[] = pos.getAdjacentCells(map.width, map.height);
@@ -127,17 +129,21 @@ module Game {
 						var connector: Connector = this.getConnector(curpos);
 						if ( connector.sector1Id !== id && connector.sector2Id === undefined ) {
 							connector.sector2Id = id;
-							console.log("Connector " + connector.id + " connecting sectors " + connector.sector1Id + " and " + connector.sector2Id
-								+ " at " + connector.pos.x + "-" + connector.pos.y);
+							if ( Yendor.urlParams[Constants.URL_PARAM_DEBUG] ) {
+								console.log("Connector " + connector.id + " connecting sectors " + connector.sector1Id + " and " + connector.sector2Id
+									+ " at " + connector.pos.x + "-" + connector.pos.y);
+							}
 						}
 					}
 				}
 			}
-			console.log("done. " + sector.nbCells + " cells.");
+			if ( Yendor.urlParams[Constants.URL_PARAM_DEBUG] ) {
+				console.log("done. " + sector.nbCells + " cells.");
+			}
 		}
 
 		private hasDoor(map: Map, pos: Yendor.Position): boolean {
-			var items: Actor[] = Engine.instance.actorManager.findActorsOnCell(pos, Engine.instance.actorManager.getItems());
+			var items: Actor[] = Engine.instance.actorManager.findActorsOnCell(pos, Engine.instance.actorManager.getItemIds());
 			if (items.length === 0) {
 				return false;
 			}
@@ -167,7 +173,9 @@ module Game {
 				sectorSeed = new Yendor.Position(pos.x, pos.y - 1);
 			}
 			this.sectorSeeds.push(sectorSeed);
-			console.log("Connector " + this.objectId + " detected at " + pos.x + "-" + pos.y);
+			if ( Yendor.urlParams[Constants.URL_PARAM_DEBUG] ) {
+				console.log("Connector " + this.objectId + " detected at " + pos.x + "-" + pos.y);
+			}
 			return this.objectId;
 		}
 
@@ -192,15 +200,17 @@ module Game {
 				if ( this.topologyMap.sectorMap[pos.x][pos.y] === -1) {
 					this.floodFill(map, pos.x, pos.y, this.objectId);
 					this.objectId++;
-				} else {
+				} else if ( Yendor.urlParams[Constants.URL_PARAM_DEBUG] ) {
 					console.log("Skipping dummy sector at " + pos.x + "-" + pos.y);
 				}
 			}
 			// here, connectors with an undefined sector2id represents useless doors
 			// we keep them for the fun
-			for (var i: number = 0, len: number = this.topologyMap.objects.length; i < len; ++i) {
-				var obj: TopologyObject = this.topologyMap.objects[i];
-				console.log(obj.getDescription());
+			if ( Yendor.urlParams[Constants.URL_PARAM_DEBUG] ) {
+				for (var i: number = 0, len: number = this.topologyMap.objects.length; i < len; ++i) {
+					var obj: TopologyObject = this.topologyMap.objects[i];
+					console.log(obj.getDescription());
+				}
 			}
 		}
 
@@ -305,7 +315,7 @@ module Game {
 			if (!map.canWalk(x, y)) {
 				return false;
 			}
-			var items: Actor[] = Engine.instance.actorManager.findActorsOnCell(new Yendor.Position(x, y), Engine.instance.actorManager.getItems());
+			var items: Actor[] = Engine.instance.actorManager.findActorsOnCell(new Yendor.Position(x, y), Engine.instance.actorManager.getItemIds());
 			if (items.length === 0) {
 				return true;
 			}
@@ -545,8 +555,8 @@ module Game {
 			}
 			var pos: Yendor.Position = new Yendor.Position(x, y);
 			var actorManager: ActorManager = Engine.instance.actorManager;
-			var actorsOnCell: Actor[] = actorManager.findActorsOnCell(pos, actorManager.getItems());
-			actorsOnCell = actorsOnCell.concat(actorManager.findActorsOnCell(pos, actorManager.getCreatures()));
+			var actorsOnCell: Actor[] = actorManager.findActorsOnCell(pos, actorManager.getItemIds());
+			actorsOnCell = actorsOnCell.concat(actorManager.findActorsOnCell(pos, actorManager.getCreatureIds()));
 			for ( var i: number = 0; i < actorsOnCell.length; i++) {
 				var actor: Actor = actorsOnCell[i];
 				if ( actor.isBlocking() ) {

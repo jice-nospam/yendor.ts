@@ -48,18 +48,22 @@ module Yendor {
 	        var chancesSum: number = 0;
 	        for (var key in chances) {
 	            if ( chances.hasOwnProperty(key) ) {
-	                chancesSum += chances[key];
+	            	if ( chances[key] <= 0 ) {
+	            		chances[key] = undefined;
+	            	} else {
+	                	chancesSum += chances[key];
+	                }
 	            }
 	        }
 	        // the dice will land on some number between 1 and the sum of the chances
 	        var dice: number = this.getNumber(0, chancesSum);
 	        var currentChanceSum = 0;
 	        for (var key2 in chances) {
-	            if ( chances.hasOwnProperty(key2) ) {
+	            if ( chances.hasOwnProperty(key2) && chances[key2] !== undefined ) {
 	                // go through all chances, keeping the sum so far
 	                currentChanceSum += chances[key2];
 	                // see if the dice landed in the part that corresponds to this choice
-	                if ( dice < currentChanceSum ) {
+	                if ( dice <= currentChanceSum ) {
 	                    return key2;
 	                }
 	            }

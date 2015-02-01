@@ -206,7 +206,7 @@ module Game {
 	 export class Container implements ActorFeature {
 		className: string;
 	 	private _capacity: number;
-	 	private actors: Actor[] = [];
+	 	private actorIds: ActorId[] = [];
 	 	private __listener: ContainerListener;
 
 	 	/*
@@ -223,7 +223,7 @@ module Game {
 
 	 	get capacity(): number { return this._capacity; }
 	 	set capacity(newValue: number) {this._capacity = newValue; }
-	 	size(): number { return this.actors.length; }
+	 	size(): number { return this.actorIds.length; }
 
 	 	// used to rebuilt listener link after loading
 	 	setListener(listener: ContainerListener) {
@@ -231,7 +231,7 @@ module Game {
 	 	}
 
 	 	get(index: number) : Actor {
-	 		return this.actors[index];
+	 		return Engine.instance.actorManager.getActor(this.actorIds[index]);
 	 	}
 
 	 	getFromSlot(slot: string): Actor {
@@ -270,7 +270,8 @@ module Game {
 
 	 	computeTotalWeight(): number {
 	 		var weight: number = 0;
-	 		this.actors.forEach((actor: Actor) => {
+	 		this.actorIds.forEach((actorId: ActorId) => {
+	 			var actor: Actor = Engine.instance.actorManager.getActor(actorId);
 	 			if ( actor.pickable ) {
 	 				weight += actor.pickable.weight;
 	 			}
@@ -293,7 +294,7 @@ module Game {
 	 		if ( actor.pickable.weight + weight > this._capacity ) {
 	 			return false;
 	 		}
-	 		this.actors.push( actor );
+	 		this.actorIds.push( actor.id );
 	 		actor.pickable.shortcut = undefined;
 	 		if (this.__listener) {
 	 			this.__listener.onAdd(actor, this, owner);
@@ -310,9 +311,9 @@ module Game {
 	 		owner - the actor owning the container
 	 	*/
 	 	remove(actor: Actor, owner: Actor) {
-	 		var idx: number = this.actors.indexOf(actor);
+	 		var idx: number = this.actorIds.indexOf(actor.id);
 	 		if ( idx !== -1 ) {
-	 			this.actors.splice(idx, 1);
+	 			this.actorIds.splice(idx, 1);
 		 		if (this.__listener) {
 		 			this.__listener.onRemove(actor, this, owner);
 		 		}
@@ -338,6 +339,7 @@ module Game {
 		private onThrowEffector: Effector;
 		private _weight: number;
 		private _destroyedWhenThrown: boolean;
+		private _container: ActorId;
 		/*
 			Property: _shortcut
 			Inventory shortcut between 0 (a) and 25 (z)
@@ -347,6 +349,7 @@ module Game {
 		get weight() { return this._weight; }
 		get onThrowEffect() { return this.onThrowEffector ? this.onThrowEffector.effect : undefined; }
 		get destroyedWhenThrown() { return this._destroyedWhenThrown; }
+		get container() { return this._container; }
 
 		constructor(weight: number, destroyedWhenThrown: boolean = false) {
 			this.className = "Pickable";
@@ -383,6 +386,7 @@ module Game {
 		*/
 		pick(owner: Actor, wearer: Actor): boolean {
 			if ( wearer.container && wearer.container.add(owner, wearer)) {
+				this._container = wearer.id;
 				log(transformMessage("[The actor1] pick[s] [the actor2].", wearer, owner));
 
 				if ( owner.equipment && wearer.container.isSlotEmpty(owner.equipment.getSlot())) {
@@ -391,7 +395,7 @@ module Game {
 				}
 
 				// remove this actor from item list
-				Engine.instance.actorManager.removeItem(owner);
+				Engine.instance.actorManager.removeItem(owner.id);
 				return true;
 			}
 			// wearer is not a container or is full
@@ -409,6 +413,7 @@ module Game {
 		*/
 		drop(owner: Actor, wearer: Actor, pos?: Yendor.Position, verb: string = "drop", fromFire: boolean = false) {
 			wearer.container.remove(owner, wearer);
+			this._container = undefined;
 			owner.x = pos ? pos.x : wearer.x;
 			owner.y = pos ? pos.y : wearer.y;
 			Engine.instance.actorManager.addItem(owner);
@@ -474,7 +479,7 @@ module Game {
 			if (owner.pickable.onThrowEffector) {
 				owner.pickable.onThrowEffector.apply(owner, wearer, pos, coef);
 				if (owner.pickable.destroyedWhenThrown) {
-					Engine.instance.actorManager.removeItem(owner);
+					Engine.instance.actorManager.destroyActor(owner.id);
 				}
 			}
 		}

@@ -159,7 +159,7 @@ module Game {
 			}
 			// check for living creatures on the destination cell
 			var cellPos: Yendor.Position = new Yendor.Position(x, y);
-			var actors: Actor[] = Engine.instance.actorManager.findActorsOnCell(cellPos, Engine.instance.actorManager.getCreatures());
+			var actors: Actor[] = Engine.instance.actorManager.findActorsOnCell(cellPos, Engine.instance.actorManager.getCreatureIds());
 			for (var i = 0; i < actors.length; i++) {
 				var actor: Actor = actors[i];
 				if ( actor.destructible && ! actor.destructible.isDead() ) {
@@ -316,10 +316,10 @@ module Game {
 			}
 			var cellPos: Yendor.Position = new Yendor.Position(owner.x, owner.y);
 			// no living actor. Log exising corpses and items
-			Engine.instance.actorManager.findActorsOnCell(cellPos, Engine.instance.actorManager.getCorpses()).forEach(function(actor: Actor) {
+			Engine.instance.actorManager.findActorsOnCell(cellPos, Engine.instance.actorManager.getCorpseIds()).forEach(function(actor: Actor) {
 				log(actor.getTheresaname() + " here.");
 			});
-			Engine.instance.actorManager.findActorsOnCell(cellPos, Engine.instance.actorManager.getItems()).forEach(function(actor: Actor) {
+			Engine.instance.actorManager.findActorsOnCell(cellPos, Engine.instance.actorManager.getItemIds()).forEach(function(actor: Actor) {
 				log(actor.getTheresaname() + " here.");
 			});
 			return true;
@@ -475,7 +475,8 @@ module Game {
 			var foundItem: boolean = false;
 			var pickedItem: boolean = false;
 			this.waitTime += this.walkTime;
-			Engine.instance.actorManager.getItems().some(function(item: Actor) {
+			Engine.instance.actorManager.getItemIds().some(function(itemId: ActorId) {
+				var item: Actor = Engine.instance.actorManager.getActor(itemId);
 				if ( item.pickable && item.x === owner.x && item.y === owner.y ) {
 					foundItem = true;
 					if (owner.container.canContain(item)) {
@@ -710,8 +711,8 @@ module Game {
 
 	export class Player extends Actor {
 		private _xpLevel = 0;
-		constructor() {
-			super();
+		constructor(readableId: string) {
+			super(readableId);
 			this.className = "Player";
 		}
 

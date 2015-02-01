@@ -92,9 +92,11 @@ module Game {
         export var PERSISTENCE_DUNGEON_LEVEL: string = "dungeonLevel";
         export var PERSISTENCE_MAP_KEY: string = "map";
         export var PERSISTENCE_ACTORS_KEY: string = "actors";
-        export var PERSISTENCE_ITEMS_KEY: string = "items";
-        export var PERSISTENCE_CORPSES_KEY: string = "corpses";
-        export var PERSISTENCE_UPDATING_CORPSES_KEY: string = "updatingCorpses";
+        export var PERSISTENCE_CREATURE_IDS_KEY: string = "creatureIds";
+        export var PERSISTENCE_ACTORS_SEQ_KEY: string = "actorsSeq";
+        export var PERSISTENCE_ITEM_IDS_KEY: string = "itemIds";
+        export var PERSISTENCE_CORPSE_IDS_KEY: string = "corpseIds";
+        export var PERSISTENCE_UPDATING_CORPSE_IDS_KEY: string = "updatingCorpseIds";
 
 	}
 	export const enum GameStatus {

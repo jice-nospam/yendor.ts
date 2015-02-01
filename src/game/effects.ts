@@ -83,24 +83,24 @@ module Game {
 		*/
 		selectTargets(owner: Actor, wearer: Actor, cellPos: Yendor.Position): boolean {
 			this.__selectedTargets = [];
-			var creatures: Actor[] = Engine.instance.actorManager.getCreatures();
+			var creatureIds: ActorId[] = Engine.instance.actorManager.getCreatureIds();
 			var data: TilePickerEventData;
 			switch (this._method) {
 				case TargetSelectionMethod.ACTOR_ON_CELL :
 					if ( cellPos ) {
-						this.__selectedTargets = Engine.instance.actorManager.findActorsOnCell(cellPos, creatures);
+						this.__selectedTargets = Engine.instance.actorManager.findActorsOnCell(cellPos, creatureIds);
 					} else {
 						this.__selectedTargets.push(wearer);
 					}
 					return true;
 				case TargetSelectionMethod.CLOSEST_ENEMY :
-					var actor = Engine.instance.actorManager.findClosestActor(cellPos ? cellPos : wearer, this.range, creatures);
+					var actor = Engine.instance.actorManager.findClosestActor(cellPos ? cellPos : wearer, this.range, creatureIds);
 					if ( actor ) {
 						this.__selectedTargets.push(actor);
 					}
 					return true;
 				case TargetSelectionMethod.ACTORS_IN_RANGE :
-					this.__selectedTargets = Engine.instance.actorManager.findActorsInRange( cellPos ? cellPos : wearer, this.range, creatures );
+					this.__selectedTargets = Engine.instance.actorManager.findActorsInRange( cellPos ? cellPos : wearer, this.range, creatureIds );
 					return true;
 				case TargetSelectionMethod.SELECTED_ACTOR :
 					log("Left-click a target creature,\nor right-click to cancel.", Constants.LOG_WARN_COLOR);
@@ -120,13 +120,13 @@ module Game {
 			Populates the __selectedTargets field for selection methods that require a tile selection
 		*/
 		onTileSelected(pos: Yendor.Position) {
-			var creatures: Actor[] = Engine.instance.actorManager.getCreatures();
+			var creatureIds: ActorId[] = Engine.instance.actorManager.getCreatureIds();
 			switch (this._method) {
 				case TargetSelectionMethod.SELECTED_ACTOR :
-					this.__selectedTargets = Engine.instance.actorManager.findActorsOnCell( pos, creatures);
+					this.__selectedTargets = Engine.instance.actorManager.findActorsOnCell( pos, creatureIds);
 				break;
 				case TargetSelectionMethod.SELECTED_RANGE :
-					this.__selectedTargets = Engine.instance.actorManager.findActorsInRange( pos, this._radius, creatures );
+					this.__selectedTargets = Engine.instance.actorManager.findActorsInRange( pos, this._radius, creatureIds );
 				break;
 			}
 		}
@@ -546,6 +546,7 @@ module Game {
 			}
 			if ( this.destroyOnEffect && success && wearer && wearer.container ) {
 				wearer.container.remove( owner, wearer );
+				// actually remove actor from actorManager
 			}
 		}
 	}

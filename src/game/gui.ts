@@ -153,9 +153,9 @@ module Game {
 
 		onMOUSE_MOVE(pos: Yendor.Position) {
 			if ( Engine.instance.map.contains(pos.x, pos.y) && Engine.instance.map.isExplored(pos.x, pos.y) ) {
-				var actorsOnCell: Actor[] = Engine.instance.actorManager.findActorsOnCell(pos, Engine.instance.actorManager.getCreatures());
-				actorsOnCell = actorsOnCell.concat(Engine.instance.actorManager.findActorsOnCell(pos, Engine.instance.actorManager.getItems()));
-				actorsOnCell = actorsOnCell.concat(Engine.instance.actorManager.findActorsOnCell(pos, Engine.instance.actorManager.getCorpses()));
+				var actorsOnCell: Actor[] = Engine.instance.actorManager.findActorsOnCell(pos, Engine.instance.actorManager.getCreatureIds());
+				actorsOnCell = actorsOnCell.concat(Engine.instance.actorManager.findActorsOnCell(pos, Engine.instance.actorManager.getItemIds()));
+				actorsOnCell = actorsOnCell.concat(Engine.instance.actorManager.findActorsOnCell(pos, Engine.instance.actorManager.getCorpseIds()));
 				this.handleMouseLook( actorsOnCell );
 			}
 		}

@@ -234,6 +234,19 @@ module Game {
 		Built an actor.
 	*/
 	export class ActorFactory {
+		private static seq: number = 0;
+		static load(persister: Persister) {
+			ActorFactory.seq = persister.loadFromKey(Constants.PERSISTENCE_ACTORS_SEQ_KEY);
+		}
+
+		static save(persister: Persister) {
+			persister.saveToKey(Constants.PERSISTENCE_ACTORS_SEQ_KEY, ActorFactory.seq);
+		}
+
+		static deleteSavedGame(persister: Persister) {
+			persister.deleteKey(Constants.PERSISTENCE_ACTORS_SEQ_KEY);
+		}
+
 		private static builders: { [index: string]: (x: number, y: number) => Actor } = {
 			// creature
 			// 		beast
@@ -343,7 +356,8 @@ module Game {
 
 		// potions
 		private static createEffectPotion(x: number, y: number, name: string, onUseEffector: Effector, onThrowEffector?: Effector): Actor {
-			var effectPotion = new Actor();
+			var effectPotion = new Actor(name + "|" + ActorFactory.seq);
+			ActorFactory.seq++;
 			effectPotion.init(x, y, "!", name, "potion", 0x800080, true);
 			effectPotion.pickable = new Pickable(0.5, true);
 			if ( onUseEffector ) {
@@ -377,7 +391,8 @@ module Game {
 
 		// scrolls
 		private static createLightningBoltScroll(x: number, y: number, range: number, damages: number): Actor {
-			var lightningBolt = new Actor();
+			var lightningBolt = new Actor("scroll of lightning bolt|" + ActorFactory.seq);
+			ActorFactory.seq++;
 			lightningBolt.init(x, y, "#", "scroll of lightning bolt", "scroll", Constants.PAPER_COLOR, true);
 			lightningBolt.pickable = new Pickable(0.1);
 			lightningBolt.pickable.setOnUseEffect(new InstantHealthEffect(-damages,
@@ -387,7 +402,8 @@ module Game {
 		}
 
 		private static createFireballScroll(x: number, y: number, range: number, radius: number, damages: number): Actor {
-			var fireball = new Actor();
+			var fireball = new Actor("scroll of fireball|" + ActorFactory.seq);
+			ActorFactory.seq++;
 			fireball.init(x, y, "#", "scroll of fireball", "scroll", Constants.PAPER_COLOR, true);
 			fireball.pickable = new Pickable(0.1);
 			fireball.pickable.setOnUseEffect(new InstantHealthEffect(-damages,
@@ -398,7 +414,8 @@ module Game {
 		}
 
 		private static createConfusionScroll(x: number, y: number, range: number, nbTurns: number): Actor {
-			var confusionScroll = new Actor();
+			var confusionScroll = new Actor("scroll of confusion|" + ActorFactory.seq);
+			ActorFactory.seq++;
 			confusionScroll.init(x, y, "#", "scroll of confusion", "scroll", Constants.PAPER_COLOR, true);
 			confusionScroll.pickable = new Pickable(0.1);
 			confusionScroll.pickable.setOnUseEffect(new ConditionEffect(ConditionType.CONFUSED, nbTurns,
@@ -409,7 +426,8 @@ module Game {
 
 		// weapons
 		private static createBlade(x: number, y: number, name: string, swordParam: BladeParam): Actor {
-			var sword = new Actor();
+			var sword = new Actor(name + "|" + ActorFactory.seq);
+			ActorFactory.seq++;
 			sword.init(x, y, "/", name, "weapon|blade", Constants.STEEL_COLOR, true);
 			sword.pickable = new Pickable(swordParam.weight);
 			sword.pickable.setOnThrowEffect(new InstantHealthEffect(-swordParam.damages,
@@ -421,7 +439,8 @@ module Game {
 		}
 
 		private static createRanged(x: number, y: number, name: string, rangedParam: RangedParam): Actor {
-			var bow = new Actor();
+			var bow = new Actor(name + "|" + ActorFactory.seq);
+			ActorFactory.seq++;
 			bow.init(x, y, ")", name, "weapon|ranged", Constants.WOOD_COLOR, true);
 			bow.pickable = new Pickable(2);
 			bow.equipment = new Equipment(rangedParam.twoHanded ? Constants.SLOT_BOTH_HANDS : Constants.SLOT_RIGHT_HAND);
@@ -431,7 +450,8 @@ module Game {
 		}
 
 		private static createStaff(x: number, y: number, name: string, staffParam: StaffParam): Actor {
-			var staff = new Actor();
+			var staff = new Actor(name + "|" + ActorFactory.seq);
+			ActorFactory.seq++;
 			staff.init(x, y, "/", name, "weapon|staff", 0xF0E020, true);
 			staff.pickable = new Pickable(staffParam.weight);
 			staff.equipment = new Equipment(staffParam.twoHanded ? Constants.SLOT_BOTH_HANDS : Constants.SLOT_RIGHT_HAND);
@@ -447,7 +467,8 @@ module Game {
 		}
 
 		private static createProjectile(x: number, y: number, name: string, projectileParam: ProjectileParam): Actor {
-			var projectile = new Actor();
+			var projectile = new Actor(name + "|" + ActorFactory.seq);
+			ActorFactory.seq++;
 			projectile.init(x, y, "\\", name, "weapon|projectile|" + projectileParam.projectileTypeName, projectileParam.color, true);
 			projectile.pickable = new Pickable(0.1);
 			projectile.pickable.setOnThrowEffect(new InstantHealthEffect(-projectileParam.damages,
@@ -458,7 +479,8 @@ module Game {
 		}
 
 		private static createShield(x: number, y: number, name: string, shieldParam: ShieldParam): Actor {
-			var shield = new Actor();
+			var shield = new Actor(name + "|" + ActorFactory.seq);
+			ActorFactory.seq++;
 			shield.init(x, y, "[", name, "weapon|shield", shieldParam.color, true);
 			shield.pickable = new Pickable(5);
 			shield.pickable.setOnThrowEffect(new ConditionEffect(ConditionType.STUNNED, 2,
@@ -470,14 +492,16 @@ module Game {
 
 		// miscellaneous
 		private static createStairs(x: number, y: number, character: string, direction: string): Actor {
-			var stairs: Actor = new Actor();
+			var stairs: Actor = new Actor("stairs " + direction + "|" + ActorFactory.seq);
+			ActorFactory.seq++;
 			stairs.init(x, y, character, "stairs " + direction, undefined, 0xFFFFFF, false);
 			stairs.fovOnly = false;
 			return stairs;
 		}
 
 		private static createDoor(x: number, y: number, name: string, doorParam: DoorParam): Actor {
-			var door: Actor = new Actor();
+			var door: Actor = new Actor(name + "|" + ActorFactory.seq);
+			ActorFactory.seq++;
 			door.init(x, y, "+", name, undefined, doorParam.color, true);
 			door.door = new Door(doorParam.seeThrough);
 			door.fovOnly = false;
@@ -491,7 +515,8 @@ module Game {
 		*/
 		private static createBeast(x: number, y: number, character: string, name: string, corpseName: string, color: Yendor.Color,
 			beastParam: BeastParam): Actor {
-			var beast: Actor = new Actor();
+			var beast: Actor = new Actor(name + "|" + ActorFactory.seq);
+			ActorFactory.seq++;
 			beast.init(x, y, character, name, "creature|beast", color, true);
 			beast.destructible = new MonsterDestructible(beastParam.hp, beastParam.defense, corpseName);
 			beast.attacker = new Attacker(beastParam.attack, beastParam.walkTime);
@@ -503,7 +528,8 @@ module Game {
 		}
 
 		private static createPlayer(x: number, y: number): Player {
-			var player = new Player();
+			var player = new Player("player|" + ActorFactory.seq);
+			ActorFactory.seq++;
 			player.init(x, y, "@", "player", 0xFFFFFF);
 			return player;
 		}
@@ -513,64 +539,112 @@ module Game {
 		Stores all the actors in the game.
 	*/
 	export class ActorManager {
-		private player: Player;
-		private stairsUp: Actor;
-		private stairsDown: Actor;
-		private creatures: Actor[];
-		private corpses: Actor[];
-		private updatingCorpses: Actor[];
-		private items: Actor[];
+		private playerId: ActorId;
+		private stairsUpId: ActorId;
+		private stairsDownId: ActorId;
+		private creatureIds: ActorId[];
+		private corpseIds: ActorId[];
+		private updatingCorpseIds: ActorId[];
+		private itemIds: ActorId[];
 		private scheduler: Yendor.Scheduler = new Yendor.Scheduler();
+		private actors: {[index: number]: Actor} = {};
 
 		getPlayer() : Player {
-			return this.player;
+			return <Player>this.actors[this.playerId];
+		}
+
+		getActor(id: ActorId) {
+			return this.actors[id];
+		}
+
+		registerActor(actor: Actor) {
+			if ( Yendor.urlParams[Constants.URL_PARAM_DEBUG] ) {
+				console.log("new actor " + actor.readableId + "[" + actor.id.toString(16) + "]");
+			}
+			this.actors[actor.id] = actor;
 		}
 
 		addCreature( actor: Actor ) {
-			this.creatures.push(actor);
+			this.creatureIds.push(actor.id);
 			this.scheduler.add(actor);
 			// possibly set the map transparency
 			actor.moveTo(actor.x, actor.y);
 		}
 
 		addItem( actor: Actor ) {
-			this.items.push(actor);
+			this.itemIds.push(actor.id);
 			// possibly set the map transparency
 			actor.moveTo(actor.x, actor.y);
 		}
 
-		getCreatures(): Actor[] {
-			return this.creatures;
+		getCreatureIds(): ActorId[] {
+			return this.creatureIds;
 		}
 
-		getItems(): Actor[] {
-			return this.items;
+		getItemIds(): ActorId[] {
+			return this.itemIds;
 		}
 
-		getCorpses(): Actor[] {
-			return this.corpses;
+		getCorpseIds(): ActorId[] {
+			return this.corpseIds;
 		}
 
 		getStairsUp(): Actor {
-			return this.stairsUp;
+			return this.actors[this.stairsUpId];
 		}
 
 		getStairsDown(): Actor {
-			return this.stairsDown;
+			return this.actors[this.stairsDownId];
+		}
+
+		destroyActor(actorId: ActorId) {
+			this.actors[actorId] = undefined;
+			var idList: ActorId[] = this.creatureIds;
+			var index: number = idList.indexOf(actorId);
+			if ( index !== -1 ) {
+				idList.splice(index, 1);
+			}
+			idList = this.itemIds;
+			index = idList.indexOf(actorId);
+			if ( index !== -1 ) {
+				idList.splice(index, 1);
+			}
+			idList = this.corpseIds;
+			index = idList.indexOf(actorId);
+			if ( index !== -1 ) {
+				idList.splice(index, 1);
+			}
+			idList = this.updatingCorpseIds;
+			index = idList.indexOf(actorId);
+			if ( index !== -1 ) {
+				idList.splice(index, 1);
+			}
 		}
 
 		clear() {
-			this.creatures = [];
-			this.corpses = [];
-			this.updatingCorpses = [];
-			this.items = [];
+			// remove all actors but the player
+			if (this.creatureIds) {
+				this.creatureIds.forEach((actorId: ActorId) => {
+					if ( actorId !== this.playerId ) {
+						this.actors[actorId] = undefined;
+					}
+				});
+				this.itemIds.forEach((actorId: ActorId) => { this.actors[actorId] = undefined; });
+				this.corpseIds.forEach((actorId: ActorId) => { this.actors[actorId] = undefined; });
+				this.updatingCorpseIds.forEach((actorId: ActorId) => { this.actors[actorId] = undefined; });
+			}
+			// TODO remove creature inventory items when creatures have inventory
+			this.creatureIds = [];
+			this.corpseIds = [];
+			this.updatingCorpseIds = [];
+			this.itemIds = [];
 			this.scheduler.clear();
 		}
 
-		private renderActorList(actors: Actor[], root: Yendor.Console) {
-			var nbActors: number = actors.length;
+		private renderActorList(actorIds: ActorId[], root: Yendor.Console) {
+			var nbActors: number = actorIds.length;
 			for (var i: number = 0; i < nbActors; i++) {
-				var actor: Actor = actors[i];
+				var actor: Actor = this.actors[actorIds[i]];
 				if ( Engine.instance.map.shouldRenderActor(actor) ) {
 					actor.render(root);
 				}
@@ -578,13 +652,13 @@ module Game {
 		}
 
 		renderActors(root: Yendor.Console) {
-			this.renderActorList(this.corpses, root);
-			this.renderActorList(this.items, root);
-			this.renderActorList(this.creatures, root);
+			this.renderActorList(this.corpseIds, root);
+			this.renderActorList(this.itemIds, root);
+			this.renderActorList(this.creatureIds, root);
 		}
 
 		isPlayerDead(): boolean {
-			return this.player.destructible.isDead();
+			return this.getPlayer().destructible.isDead();
 		}
 
 		/*
@@ -593,20 +667,21 @@ module Game {
 			Moves the dead actors from the actor list to the corpse list.
 		*/
 		updateActors() {
-			var oldPlayerX: number = this.player.x;
-			var oldPlayerY: number = this.player.y;
+			var player: Actor = this.getPlayer();
+			var oldPlayerX: number = player.x;
+			var oldPlayerY: number = player.y;
 			this.scheduler.run();
 			this.moveDeadToCorpse();
 			this.updateCorpses();
-			if ( this.player.x !== oldPlayerX || this.player.y !== oldPlayerY) {
+			if ( player.x !== oldPlayerX || player.y !== oldPlayerY) {
 				// the player moved. Recompute the field of view
-				Engine.instance.map.computeFov(this.player.x, this.player.y, Constants.FOV_RADIUS);
+				Engine.instance.map.computeFov(player.x, player.y, Constants.FOV_RADIUS);
 			}
 		}
 
 		private moveDeadToCorpse() {
-			for ( var i: number = 0, len: number = this.creatures.length; i < len; ++i) {
-				var actor: Actor = this.creatures[i];
+			for ( var i: number = 0, len: number = this.creatureIds.length; i < len; ++i) {
+				var actor: Actor = this.actors[this.creatureIds[i]];
 				if ( actor.destructible && actor.destructible.isDead() ) {
 					// actor is dead. move it to corpse list
 					// note that corpses must still be updated until they have no active conditions
@@ -614,22 +689,22 @@ module Game {
 					if (! actor.ai.hasActiveConditions()) {
 						this.scheduler.remove(actor);
 					} else {
-						this.updatingCorpses.push(actor);
+						this.updatingCorpseIds.push(actor.id);
 					}
-					this.creatures.splice( i, 1);
+					this.creatureIds.splice( i, 1);
 					i--;
 					len--;
-					this.corpses.push(actor);
+					this.corpseIds.push(actor.id);
 				}
 			}
 		}
 
 		private updateCorpses() {
-			for ( var i: number = 0, len: number = this.updatingCorpses.length; i < len; ++i) {
-				var actor: Actor = this.updatingCorpses[i];
+			for ( var i: number = 0, len: number = this.updatingCorpseIds.length; i < len; ++i) {
+				var actor: Actor = this.actors[this.updatingCorpseIds[i]];
 				if ( ! actor.ai.hasActiveConditions()) {
 					this.scheduler.remove(actor);
-					this.updatingCorpses.splice(i, 1);
+					this.updatingCorpseIds.splice(i, 1);
 					i--;
 					len--;
 				}
@@ -651,10 +726,10 @@ module Game {
 			return this.scheduler.isPaused();
 		}
 
-		removeItem(item: Actor) {
-			var idx: number = this.items.indexOf(item);
+		removeItem(itemId: ActorId) {
+			var idx: number = this.itemIds.indexOf(itemId);
 			if ( idx !== -1 ) {
-				this.items.splice(idx, 1);
+				this.itemIds.splice(idx, 1);
 			}
 		}
 
@@ -663,40 +738,46 @@ module Game {
 			Create the actors for up and down stairs. The position is not important, actors will be placed by the dungeon builder.
 		*/
 		createStairs() {
-			this.stairsUp = ActorFactory.create(ActorType.STAIR_UP);
-			this.stairsDown = ActorFactory.create(ActorType.STAIR_DOWN);
-			this.items.push(this.stairsUp);
-			this.items.push(this.stairsDown);
+			this.stairsUpId = ActorFactory.create(ActorType.STAIR_UP).id;
+			this.stairsDownId = ActorFactory.create(ActorType.STAIR_DOWN).id;
+			this.itemIds.push(this.stairsUpId);
+			this.itemIds.push(this.stairsDownId);
 		}
 
 		createPlayer() {
-			this.player = <Player>ActorFactory.create(ActorType.PLAYER);
-			this.addCreature(this.player);
+			var player: Actor = ActorFactory.create(ActorType.PLAYER);
+			this.playerId = player.id;
+			this.addCreature(player);
 		}
 
 		load(persister: Persister) {
-			this.creatures = persister.loadFromKey(Constants.PERSISTENCE_ACTORS_KEY);
-			this.scheduler.addAll(this.creatures);
-			this.player = <Player>this.creatures[0];
-			this.items = persister.loadFromKey(Constants.PERSISTENCE_ITEMS_KEY);
-			this.stairsUp = this.items[0];
-			this.stairsDown = this.items[1];
-			this.corpses = persister.loadFromKey(Constants.PERSISTENCE_CORPSES_KEY);
-			this.updatingCorpses = persister.loadFromKey(Constants.PERSISTENCE_UPDATING_CORPSES_KEY);
+			this.actors = persister.loadFromKey(Constants.PERSISTENCE_ACTORS_KEY);
+			this.creatureIds = persister.loadFromKey(Constants.PERSISTENCE_CREATURE_IDS_KEY);
+			for ( var i: number = 0, len: number = this.creatureIds.length; i < len; ++i ) {
+				this.scheduler.add(this.actors[this.creatureIds[i]]);
+			}
+			this.playerId = this.creatureIds[0];
+			this.itemIds = persister.loadFromKey(Constants.PERSISTENCE_ITEM_IDS_KEY);
+			this.stairsUpId = this.itemIds[0];
+			this.stairsDownId = this.itemIds[1];
+			this.corpseIds = persister.loadFromKey(Constants.PERSISTENCE_CORPSE_IDS_KEY);
+			this.updatingCorpseIds = persister.loadFromKey(Constants.PERSISTENCE_UPDATING_CORPSE_IDS_KEY);
 		}
 
 		save(persister: Persister) {
-			persister.saveToKey(Constants.PERSISTENCE_ACTORS_KEY, this.creatures);
-			persister.saveToKey(Constants.PERSISTENCE_ITEMS_KEY, this.items);
-			persister.saveToKey(Constants.PERSISTENCE_CORPSES_KEY, this.corpses);
-			persister.saveToKey(Constants.PERSISTENCE_UPDATING_CORPSES_KEY, this.updatingCorpses);
+			persister.saveToKey(Constants.PERSISTENCE_ACTORS_KEY, this.actors);
+			persister.saveToKey(Constants.PERSISTENCE_CREATURE_IDS_KEY, this.creatureIds);
+			persister.saveToKey(Constants.PERSISTENCE_ITEM_IDS_KEY, this.itemIds);
+			persister.saveToKey(Constants.PERSISTENCE_CORPSE_IDS_KEY, this.corpseIds);
+			persister.saveToKey(Constants.PERSISTENCE_UPDATING_CORPSE_IDS_KEY, this.updatingCorpseIds);
 		}
 
 		deleteSavedGame(persister: Persister) {
 			persister.deleteKey(Constants.PERSISTENCE_ACTORS_KEY);
-			persister.deleteKey(Constants.PERSISTENCE_ITEMS_KEY);
-			persister.deleteKey(Constants.PERSISTENCE_CORPSES_KEY);
-			persister.deleteKey(Constants.PERSISTENCE_UPDATING_CORPSES_KEY);
+			persister.deleteKey(Constants.PERSISTENCE_CREATURE_IDS_KEY);
+			persister.deleteKey(Constants.PERSISTENCE_ITEM_IDS_KEY);
+			persister.deleteKey(Constants.PERSISTENCE_CORPSE_IDS_KEY);
+			persister.deleteKey(Constants.PERSISTENCE_UPDATING_CORPSE_IDS_KEY);
 		}
 		/*
 			Function: findClosestActor
@@ -704,12 +785,12 @@ module Game {
 			In the `actors` array, find the closest actor (except the player) from position `pos` within `range`.
 			If range is 0, no range limitation.
 		*/
-		findClosestActor( pos: Yendor.Position, range: number, actors: Actor[] ) : Actor {
+		findClosestActor( pos: Yendor.Position, range: number, actorIds: ActorId[] ) : Actor {
 			var bestDistance: number = 1E8;
 			var closestActor: Actor = undefined;
-			var player: Actor = this.getPlayer();
-			actors.forEach(function(actor: Actor) {
-				if ( actor !== player ) {
+			actorIds.forEach(function(actorId: ActorId) {
+				if ( actorId !== this.playerId ) {
+					var actor: Actor = this.actors[actorId];
 					var distance: number = Yendor.Position.distance(pos, actor);
 					if ( distance < bestDistance && (distance < range || range === 0) ) {
 						bestDistance = distance;
@@ -731,11 +812,11 @@ module Game {
 			an array containing all the living actors on the cell
 
 		*/
-		findActorsOnCell( pos: Yendor.Position, actors: Actor[]) : Actor[] {
+		findActorsOnCell( pos: Yendor.Position, actorIds: ActorId[]) : Actor[] {
 			var actorsOnCell: Actor[] = [];
-			var nbActors: number = actors.length;
+			var nbActors: number = actorIds.length;
 			for (var i: number = 0; i < nbActors; i++) {
-				var actor: Actor = actors[i];
+				var actor: Actor = this.actors[actorIds[i]];
 				if ( actor.x === pos.x && actor.y === pos.y ) {
 					actorsOnCell.push(actor);
 				}
@@ -755,11 +836,11 @@ module Game {
 			Returns:
 			an actor array containing all actor within range
 		*/
-		findActorsInRange( pos: Yendor.Position, range: number, actors: Actor[]): Actor[] {
+		findActorsInRange( pos: Yendor.Position, range: number, actorIds: ActorId[]): Actor[] {
 			var actorsInRange: Actor[] = [];
-			var nbActors: number = actors.length;
+			var nbActors: number = actorIds.length;
 			for (var i: number = 0; i < nbActors; i++) {
-				var actor: Actor = actors[i];
+				var actor: Actor = this.actors[actorIds[i]];
 				if (Yendor.Position.distance(pos, actor) <= range ) {
 					actorsInRange.push( actor );
 				}
@@ -780,7 +861,7 @@ module Game {
 			// scan all 8 adjacent cells
 			for ( var i: number = 0; i < len; ++i) {
 				if ( !Engine.instance.map.isWall(adjacentCells[i].x, adjacentCells[i].y)) {
-					var items: Actor[] = this.findActorsOnCell(adjacentCells[i], this.items);
+					var items: Actor[] = this.findActorsOnCell(adjacentCells[i], this.itemIds);
 					for ( var j: number = 0, jlen: number = items.length; j < jlen; ++j) {
 						if ( items[j].lever ) {
 							return items[j];
@@ -822,12 +903,20 @@ module Game {
 	export interface ActorFeature extends Persistent {
 	}
 
+	/*
+		Type: ActorId
+		The CRC32 hashed value of the actor's readable id
+	*/
+	export type ActorId = number;
+
 	 /*
 	 	Class: Actor
 	 	The base class for all actors
 	 */
 	export class Actor extends Yendor.Position implements Persistent, Yendor.TimedEntity {
 		className: string;
+		private _id: ActorId;
+		private _readableId: string;
 		private _type: ActorClass;
 		// the ascii code of the symbol representing this actor on the map
 		private _ch: number;
@@ -847,9 +936,18 @@ module Game {
 		// whether this actor name is singular (you can write "a <name>")
 		private _singular: boolean = true;
 
-		constructor() {
+		get id() { return this._id; }
+		get readableId() { return this._readableId; }
+
+		constructor(readableId?: string) {
 			super();
 			this.className = "Actor";
+			if (readableId) {
+				// readableId is undefined when loading a game
+				this._readableId = readableId;
+				this._id = Yendor.crc32(readableId);
+				Engine.instance.actorManager.registerActor(this);
+			}
 		}
 
 		init(_x: number = 0, _y: number = 0, _ch: string = "", _name: string = "", types: string = "",
