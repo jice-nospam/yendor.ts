@@ -5,11 +5,21 @@
 /// <reference path="console.ts" />
 /// <reference path="path.ts" />
 /// <reference path="gameplay.ts" />
+
+module Tests {
+	"use strict";
+	export class MainTests extends tsUnit.TestClass {
+		crc32() {
+			this.areIdentical(2240272485, Yendor.crc32("abcde"));
+		}
+	}
+}
+
 $(function() {
 	// new instance of tsUnit
 	var test = new tsUnit.Test();
 
-	// add your test class (you can call this multiple times)
+	test.addTestClass(new Tests.MainTests(), "main");
 	test.addTestClass(new Tests.RngTests(), "rng");
 	test.addTestClass(new Tests.BspTests(), "bsp");
 	test.addTestClass(new Tests.FovTests(), "fov");

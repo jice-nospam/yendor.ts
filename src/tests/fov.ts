@@ -8,7 +8,7 @@ module Tests {
 			this.fov = new Yendor.Fov(20, 20);
 			for (var x = 0; x < 20; x++) {
 				for ( var y = 0; y < 20; y++) {
-					this.fov.setCell(x, y, true, true);
+					this.fov.setTransparent(x, y, true);
 				}
 			}
 		}
@@ -19,14 +19,13 @@ module Tests {
 			for (var x = 0; x < 20; x++) {
 				for ( var y = 0; y < 20; y++) {
 					this.isTrue( this.fov.isTransparent(x, y), "fov.isTransparent(" + x + "," + y + ")" );
-					this.isTrue( this.fov.isWalkable(x, y), "fov.isWalkable(" + x + "," + y + ")" );
 					this.isTrue( this.fov.isInFov(x, y), "fov.isInFov(" + x + "," + y + ")" );
 				}
 			}
 		}
 
 		pillar() {
-			this.fov.setCell(10, 10, false, false);
+			this.fov.setTransparent(10, 10, false);
 			this.fov.computeFov(10, 11, 20, true);
 
 			for ( var x = 0; x < 20; x++) {
@@ -43,7 +42,7 @@ module Tests {
 
 		wall() {
 			for ( var x = 0; x < 20; x++) {
-				this.fov.setCell(x, 10, false, false);
+				this.fov.setTransparent(x, 10, false);
 			}
 			this.fov.computeFov(10, 11, 20, true);
 
@@ -60,7 +59,7 @@ module Tests {
 
 		dontLightWalls() {
 			for ( var x = 0; x < 20; x++) {
-				this.fov.setCell(x, 10, false, false);
+				this.fov.setTransparent(x, 10, false);
 			}
 			this.fov.computeFov(10, 11, 20, false);
 

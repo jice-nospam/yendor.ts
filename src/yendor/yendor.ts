@@ -47,6 +47,7 @@ module Yendor {
 			};
 		})();
 		urlParams = parseUrlParams();
+		makeCRCTable();
 	}
 
 	function parseUrlParams(): { [index: string]: string; } {
@@ -60,6 +61,36 @@ module Yendor {
 		}
 		return paramMap;
 	}
+
+	// CRC32 utility. Adapted from http://stackoverflow.com/questions/18638900/javascript-crc32
+    var crcTable: number[];
+	function makeCRCTable() {
+	    var c: number;
+	    crcTable = [];
+	    for (var n: number = 0; n < 256; n++) {
+	        c = n;
+	        for (var k: number = 0; k < 8; k++) {
+	            c = ((c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1));
+	        }
+	        crcTable[n] = c;
+	    }
+	}
+
+	/*
+		Function: crc32
+		Returns:
+		the CRC32 hash of a string
+	*/
+	export function crc32(str: string): number {
+	    if (! crcTable) {
+	    	makeCRCTable();
+	    }
+	    var crc: number = 0 ^ (-1);
+	    for (var i: number = 0, len: number = str.length; i < len; ++i ) {
+	        crc = (crc >>> 8) ^ crcTable[(crc ^ str.charCodeAt(i)) & 0xFF];
+	    }
+	    return (crc ^ (-1)) >>> 0;
+	};
 
 	/*
 		Function: createConsole
