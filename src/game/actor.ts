@@ -534,6 +534,13 @@ module Game {
 			return player;
 		}
 	}
+
+	/*
+		Type: ActorId
+		The CRC32 hashed value of the actor's readable id.
+	*/
+	export type ActorId = number;
+
 	/*
 		Class: ActorManager
 		Stores all the actors in the game.
@@ -788,7 +795,9 @@ module Game {
 		findClosestActor( pos: Yendor.Position, range: number, actorIds: ActorId[] ) : Actor {
 			var bestDistance: number = 1E8;
 			var closestActor: Actor = undefined;
-			actorIds.forEach(function(actorId: ActorId) {
+			var nbActors: number = actorIds.length;
+			for (var i: number = 0; i < nbActors; i++) {
+				var actorId: ActorId = actorIds[i];
 				if ( actorId !== this.playerId ) {
 					var actor: Actor = this.actors[actorId];
 					var distance: number = Yendor.Position.distance(pos, actor);
@@ -797,7 +806,7 @@ module Game {
 						closestActor = actor;
 					}
 				}
-			});
+			}
 			return closestActor;
 		}
 
@@ -903,15 +912,11 @@ module Game {
 	export interface ActorFeature extends Persistent {
 	}
 
-	/*
-		Type: ActorId
-		The CRC32 hashed value of the actor's readable id
-	*/
-	export type ActorId = number;
-
 	 /*
 	 	Class: Actor
-	 	The base class for all actors
+	 	The base class for all actors.
+	 	Actor shouldn't hold references to other Actors, else there might be cyclic dependencies which
+	 	keep the json serializer from working. Instead, hold ActorId and use ActorManager.getActor()
 	 */
 	export class Actor extends Yendor.Position implements Persistent, Yendor.TimedEntity {
 		className: string;

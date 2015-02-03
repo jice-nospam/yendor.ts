@@ -593,12 +593,12 @@ module Game {
 		*/
 		private _range: number;
 
-		private _projectile: Actor;
+		private projectileId: ActorId;
 
 		get loadTime() { return this._loadTime; }
 		get damageCoef() { return this._damageCoef; }
 		get projectileType() { return this._projectileType; }
-		get projectile() { return this._projectile; }
+		get projectile() { return this.projectileId ? Engine.instance.actorManager.getActor(this.projectileId) : undefined; }
 		get range() { return this._range; }
 
 		constructor(_damageCoef: number, projectileTypeName: string, loadTime: number, range: number) {
@@ -610,16 +610,17 @@ module Game {
 		}
 
 		fire(owner: Actor, wearer: Actor) {
-			this._projectile = this.findCompatibleProjectile(wearer);
-			if (! this._projectile) {
+			var projectile: Actor = this.findCompatibleProjectile(wearer);
+			if (! projectile) {
 				// no projectile found. cannot fire
 				if ( wearer === Engine.instance.actorManager.getPlayer()) {
 					log("No " + this._projectileType.name + " available.", 0xFF0000);
 					return;
 				}
 			}
-			log(transformMessage("[The actor1] fire[s] [a actor2].", wearer, this._projectile));
-			this._projectile.pickable.throw(this._projectile, wearer, this._range);
+			this.projectileId = projectile.id;
+			log(transformMessage("[The actor1] fire[s] [a actor2].", wearer, projectile));
+			projectile.pickable.throw(projectile, wearer, this._range);
 		}
 
 		private findCompatibleProjectile(wearer: Actor): Actor {
