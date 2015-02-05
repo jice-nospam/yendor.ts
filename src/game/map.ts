@@ -559,7 +559,7 @@ module Game {
 			actorsOnCell = actorsOnCell.concat(actorManager.findActorsOnCell(pos, actorManager.getCreatureIds()));
 			for ( var i: number = 0; i < actorsOnCell.length; i++) {
 				var actor: Actor = actorsOnCell[i];
-				if ( actor.isBlocking() ) {
+				if ( actor.blocks ) {
 					return false;
 				}
 			}
@@ -587,7 +587,7 @@ module Game {
 			var detectLifeCond: DetectLifeCondition = <DetectLifeCondition>player.ai.getCondition(ConditionType.DETECT_LIFE);
 			var detectRange = detectLifeCond ? detectLifeCond.range : 0;
 			return this.isInFov( actor.x, actor.y)
-				|| (!actor.isFovOnly() && this.isExplored( actor.x, actor.y))
+				|| (!actor.fovOnly && this.isExplored( actor.x, actor.y))
 				|| (detectRange > 0 && actor.ai && actor.destructible && !actor.destructible.isDead()
 					&& Yendor.Position.distance(player, actor) < detectRange);
 		}

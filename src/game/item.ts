@@ -15,39 +15,30 @@ module Game {
 	export class Destructible implements ActorFeature {
 		className: string;
 		private _maxHp: number;
-		private _defense: number;
-		private _hp: number;
-		private _corpseName: string;
-		private _xp: number = 0;
+		defense: number;
+		hp: number;
+		private corpseName: string;
+		xp: number = 0;
 		/*
 			Constructor: constructor
 
 			Parameters:
 			_maxHp - initial amount of health points
-			_defense - when attacked, how much hit points are deflected
-			_corpseName - new name of the actor when its health points reach 0
+			defense - when attacked, how much hit points are deflected
+			corpseName - new name of the actor when its health points reach 0
 		*/
-		constructor(_maxHp: number = 0, _defense: number = 0, _corpseName: string = "") {
+		constructor(_maxHp: number = 0, defense: number = 0, corpseName: string = "") {
 			this.className = "Destructible";
-			this._hp = _maxHp;
+			this.hp = _maxHp;
 			this._maxHp = _maxHp;
-			this._defense = _defense;
-			this._corpseName = _corpseName;
+			this.defense = defense;
+			this.corpseName = corpseName;
 		}
-
-		get hp() { return this._hp; }
-		set hp(newValue: number) { this._hp = newValue; }
-
-		get xp() { return this._xp; }
-		set xp(newValue: number) { this._xp = newValue; }
 
 		get maxHp() { return this._maxHp; }
 
-		get defense() { return this._defense; }
-		set defense(newValue: number) { this._defense = newValue; }
-
 		isDead(): boolean {
-			return this._hp <= 0;
+			return this.hp <= 0;
 		}
 
 		public computeRealDefense(owner: Actor): number {
@@ -80,9 +71,9 @@ module Game {
 		takeDamage(owner: Actor, damage: number): number {
 			damage -= this.computeRealDefense(owner);
 			if ( damage > 0 ) {
-				this._hp -= damage;
+				this.hp -= damage;
 				if ( this.isDead() ) {
-					this._hp = 0;
+					this.hp = 0;
 					this.die(owner);
 				}
 			} else {
@@ -102,10 +93,10 @@ module Game {
 			the actual amount of health points recovered
 		*/
 		heal(amount: number): number {
-			this._hp += amount;
-			if ( this._hp > this._maxHp ) {
-				amount -= this._hp - this._maxHp;
-				this._hp = this._maxHp;
+			this.hp += amount;
+			if ( this.hp > this._maxHp ) {
+				amount -= this.hp - this._maxHp;
+				this.hp = this._maxHp;
 			}
 			return amount;
 		}
@@ -119,7 +110,7 @@ module Game {
 		*/
 		die(owner: Actor) {
 			owner.ch = "%";
-			owner.name = this._corpseName;
+			owner.name = this.corpseName;
 			owner.blocks = false;
 			if (! owner.transparent) {
 				Engine.instance.map.setTransparent(owner.x, owner.y, true);
@@ -134,7 +125,11 @@ module Game {
 	*/
 	export class Attacker implements ActorFeature {
 		className: string;
-		private _power: number;
+		/*
+			Property: power
+			Amount of damages given
+		*/
+		power: number;
 		private _attackTime: number;
 		/*
 			Constructor: constructor
@@ -144,16 +139,9 @@ module Game {
 		*/
 		constructor(_power: number = 0, attackTime: number = Constants.PLAYER_WALK_TIME) {
 			this.className = "Attacker";
-			this._power = _power;
+			this.power = _power;
 			this._attackTime = attackTime;
 		}
-
-		/*
-			Property: power
-			Amount of damages given
-		*/
-		get power() { return this._power; }
-		set power(newValue: number) { this._power = newValue; }
 
 		get attackTime() { return this._attackTime; }
 
@@ -167,7 +155,7 @@ module Game {
 		*/
 		attack(owner: Actor, target: Actor) {
 			if ( target.destructible && ! target.destructible.isDead() ) {
-				var damage = this._power - target.destructible.computeRealDefense(target);
+				var damage = this.power - target.destructible.computeRealDefense(target);
 				var msg: string = "[The actor1] attack[s] [the actor2]";
 				var msgColor: Yendor.Color;
 				if ( damage >= target.destructible.hp ) {
@@ -180,7 +168,7 @@ module Game {
 					msg += " but it has no effect!";
 				}
 				log(transformMessage(msg, owner, target), msgColor);
-				target.destructible.takeDamage(target, this._power);
+				target.destructible.takeDamage(target, this.power);
 			}
 		}
 	}
@@ -209,6 +197,8 @@ module Game {
 	 	private actorIds: ActorId[] = [];
 	 	private __listener: ContainerListener;
 
+	 	get capacity() { return this._capacity; }
+
 	 	/*
 	 		Constructor: constructor
 
@@ -221,8 +211,6 @@ module Game {
 	 		this.__listener = listener;
 	 	}
 
-	 	get capacity(): number { return this._capacity; }
-	 	set capacity(newValue: number) {this._capacity = newValue; }
 	 	size(): number { return this.actorIds.length; }
 
 	 	// used to rebuilt listener link after loading
@@ -651,17 +639,14 @@ module Game {
 	*/
 	export class Magic implements ActorFeature {
 		className: string;
-		private _maxCharges: number;
+		maxCharges: number;
 		private _charges: number;
 		private onFireEffector: Effector;
 
-		get maxCharges() { return this._maxCharges; }
-		set maxCharges(newValue: number) { this._maxCharges = newValue; }
-
 		constructor(maxCharges: number) {
 			this.className = "Magic";
-			this._maxCharges = maxCharges;
-			this._charges = this._maxCharges;
+			this.maxCharges = maxCharges;
+			this._charges = this.maxCharges;
 		}
 
 		setFireEffector(effect: Effect, targetSelector: TargetSelector, message?: string) {

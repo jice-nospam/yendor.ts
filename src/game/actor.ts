@@ -926,18 +926,18 @@ module Game {
 		// the ascii code of the symbol representing this actor on the map
 		private _ch: number;
 		// the name to be used by mouse look or the inventory screen
-		private _name: string;
+		name: string;
 		// the color associated with this actor's symbol
-		private _col: Yendor.Color;
+		col: Yendor.Color;
 
 		private features: { [index: number]: ActorFeature} = {};
 
 		// whether you can walk on the tile where this actor is
-		private _blocks: boolean = false;
+		blocks: boolean = false;
 		// whether light goes through this actor
-		private _transparent: boolean = true;
+		transparent: boolean = true;
 		// whether you can see this actor only if it's in your field of view
-		private _fovOnly: boolean = true;
+		fovOnly: boolean = true;
 		// whether this actor name is singular (you can write "a <name>")
 		private _singular: boolean = true;
 
@@ -956,17 +956,17 @@ module Game {
 		}
 
 		init(_x: number = 0, _y: number = 0, _ch: string = "", _name: string = "", types: string = "",
-			_col: Yendor.Color = "", singular: boolean = true) {
+			col: Yendor.Color = "", singular: boolean = true) {
 			this.moveTo(_x, _y);
 			this._ch = _ch.charCodeAt(0);
-			this._name = _name;
-			this._col = _col;
+			this.name = _name;
+			this.col = col;
 			this._singular = singular;
 			this._type = types ? ActorClass.buildClassHierarchy(types) : ActorClass.getRoot();
 		}
 
 		moveTo(x: number, y: number) {
-			if (! this._transparent) {
+			if (! this.transparent) {
 				Engine.instance.map.setTransparent(this.x, this.y, true);
 				super.moveTo(x, y);
 				Engine.instance.map.setTransparent(this.x, this.y, false);
@@ -989,12 +989,6 @@ module Game {
 		get ch() { return String.fromCharCode(this._ch); }
 		set ch(newValue: string) { this._ch = newValue.charCodeAt(0); }
 
-		get col() { return this._col; }
-		set col(newValue: Yendor.Color) { this._col = newValue; }
-
-		get name() { return this._name; }
-		set name(newValue: string) { this._name = newValue; }
-
 		isSingular(): boolean {
 			return this._singular;
 		}
@@ -1002,21 +996,6 @@ module Game {
 		isStackable(): boolean {
 			return ! this.destructible && (! this.equipment || ! this.equipment.isEquipped() || this.equipment.getSlot() === Constants.SLOT_QUIVER);
 		}
-
-		isBlocking(): boolean {
-			return this._blocks;
-		}
-		set blocks(newValue: boolean) { this._blocks = newValue; }
-
-		isTransparent(): boolean {
-			return this._transparent;
-		}
-		set transparent(newValue: boolean) { this._transparent = newValue; }
-
-		isFovOnly(): boolean {
-			return this._fovOnly;
-		}
-		set fovOnly(newValue: boolean) { this._fovOnly = newValue; }
 
 		// feature getters & setters
 		get destructible(): Destructible { return <Destructible>this.features[ActorFeatureType.DESTRUCTIBLE]; }
@@ -1152,7 +1131,7 @@ module Game {
 
 		render(root: Yendor.Console) {
 			root.text[this.x][this.y] = this._ch;
-			root.fore[this.x][this.y] = this._col;
+			root.fore[this.x][this.y] = this.col;
 		}
 
 		/*

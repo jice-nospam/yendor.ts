@@ -228,8 +228,16 @@ module Yendor {
 		Stores the position of a cell in the console (column, row)
 	*/
 	export class Position implements Comparable {
-		private _x: number;
-		private _y: number;
+		/*
+			Property: x
+		*/
+		x: number;
+
+		/*
+			Property: y
+		*/
+		y: number;
+
 		/*
 			Constructor: constructor
 
@@ -238,21 +246,9 @@ module Yendor {
 			_y : the row
 		*/
 		constructor(_x: number = 0, _y: number = 0) {
-			this._x = _x;
-			this._y = _y;
+			this.x = _x;
+			this.y = _y;
 		}
-
-		/*
-			Property: x
-		*/
-		get x() { return this._x; }
-		set x(newValue: number) { this._x = newValue; }
-
-		/*
-			Property: y
-		*/
-		get y() { return this._y; }
-		set y(newValue: number) { this._y = newValue; }
 
 		/*
 			Function: moveTo
