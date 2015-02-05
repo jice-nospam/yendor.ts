@@ -705,8 +705,8 @@ module Game {
 		}
 	}
 
-	export interface LeverAction {
-		(): void;
+	export enum LeverAction {
+		OPEN_CLOSE_DOOR
 	}
 
 	/*
@@ -716,14 +716,27 @@ module Game {
 	*/
 	export class Lever implements ActorFeature {
 		className: string;
-		action: LeverAction;
-		constructor(action: LeverAction) {
+		private _action: LeverAction;
+		private _actorId: ActorId;
+
+		get actorId() { return this._actorId; }
+		get action() { return this._action; }
+
+		constructor(action: LeverAction, actorId?: ActorId) {
 			this.className = "Lever";
-			this.action = action;
+			this._action = action;
+			this._actorId = actorId;
 		}
 
 		activate() {
-			this.action();
+			var actor = this._actorId !== undefined ? Engine.instance.actorManager.getActor(this._actorId) : undefined;
+			switch (this._action) {
+				case LeverAction.OPEN_CLOSE_DOOR :
+					if ( actor && actor.door ) {
+						actor.door.openOrClose(actor);
+					}
+				break;
+			}
 		}
 	}
 

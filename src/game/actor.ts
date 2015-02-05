@@ -507,7 +507,7 @@ module Game {
 			door.fovOnly = false;
 			door.blocks = true;
 			door.transparent = doorParam.seeThrough;
-			door.lever = new Lever(function() { door.door.openOrClose(door); } );
+			door.lever = new Lever(LeverAction.OPEN_CLOSE_DOOR, door.id);
 			return door;
 		}
 		/*
@@ -1163,11 +1163,6 @@ module Game {
 			// rebuild container -> listener backlinks
 			if ( this.ai && this.container ) {
 				this.container.setListener(this.ai);
-			}
-			// rebuild lever->door links
-			if ( this.door && this.lever ) {
-				var thisDoor: Actor = this;
-				this.lever.action = function() {thisDoor.door.openOrClose(thisDoor); };
 			}
 		}
 

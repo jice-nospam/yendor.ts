@@ -15,7 +15,7 @@ module Game {
 		to keep the game from trying to load data with an old format.
 		This should be an integer.
 	*/
-	var SAVEFILE_VERSION: string = "11";
+	var SAVEFILE_VERSION: string = "12";
 
 	/*
 		Class: Engine
