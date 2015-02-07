@@ -33,4 +33,13 @@ __name1 type;
 private __name2 type;
 ```
 
+## performances
+* avoid closures, array.slice in tight loops
+* fastest way to iterate on an array :
+```
+for ( var i: number = 0, len: number = array.length; i < len; ++i) {
+	// do something with array[i]
+}
+```
+
 
