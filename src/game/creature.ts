@@ -500,7 +500,7 @@ module Game {
 			// check if there's an adjacent lever
 			var lever: Actor = Engine.instance.actorManager.findAdjacentLever(owner);
 			if ( lever ) {
-				lever.lever.activate();
+				lever.lever.activate(owner);
 				this.waitTime += this.walkTime;
 			}
 		}
