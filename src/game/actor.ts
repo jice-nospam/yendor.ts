@@ -151,6 +151,7 @@ module Game {
 		STAIR_DOWN,
 		WOODEN_DOOR,
 		IRON_PORTCULLIS,
+		KEY,
 		LAST_ACTOR_TYPE
 	};
 
@@ -216,6 +217,7 @@ module Game {
 	interface DoorParam {
 		seeThrough: boolean;
 		color: Yendor.Color;
+		keyId?: ActorId;
 	}
 
 	interface ShieldParam {
@@ -332,7 +334,10 @@ module Game {
 			WOODEN_DOOR: (x: number, y: number) => { return ActorFactory.createDoor(x, y, "wooden door",
 				{ seeThrough: false, color: Constants.WOOD_COLOR } ); },
 			IRON_PORTCULLIS: (x: number, y: number) => { return ActorFactory.createDoor(x, y, "iron portcullis",
-				{ seeThrough: true, color: Constants.IRON_COLOR } ); }
+				{ seeThrough: true, color: Constants.IRON_COLOR } ); },
+			KEY: (x: number, y: number) => {
+				return ActorFactory.createPickable(x, y, "key", "p", Constants.IRON_COLOR, 0.2);
+			}
 		};
 		/*
 			Function: create
@@ -351,6 +356,24 @@ module Game {
 			} else {
 				actor = builder(x, y);
 			}
+			return actor;
+		}
+
+		/*
+			Function: setLock
+			Associate a door with a key to create a locked door that can only be opened by this key
+		*/
+		static setLock(door: Actor, key: Actor) {
+			door.lock = new Lockable(key.id);
+		}
+
+		// generic
+		private static createPickable(x: number, y: number, name: string, ch: string,
+			col: Yendor.Color, weight: number, singular: boolean = true) {
+			var actor: Actor = new Actor(name + "|" + ActorFactory.seq);
+			ActorFactory.seq++;
+			actor.init(x, y, ch, name, undefined, col, singular);
+			actor.pickable = new Pickable(weight, false);
 			return actor;
 		}
 
@@ -510,6 +533,7 @@ module Game {
 			door.lever = new Lever(LeverAction.OPEN_CLOSE_DOOR, door.id);
 			return door;
 		}
+
 		/*
 			creature factories
 		*/
@@ -541,6 +565,14 @@ module Game {
 	*/
 	export type ActorId = number;
 
+	export interface ActorProcessor {
+		(actor: Actor): void;
+	}
+
+	export interface ActorFilter {
+		(actor: Actor): boolean;
+	}
+
 	/*
 		Class: ActorManager
 		Stores all the actors in the game.
@@ -562,6 +594,24 @@ module Game {
 
 		getActor(id: ActorId) {
 			return this.actors[id];
+		}
+
+		map(actorProcessor: ActorProcessor) {
+			for (var index in this.actors) {
+				if ( this.actors.hasOwnProperty(index) ) {
+					actorProcessor(this.actors[index]);
+				}
+			}
+		}
+
+		filter(actorFilter: ActorFilter): Actor[] {
+			var selectedActors: Actor[] = [];
+			for (var index in this.actors) {
+				if ( this.actors.hasOwnProperty(index) && actorFilter(this.actors[index])) {
+					selectedActors.push(this.actors[index]);
+				}
+			}
+			return selectedActors;
 		}
 
 		registerActor(actor: Actor) {
@@ -903,10 +953,12 @@ module Game {
 		RANGED,
 		// has magic properties
 		MAGIC,
-		// can be open/closed, locked/unlocked
+		// can be open/closed. Can be combined with a lockable
 		DOOR,
 		// can be triggered by pressing E when standing on an adjacent cell
 		LEVER,
+		// can be locked/unlocked
+		LOCKABLE,
 	}
 
 	export interface ActorFeature extends Persistent {
@@ -1024,6 +1076,9 @@ module Game {
 
 		get door(): Door { return <Door>this.features[ActorFeatureType.DOOR]; }
 		set door(newValue: Door) { this.features[ActorFeatureType.DOOR] = newValue; }
+
+		get lock(): Lockable { return <Lockable>this.features[ActorFeatureType.LOCKABLE]; }
+		set lock(newValue: Lockable) { this.features[ActorFeatureType.LOCKABLE] = newValue; }
 
 		get lever(): Lever { return <Lever>this.features[ActorFeatureType.LEVER]; }
 		set lever(newValue: Lever) { this.features[ActorFeatureType.LEVER] = newValue; }

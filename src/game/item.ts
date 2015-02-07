@@ -222,9 +222,17 @@ module Game {
 	 		return Engine.instance.actorManager.getActor(this.actorIds[index]);
 	 	}
 
+	 	contains(actorId: ActorId): boolean {
+	 		for ( var i: number = 0, n: number = this.size(); i < n; i++) {
+	 			if ( actorId === this.actorIds[i] ) {
+	 				return true;
+	 			}
+	 		}
+	 		return false;
+	 	}
+
 	 	getFromSlot(slot: string): Actor {
-	 		var n: number = this.size();
-	 		for ( var i: number = 0; i < n; i++) {
+	 		for ( var i: number = 0, n: number = this.size(); i < n; i++) {
 	 			var actor: Actor = this.get(i);
 	 			if ( actor.equipment && actor.equipment.isEquipped() && actor.equipment.getSlot() === slot ) {
 	 				return actor;
@@ -713,12 +721,19 @@ module Game {
 			this._actorId = actorId;
 		}
 
-		activate() {
-			var actor = this._actorId !== undefined ? Engine.instance.actorManager.getActor(this._actorId) : undefined;
+		activate(activator: Actor) {
+			var mechanism = this._actorId !== undefined ? Engine.instance.actorManager.getActor(this._actorId) : undefined;
 			switch (this._action) {
 				case LeverAction.OPEN_CLOSE_DOOR :
-					if ( actor && actor.door ) {
-						actor.door.openOrClose(actor);
+					if ( mechanism && mechanism.door ) {
+						if ( mechanism.lock && mechanism.lock.isLocked()) {
+							// unlock if the activator has the key
+							if ( activator.container && activator.container.contains(mechanism.lock.keyId)) {
+								mechanism.lock.unlock(mechanism.lock.keyId);
+								log(transformMessage("[The actor1] unlock[s] [the actor2].", activator, mechanism));
+							}
+						}
+						mechanism.door.openOrClose(mechanism);
 					}
 				break;
 			}
@@ -726,42 +741,26 @@ module Game {
 	}
 
 	/*
-		Class: Door
-		Can be open/closed. Does not necessarily block sight (portcullis).
+		Class: Openable
+		Something that can be oen/closed
 	*/
-	export class Door implements ActorFeature {
+	export class Openable implements ActorFeature {
 		className: string;
 		private closed: boolean = true;
-		private seeThrough: boolean;
-		constructor(seeThrough: boolean) {
-			this.className = "Door";
-			this.seeThrough = seeThrough;
+
+		constructor() {
+			this.className = "Openable";
 		}
 
 		isClosed(): boolean { return this.closed; }
 
 		open(owner: Actor) {
 			this.closed = false;
-			owner.ch = "/";
-			owner.blocks = false;
-			owner.transparent = true;
-			Engine.instance.map.setWalkable(owner.x, owner.y, true);
-			Engine.instance.map.setTransparent(owner.x, owner.y, true);
 			log(transformMessage("[The actor1] is open.", owner));
 		}
 
 		close(owner: Actor) {
-			// don't close if there's a living actor on the cell
-			if (! Engine.instance.map.canWalk(owner.x, owner.y)) {
-				log(transformMessage("Cannot close [the actor1]", owner));
-				return;
-			}
 			this.closed = true;
-			owner.ch = "+";
-			owner.blocks = true;
-			owner.transparent = this.seeThrough;
-			Engine.instance.map.setWalkable(owner.x, owner.y, false);
-			Engine.instance.map.setTransparent(owner.x, owner.y, this.seeThrough);
 			log(transformMessage("[The actor1] is closed.", owner));
 		}
 
@@ -771,6 +770,73 @@ module Game {
 			} else {
 				this.close(owner);
 			}
+		}
+	}
+
+	/*
+		Class: Lockable
+		Something that can be locked/unlocked
+	*/
+	export class Lockable implements ActorFeature {
+		className: string;
+		private locked: boolean = true;
+		private _keyId: ActorId;
+		constructor(keyId: ActorId) {
+			this.className = "Lockable";
+			this._keyId = keyId;
+		}
+
+		isLocked(): boolean { return this.locked; }
+		get keyId() { return this._keyId; }
+
+		unlock(keyId: ActorId): boolean {
+			if ( this._keyId === keyId ) {
+				this.locked = false;
+				return true;
+			}
+			return false;
+		}
+		lock() {
+			this.locked = true;
+		}
+	}
+
+	/*
+		Class: Door
+		Can be open/closed. Does not necessarily block sight (portcullis).
+	*/
+	export class Door extends Openable {
+		private seeThrough: boolean;
+		constructor(seeThrough: boolean) {
+			super();
+			this.className = "Door";
+			this.seeThrough = seeThrough;
+		}
+
+		open(owner: Actor) {
+			if ( owner.lock && owner.lock.isLocked()) {
+				log(transformMessage("[The actor1] is locked.", owner));
+			}
+			super.open(owner);
+			owner.ch = "/";
+			owner.blocks = false;
+			owner.transparent = true;
+			Engine.instance.map.setWalkable(owner.x, owner.y, true);
+			Engine.instance.map.setTransparent(owner.x, owner.y, true);
+		}
+
+		close(owner: Actor) {
+			// don't close if there's a living actor on the cell
+			if (! Engine.instance.map.canWalk(owner.x, owner.y)) {
+				log(transformMessage("Cannot close [the actor1]", owner));
+				return;
+			}
+			super.close(owner);
+			owner.ch = "+";
+			owner.blocks = true;
+			owner.transparent = this.seeThrough;
+			Engine.instance.map.setWalkable(owner.x, owner.y, false);
+			Engine.instance.map.setTransparent(owner.x, owner.y, this.seeThrough);
 		}
 	}
 }
