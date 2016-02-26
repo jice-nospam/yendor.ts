@@ -21,7 +21,7 @@ module Umbra {
 		Module: EventManager
 		To get events, register to the type :
 		> eventBus.registerEventListener( myListener, "fire_bullet" );
-		and implement a handler :
+		myListener should implement a handler :
 		> onFireBullet(data)
 		The handler's parameter type depends on the event type. See <EventType>.
 		The handler's name is the camelcase version of the EventType.

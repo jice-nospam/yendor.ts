@@ -33,7 +33,6 @@ Reminder for stuff that might be added to the game. Or not.
 
 * Game
     - **Engine**
-    - move keyboard event handling and convertKeyToAction from Game.Engine to Umbra.EventManager
     - replace GuiManager by Umbra nodes
     - reduce garbage collector usage
     - **Gameplay**

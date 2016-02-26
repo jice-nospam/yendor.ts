@@ -68,7 +68,7 @@ module Umbra {
 		*/
         protected onGainFocus(): void {
             this.paused = false;
-            Umbra.Input.resetFrameInput();
+            Umbra.Input.resetInput();
             console.log("umbra: focus gained");
         }
 
@@ -89,7 +89,7 @@ module Umbra {
                 // update the game only options.ticksPerSecond per second
                 if (!this.paused) {
                     scene.updateHierarchy(time);
-                    Umbra.Input.resetFrameInput();
+                    Umbra.Input.resetInput();
                 }
             }
         }

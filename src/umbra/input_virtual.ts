@@ -254,20 +254,5 @@ module Umbra {
         export function wasButtonReleased(name: string): boolean {
             return axesMap[name] ? !!axesMap[name].released : undefined;
         }
-        /*
-            Function: resetInput
-            Resets all input. After ResetInputAxes all axes return to 0 and all buttons return to 0 for one frame.
-            This can be useful when respawning the player and you don't want any input from keys that might still be held down.
-        */
-        export function resetInput() {
-            for (var name in axesMap) {
-                if (axesMap[name].pressed) {
-                    axesMap[name].pressed = false;
-                }
-                if (axesMap[name].released) {
-                    axesMap[name].released = false;
-                }
-            }
-        }
     }
 }

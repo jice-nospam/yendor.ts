@@ -137,12 +137,6 @@ module Game {
         CANCEL
     }
 
-    export interface KeyInput {
-        action: PlayerAction;
-        keyCode: Umbra.KeyCode;
-        char: string;
-    }
-
     // utilities
     /*
         Function: log

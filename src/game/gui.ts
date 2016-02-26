@@ -283,6 +283,7 @@ module Game {
         checkKeyboardInput() {
             if (Umbra.Input.wasButtonPressed(PlayerAction[PlayerAction.CANCEL])) {
                 this.hide();
+                Umbra.Input.resetInput();
             } else {
                 for (var keyCode: number = Umbra.KeyCode.DOM_VK_A; keyCode <= Umbra.KeyCode.DOM_VK_Z; ++keyCode) {
                     if (Umbra.Input.wasKeyPressed(keyCode)) {
@@ -332,7 +333,7 @@ module Game {
             this.checkKeyboardInput();
             if (this.selectedItem !== undefined && Umbra.Input.wasMouseButtonReleased(Umbra.MouseButton.LEFT)) {
                 this.selectItemByIndex(this.selectedItem);
-                Umbra.Input.resetFrameInput();
+                Umbra.Input.resetInput();
             }
             this.console.clearBack(Constants.INVENTORY_BACKGROUND);
             this.console.clearText();
@@ -519,11 +520,13 @@ module Game {
             switch (action) {
                 case PlayerAction.CANCEL:
                     this.deactivate();
+                    Umbra.Input.resetInput();
                     break;
                 case PlayerAction.VALIDATE:
                     if (this.tileIsValid) {
                         this.doSelectTile(this.tilePos);
                         this.deactivate();
+                        Umbra.Input.resetInput();
                     }
                     break;
             }

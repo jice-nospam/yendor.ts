@@ -164,10 +164,12 @@ module Umbra {
         }
 
         /*
-            Function: resetFrameInput
-            Resets wasPressed/wasReleased flags after a frame
+            Function: resetInput
+            Resets all input. After ResetInputAxes all axes return to 0 and all buttons return to 0 for one frame.
+            This can be useful when respawning the player and you don't want any input from keys that might still be held down,
+            or if you want to "consume"" the last frame input so that it doesn't trigger anything else.
         */
-        export function resetFrameInput() {
+        export function resetInput() {
             for (var i: number = 0, len: number = mouseStatus.buttons.length; i < len; ++i) {
                 if (mouseStatus.buttons[i]) {
                     mouseStatus.buttons[i].pressed = false;

@@ -679,6 +679,9 @@ module Game {
 				return;
 			}
 			var keyClass: ActorClass = ActorClass.getActorClass("key");
+            if (keyClass === undefined) {
+                return;
+            }
 			for (var i: number = 0, len: number = player.container.size(); i < len; ++i) {
 				var key: Actor = player.container.get(i);
 				if ( key.isA(keyClass) ) {

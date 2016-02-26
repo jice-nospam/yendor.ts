@@ -46,13 +46,7 @@ module Game {
         onInit(): void {
             super.onInit();
             Engine.instance = this;
-            /*
-            TODO remove
-            Umbra.EventManager.registerKeyboardListener({
-                enableEvents: true,
-                onKeydown: this.handleKeydown.bind(this),
-            });
-            */
+            // Umbra player input configuration
             Umbra.Input.registerAxes([
                 // cardinal movements
                 { name: PlayerAction[PlayerAction.MOVE_WEST], positiveButton: Umbra.KeyCode.DOM_VK_LEFT, type: Umbra.AxisType.KEY_OR_BUTTON },
@@ -208,13 +202,9 @@ module Game {
         }
 
 		/*
-			Function: handleKeypress
-			Triggered when the player presses a key. Updates the game world and possibly starts a new turn for NPCs.
-
-			Parameters:
-			event - the KeyboardEvent
+			Function: handleKeyboardInput
+			Checks if the player pressed a key and resume actors simulation when needed.
 		*/
-        
         private handleKeyboardInput(): void {
             if (Umbra.Input.getLastAxisName() !== undefined && !Gui.getActiveModal()) {
                 if (!this.handleGlobalShortcuts()) {
@@ -225,7 +215,7 @@ module Game {
 
         private handleGlobalShortcuts(): boolean {
             if (getLastPlayerAction() === PlayerAction.CANCEL) {
-                Umbra.Input.resetFrameInput();
+                Umbra.Input.resetInput();
                 Umbra.EventManager.publishEvent(EventType[EventType.OPEN_MAIN_MENU]);
                 return true;
             }
@@ -240,6 +230,7 @@ module Game {
 			time - elapsed time since the last update in milliseconds
 		*/
         onUpdate(time: number): void {
+            this.handleKeyboardInput();
             if (this.status === GameStatus.NEXT_LEVEL) {
                 this.gotoNextLevel();
                 this.status = GameStatus.RUNNING;
@@ -258,7 +249,6 @@ module Game {
 			- the GUI
 		*/
         onRender(con: Yendor.Console): void {
-            this.handleKeyboardInput();
             con.clearText();
             this.computePlayerFov();
             this._map.render(con);
