@@ -1,5 +1,3 @@
-/// <reference path="tsUnit.ts" />
-/// <reference path="../yendor/bsp.ts" />
 module Tests {
 	export class BspTests extends tsUnit.TestClass {
 
@@ -53,12 +51,12 @@ module Tests {
 			this.isFalse( root.isLeaf(), "root.isLeaf()" );
 			this.isFalse( root.leftChild.isLeaf(), "root.leftChild.isLeaf()" );
 			this.isTrue( root.leftChild.leftChild.isLeaf(), "root.leftChild.leftChild.isLeaf()" );
-			this.isTrue( root.containsNode(root.leftChild), "root.contains(root.leftChild)");
-			this.isTrue( root.containsNode(root.rightChild), "root.contains(root.rightChild)");
-			this.isTrue( root.containsNode(root.leftChild.leftChild), "root.contains(root.leftChild.leftChild)");
-			this.isTrue( root.containsNode(root.leftChild.rightChild), "root.contains(root.leftChild.rightChild)");
-			this.isTrue( root.containsNode(root.rightChild.leftChild), "root.contains(root.rightChild.leftChild)");
-			this.isTrue( root.containsNode(root.rightChild.rightChild), "root.contains(root.rightChild.rightChild)");
+			this.isTrue( root.containsRect(root.leftChild), "root.contains(root.leftChild)");
+			this.isTrue( root.containsRect(root.rightChild), "root.contains(root.rightChild)");
+			this.isTrue( root.containsRect(root.leftChild.leftChild), "root.contains(root.leftChild.leftChild)");
+			this.isTrue( root.containsRect(root.leftChild.rightChild), "root.contains(root.leftChild.rightChild)");
+			this.isTrue( root.containsRect(root.rightChild.leftChild), "root.contains(root.rightChild.leftChild)");
+			this.isTrue( root.containsRect(root.rightChild.rightChild), "root.contains(root.rightChild.rightChild)");
 		}
 
 		minSizeHoriz() {

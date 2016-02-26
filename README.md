@@ -1,17 +1,24 @@
 # Introduction
 
-Yendor.ts is a [TypeScript](http://www.typescriptlang.org) API for roguelike developers. It provides a true color console, a robust random number generator, a field of view toolkit, and other utilities frequently used in roguelikes.
+yendor.ts is a [TypeScript](http://www.typescriptlang.org) toolkit for roguelike developers. It provides a true color console, a robust random number generator, a field of view toolkit, and other utilities frequently used in roguelikes.
 
-It comes with a simple generic roguelike game to extend and a benchmark showcasing some features. 
+umbra.ts is a [TypeScript](http://www.typescriptlang.org) lightweight game framework built on top of yendor.ts. It handles player input and the game scene graph.
+
+gizmo.ts provides user interface widgets for umbra.ts
 
 # Features
 
+## yendor.ts
 * fast WebGL/Canvas true color console  (using [pixi.js](http://www.pixijs.com/))
 * BSP based dungeon building toolkit
 * [CMWC random number generator](https://en.wikipedia.org/wiki/Multiply-with-carry#Complementary-multiply-with-carry_generators)
 * field of view toolkit using [restrictive precise angle shadowcasting](http://www.roguebasin.com/index.php?title=Restrictive_Precise_Angle_Shadowcasting)
 * [A* pathfinding](http://en.wikipedia.org/wiki/A*_search_algorithm) toolkit
 * a scheduler to handle the order in which creatures with different speed are updated
+
+## Umbra.ts
+* scene graph management
+* input events management
 
 # Supported browsers
 
@@ -33,7 +40,7 @@ It comes with a simple generic roguelike game to extend and a benchmark showcasi
 
 ## pre-requisites
 * install [node.js](http://nodejs.org/)
-* install [TypeScript](http://www.typescriptlang.org/) (version 1.4+ required)
+* install [TypeScript](http://www.typescriptlang.org/) (version 1.8.2+ required)
 
 `npm install -g typescript`
 

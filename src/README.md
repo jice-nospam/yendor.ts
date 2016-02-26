@@ -1,11 +1,14 @@
-This directory contains the typescript source code of yendor.ts and the generogue game shell.
+This directory contains the typescript source code of yendor.ts, umbra.ts and GeneRogue.
 This code can be compiled into ../game/main.js using jake.
 
 # Directories
 * decl : typescript declaration files for jquery and pixi.js
-* game : generogue source code
+* core : base utilities
+* yendor : the yendor.ts toolkit
+* umbra : the umbra.ts framework
+* gizmo : the gizmo.ts widget library
+* game : GeneRogue source code
 * tests : benchmark and unit tests
-* yendor : the yendor.ts library
 
 # Coding rules (to be completed)
 * Follow tslint rules using the provided ../lint/tslint.json configuration file.
@@ -31,15 +34,6 @@ private name type;
 ```
 __name1 type;
 private __name2 type;
-```
-
-## performances
-* avoid closures, array.slice in tight loops
-* fastest way to iterate on an array :
-```
-for ( var i: number = 0, len: number = array.length; i < len; ++i) {
-	// do something with array[i]
-}
 ```
 
 

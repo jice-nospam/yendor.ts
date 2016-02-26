@@ -1,4 +1,4 @@
-/// <reference path="../decl/pixi.d.ts" />
+/// <reference path="../decl/pixi.js.d.ts" />
 /// <reference path="../yendor/console.ts" />
 
 /*
@@ -15,16 +15,17 @@ module Yendor {
 		private static CANVAS_ID: string = "__yendor_canvas";
 		private static CANVAS_SELECTOR: string = "#" + PixiConsole.CANVAS_ID;
 		private divSelector: string;
+        private topLeftPos: Core.Position;
 		private defaultBackgroundColor: number;
 		private defaultForegroundColor: number;
 		private canvas: HTMLCanvasElement;
-		private renderer: PIXI.PixiRenderer;
-		private stage: PIXI.Stage;
+		private renderer: PIXI.SystemRenderer;
 		private font: PIXI.BaseTexture;
 		private chars: PIXI.Texture[];
 		private backCells: PIXI.Sprite[][];
 		private foreCells: PIXI.Sprite[][];
 		private loadComplete: boolean;
+        private stage: PIXI.Container;
 		// empty character
 		private static ASCII_SPACE : number = 32;
 		// full character (all white)
@@ -54,17 +55,18 @@ module Yendor {
 			fontUrl - URL of the image containing the font
 		*/
 		constructor( _width: number, _height: number,
-			foreground: Color, background: Color, divSelector: string, fontUrl: string ) {
+			foreground: Core.Color, background: Core.Color, divSelector: string, fontUrl: string ) {
 			super(_width, _height, foreground, background);
 			this.divSelector = divSelector;
 			this.loadComplete = false;
-			this.defaultBackgroundColor = ColorUtils.toNumber(background);
-			this.defaultForegroundColor = ColorUtils.toNumber(foreground);
+			this.defaultBackgroundColor = Core.ColorUtils.toNumber(background);
+			this.defaultForegroundColor = Core.ColorUtils.toNumber(foreground);
+            this.stage = new PIXI.Container();
 			this.loadFont(fontUrl);
 		}
 
 		private loadFont( fontUrl: string ) {
-			this.font = PIXI.BaseTexture.fromImage(fontUrl, false, PIXI.scaleModes.NEAREST);
+			this.font = PIXI.BaseTexture.fromImage(fontUrl, false, PIXI.SCALE_MODES.NEAREST);
 			if (!this.font.hasLoaded) {
 				this.font.on("loaded", this.onFontLoaded.bind(this));
 			} else {
@@ -92,7 +94,7 @@ module Yendor {
                 + "' height='" + canvasHeight + "'></canvas>";
 
 			this.canvas = <HTMLCanvasElement>$(PixiConsole.CANVAS_SELECTOR)[0];
-			this.stage = new PIXI.Stage(this.defaultBackgroundColor);
+            this.topLeftPos = new Core.Position($(PixiConsole.CANVAS_SELECTOR).offset().left,$(PixiConsole.CANVAS_SELECTOR).offset().top);
 			var pixiOptions: any = {
 				antialias: false,
 				clearBeforeRender: false,
@@ -108,6 +110,7 @@ module Yendor {
 			} else {
 				this.renderer = PIXI.autoDetectRenderer(canvasWidth, canvasHeight, pixiOptions);
 			}
+            this.renderer.backgroundColor = this.defaultBackgroundColor;
 		}
 
 		private initCharacterMap() {
@@ -164,8 +167,8 @@ module Yendor {
 					for ( var y = 0; y < this.height; y++) {
 						var ascii = this.text[x][y];
 						this.foreCells[x][y].texture = this.chars[ascii];
-						this.foreCells[x][y].tint = ColorUtils.toNumber(this.fore[x][y]);
-						this.backCells[x][y].tint = ColorUtils.toNumber(this.back[x][y]);
+						this.foreCells[x][y].tint = Core.ColorUtils.toNumber(this.fore[x][y]);
+						this.backCells[x][y].tint = Core.ColorUtils.toNumber(this.back[x][y]);
 					}
 				}
 				this.renderer.render(this.stage);
@@ -179,18 +182,23 @@ module Yendor {
 			Parameters:
 			x - the mouse x coordinate in pixels relative to the document
 			y - the mouse y coordinate in pixels relative to the document
+            pos - if not undefined, when function exits, contains the mouse cell position
 
 			Returns:
-			The <Position> in the console.
+			The <Core.Position> in the console.
 		*/
-		getPositionFromPixels( x: number, y: number ) : Position {
+		getPositionFromPixels( x: number, y: number, pos: Core.Position ) : Core.Position {
+            var ret = pos ? pos : new Core.Position();
 			if (this.loadComplete) {
-				var dx: number = x - $(PixiConsole.CANVAS_SELECTOR).offset().left;
-				var dy: number = y - $(PixiConsole.CANVAS_SELECTOR).offset().top;
-				return new Position(Math.floor(dx / this.charWidth), Math.floor(dy / this.charHeight));
+				var dx: number = x - this.topLeftPos.x;
+				var dy: number = y - this.topLeftPos.y;
+                ret.x = Math.floor(dx / this.charWidth);
+                ret.y = Math.floor(dy / this.charHeight);
 			} else {
-				return new Position(-1, -1);
+                ret.x = -1;
+                ret.y = -1;
 			}
+            return ret;
 		}
 	}
 }

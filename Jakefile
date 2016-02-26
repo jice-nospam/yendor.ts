@@ -1,4 +1,4 @@
-var TSC_COMMAND='tsc';
+var TSC_COMMAND='tsc --target ES5 --noImplicitReturns';
 var RM_COMMAND='rm -f';
 //var NATURALDOCS_COMMAND='perl ../naturaldocs/NaturalDocs';
 var NATURALDOCS_COMMAND='naturaldocs';
@@ -18,7 +18,7 @@ function runCommand(cmd) {
 }
 
 task( 'compile', function(params) {
-	runCommand(TSC_COMMAND+' --target ES5 --out game/main.js src/game/main.ts');
+	runCommand(TSC_COMMAND+' --out game/main.js src/game/main.ts');
 } );
 
 task( 'clean', function(params) {
@@ -26,11 +26,11 @@ task( 'clean', function(params) {
 });
 
 task( 'tests', function(params) {
-  runCommand(TSC_COMMAND+' --target ES5 --out game/main.js src/tests/main.ts');
+  runCommand(TSC_COMMAND+' --out game/main.js src/tests/main.ts');
 });
 
 task( 'benchmark', function(params) {
-  runCommand(TSC_COMMAND+' --target ES5 --out game/main.js src/tests/bench.ts');
+  runCommand(TSC_COMMAND+' --out game/main.js src/tests/bench.ts');
 });
 
 task( 'doc', function(params) {

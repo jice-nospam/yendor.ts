@@ -23,7 +23,7 @@ To compile it, run `jake` then open game/index.html in your browser.
 * f : fire a projectile using an equipped ranged weapon
 * z : zap an equipped magic wand or staff
 * e : activate an adjacent mechanism (lever, torch, door, ...)
-* > : go down the stairs
+* \> : go down the stairs
 * < : go up the stairs
 * ESC : open game menu
 
@@ -31,24 +31,33 @@ To compile it, run `jake` then open game/index.html in your browser.
 
 Reminder for stuff that might be added to the game. Or not.
 
-* Engine
-	- reduce garbage collector usage
+* Game
+    - **Engine**
+    - move keyboard event handling and convertKeyToAction from Game.Engine to Umbra.EventManager
+    - replace GuiManager by Umbra nodes
+    - reduce garbage collector usage
+    - **Gameplay**
+    - beast A.I. should move randomly when no scent is detected
+    - humanoid A.I. (can use weapons and wear armors)
+    - poison potion and weapon / projectile poisoning (need onHitEffector on Attacker)
+    - doors and keys : consume key when unlocking the door
+    - armors
+    - lighting
+    - spells and spellbooks
+    - gems and weapons/armors slots
+    - static containers (chests, corpses) + loot GUI
+    - jewelry (necklace, rings)
+    - shield should block only one hit per turn
+    - dual wielding (you attack with the fastest weapon first, then with the slowest one. Total waitTime is smaller than the sum of the weapons waitTimes. watch out for special cases like crossbow + sword)
+    - **Eye candy**
+    - background animation (torch flickering)
+    - end of turn animation (flying arrows, explosions, ...)
+    - blood stains
 
-* Gameplay
-	- beast A.I. should move randomly when no scent is detected
-	- humanoid A.I. (can use weapons and wear armors)
-	- poison potion and weapon / projectile poisoning (need onHitEffector on Attacker)
-	- doors and keys
-	- armors
-	- lighting
-	- spells and spellbooks
-	- gems and weapons/armors slots
-	- static containers (chests, corpses) + loot GUI
-	- jewelry (necklace, rings)
-	- shield should block only one hit per turn
-	- dual wielding (you attack with the fastest weapon first, then with the slowest one. Total waitTime is smaller than the sum of the weapons waitTimes. watch out for special cases like crossbow + sword)
 
-* Eye candy
-	- background animation (torch flickering)
-	- end of turn animation (flying arrows, explosions, ...)
-	- blood stains
+* Gizmo
+
+* Umbra
+
+* Yendor
+

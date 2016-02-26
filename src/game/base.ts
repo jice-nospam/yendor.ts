@@ -1,116 +1,118 @@
 module Game {
     "use strict";
 
-	export module Constants {
-        export var MAIN_MODULE_NAME: string = "Game";
-		// console
-		export var CONSOLE_WIDTH: number = 80;
-		export var CONSOLE_HEIGHT: number = 34;
+    export module Constants {
+        export const MAIN_MODULE_NAME: string = "Game";
+        // console
+        export const CONSOLE_WIDTH: number = 80;
+        export const CONSOLE_HEIGHT: number = 34;
 
         // URL parameters
-        export var URL_PARAM_DEBUG: string = "debug";
+        export const URL_PARAM_DEBUG: string = "debug";
+        export const URL_PARAM_NO_MONSTER: string = "nomonster";
 
-		// rendering
-		export var DARK_WALL: Yendor.Color = 0x000064;
-		export var LIGHT_WALL: Yendor.Color = 0x826E32;
-		export var DARK_GROUND: Yendor.Color = 0x323296;
-		export var LIGHT_GROUND: Yendor.Color = 0xC8B432;
-        export var FOV_RADIUS: number = 10;
-        export var MENU_BACKGROUND: Yendor.Color = 0x272822;
-        export var MENU_BACKGROUND_ACTIVE: Yendor.Color = 0x383830;
-        export var MENU_FOREGROUND: Yendor.Color = 0xFD971F;
-        export var MENU_FOREGROUND_ACTIVE: Yendor.Color = 0xFFDF90;
-        export var MENU_FOREGROUND_DISABLED: Yendor.Color = 0x5C714B;
-        export var HEALTH_BAR_BACKGROUND: Yendor.Color = 0xFF3F3F;
-        export var HEALTH_BAR_FOREGROUND: Yendor.Color = 0x7F3F3F;
-        export var XP_BAR_BACKGROUND: Yendor.Color = 0x9F3FFF;
-        export var XP_BAR_FOREGROUND: Yendor.Color = 0x3F007F;
-        export var CONDITION_BAR_BACKGROUND: Yendor.Color = 0x3F9F3F;
-        export var CONDITION_BAR_FOREGROUND: Yendor.Color = 0x007F3F;
-        export var INVENTORY_BACKGROUND: Yendor.Color = 0x272822;
-        export var INVENTORY_BACKGROUND_ACTIVE: Yendor.Color = 0x383830;
-        export var INVENTORY_FOREGROUND: Yendor.Color = 0xFD971F;
-        export var INVENTORY_FOREGROUND_ACTIVE: Yendor.Color = 0xFFDF90;
-        export var INVENTORY_BACKGROUND_EQUIPPED: Yendor.Color = 0x585850;
-        export var LOG_INFO_COLOR: Yendor.Color = 0xEEEEEE;
-        export var LOG_WARN_COLOR: Yendor.Color = 0xFFA500;
-        export var LOG_CRIT_COLOR: Yendor.Color = 0xFF2222;
-        export var TILEPICKER_OK_COLOR: Yendor.Color = 0x00FF00;
-        export var TILEPICKER_KO_COLOR: Yendor.Color = 0xFF2222;
-        export var FROST_COLOR: Yendor.Color = 0xE0E0FF;
+        // rendering
+        export const DARK_WALL: Core.Color = 0x000064;
+        export const LIGHT_WALL: Core.Color = 0x826E32;
+        export const DARK_GROUND: Core.Color = 0x323296;
+        export const LIGHT_GROUND: Core.Color = 0xC8B432;
+        export const FOV_RADIUS: number = 10;
+        export const MENU_BACKGROUND: Core.Color = 0x272822;
+        export const MENU_BACKGROUND_ACTIVE: Core.Color = 0x383830;
+        export const MENU_FOREGROUND: Core.Color = 0xFD971F;
+        export const MENU_FOREGROUND_ACTIVE: Core.Color = 0xFFDF90;
+        export const MENU_FOREGROUND_DISABLED: Core.Color = 0x5C714B;
+        export const HEALTH_BAR_BACKGROUND: Core.Color = 0xFF3F3F;
+        export const HEALTH_BAR_FOREGROUND: Core.Color = 0x7F3F3F;
+        export const XP_BAR_BACKGROUND: Core.Color = 0x9F3FFF;
+        export const XP_BAR_FOREGROUND: Core.Color = 0x3F007F;
+        export const CONDITION_BAR_BACKGROUND: Core.Color = 0x3F9F3F;
+        export const CONDITION_BAR_FOREGROUND: Core.Color = 0x007F3F;
+        export const INVENTORY_BACKGROUND: Core.Color = 0x272822;
+        export const INVENTORY_BACKGROUND_ACTIVE: Core.Color = 0x383830;
+        export const INVENTORY_FOREGROUND: Core.Color = 0xFD971F;
+        export const INVENTORY_FOREGROUND_ACTIVE: Core.Color = 0xFFDF90;
+        export const INVENTORY_BACKGROUND_EQUIPPED: Core.Color = 0x585850;
+        export const LOG_INFO_COLOR: Core.Color = 0xEEEEEE;
+        export const LOG_WARN_COLOR: Core.Color = 0xFFA500;
+        export const LOG_CRIT_COLOR: Core.Color = 0xFF2222;
+        export const TILEPICKER_OK_COLOR: Core.Color = 0x00FF00;
+        export const TILEPICKER_KO_COLOR: Core.Color = 0xFF2222;
+        export const FROST_COLOR: Core.Color = 0xE0E0FF;
 
         // some material colors
-        export var WOOD_COLOR: Yendor.Color = 0x7F3300;
-        export var PAPER_COLOR: Yendor.Color = 0xC4D67E;
-        export var BONE_COLOR: Yendor.Color = 0xD2D8BC;
-        export var IRON_COLOR: Yendor.Color = 0x7C8081;
-        export var STEEL_COLOR: Yendor.Color = 0x867F70;
+        export const WOOD_COLOR: Core.Color = 0x7F3300;
+        export const PAPER_COLOR: Core.Color = 0xC4D67E;
+        export const BONE_COLOR: Core.Color = 0xD2D8BC;
+        export const IRON_COLOR: Core.Color = 0x7C8081;
+        export const STEEL_COLOR: Core.Color = 0x867F70;
 
         // gui
-        export var STATUS_PANEL_ID: string = "statusPanel";
-        export var INVENTORY_ID: string = "inventory";
-        export var TILE_PICKER_ID: string = "tilePicker";
-        export var MAIN_MENU_ID: string = "mainMenu";
-		export var LOG_DARKEN_COEF: number = 0.8;
-		export var STATUS_PANEL_HEIGHT: number = 7;
-		export var STAT_BAR_WIDTH: number = 20;
-        export var INVENTORY_PANEL_WIDTH: number = 50;
-        export var INVENTORY_PANEL_HEIGHT: number = 28;
+        export const STATUS_PANEL_ID: string = "statusPanel";
+        export const INVENTORY_ID: string = "inventory";
+        export const TILE_PICKER_ID: string = "tilePicker";
+        export const MAIN_MENU_ID: string = "mainMenu";
+        export const LOG_DARKEN_COEF: number = 0.8;
+        export const STATUS_PANEL_HEIGHT: number = 7;
+        export const STAT_BAR_WIDTH: number = 20;
+        export const INVENTORY_PANEL_WIDTH: number = 50;
+        export const INVENTORY_PANEL_HEIGHT: number = 28;
 
-		// map building
-		export var MAX_MONSTERS_PER_ROOM: number = 3;
-        export var MAX_ITEMS_PER_ROOM: number = 2;
-		export var ROOM_MAX_SIZE: number = 8;
-		export var ROOM_MIN_SIZE: number = 4;
+        // map building
+        export const MAX_MONSTERS_PER_ROOM: number = 3;
+        export const MAX_ITEMS_PER_ROOM: number = 2;
+        export const ROOM_MAX_SIZE: number = 8;
+        export const ROOM_MIN_SIZE: number = 4;
+        export const PUZZLE_STEP_PROBABILITY: number = 0.6;
 
-		// gameplay
+        // gameplay
         // how often the world is updated
-        export var TICKS_PER_SECOND: number = 10;
-        export var TICK_LENGTH: number = 1.0 / Constants.TICKS_PER_SECOND;
-		export var SCENT_THRESHOLD: number = 10;
-        export var PLAYER_WALK_TIME: number = 5;
+        export const TICKS_PER_SECOND: number = 10;
+        export const TICK_LENGTH: number = 1.0 / Constants.TICKS_PER_SECOND;
+        export const SCENT_THRESHOLD: number = 10;
+        export const PLAYER_WALK_TIME: number = 5;
         // xp level required for level 1
-        export var XP_BASE_LEVEL: number = 200;
+        export const XP_BASE_LEVEL: number = 200;
         // xp level required for level n = BASE_LEVEL + n * NEW_LEVEL
-        export var XP_NEW_LEVEL: number = 150;
+        export const XP_NEW_LEVEL: number = 150;
         // how many turns you are confused after being stunned
-        export var AFTER_STUNNED_CONFUSION_DELAY: number = 3;
+        export const AFTER_STUNNED_CONFUSION_DELAY: number = 3;
         // overencumbered inventory capacity (percentage of capacity)
-        export var OVEREMCUMBERED_THRESHOLD: number = 0.9;
+        export const OVEREMCUMBERED_THRESHOLD: number = 0.9;
         // when overencumbered, walkTime is multiplied by this value
-        export var OVERENCUMBERED_MULTIPLIER: number = 1.5;
-        export var FROZEN_MULTIPLIER: number = 2;
+        export const OVERENCUMBERED_MULTIPLIER: number = 1.5;
+        export const FROZEN_MULTIPLIER: number = 2;
 
         // equipment slots names
-        export var SLOT_RIGHT_HAND: string = "right hand";
-        export var SLOT_LEFT_HAND: string = "left hand";
-        export var SLOT_BOTH_HANDS: string = "hands";
-        export var SLOT_QUIVER: string = "quiver";
+        export const SLOT_RIGHT_HAND: string = "right hand";
+        export const SLOT_LEFT_HAND: string = "left hand";
+        export const SLOT_BOTH_HANDS: string = "hands";
+        export const SLOT_QUIVER: string = "quiver";
 
         // persistence local storage keys
-        export var PERSISTENCE_VERSION_KEY: string = "version";
-        export var PERSISTENCE_DUNGEON_LEVEL: string = "dungeonLevel";
-        export var PERSISTENCE_MAP_KEY: string = "map";
-        export var PERSISTENCE_ACTORS_KEY: string = "actors";
-        export var PERSISTENCE_CREATURE_IDS_KEY: string = "creatureIds";
-        export var PERSISTENCE_ACTORS_SEQ_KEY: string = "actorsSeq";
-        export var PERSISTENCE_ITEM_IDS_KEY: string = "itemIds";
-        export var PERSISTENCE_CORPSE_IDS_KEY: string = "corpseIds";
-        export var PERSISTENCE_UPDATING_CORPSE_IDS_KEY: string = "updatingCorpseIds";
+        export const PERSISTENCE_VERSION_KEY: string = "version";
+        export const PERSISTENCE_DUNGEON_LEVEL: string = "dungeonLevel";
+        export const PERSISTENCE_MAP_KEY: string = "map";
+        export const PERSISTENCE_ACTORS_KEY: string = "actors";
+        export const PERSISTENCE_CREATURE_IDS_KEY: string = "creatureIds";
+        export const PERSISTENCE_ACTORS_SEQ_KEY: string = "actorsSeq";
+        export const PERSISTENCE_ITEM_IDS_KEY: string = "itemIds";
+        export const PERSISTENCE_CORPSE_IDS_KEY: string = "corpseIds";
+        export const PERSISTENCE_UPDATING_CORPSE_IDS_KEY: string = "updatingCorpseIds";
 
-	}
-	export const enum GameStatus {
+    }
+    export const enum GameStatus {
         // go to next level
         NEXT_LEVEL,
         // game is running
-		RUNNING,
+        RUNNING,
         // player won
-		VICTORY,
+        VICTORY,
         // player died
-		DEFEAT
-	}
+        DEFEAT
+    }
 
-    export const enum PlayerAction {
+    export enum PlayerAction {
         MOVE_NORTH,
         MOVE_SOUTH,
         MOVE_EAST,
@@ -135,138 +137,19 @@ module Game {
         CANCEL
     }
 
-	// key codes
-	export const enum KeyEvent {
-        DOM_VK_CANCEL= 3,
-        DOM_VK_HELP= 6,
-        DOM_VK_BACK_SPACE= 8,
-        DOM_VK_TAB= 9,
-        DOM_VK_CLEAR= 12,
-        DOM_VK_RETURN= 13,
-        DOM_VK_ENTER= 14,
-        DOM_VK_SHIFT= 16,
-        DOM_VK_CONTROL= 17,
-        DOM_VK_ALT= 18,
-        DOM_VK_PAUSE= 19,
-        DOM_VK_CAPS_LOCK= 20,
-        DOM_VK_ESCAPE= 27,
-        DOM_VK_SPACE= 32,
-        DOM_VK_PAGE_UP= 33,
-        DOM_VK_PAGE_DOWN= 34,
-        DOM_VK_END= 35,
-        DOM_VK_HOME= 36,
-        DOM_VK_LEFT= 37,
-        DOM_VK_UP= 38,
-        DOM_VK_RIGHT= 39,
-        DOM_VK_DOWN= 40,
-        DOM_VK_PRINTSCREEN= 44,
-        DOM_VK_INSERT= 45,
-        DOM_VK_DELETE= 46,
-        DOM_VK_0= 48,
-        DOM_VK_1= 49,
-        DOM_VK_2= 50,
-        DOM_VK_3= 51,
-        DOM_VK_4= 52,
-        DOM_VK_5= 53,
-        DOM_VK_6= 54,
-        DOM_VK_7= 55,
-        DOM_VK_8= 56,
-        DOM_VK_9= 57,
-        DOM_VK_SEMICOLON= 59,
-        DOM_VK_EQUALS= 61,
-        DOM_VK_A= 65,
-        DOM_VK_B= 66,
-        DOM_VK_C= 67,
-        DOM_VK_D= 68,
-        DOM_VK_E= 69,
-        DOM_VK_F= 70,
-        DOM_VK_G= 71,
-        DOM_VK_H= 72,
-        DOM_VK_I= 73,
-        DOM_VK_J= 74,
-        DOM_VK_K= 75,
-        DOM_VK_L= 76,
-        DOM_VK_M= 77,
-        DOM_VK_N= 78,
-        DOM_VK_O= 79,
-        DOM_VK_P= 80,
-        DOM_VK_Q= 81,
-        DOM_VK_R= 82,
-        DOM_VK_S= 83,
-        DOM_VK_T= 84,
-        DOM_VK_U= 85,
-        DOM_VK_V= 86,
-        DOM_VK_W= 87,
-        DOM_VK_X= 88,
-        DOM_VK_Y= 89,
-        DOM_VK_Z= 90,
-        DOM_VK_CONTEXT_MENU= 93,
-        DOM_VK_NUMPAD0= 96,
-        DOM_VK_NUMPAD1= 97,
-        DOM_VK_NUMPAD2= 98,
-        DOM_VK_NUMPAD3= 99,
-        DOM_VK_NUMPAD4= 100,
-        DOM_VK_NUMPAD5= 101,
-        DOM_VK_NUMPAD6= 102,
-        DOM_VK_NUMPAD7= 103,
-        DOM_VK_NUMPAD8= 104,
-        DOM_VK_NUMPAD9= 105,
-        DOM_VK_MULTIPLY= 106,
-        DOM_VK_ADD= 107,
-        DOM_VK_SEPARATOR= 108,
-        DOM_VK_SUBTRACT= 109,
-        DOM_VK_DECIMAL= 110,
-        DOM_VK_DIVIDE= 111,
-        DOM_VK_F1= 112,
-        DOM_VK_F2= 113,
-        DOM_VK_F3= 114,
-        DOM_VK_F4= 115,
-        DOM_VK_F5= 116,
-        DOM_VK_F6= 117,
-        DOM_VK_F7= 118,
-        DOM_VK_F8= 119,
-        DOM_VK_F9= 120,
-        DOM_VK_F10= 121,
-        DOM_VK_F11= 122,
-        DOM_VK_F12= 123,
-        DOM_VK_F13= 124,
-        DOM_VK_F14= 125,
-        DOM_VK_F15= 126,
-        DOM_VK_F16= 127,
-        DOM_VK_F17= 128,
-        DOM_VK_F18= 129,
-        DOM_VK_F19= 130,
-        DOM_VK_F20= 131,
-        DOM_VK_F21= 132,
-        DOM_VK_F22= 133,
-        DOM_VK_F23= 134,
-        DOM_VK_F24= 135,
-        DOM_VK_NUM_LOCK= 144,
-        DOM_VK_SCROLL_LOCK= 145,
-        DOM_VK_COMMA= 188,
-        DOM_VK_PERIOD= 190,
-        DOM_VK_SLASH= 191,
-        DOM_VK_BACK_QUOTE= 192,
-        DOM_VK_OPEN_BRACKET= 219,
-        DOM_VK_BACK_SLASH= 220,
-        DOM_VK_CLOSE_BRACKET= 221,
-        DOM_VK_QUOTE= 222,
-        DOM_VK_META= 224
-    };
-
     export interface KeyInput {
         action: PlayerAction;
-        keyCode: KeyEvent;
+        keyCode: Umbra.KeyCode;
         char: string;
     }
 
-	// utilities
+    // utilities
     /*
         Function: log
         Add a log to the status panel by sending a LOG_MESSAGE event on the event bus.
     */
-    export var log = function(text: string, color: Yendor.Color = Constants.LOG_INFO_COLOR) {
-        Engine.instance.eventBus.publishEvent(EventType.LOG_MESSAGE, new Message(color, text));
+    export var log = function(text: string, color: Core.Color = Constants.LOG_INFO_COLOR) {
+        Umbra.EventManager.publishEvent(EventType[EventType.LOG_MESSAGE], new Message(color, text));
     };
 
     /*
@@ -320,7 +203,7 @@ module Game {
         newText = newText.replace(/ \[it\]/g, actor1.getit());
         newText = newText.replace(/ \[its\] /g, actor1.getits());
         newText = newText.replace(/ \[is\]/g, actor1.getis());
-        if ( actor2 ) {
+        if (actor2) {
             newText.replace("[The actor2's] ", actor2.getThenames());
             newText = newText.replace(" [the actor2's] ", actor2.getthenames());
             newText = newText.replace("[The actor2]", actor2.getThename());
@@ -332,53 +215,58 @@ module Game {
             newText = newText.replace(/ \[its2\] /g, actor2.getits());
             newText = newText.replace(/ \[is2\]/g, actor2.getis());
         }
-        if ( value1 !== undefined ) {
+        if (value1 !== undefined) {
             newText = newText.replace("[value1]", "" + value1);
         }
-        if ( value2 !== undefined ) {
+        if (value2 !== undefined) {
             newText = newText.replace("[value2]", "" + value2);
         }
         return newText;
     };
+
+    export var getLastPlayerAction = function(): PlayerAction {
+        var lastActionName: string = Umbra.Input.getLastAxisName();
+        return lastActionName ? PlayerAction[lastActionName] : undefined;
+    } 
 
     /*
         Function: convertActionToPosition
         convert a movement action into an actual dx, dy movement
 
         Returns:
-        the Yendor.Position containing the movement, 0,0 if the action is not a movement action
+        the Core.Position containing the movement, 0,0 if the action is not a movement action
     */
-    export var convertActionToPosition = function(action: PlayerAction): Yendor.Position {
-        var move: Yendor.Position = new Yendor.Position(0, 0);
-        switch ( action ) {
-            case PlayerAction.MOVE_NORTH :
+    export var convertActionToPosition = function(action: PlayerAction): Core.Position {        
+        var move: Core.Position = new Core.Position(0, 0);
+        switch (action) {
+            case PlayerAction.MOVE_NORTH:
                 move.y = -1;
-            break;
-            case PlayerAction.MOVE_SOUTH :
+                break;
+            case PlayerAction.MOVE_SOUTH:
                 move.y = 1;
-            break;
-            case PlayerAction.MOVE_EAST :
+                break;
+            case PlayerAction.MOVE_EAST:
                 move.x = 1;
-            break;
-            case PlayerAction.MOVE_WEST :
+                break;
+            case PlayerAction.MOVE_WEST:
                 move.x = -1;
-            break;
-            case PlayerAction.MOVE_NW :
+                break;
+            case PlayerAction.MOVE_NW:
                 move.x = -1;
                 move.y = -1;
-            break;
-            case PlayerAction.MOVE_NE :
+                break;
+            case PlayerAction.MOVE_NE:
                 move.x = 1;
                 move.y = -1;
-            break;
-            case PlayerAction.MOVE_SW :
+                break;
+            case PlayerAction.MOVE_SW:
                 move.x = -1;
                 move.y = 1;
-            break;
-            case PlayerAction.MOVE_SE :
+                break;
+            case PlayerAction.MOVE_SE:
                 move.x = 1;
                 move.y = 1;
-            break;
+                break;
         }
         return move;
     };

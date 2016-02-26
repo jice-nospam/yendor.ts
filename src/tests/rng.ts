@@ -1,5 +1,3 @@
-/// <reference path="tsUnit.ts" />
-/// <reference path="../yendor/rng.ts" />
 module Tests {
 	"use strict";
 	export class RngTests extends tsUnit.TestClass {

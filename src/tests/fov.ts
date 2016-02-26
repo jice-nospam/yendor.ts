@@ -1,5 +1,3 @@
-/// <reference path="tsUnit.ts" />
-/// <reference path="../yendor/fov.ts" />
 module Tests {
 	"use strict";
 	export class FovTests extends tsUnit.TestClass {

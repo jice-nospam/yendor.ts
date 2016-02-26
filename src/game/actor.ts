@@ -17,6 +17,7 @@ module Game {
 		>        beast
 		>        human
 		>    potion
+        >    key
 		>    scroll
 		>    weapon
 		>        blade
@@ -216,19 +217,19 @@ module Game {
 
 	interface DoorParam {
 		seeThrough: boolean;
-		color: Yendor.Color;
+		color: Core.Color;
 		keyId?: ActorId;
 	}
 
 	interface ShieldParam {
 		defense: number;
-		color: Yendor.Color;
+		color: Core.Color;
 	}
 
 	interface ProjectileParam {
 		damages: number;
 		projectileTypeName: string;
-		color: Yendor.Color;
+		color: Core.Color;
 	}
 
 	/*
@@ -336,7 +337,7 @@ module Game {
 			IRON_PORTCULLIS: (x: number, y: number) => { return ActorFactory.createDoor(x, y, "iron portcullis",
 				{ seeThrough: true, color: Constants.IRON_COLOR } ); },
 			KEY: (x: number, y: number) => {
-				return ActorFactory.createPickable(x, y, "key", "p", Constants.IRON_COLOR, 0.2);
+				return ActorFactory.createPickable(x, y, "key", "p", "key", Constants.IRON_COLOR, 0.2);
 			}
 		};
 		/*
@@ -368,21 +369,18 @@ module Game {
 		}
 
 		// generic
-		private static createPickable(x: number, y: number, name: string, ch: string,
-			col: Yendor.Color, weight: number, singular: boolean = true) {
+		private static createPickable(x: number, y: number, name: string, ch: string, type: string,
+			col: Core.Color, weight: number, singular: boolean = true) {
 			var actor: Actor = new Actor(name + "|" + ActorFactory.seq);
 			ActorFactory.seq++;
-			actor.init(x, y, ch, name, undefined, col, singular);
+			actor.init(x, y, ch, name, type, col, singular);
 			actor.pickable = new Pickable(weight, false);
 			return actor;
 		}
 
 		// potions
 		private static createEffectPotion(x: number, y: number, name: string, onUseEffector: Effector, onThrowEffector?: Effector): Actor {
-			var effectPotion = new Actor(name + "|" + ActorFactory.seq);
-			ActorFactory.seq++;
-			effectPotion.init(x, y, "!", name, "potion", 0x800080, true);
-			effectPotion.pickable = new Pickable(0.5, true);
+			var effectPotion = this.createPickable(x, y, name, "!", "potion", 0x800080, 0.5, true);
 			if ( onUseEffector ) {
 				effectPotion.pickable.setOnUseEffector(onUseEffector);
 			}
@@ -414,10 +412,7 @@ module Game {
 
 		// scrolls
 		private static createLightningBoltScroll(x: number, y: number, range: number, damages: number): Actor {
-			var lightningBolt = new Actor("scroll of lightning bolt|" + ActorFactory.seq);
-			ActorFactory.seq++;
-			lightningBolt.init(x, y, "#", "scroll of lightning bolt", "scroll", Constants.PAPER_COLOR, true);
-			lightningBolt.pickable = new Pickable(0.1);
+			var lightningBolt = this.createPickable(x, y, "scroll of lightning bolt", "#", "scroll", Constants.PAPER_COLOR, 0.1);
 			lightningBolt.pickable.setOnUseEffect(new InstantHealthEffect(-damages,
 				"A lightning bolt strikes [the actor1] with a loud thunder!\nThe damage is [value1] hit points."),
 				new TargetSelector( TargetSelectionMethod.CLOSEST_ENEMY, range), undefined, true);
@@ -425,10 +420,7 @@ module Game {
 		}
 
 		private static createFireballScroll(x: number, y: number, range: number, radius: number, damages: number): Actor {
-			var fireball = new Actor("scroll of fireball|" + ActorFactory.seq);
-			ActorFactory.seq++;
-			fireball.init(x, y, "#", "scroll of fireball", "scroll", Constants.PAPER_COLOR, true);
-			fireball.pickable = new Pickable(0.1);
+			var fireball = this.createPickable(x, y, "scroll of fireball", "#", "scroll", Constants.PAPER_COLOR, 0.1);
 			fireball.pickable.setOnUseEffect(new InstantHealthEffect(-damages,
 				"[The actor1] get[s] burned for [value1] hit points."),
 				new TargetSelector( TargetSelectionMethod.SELECTED_RANGE, range, radius),
@@ -437,10 +429,7 @@ module Game {
 		}
 
 		private static createConfusionScroll(x: number, y: number, range: number, nbTurns: number): Actor {
-			var confusionScroll = new Actor("scroll of confusion|" + ActorFactory.seq);
-			ActorFactory.seq++;
-			confusionScroll.init(x, y, "#", "scroll of confusion", "scroll", Constants.PAPER_COLOR, true);
-			confusionScroll.pickable = new Pickable(0.1);
+			var confusionScroll = this.createPickable(x, y, "scroll of confusion", "#", "scroll", Constants.PAPER_COLOR, 0.1);
 			confusionScroll.pickable.setOnUseEffect(new ConditionEffect(ConditionType.CONFUSED, nbTurns,
 				"[The actor1's] eyes look vacant,\nas [it] start[s] to stumble around!"),
 				new TargetSelector( TargetSelectionMethod.SELECTED_ACTOR, range), undefined, true);
@@ -449,10 +438,7 @@ module Game {
 
 		// weapons
 		private static createBlade(x: number, y: number, name: string, swordParam: BladeParam): Actor {
-			var sword = new Actor(name + "|" + ActorFactory.seq);
-			ActorFactory.seq++;
-			sword.init(x, y, "/", name, "weapon|blade", Constants.STEEL_COLOR, true);
-			sword.pickable = new Pickable(swordParam.weight);
+			var sword = this.createPickable(x, y, name, "/", "weapon|blade", Constants.STEEL_COLOR, swordParam.weight);
 			sword.pickable.setOnThrowEffect(new InstantHealthEffect(-swordParam.damages,
 				"The sword hits [the actor1] for [value1] hit points."),
 				new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL ));
@@ -462,10 +448,7 @@ module Game {
 		}
 
 		private static createRanged(x: number, y: number, name: string, rangedParam: RangedParam): Actor {
-			var bow = new Actor(name + "|" + ActorFactory.seq);
-			ActorFactory.seq++;
-			bow.init(x, y, ")", name, "weapon|ranged", Constants.WOOD_COLOR, true);
-			bow.pickable = new Pickable(2);
+			var bow = this.createPickable(x, y, name, ")", "weapon|ranged", Constants.WOOD_COLOR, 2);
 			bow.equipment = new Equipment(rangedParam.twoHanded ? Constants.SLOT_BOTH_HANDS : Constants.SLOT_RIGHT_HAND);
 			bow.ranged = new Ranged(rangedParam.damages, rangedParam.projectileTypeName,
 				rangedParam.loadTime, rangedParam.range);
@@ -473,10 +456,7 @@ module Game {
 		}
 
 		private static createStaff(x: number, y: number, name: string, staffParam: StaffParam): Actor {
-			var staff = new Actor(name + "|" + ActorFactory.seq);
-			ActorFactory.seq++;
-			staff.init(x, y, "/", name, "weapon|staff", 0xF0E020, true);
-			staff.pickable = new Pickable(staffParam.weight);
+			var staff = this.createPickable(x, y, name, "/", "weapon|staff", 0xF0E020, staffParam.weight);
 			staff.equipment = new Equipment(staffParam.twoHanded ? Constants.SLOT_BOTH_HANDS : Constants.SLOT_RIGHT_HAND);
 			staff.magic = new Magic(staffParam.maxCharges);
 			staff.magic.setFireEffector(staffParam.fireEffect, new TargetSelector(staffParam.fireTargetSelectionMethod,
@@ -490,10 +470,7 @@ module Game {
 		}
 
 		private static createProjectile(x: number, y: number, name: string, projectileParam: ProjectileParam): Actor {
-			var projectile = new Actor(name + "|" + ActorFactory.seq);
-			ActorFactory.seq++;
-			projectile.init(x, y, "\\", name, "weapon|projectile|" + projectileParam.projectileTypeName, projectileParam.color, true);
-			projectile.pickable = new Pickable(0.1);
+			var projectile = this.createPickable(x, y, name, "\\", "weapon|projectile|" + projectileParam.projectileTypeName, projectileParam.color, 0.1);
 			projectile.pickable.setOnThrowEffect(new InstantHealthEffect(-projectileParam.damages,
 				"The " + name + " hits [the actor1] for [value1] points."),
 				new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL));
@@ -502,10 +479,7 @@ module Game {
 		}
 
 		private static createShield(x: number, y: number, name: string, shieldParam: ShieldParam): Actor {
-			var shield = new Actor(name + "|" + ActorFactory.seq);
-			ActorFactory.seq++;
-			shield.init(x, y, "[", name, "weapon|shield", shieldParam.color, true);
-			shield.pickable = new Pickable(5);
+			var shield = this.createPickable(x, y, name, "[", "weapon|shield", shieldParam.color, 5);
 			shield.pickable.setOnThrowEffect(new ConditionEffect(ConditionType.STUNNED, 2,
 				"The shield hits [the actor1] and stuns [it]!"),
 				new TargetSelector( TargetSelectionMethod.ACTOR_ON_CELL));
@@ -537,7 +511,7 @@ module Game {
 		/*
 			creature factories
 		*/
-		private static createBeast(x: number, y: number, character: string, name: string, corpseName: string, color: Yendor.Color,
+		private static createBeast(x: number, y: number, character: string, name: string, corpseName: string, color: Core.Color,
 			beastParam: BeastParam): Actor {
 			var beast: Actor = new Actor(name + "|" + ActorFactory.seq);
 			ActorFactory.seq++;
@@ -655,7 +629,7 @@ module Game {
 		}
 
 		destroyActor(actorId: ActorId) {
-			this.actors[actorId] = undefined;
+			delete this.actors[actorId];
 			var idList: ActorId[] = this.creatureIds;
 			var index: number = idList.indexOf(actorId);
 			if ( index !== -1 ) {
@@ -683,19 +657,37 @@ module Game {
 			if (this.creatureIds) {
 				this.creatureIds.forEach((actorId: ActorId) => {
 					if ( actorId !== this.playerId ) {
-						this.actors[actorId] = undefined;
+						delete this.actors[actorId];
 					}
 				});
-				this.itemIds.forEach((actorId: ActorId) => { this.actors[actorId] = undefined; });
-				this.corpseIds.forEach((actorId: ActorId) => { this.actors[actorId] = undefined; });
-				this.updatingCorpseIds.forEach((actorId: ActorId) => { this.actors[actorId] = undefined; });
+				this.itemIds.forEach((actorId: ActorId) => { delete this.actors[actorId]; });
+				this.corpseIds.forEach((actorId: ActorId) => { delete this.actors[actorId]; });
+				this.updatingCorpseIds.forEach((actorId: ActorId) => { delete this.actors[actorId]; });
 			}
 			// TODO remove creature inventory items when creatures have inventory
+            this.removePlayerKeys();
 			this.creatureIds = [];
 			this.corpseIds = [];
 			this.updatingCorpseIds = [];
 			this.itemIds = [];
 			this.scheduler.clear();
+		}
+
+        private removePlayerKeys() {
+			var player: Player = this.getPlayer();
+			if (player === undefined) {
+				return;
+			}
+			var keyClass: ActorClass = ActorClass.getActorClass("key");
+			for (var i: number = 0, len: number = player.container.size(); i < len; ++i) {
+				var key: Actor = player.container.get(i);
+				if ( key.isA(keyClass) ) {
+					player.container.remove(key, player);
+					i--;
+					len--;
+					delete this.actors[key.id];
+				}
+			}
 		}
 
 		private renderActorList(actorIds: ActorId[], root: Yendor.Console) {
@@ -842,15 +834,15 @@ module Game {
 			In the `actors` array, find the closest actor (except the player) from position `pos` within `range`.
 			If range is 0, no range limitation.
 		*/
-		findClosestActor( pos: Yendor.Position, range: number, actorIds: ActorId[] ) : Actor {
+		findClosestActor( pos: Core.Position, range: number, actorIds: ActorId[] ) : Actor {
 			var bestDistance: number = 1E8;
-			var closestActor: Actor = undefined;
+			var closestActor: Actor;
 			var nbActors: number = actorIds.length;
 			for (var i: number = 0; i < nbActors; i++) {
 				var actorId: ActorId = actorIds[i];
 				if ( actorId !== this.playerId ) {
 					var actor: Actor = this.actors[actorId];
-					var distance: number = Yendor.Position.distance(pos, actor);
+					var distance: number = Core.Position.distance(pos, actor);
 					if ( distance < bestDistance && (distance < range || range === 0) ) {
 						bestDistance = distance;
 						closestActor = actor;
@@ -871,7 +863,7 @@ module Game {
 			an array containing all the living actors on the cell
 
 		*/
-		findActorsOnCell( pos: Yendor.Position, actorIds: ActorId[]) : Actor[] {
+		findActorsOnCell( pos: Core.Position, actorIds: ActorId[]) : Actor[] {
 			var actorsOnCell: Actor[] = [];
 			var nbActors: number = actorIds.length;
 			for (var i: number = 0; i < nbActors; i++) {
@@ -895,12 +887,12 @@ module Game {
 			Returns:
 			an actor array containing all actor within range
 		*/
-		findActorsInRange( pos: Yendor.Position, range: number, actorIds: ActorId[]): Actor[] {
+		findActorsInRange( pos: Core.Position, range: number, actorIds: ActorId[]): Actor[] {
 			var actorsInRange: Actor[] = [];
 			var nbActors: number = actorIds.length;
 			for (var i: number = 0; i < nbActors; i++) {
 				var actor: Actor = this.actors[actorIds[i]];
-				if (Yendor.Position.distance(pos, actor) <= range ) {
+				if (Core.Position.distance(pos, actor) <= range ) {
 					actorsInRange.push( actor );
 				}
 			}
@@ -914,8 +906,8 @@ module Game {
 			Parameters:
 			pos - a position on the map
 		*/
-		findAdjacentLever( pos: Yendor.Position ): Actor {
-			var adjacentCells: Yendor.Position[] = pos.getAdjacentCells(Engine.instance.map.width, Engine.instance.map.height);
+		findAdjacentLever( pos: Core.Position ): Actor {
+			var adjacentCells: Core.Position[] = pos.getAdjacentCells(Engine.instance.map.width, Engine.instance.map.height);
 			var len: number = adjacentCells.length;
 			// scan all 8 adjacent cells
 			for ( var i: number = 0; i < len; ++i) {
@@ -970,7 +962,7 @@ module Game {
 	 	Actor shouldn't hold references to other Actors, else there might be cyclic dependencies which
 	 	keep the json serializer from working. Instead, hold ActorId and use ActorManager.getActor()
 	 */
-	export class Actor extends Yendor.Position implements Persistent, Yendor.TimedEntity {
+	export class Actor extends Core.Position implements Persistent, Yendor.TimedEntity {
 		className: string;
 		private _id: ActorId;
 		private _readableId: string;
@@ -980,7 +972,7 @@ module Game {
 		// the name to be used by mouse look or the inventory screen
 		name: string;
 		// the color associated with this actor's symbol
-		col: Yendor.Color;
+		col: Core.Color;
 
 		private features: { [index: number]: ActorFeature} = {};
 
@@ -1002,13 +994,13 @@ module Game {
 			if (readableId) {
 				// readableId is undefined when loading a game
 				this._readableId = readableId;
-				this._id = Yendor.crc32(readableId);
+				this._id = Core.crc32(readableId);
 				Engine.instance.actorManager.registerActor(this);
 			}
 		}
 
 		init(_x: number = 0, _y: number = 0, _ch: string = "", _name: string = "", types: string = "",
-			col: Yendor.Color = "", singular: boolean = true) {
+			col: Core.Color = "", singular: boolean = true) {
 			this.moveTo(_x, _y);
 			this._ch = _ch.charCodeAt(0);
 			this.name = _name;
@@ -1108,7 +1100,7 @@ module Game {
 		}
 
 		/*
-			Function: getAname
+			Function: getTheresaname
 			Returns "There's a <name>" or "There's an <name>" or "There are <name>"
 		*/
 		getTheresaname(): string {
@@ -1117,7 +1109,7 @@ module Game {
 		}
 
 		/*
-			Function: getAname
+			Function: getthename
 			Returns " the <name>"
 		*/
 		getthename(): string {
@@ -1125,7 +1117,7 @@ module Game {
 		}
 
 		/*
-			Function: getAname
+			Function: getThename
 			Returns "The <name>"
 		*/
 		getThename(): string {
@@ -1133,7 +1125,7 @@ module Game {
 		}
 
 		/*
-			Function: getAname
+			Function: getThenames
 			Returns "The <name>'s "
 		*/
 		getThenames(): string {
@@ -1141,7 +1133,7 @@ module Game {
 		}
 
 		/*
-			Function: getAname
+			Function: getthenames
 			Returns " the <name>'s "
 		*/
 		getthenames(): string {
@@ -1166,13 +1158,20 @@ module Game {
 
 		getDescription(): string {
 			var desc = this.name;
+			if ( this.magic ) {
+				if ( this.magic.charges > 0 ) {
+					desc += ", " + this.magic.charges + " charges";
+				} else {
+					desc += ", uncharged";
+				}
+			}
 			if ( this.equipment && this.equipment.isEquipped()) {
-				desc += " (on " + this.equipment.getSlot() + ")";
+				desc += ", on " + this.equipment.getSlot();
 			}
 			if ( this.ai ) {
 				var condDesc: string = this.ai.getConditionDescription();
 				if ( condDesc ) {
-					desc += " (" + condDesc + ")";
+					desc += ", " + condDesc;
 				}
 			}
 			return desc;

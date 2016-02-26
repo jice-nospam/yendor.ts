@@ -18,7 +18,7 @@
     "label-position": true,
     "label-undefined": true,
     "max-line-length": [true, 140],
-    "member-ordering": false,
+    "member-ordering": ["public-before-private","static-before-instance","variables-before-functions"],
     "no-arg": true,
     "no-bitwise": false,
     "no-console": [true,
@@ -35,6 +35,7 @@
     "no-duplicate-variable": true,
     "no-empty": false,
     "no-eval": true,
+    "no-internal-module": false,
     "no-string-literal": true,
     "no-switch-case-fall-through": true,
     "no-trailing-comma": true,
@@ -54,17 +55,29 @@
     "radix": true,
     "semicolon": true,
     "triple-equals": [true, "allow-null-check"],
-    "typedef": [true,
-        "callSignature",
-        "indexSignature",
-        "parameter",
-        "propertySignature",
-        "variableDeclarator"
+    "typedef": [
+      true,
+      "call-signature",
+      "parameter",
+      "property-declaration",
+      "variable-declaration",
+      "member-variable-declaration"
     ],
     "typedef-whitespace": [true,
-        ["callSignature", "noSpace"],
-        ["catchClause", "noSpace"],
-        ["indexSignature", "space"]
+      {
+        "call-signature": "nospace",
+        "index-signature": "nospace",
+        "parameter": "nospace",
+        "property-declaration": "nospace",
+        "variable-declaration": "nospace"
+      }, 
+      {
+        "call-signature": "space",
+        "index-signature": "space",
+        "parameter": "space",
+        "property-declaration": "space",
+        "variable-declaration": "space"
+      }
     ],
     "use-strict": [true,
         "check-module",

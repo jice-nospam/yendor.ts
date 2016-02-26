@@ -1,4 +1,17 @@
 /// <reference path="../decl/jquery.d.ts" />
+/// <reference path="tsUnit.ts" />
+/// <reference path="../yendor/yendor.ts" />
+/// <reference path="../umbra/umbra.ts" />
+/// <reference path="../game/custom_events.ts" />
+/// <reference path="../game/base.ts" />
+/// <reference path="../game/persistence.ts" />
+/// <reference path="../game/actor.ts" />
+/// <reference path="../game/effects.ts" />
+/// <reference path="../game/item.ts" />
+/// <reference path="../game/creature.ts" />
+/// <reference path="../game/map.ts" />
+/// <reference path="../game/gui.ts" />
+/// <reference path="../game/engine.ts" />
 /// <reference path="rng.ts" />
 /// <reference path="bsp.ts" />
 /// <reference path="fov.ts" />
@@ -10,7 +23,7 @@ module Tests {
 	"use strict";
 	export class MainTests extends tsUnit.TestClass {
 		crc32() {
-			this.areIdentical(2240272485, Yendor.crc32("abcde"));
+			this.areIdentical(2240272485, Core.crc32("abcde"));
 		}
 	}
 }

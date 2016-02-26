@@ -1,7 +1,3 @@
-/// <reference path="tsUnit.ts" />
-/// <reference path="../yendor/yendor.ts" />
-/// <reference path="../game/engine.ts" />
-
 module Tests {
 	"use strict";
 
@@ -12,7 +8,9 @@ module Tests {
 	export class GameplayTests extends tsUnit.TestClass {
 		private actors: Game.Actor[];
 		setUp() {
-			Yendor.init();
+			Umbra.init();
+			var engine: Game.Engine = new Game.Engine();
+			engine.onInit();
 			this.actors = [];
 			// build a table containing an item of each type
 			for ( var i: number = 0; i < Game.ActorType.LAST_ACTOR_TYPE; ++i) {

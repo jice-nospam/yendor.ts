@@ -1,2 +1,6 @@
 game/main.js
+game/main.js.map
 doc/
+node_modules/
+npm-debug.log
+.vscode/

@@ -16,7 +16,7 @@ module tsUnit {
         }
 
         isReservedFunctionName(functionName: string): boolean {
-            if ( functionName.indexOf("_") === 0 ) {
+            if (functionName.indexOf("_") === 0) {
                 return true;
             }
             for (var prop in this.testClass) {
@@ -31,7 +31,7 @@ module tsUnit {
             var testContext = new TestContext();
             var testResult = new TestResult();
 
-            for (var i = 0; i < this.tests.length; ++i) {
+            for (var i: number = 0, len: number = this.tests.length; i < len; ++i) {
                 var testClass = this.tests[i].testClass;
                 var testName = this.tests[i].name;
                 for (var prop in testClass) {
@@ -88,7 +88,7 @@ module tsUnit {
             var list = "";
             var group = "";
             var isFirst = true;
-            for (var i = 0; i < testResults.length; ++i) {
+            for (var i:number = 0, len:number = testResults.length; i < len; ++i) {
                 var result = testResults[i];
                 if (result.testName !== group) {
                     group = result.testName;
@@ -121,16 +121,16 @@ module tsUnit {
         areIdentical(a: any, b: any, msg?: string): void {
             if (a !== b) {
                 throw (msg ? msg : "") +
-                    " {" + (typeof a) + "} '" + a + "' instead of " +
-                    "{" + (typeof b) + "} '" + b + "'";
+                " {" + (typeof a) + "} '" + a + "' instead of " +
+                "{" + (typeof b) + "} '" + b + "'";
             }
         }
 
         areNotIdentical(a: any, b: any): void {
             if (a === b) {
                 throw "areNotIdentical failed when passed " +
-                    "{" + (typeof a) + "} '" + a + "' and " +
-                    "{" + (typeof b) + "} '" + b + "'";
+                "{" + (typeof a) + "} '" + a + "' and " +
+                "{" + (typeof b) + "} '" + b + "'";
             }
         }
 
@@ -149,14 +149,14 @@ module tsUnit {
         isTruthy(a: any) {
             if (!a) {
                 throw "isTrue failed when passed " +
-                    "{" + (typeof a) + "} '" + a + "'";
+                "{" + (typeof a) + "} '" + a + "'";
             }
         }
 
         isFalsey(a: any) {
             if (a) {
                 throw "isFalse failed when passed " +
-                    "{" + (typeof a) + "} '" + a + "'";
+                "{" + (typeof a) + "} '" + a + "'";
             }
         }
 
@@ -190,7 +190,7 @@ module tsUnit {
         constructor(obj: any) {
             for (var prop in obj) {
                 if (typeof obj[prop] === "function") {
-                    this[prop] = function () { };
+                    this[prop] = function() { };
                 } else {
                     this[prop] = null;
                 }
