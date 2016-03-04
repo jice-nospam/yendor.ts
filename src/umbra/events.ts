@@ -75,7 +75,7 @@ module Umbra {
             data - optional parameter to pass to the callback
         */
         export function processEvent(type: string, eventListener: EventListener, data?: any) {
-            var funcName: string = "on" + Core.toCamelCase(type);
+            var funcName: string = eventTypeToCallback(type);
             var func: any = eventListener[funcName];
             if (func && typeof func === "function") {
                 if (data !== undefined) {
@@ -87,6 +87,10 @@ module Umbra {
                 console.log("Warning : object type " + (eventListener["className"] ? eventListener["className"] : "unknown")
                     + " does not implement handler " + funcName + " for event " + type);
             }
+        }
+        
+        export function eventTypeToCallback(eventType: string): string {
+            return "on" + Core.toCamelCase(eventType);
         }
 
 		/*

@@ -128,15 +128,15 @@ module Yendor {
 			Fill the text on the console (don't change foreground/background colors)
 
 			Parameters:
-			value - ascii code to use to fill
+			asciiCode - ascii code to use to fill
 			x - *optional* (default 0) top left column
 			y - *optional* (default 0) top left row
 			width - *optional* the rectangle width
 			height - *optional* the rectangle height			
 		*/
-        clearText(value: number = 0,
+        clearText(asciiCode: number = 0,
             x: number = 0, y: number = 0, width: number = -1, height: number = -1) {
-            this.clearTable(this.text, value, x, y, width, height);
+            this.clearTable(this.text, asciiCode, x, y, width, height);
         }
 
 		/*
@@ -147,15 +147,15 @@ module Yendor {
 			fills the whole console foreground with red.
 
 			Parameters:
-			value - new foreground color
+			color - new foreground color
 			x - *optional* (default 0) top left column
 			y - *optional* (default 0) top left row
 			width - *optional* the rectangle width
 			height - *optional* the rectangle height
 		*/
-        clearFore(value: Core.Color,
+        clearFore(color: Core.Color,
             x: number = 0, y: number = 0, width: number = -1, height: number = -1) {
-            this.clearTable(this.fore, value, x, y, width, height);
+            this.clearTable(this.fore, color, x, y, width, height);
         }
 
 
@@ -167,15 +167,15 @@ module Yendor {
 			fills the whole console background with red.
 
 			Parameters:
-			value - new background color
+			color - new background color
 			x - *optional* (default 0) top left column
 			y - *optional* (default 0) top left row
 			width - *optional* the rectangle width
 			height - *optional* the rectangle height
 		*/
-        clearBack(value: Core.Color,
+        clearBack(color: Core.Color,
             x: number = 0, y: number = 0, width: number = -1, height: number = -1) {
-            this.clearTable(this.back, value, x, y, width, height);
+            this.clearTable(this.back, color, x, y, width, height);
         }
 
 		/*

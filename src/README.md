@@ -1,4 +1,4 @@
-This directory contains the typescript source code of yendor.ts, umbra.ts and GeneRogue.
+This directory contains the typescript source code of yendor.ts, umbra.ts, gizmo.ts and GeneRogue.
 This code can be compiled into ../game/main.js using jake.
 
 # Directories

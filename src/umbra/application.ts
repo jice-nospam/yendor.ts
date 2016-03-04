@@ -88,6 +88,8 @@ module Umbra {
                 this.gameTime = time;
                 // update the game only options.ticksPerSecond per second
                 if (!this.paused) {
+                    // TODO remove this cyclic dependency
+                    Gizmo.initFrame();
                     scene.updateHierarchy(time);
                     Umbra.Input.resetInput();
                 }

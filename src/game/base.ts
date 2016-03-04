@@ -48,10 +48,6 @@ module Game {
         export const STEEL_COLOR: Core.Color = 0x867F70;
 
         // gui
-        export const STATUS_PANEL_ID: string = "statusPanel";
-        export const INVENTORY_ID: string = "inventory";
-        export const TILE_PICKER_ID: string = "tilePicker";
-        export const MAIN_MENU_ID: string = "mainMenu";
         export const LOG_DARKEN_COEF: number = 0.8;
         export const STATUS_PANEL_HEIGHT: number = 7;
         export const STAT_BAR_WIDTH: number = 20;
@@ -99,6 +95,7 @@ module Game {
         export const PERSISTENCE_ITEM_IDS_KEY: string = "itemIds";
         export const PERSISTENCE_CORPSE_IDS_KEY: string = "corpseIds";
         export const PERSISTENCE_UPDATING_CORPSE_IDS_KEY: string = "updatingCorpseIds";
+        export const PERSISTENCE_STATUS_PANEL: string = "statusPanel";
 
     }
     export const enum GameStatus {

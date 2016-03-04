@@ -61,8 +61,14 @@ module Core {
 			Returns:
 			true if the point is inside the rectangle.
 		*/
-        contains(px: number, py: number): boolean {
-            return px >= this.x && py >= this.y && px <= this.x + this.w && py <= this.y + this.h;
+        contains(pos: Core.Position): boolean;
+        contains(px: number, py: number): boolean;
+        contains(px: number|Core.Position, py?:number) {
+            if (typeof px === "number") {
+                return px >= this.x && py >= this.y && px < this.x + this.w && py < this.y + this.h;
+            } else {
+                return px.x >= this.x && px.y >= this.y && px.x < this.x + this.w && px.y < this.y + this.h;
+            }
         }
 
 		/*
@@ -75,10 +81,56 @@ module Core {
 			Returns:
 			true if rect is inside *this*.
 		*/
-        containsRect(rect: Rect) {
+        containsRect(rect: Rect): boolean {
             return this.x <= rect.x && this.y <= rect.y
                 && this.x + this.w >= rect.x + rect.w
                 && this.y + this.h >= rect.y + rect.h;
+        }
+        
+		/*
+			Function: intersects
+			Check if a rectangle is intersecting this rectangle.
+
+			Parameters:
+			rect - the rectangle
+
+			Returns:
+			true if rect and *this* are intersecting.
+		*/
+        intersects(rect: Rect): boolean {
+            return !(this.x + this.w <= rect.x
+                || rect.x + rect.w <= this.x
+                || this.y + this.h <= rect.y
+                || rect.y + rect.h <= this.y);
+        }
+        
+        /*
+            Function: expand
+            Grows this rectangle so that it contains a point
+            
+            Parameters :
+            pos - the point's position
+        */
+        expand(pos: Core.Position) {
+            if (pos.x < this.x) {
+                this.w += this.x - pos.x;
+                this.x = pos.x;
+            } else if (pos.x >= this.x + this.w) {
+                this.w += pos.x - this.x - this.w + 1;
+            }
+            if (pos.y < this.y) {
+                this.h += this.y - pos.y;
+                this.y = pos.y;
+            } else if (pos.y >= this.y + this.h) {
+                this.h += pos.y - this.y - this.h + 1;
+            }
+        }
+        
+        set(rect: Core.Rect) {
+            this.x = rect.x;
+            this.y = rect.y;
+            this.w = rect.w;
+            this.h = rect.h;
         }
     }
 }

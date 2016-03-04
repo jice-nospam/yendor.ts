@@ -37,9 +37,8 @@ module Game {
 
         enableEvents: boolean = true;
 
-        private guiManager: GuiManager;
         private status: GameStatus;
-        private persister: Persister = new LocalStoragePersister();
+        public persister: Persister = new LocalStoragePersister();
         private dungeonLevel: number = 1;
         private gameTime: number = 0;
 
@@ -86,9 +85,27 @@ module Game {
                 { name: PlayerAction[PlayerAction.MOVE_DOWN], positiveButton: ">", type: Umbra.AxisType.KEY_OR_BUTTON },
                 { name: PlayerAction[PlayerAction.MOVE_UP], positiveButton: "<", type: Umbra.AxisType.KEY_OR_BUTTON },
             ]);
-            this.initEventBus();
-            this.guiManager = new GuiManager();
-            this.guiManager.createStatusPanel();
+            // Gizmo configuration
+            Gizmo.setConfiguration(
+              {
+                  input: {
+                      focusNextWidgetAxisName: PlayerAction[PlayerAction.MOVE_SOUTH],
+                      focusPreviousWidgetAxisName: PlayerAction[PlayerAction.MOVE_NORTH],
+                      cancelAxisName: PlayerAction[PlayerAction.CANCEL],
+                      validateAxisName: PlayerAction[PlayerAction.VALIDATE]
+                  },
+                  color: {
+                      background: Constants.MENU_BACKGROUND,
+                      backgroundActive: Constants.MENU_BACKGROUND_ACTIVE,
+                      backgroundDisabled: Constants.MENU_BACKGROUND,
+                      foreground: Constants.MENU_FOREGROUND,
+                      foregroundActive: Constants.MENU_FOREGROUND,
+                      foregroundDisabled: Constants.MENU_FOREGROUND
+                  }
+              }  
+            );
+            this.registerEvents();
+            this.createStatusPanel();
 
             var savedVersion = this.persister.loadFromKey(Constants.PERSISTENCE_VERSION_KEY);
             if (savedVersion && savedVersion.toString() === SAVEFILE_VERSION) {
@@ -96,14 +113,51 @@ module Game {
             } else {
                 this.createNewGame();
             }
-            this.guiManager.createOtherGui();
+            this.createOtherGui();
+        }
+        
+        createStatusPanel() {
+            var statusPanel = new StatusPanel(Constants.CONSOLE_WIDTH, Constants.STATUS_PANEL_HEIGHT);
+            statusPanel.moveTo(0, Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT);
+            this.addChild(statusPanel);
+        }
+        
+        createOtherGui() {
+            var inventoryPanel = new InventoryPanel(Constants.INVENTORY_PANEL_WIDTH, Constants.INVENTORY_PANEL_HEIGHT);
+            inventoryPanel.moveTo(Math.floor(Constants.CONSOLE_WIDTH / 2 - Constants.INVENTORY_PANEL_WIDTH / 2), 0);
+            this.addChild(inventoryPanel);
+            this.addChild(new MainMenu());
+            this.addChild(new TilePicker());
         }
 
-        private initEventBus() {
+        private registerEvents() {
             Umbra.EventManager.registerEventListener(this, EventType[EventType.CHANGE_STATUS]);
             Umbra.EventManager.registerEventListener(this, EventType[EventType.NEW_GAME]);
             Umbra.EventManager.registerEventListener(this, EventType[EventType.GAIN_XP]);
+            Umbra.EventManager.registerEventListener(this, Gizmo.EventType[Gizmo.EventType.MODAL_SHOW]);
+            Umbra.EventManager.registerEventListener(this, Gizmo.EventType[Gizmo.EventType.MODAL_HIDE]);
         }
+        
+        onChangeStatus(status: GameStatus) {
+            this.status = status;
+        }
+
+        onNewGame() {
+            this.dungeonLevel = 1;
+            this.createNewGame();
+        }
+
+        onGainXp(amount: number) {
+            this._actorManager.getPlayer().addXp(amount);
+        }
+
+        onModalShow(w: Gizmo.Widget) {
+            this.actorManager.pause();
+        }
+
+        onModalHide(w: Gizmo.Widget) {
+            this.actorManager.resume();
+        }        
 
         private createNewGame() {
             this._actorManager.clear();
@@ -132,7 +186,7 @@ module Game {
             ActorFactory.load(this.persister);
             this._actorManager.load(this.persister);
             // TODO save/restore topologyMap
-            this.persister.loadFromKey(Constants.STATUS_PANEL_ID, this.guiManager.getGui(Constants.STATUS_PANEL_ID));
+            Umbra.EventManager.publishEvent(EventType[EventType.LOAD_GAME]);
             this.status = GameStatus.RUNNING;
         }
 
@@ -144,8 +198,8 @@ module Game {
                 this.persister.saveToKey(Constants.PERSISTENCE_VERSION_KEY, SAVEFILE_VERSION);
                 this.persister.saveToKey(Constants.PERSISTENCE_MAP_KEY, this._map);
                 ActorFactory.save(this.persister);
+                Umbra.EventManager.publishEvent(EventType[EventType.SAVE_GAME]);
                 this._actorManager.save(this.persister);
-                this.persister.saveToKey(Constants.STATUS_PANEL_ID, this.guiManager.getGui(Constants.STATUS_PANEL_ID));
             }
         }
 
@@ -155,7 +209,7 @@ module Game {
             this.persister.deleteKey(Constants.PERSISTENCE_MAP_KEY);
             ActorFactory.deleteSavedGame(this.persister);
             this._actorManager.deleteSavedGame(this.persister);
-            this.persister.deleteKey(Constants.STATUS_PANEL_ID);
+            Umbra.EventManager.publishEvent(EventType[EventType.DELETE_SAVEGAME]);
         }
 
         private computePlayerFov() {
@@ -182,20 +236,6 @@ module Game {
             dungeonBuilder.build(this._map);
         }
 
-        onChangeStatus(status: GameStatus) {
-            this.status = status;
-        }
-
-        onNewGame() {
-            this.guiManager.getGui(Constants.STATUS_PANEL_ID).clear();
-            this.dungeonLevel = 1;
-            this.createNewGame();
-        }
-
-        onGainXp(amount: number) {
-            this._actorManager.getPlayer().addXp(amount);
-        }
-
         private hasBackgroundAnimation(): boolean {
             // TODO
             return false;
@@ -206,20 +246,14 @@ module Game {
 			Checks if the player pressed a key and resume actors simulation when needed.
 		*/
         private handleKeyboardInput(): void {
-            if (Umbra.Input.getLastAxisName() !== undefined && !Gui.getActiveModal()) {
-                if (!this.handleGlobalShortcuts()) {
-                    this.actorManager.resume();
-                }
-            }
-        }
-
-        private handleGlobalShortcuts(): boolean {
-            if (getLastPlayerAction() === PlayerAction.CANCEL) {
+            if (Gizmo.Widget.getActiveModal()) {
+                return;
+            } else if (getLastPlayerAction() === PlayerAction.CANCEL) {
                 Umbra.Input.resetInput();
                 Umbra.EventManager.publishEvent(EventType[EventType.OPEN_MAIN_MENU]);
-                return true;
+            } else if (getLastPlayerAction() !== undefined ) {
+                this.actorManager.resume();
             }
-            return false;
         }
         
 		/*
@@ -253,7 +287,6 @@ module Game {
             this.computePlayerFov();
             this._map.render(con);
             this._actorManager.renderActors(con);
-            this.guiManager.renderGui(con);
         }
 
         onTerm(): void {

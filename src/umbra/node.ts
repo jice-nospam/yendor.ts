@@ -5,7 +5,7 @@ module Umbra {
     "use strict";
 
     export abstract class Node extends Core.TreeNode {
-        boundingBox: Core.Rect;
+        protected boundingBox: Core.Rect;
 
         private visible: boolean = true;
         private zOrder: number;
@@ -19,6 +19,25 @@ module Umbra {
         }
         isVisible(): boolean {
             return this.visible;
+        }
+
+        getBoundingBox(): Core.Rect {
+            return this.boundingBox;
+        }
+
+        moveTo(pos: Core.Position);
+        moveTo(x: number, y: number);
+        moveTo(x: number | Core.Position, y?: number) {
+            if (typeof x === "number") {
+                this.boundingBox.moveTo(x, y);
+            } else {
+                var pos: Core.Position = <Core.Position>x;
+                this.boundingBox.moveTo(pos.x, pos.y);
+            }
+        }
+
+        resize(w: number, h: number) {
+            this.boundingBox.resize(w, h);
         }
 
         getZOrder(): number {
@@ -44,8 +63,8 @@ module Umbra {
             }
         }
 
-        abstract onInit(): void;
-        abstract onTerm(): void;
+        onInit(): void {}
+        onTerm(): void {}
         abstract onRender(con: Yendor.Console): void;
         abstract onUpdate(time: number): void;
 
@@ -93,18 +112,18 @@ module Umbra {
 
 		/*
 			Function: updateHierarchy
-			Update this node, then this node children in ascending zOrder.
+			Update this node children in descending zOrder, then this node.
 
 			Parameters:
 			time - current game time
 		*/
         updateHierarchy(time: number): void {
             if (this.visible) {
-                this.onUpdate(time);
-                for (var i: number = 0, len: number = this.children.length; i < len; ++i) {
+                for (var i: number = this.children.length-1; i >= 0; --i) {
                     var node: Node = <Node>this.children[i];
                     node.updateHierarchy(time);
                 }
+                this.onUpdate(time);
             }
         }
 
@@ -114,8 +133,11 @@ module Umbra {
 
 			Parameters:
 			node - the child node
+            
+            Returns:
+            the position of the node in the child list
 		*/
-        addChild(node: Node): void {
+        addChild(node: Node): number {
             var i: number = 0, len: number = this.children.length;
             while (i < len && (<Node>this.children[i]).zOrder < node.zOrder) {
                 ++i;
@@ -125,8 +147,34 @@ module Umbra {
             } else {
                 this.children.splice(i, 0, node);
             }
+            return i;
         }
-
+        
+        computeBoundingBox() {
+            if (this.children.length === 0) {
+                return;
+            }
+            var first: boolean = true;
+            for (var i: number = 0, len: number = this.children.length; i < len; ++i) {
+                var node: Node = <Node>this.children[i];
+                if (node.boundingBox) {
+                    if ( first ) {
+                        if (! this.boundingBox ) {
+                            this.boundingBox = new Core.Rect();
+                        }
+                        this.boundingBox.set(node.boundingBox);
+                        first = false;
+                    } else {
+                        // make sure our bounding box contains all the children.
+                        var p: Core.Position = new Core.Position(node.boundingBox.x, node.boundingBox.y);
+                        this.boundingBox.expand(p);
+                        p.x += node.boundingBox.w - 1;
+                        p.y += node.boundingBox.h - 1;
+                        this.boundingBox.expand(p);
+                    }
+                }
+            }
+        }
     }
 
 }

@@ -5,120 +5,6 @@ module Game {
     "use strict";
 
 	/********************************************************************************
-	 * Group: generic GUI stuff
-	 ********************************************************************************/
-    export class GuiManager {
-        private guis: { [index: string]: Gui; } = {};
-        addGui(gui: Gui, name: string, x?: number, y?: number) {
-            if (x !== undefined && y !== undefined) {
-                gui.moveTo(x, y);
-            }
-            this.guis[name] = gui;
-        }
-
-        getGui(name: string): Gui {
-            return this.guis[name];
-        }
-
-        renderGui(rootConsole: Yendor.Console) {
-            for (var guiName in this.guis) {
-                if (this.guis.hasOwnProperty(guiName)) {
-                    var gui: Gui = this.guis[guiName];
-                    if (gui.isVisible()) {
-                        gui.render(rootConsole);
-                    }
-                }
-            }
-        }
-
-        createStatusPanel() {
-            var statusPanel: Gui = new StatusPanel(Constants.CONSOLE_WIDTH, Constants.STATUS_PANEL_HEIGHT);
-            statusPanel.show();
-            this.addGui(statusPanel, Constants.STATUS_PANEL_ID, 0, Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT);
-        }
-
-        createOtherGui() {
-            var inventoryPanel: Gui = new InventoryPanel(Constants.INVENTORY_PANEL_WIDTH, Constants.INVENTORY_PANEL_HEIGHT);
-            this.addGui(inventoryPanel, Constants.INVENTORY_ID, Math.floor(Constants.CONSOLE_WIDTH / 2 - Constants.INVENTORY_PANEL_WIDTH / 2), 0);
-
-            var tilePicker: Gui = new TilePicker();
-            this.addGui(tilePicker, Constants.TILE_PICKER_ID);
-
-            var mainMenu: Menu = new MainMenu();
-            this.addGui(mainMenu, Constants.MAIN_MENU_ID);
-        }
-    }
-
-    export class Gui extends Core.Position implements Umbra.EventListener {
-        private static activeModal: Gui;
-
-        enableEvents: boolean = true;
-
-        protected __console: Yendor.Console;
-
-        private _width: number;
-        private _height: number;
-        private _visible: boolean = false;
-        private modal: boolean = false;
-
-        static getActiveModal(): Gui { return Gui.activeModal; }
-
-        constructor(_width: number, _height: number) {
-            super();
-            this._width = _width;
-            this._height = _height;
-            this.__console = new Yendor.Console(_width, _height);
-        }
-
-        get width() { return this._width; }
-        get height() { return this._height; }
-
-        isVisible() { return this._visible; }
-        isModal() { return this.modal; }
-        protected setModal() { this.modal = true; }
-        set visible(newValue: boolean) { this._visible = newValue; }
-        protected resize(width: number, height: number) {
-            if (this.console.width !== width || this.console.height !== height) {
-                this.__console = new Yendor.Console(width, height);
-                this._width = width;
-                this._height = height;
-            }
-        }
-
-        show() {
-            if (this.modal) {
-                if (Gui.activeModal) {
-                    Gui.activeModal.hide();
-                }
-                Gui.activeModal = this;
-                Engine.instance.actorManager.pause();
-            }
-            this._visible = true;
-        }
-        hide() {
-            if (this.modal) {
-                Gui.activeModal = undefined;
-                Engine.instance.actorManager.resume();
-            }
-            this._visible = false;
-        }
-
-        get console() { return this.__console; }
-
-        clear() {
-            // empty
-        }
-
-		/*
-			Function: render
-			To be overloaded by extending classes.
-		*/
-        render(destination: Yendor.Console) {
-            this.__console.blit(destination, this.x, this.y);
-        }
-    }
-
-	/********************************************************************************
 	 * Group: status panel
 	 ********************************************************************************/
     export class Message implements Persistent {
@@ -138,7 +24,7 @@ module Game {
         }
     }
 
-    export class StatusPanel extends Gui implements Umbra.EventListener, Persistent {
+    export class StatusPanel extends Gizmo.ConsoleWidget implements Umbra.EventListener, Persistent {
         private static MESSAGE_X = Constants.STAT_BAR_WIDTH + 2;
         className: string;
         private messageHeight: number;
@@ -149,6 +35,10 @@ module Game {
             this.className = "StatusPanel";
             this.messageHeight = height - 1;
             Umbra.EventManager.registerEventListener(this, EventType[EventType.LOG_MESSAGE]);
+            Umbra.EventManager.registerEventListener(this, EventType[EventType.NEW_GAME]);
+            Umbra.EventManager.registerEventListener(this, EventType[EventType.LOAD_GAME]);
+            Umbra.EventManager.registerEventListener(this, EventType[EventType.SAVE_GAME]);
+            Umbra.EventManager.registerEventListener(this, EventType[EventType.DELETE_SAVEGAME]);
         }
 
         onLogMessage(msg: Message) {
@@ -163,6 +53,22 @@ module Game {
                 this.messages.push(new Message(msg.color, lines[j]));
             }
         }
+        
+        onNewGame() {
+            this.clear();
+        }
+        
+        onLoadGame() {
+            Engine.instance.persister.loadFromKey(Constants.PERSISTENCE_STATUS_PANEL, this);            
+        }
+        
+        onSaveGame() {
+            Engine.instance.persister.saveToKey(Constants.PERSISTENCE_STATUS_PANEL, this);            
+        }
+        
+        onDeleteSavegame() {
+            Engine.instance.persister.deleteKey(Constants.PERSISTENCE_STATUS_PANEL);
+        }
 
         handleMouseMove() {
             var mousePos: Core.Position = Umbra.Input.getMouseCellPosition();
@@ -174,11 +80,10 @@ module Game {
             }
         }
 
-        render(destination: Yendor.Console) {
+        onRender(destination: Yendor.Console) {
             this.console.clearBack(0x000000);
             this.console.clearText();
             var player: Player = Engine.instance.actorManager.getPlayer();
-            this.handleMouseMove();
             this.console.print(0, 0, this.mouseLookText);
             this.renderBar(1, 1, Constants.STAT_BAR_WIDTH, "HP", player.destructible.hp,
                 player.destructible.maxHp, Constants.HEALTH_BAR_BACKGROUND, Constants.HEALTH_BAR_FOREGROUND);
@@ -186,7 +91,11 @@ module Game {
                 player.getNextLevelXp(), Constants.XP_BAR_BACKGROUND, Constants.XP_BAR_FOREGROUND);
             this.renderConditions(player.ai.conditions);
             this.renderMessages();
-            super.render(destination);
+            super.onRender(destination);
+        }
+
+        onUpdate(time: number) {
+            this.handleMouseMove();
         }
 
         clear() {
@@ -257,7 +166,7 @@ module Game {
         itemListener: ItemListener;
     }
 
-    export class InventoryPanel extends Gui {
+    export class InventoryPanel extends Gizmo.ConsoleWidget implements Umbra.EventListener {
         private title: string = "=== inventory - ESC to close ===";
         private selectedItem: number;
         private itemListener: ItemListener;
@@ -271,13 +180,11 @@ module Game {
         constructor(width: number, height: number) {
             super(width, height);
             this.setModal();
-            Umbra.EventManager.registerEventListener(this, EventType[EventType.OPEN_INVENTORY]);
-        }
-
-        onOpenInventory(data: OpenInventoryEventData) {
-            this.itemListener = data.itemListener;
-            this.title = "=== " + data.title + " - ESC to close ===";
-            this.show();
+            this.hide();
+            this.showOnEventType(EventType[EventType.OPEN_INVENTORY], function(data: OpenInventoryEventData) {
+                this.itemListener = data.itemListener;
+                this.title = "=== " + data.title + " - ESC to close ===";
+            }.bind(this));
         }
 
         checkKeyboardInput() {
@@ -326,21 +233,16 @@ module Game {
         }
 
         private selectItemAtPos(pos: Core.Position) {
-            this.selectedItem = pos.y - (this.y + 1);
+            this.selectedItem = pos.y - (this.boundingBox.y + 1);
         }
 
-        render(destination: Yendor.Console) {
-            this.checkKeyboardInput();
-            if (this.selectedItem !== undefined && Umbra.Input.wasMouseButtonReleased(Umbra.MouseButton.LEFT)) {
-                this.selectItemByIndex(this.selectedItem);
-                Umbra.Input.resetInput();
-            }
+        onRender(destination: Yendor.Console) {
             this.console.clearBack(Constants.INVENTORY_BACKGROUND);
             this.console.clearText();
-            this.x = Math.floor(destination.width / 2 - this.width / 2);
-            this.y = Math.floor(destination.height / 2 - this.height / 2);
+            this.boundingBox.x = Math.floor(destination.width / 2 - this.boundingBox.w / 2);
+            this.boundingBox.y = Math.floor(destination.height / 2 - this.boundingBox.h / 2);
             var y: number = 1;
-            this.console.print(Math.floor(this.width / 2 - this.title.length / 2), 0, this.title);
+            this.console.print(Math.floor(this.boundingBox.w / 2 - this.title.length / 2), 0, this.title);
             var player: Actor = Engine.instance.actorManager.getPlayer();
             this.handleMouseMove();
             for (var i: number = 0; i < this.inventory.length; i++) {
@@ -350,8 +252,16 @@ module Game {
             }
             var capacity: string = "capacity " + (Math.floor(10 * player.container.computeTotalWeight()) / 10)
                 + "/" + player.container.capacity;
-            this.console.print(Math.floor(this.width / 2 - capacity.length / 2), this.height - 1, capacity);
-            super.render(destination);
+            this.console.print(Math.floor(this.boundingBox.w / 2 - capacity.length / 2), this.boundingBox.h - 1, capacity);
+            super.onRender(destination);
+        }
+        
+        onUpdate(time: number) {
+            this.checkKeyboardInput();
+            if (this.selectedItem !== undefined && Umbra.Input.wasMouseButtonReleased(Umbra.MouseButton.LEFT)) {
+                this.selectItemByIndex(this.selectedItem);
+                Umbra.Input.resetInput();
+            }            
         }
 
         private renderItem(item: Actor, entryNum: number, y: number, count: number = 1) {
@@ -453,18 +363,25 @@ module Game {
 		It then listens to mouse events until the player left-clicks a tile.
 		Then it sends a TILE_SELECTED event containing the tile position.
 	*/
-    export class TilePicker extends Gui {
+    export class TilePicker extends Gizmo.Widget implements Umbra.EventListener {
         private tilePos: Core.Position = new Core.Position();
         private tileIsValid: boolean = false;
         private data: TilePickerEventData;
         enableEvents: boolean = true;
         constructor() {
-            super(Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT);
+            super();
+            this.hide();
             this.setModal();
-            Umbra.EventManager.registerEventListener(this, EventType[EventType.PICK_TILE]);
+            this.showOnEventType(EventType[EventType.PICK_TILE], function(data: TilePickerEventData) {
+                this.data = data;
+                this.tileIsValid = true;
+                var player: Actor = Engine.instance.actorManager.getPlayer();
+                this.tilePos.x = player.x;
+                this.tilePos.y = player.y;
+            }.bind(this));
         }
 
-        render(console: Yendor.Console) {
+        onRender(console: Yendor.Console) {
             this.handleMouseMove();
             this.handleMouseClick();
             this.checkKeyboardInput();
@@ -491,17 +408,11 @@ module Game {
             }
         }
 
-        onPickTile(data?: TilePickerEventData) {
-            this.data = data;
-            this.show();
-            this.tileIsValid = true;
-            var player: Actor = Engine.instance.actorManager.getPlayer();
-            this.tilePos.x = player.x;
-            this.tilePos.y = player.y;
-        }
-
-        private deactivate() {
-            this.hide();
+        onUpdate(time: number): void {
+            if (getLastPlayerAction() === PlayerAction.CANCEL) {
+                this.hide();
+                Umbra.Input.resetInput();
+            }
         }
 
         checkKeyboardInput() {
@@ -519,13 +430,13 @@ module Game {
             }
             switch (action) {
                 case PlayerAction.CANCEL:
-                    this.deactivate();
+                    this.hide();
                     Umbra.Input.resetInput();
                     break;
                 case PlayerAction.VALIDATE:
                     if (this.tileIsValid) {
                         this.doSelectTile(this.tilePos);
-                        this.deactivate();
+                        this.hide();
                         Umbra.Input.resetInput();
                     }
                     break;
@@ -537,10 +448,10 @@ module Game {
             if (Umbra.Input.wasMouseButtonReleased(Umbra.MouseButton.LEFT)) {
                 if (this.tileIsValid) {
                     this.doSelectTile(this.tilePos);
-                    this.deactivate();
+                    this.hide();
                 }
             } else if (Umbra.Input.wasMouseButtonReleased(Umbra.MouseButton.RIGHT)) {
-                this.deactivate();
+                this.hide();
             }
         }
 
@@ -572,169 +483,46 @@ module Game {
 	/********************************************************************************
 	 * Group: menu
 	 ********************************************************************************/
-
-	/*
-		Interface: MenuItem
-		An entry in the menu.
-	*/
-    export interface MenuItem {
-        label: string;
-        eventType?: EventType;
-        disabled?: boolean;
+    interface MenuItem {
+        label: string,
+        eventType: string
     }
-
-	/*
-		Class: Menu
-		A generic popup menu
-	*/
-    export class Menu extends Gui {
-        private items: MenuItem[];
-        private activeItemIndex: number;
-        enableEvents: boolean = true;
-
-        constructor(items: MenuItem[] = [], x: number = -1, y: number = -1) {
-            super(1, items.length + 2);
-            this.items = items;
-            if (items.length > 0) {
-                this.activeItemIndex = 0;
-            }
-            this.resizeMenu();
-            this.setModal();
-            this.setPosition(x, y);
-        }
-
-        private computeWidth(): number {
-            var maxWidth: number = 2;
-            for (var i = 0; i < this.items.length; i++) {
-                if (maxWidth < this.items[i].label.length + 2) {
-                    maxWidth = this.items[i].label.length + 2;
-                }
-            }
-            return maxWidth;
-        }
-
-        private resizeMenu() {
-            var maxWidth = this.computeWidth();
-            super.resize(maxWidth, this.items.length + 2);
-        }
-
-        private drawMenu() {
-            this.console.clearBack(Constants.MENU_BACKGROUND);
-            for (var j = 0; j < this.items.length; j++) {
-                var itemx: number = Math.floor(this.width / 2 - this.items[j].label.length / 2);
-                this.console.print(itemx, j + 1, this.items[j].label);
-            }
-        }
-
-        private setPosition(x: number, y: number) {
-            if (x === -1) {
-                x = Math.floor(Constants.CONSOLE_WIDTH / 2 - this.width / 2);
-            }
-            if (y === -1) {
-                y = Math.floor(Constants.CONSOLE_HEIGHT / 2 - this.height / 2);
-            }
-            this.moveTo(x, y);
-        }
-
-        show() {
-            this.resizeMenu();
-            this.drawMenu();
-            super.show();
-        }
-
-        hide() {
-            super.hide();
-        }
-
-        render(destination: Yendor.Console) {
-            this.checkKeyboardInput();
-            this.console.clearBack(Constants.MENU_BACKGROUND);
-            this.handleMouseMove();
-            this.handleMouseClick();
-            for (var i = 0; i < this.items.length; i++) {
-                if (this.items[i].disabled) {
-                    this.console.clearFore(Constants.MENU_FOREGROUND_DISABLED, 0, i + 1, -1, 1);
-                } else if (i === this.activeItemIndex) {
-                    this.console.clearFore(Constants.MENU_FOREGROUND_ACTIVE, 0, i + 1, -1, 1);
-                    this.console.clearBack(Constants.MENU_BACKGROUND_ACTIVE, 0, i + 1, -1, 1);
-                } else {
-                    this.console.clearFore(Constants.MENU_FOREGROUND, 0, i + 1, -1, 1);
-                }
-            }
-            super.render(destination);
-        }
-
-        handleMouseMove() {
-            if (Umbra.Input.wasMouseMoved()) {
-                var mouseCellPos: Core.Position = Umbra.Input.getMouseCellPosition();
-                if (mouseCellPos.x >= this.x && mouseCellPos.x < this.x + this.width
-                    && mouseCellPos.y >= this.y + 1 && mouseCellPos.y < this.y + this.height - 1) {
-                    this.activeItemIndex = mouseCellPos.y - this.y - 1;
-                } else {
-                    this.activeItemIndex = undefined;
-                }
-            }
-        }
-
-        handleMouseClick() {
-            if (Umbra.Input.wasMouseButtonReleased(Umbra.MouseButton.LEFT)) {
-                this.activateActiveItem();
-            }
-        }
-
-        checkKeyboardInput() {
-            var action: PlayerAction = getLastPlayerAction();
-            switch (action) {
-                case PlayerAction.CANCEL:
-                    this.hide();
-                    break;
-                case PlayerAction.MOVE_NORTH:
-                    if (this.activeItemIndex) {
-                        this.activeItemIndex--;
-                    } else {
-                        this.activeItemIndex = this.items.length - 1;
-                    }
-                    break;
-                case PlayerAction.MOVE_SOUTH:
-                    if (this.activeItemIndex !== undefined && this.activeItemIndex < this.items.length - 1) {
-                        this.activeItemIndex++;
-                    } else {
-                        this.activeItemIndex = 0;
-                    }
-                    break;
-                case PlayerAction.VALIDATE:
-                    this.activateActiveItem();
-                    break;
-            }
-        }
-
-        private activateActiveItem() {
-            if (this.activeItemIndex !== undefined) {
-                var item: MenuItem = this.items[this.activeItemIndex];
-                if (!item.disabled) {
-                    this.hide();
-                    if (item.eventType) {
-                        Umbra.EventManager.publishEvent(EventType[item.eventType], item);
-                    }
-                }
-            } else {
-                // close the menu if user clicks out of it
-                this.hide();
-            }
-        }
-    }
-
-    export class MainMenu extends Menu {
+    export abstract class PopupMenu extends Gizmo.Widget implements Umbra.EventListener {
+        private items: MenuItem[] = [];
         constructor() {
-            super([
-                { label: "Resume game" },
-                { label: "New game", eventType: EventType.NEW_GAME }
-            ]);
-            Umbra.EventManager.registerEventListener(this, EventType[EventType.OPEN_MAIN_MENU]);
+            super();
+            this.hide();
+            this.setModal();
+            this.boundingBox = new Core.Rect(0, 0, 0, 2);
         }
 
-        onOpenMainMenu() {
-            this.show();
+        protected addItem(label: string, eventType: string) {
+            this.boundingBox.h++;
+            this.boundingBox.w = Math.max(label.length + 2, this.boundingBox.w);
+            this.boundingBox.x = Math.floor(Constants.CONSOLE_WIDTH / 2 - this.boundingBox.w / 2);
+            this.boundingBox.y = Math.floor(Constants.CONSOLE_HEIGHT / 2 - this.boundingBox.h / 2);
+            this.items.push({ label: label, eventType: eventType });
+        }
+        onRender(con: Yendor.Console): void {
+            Gizmo.frame(con, this.boundingBox.x, this.boundingBox.y, 13, 4);
+            for (var i: number = 0, len: number = this.items.length; i < len; ++i) {
+                Gizmo.button(this, con, this.boundingBox.x, this.boundingBox.y + 1 + i, this.items[i].eventType, this.items[i].label, { autoHide: true });
+            }
+        }
+        onUpdate(time: number): void {
+            if (getLastPlayerAction() === PlayerAction.CANCEL) {
+                this.hide();
+                Umbra.Input.resetInput();
+            }
+        }
+    }
+
+    export class MainMenu extends PopupMenu {
+        constructor() {
+            super();
+            this.showOnEventType(EventType[EventType.OPEN_MAIN_MENU]);
+            this.addItem(" Resume game ", EventType[EventType.RESUME_GAME]);
+            this.addItem("   New game  ", EventType[EventType.NEW_GAME]);
         }
     }
 }
