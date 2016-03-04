@@ -28,6 +28,7 @@ module Game {
             this.items = [];
             this.boundingBox.w = this._title ? this._title.length + 2 : 0;
             this.boundingBox.h = 2;
+            this.boundingBox.y = Math.floor(Constants.CONSOLE_HEIGHT / 2 - 1);
         }
 
         private addItemInternal(label: string) {
@@ -229,46 +230,19 @@ module Game {
 
         constructor(width: number, height: number) {
             super();
-            this.title = "=== inventory - ESC to close ===";
             this.showOnEventType(EventType[EventType.OPEN_INVENTORY], function(data: OpenInventoryEventData) {
                 this.itemListener = data.itemListener;
                 this.title = "=== " + data.title + " - ESC to close ===";
+                var player: Actor = Engine.instance.actorManager.getPlayer();
+                this.buildStackedInventory(player.container);
             }.bind(this));
-        }
-
-        checkKeyboardInput() {
-            if (Umbra.Input.wasButtonPressed(PlayerAction[PlayerAction.CANCEL])) {
-                this.hide();
-                Umbra.Input.resetInput();
-            } else {
-                for (var keyCode: number = Umbra.KeyCode.DOM_VK_A; keyCode <= Umbra.KeyCode.DOM_VK_Z; ++keyCode) {
-                    if (Umbra.Input.wasKeyPressed(keyCode)) {
-                        var item: Actor = this.getByShortcut(keyCode - Umbra.KeyCode.DOM_VK_A);
-                        if (item) {
-                            this.selectItem(item);
-                            break;
-                        }
-                    }
-                }
-            }
         }
 
         private selectItemByIndex(index: number) {
             if (index >= 0 && index < this.inventory.length) {
                 var item: Actor = this.inventory[index][0];
-                this.selectItem(item);
+                this.itemListener(item);
             }
-        }
-
-        private selectItem(item: Actor) {
-            this.hide();
-            this.itemListener(item);
-        }
-
-        show() {
-            super.show();
-            var player: Actor = Engine.instance.actorManager.getPlayer();
-            this.buildStackedInventory(player.container);
         }
 
         onRender(destination: Yendor.Console) {
@@ -286,14 +260,16 @@ module Game {
         }
 
         onUpdate(time: number) {
-            this.checkKeyboardInput();
-            if (this.selectedItem !== undefined && Umbra.Input.wasMouseButtonReleased(Umbra.MouseButton.LEFT)) {
+            if (Umbra.Input.wasButtonPressed(PlayerAction[PlayerAction.CANCEL])) {
+                this.hide();
+                Umbra.Input.resetInput();
+            } else if (this.selectedItem !== undefined && Umbra.Input.wasMouseButtonReleased(Umbra.MouseButton.LEFT)) {
                 this.selectItemByIndex(this.selectedItem);
                 Umbra.Input.resetInput();
             }
         }
 
-        private getItemLabel(item: Actor, count: number = 1) {
+        private computeItemLabel(item: Actor, count: number = 1) {
             var itemDescription = "(" + String.fromCharCode(item.pickable.shortcut + "a".charCodeAt(0)) + ") " + item.ch + " ";
             if (count > 1) {
                 itemDescription += count + " ";
@@ -313,14 +289,14 @@ module Game {
             con.fore[this.boundingBox.x + 5][y] = item.col;
         }
 
-        private getByShortcut(shortcut: number): Actor {
-            for (var i: number = 0; i < this.inventory.length; i++) {
-                var list: Actor[] = this.inventory[i];
-                if (list[0].pickable.shortcut === shortcut) {
-                    return list[0];
+        private isShortcutAvailable(shortcut: number): boolean {
+            for (var i: number = 0, len: number = this.inventory.length; i < len; ++i) {
+                var itemStack: Actor[] = this.inventory[i];
+                if (itemStack[0].pickable.shortcut === shortcut) {
+                    return false;
                 }
             }
-            return undefined;
+            return true;
         }
 
         /*
@@ -333,7 +309,7 @@ module Game {
             var shortcut: number = 0;
             var available: boolean = true;
             do {
-                available = (this.getByShortcut(shortcut) === undefined);
+                available = this.isShortcutAvailable(shortcut);
                 if (!available) {
                     shortcut++;
                 }
@@ -341,22 +317,23 @@ module Game {
             return shortcut;
         }
 
+        private addItemToStack(item: Actor): boolean {
+            for (var j: number = 0, invlen: number = this.inventory.length; j < invlen; ++j) {
+                if (this.inventory[j][0].name === item.name) {
+                    item.pickable.shortcut = this.inventory[j][0].pickable.shortcut;
+                    this.inventory[j].push(item);
+                    return true;
+                }
+            }
+            return false;
+        }
+
         private buildStackedInventory(container: Container) {
             var player: Actor = Engine.instance.actorManager.getPlayer();
             this.inventory = [];
-            for (var i: number = 0; i < player.container.size(); ++i) {
+            for (var i: number = 0, len: number = player.container.size(); i < len; ++i) {
                 var item: Actor = player.container.get(i);
-                var found: boolean = false;
-                if (item.isStackable()) {
-                    for (var j: number = 0; j < this.inventory.length; ++j) {
-                        if (this.inventory[j][0].isStackable() && this.inventory[j][0].name === item.name) {
-                            item.pickable.shortcut = this.inventory[j][0].pickable.shortcut;
-                            this.inventory[j].push(item);
-                            found = true;
-                            break;
-                        }
-                    }
-                }
+                var found: boolean = item.isStackable() && this.addItemToStack(item);
                 if (!found) {
                     var itemTab: Actor[] = [];
                     itemTab.push(item);
@@ -371,23 +348,23 @@ module Game {
         private createButtons() {
             this.clearItems();
             for (var i: number = 0, len: number = this.inventory.length; i < len; ++i) {
-                var list: Actor[] = this.inventory[i];
-                var item: Actor = list[0];
+                var itemStack: Actor[] = this.inventory[i];
+                var item: Actor = itemStack[0];
                 this.addItem({
-                    label: this.getItemLabel(item, list.length),
+                    label: this.computeItemLabel(item, itemStack.length),
                     autoHide: true,
                     callback: this.itemListener.bind(this),
                     eventData: item,
-                    asciiShortcut: item.pickable.shortcut
+                    asciiShortcut: "a".charCodeAt(0) + item.pickable.shortcut
                 });
             }
         }
 
         private defineShortcuts() {
             for (var i: number = 0; i < this.inventory.length; i++) {
-                var list: Actor[] = this.inventory[i];
-                if (list[0].pickable.shortcut === undefined) {
-                    list[0].pickable.shortcut = this.getFreeShortcut();
+                var itemStack: Actor[] = this.inventory[i];
+                if (itemStack[0].pickable.shortcut === undefined) {
+                    itemStack[0].pickable.shortcut = this.getFreeShortcut();
                 }
             }
         }
@@ -429,9 +406,6 @@ module Game {
         }
 
         onRender(console: Yendor.Console) {
-            this.handleMouseMove();
-            this.handleMouseClick();
-            this.checkKeyboardInput();
             if (console.contains(this.tilePos)) {
                 console.text[this.tilePos.x][this.tilePos.y] = this.tileIsValid ? "+".charCodeAt(0) : "x".charCodeAt(0);
                 console.fore[this.tilePos.x][this.tilePos.y] = this.tileIsValid ? Constants.TILEPICKER_OK_COLOR : Constants.TILEPICKER_KO_COLOR;
@@ -456,24 +430,32 @@ module Game {
         }
 
         onUpdate(time: number): void {
-            if (getLastPlayerAction() === PlayerAction.CANCEL) {
-                this.hide();
-                Umbra.Input.resetInput();
-            }
+            this.handleMouseMove();
+            this.handleMouseClick();
+            this.checkKeyboardInput();
         }
 
         checkKeyboardInput() {
+            if (getLastPlayerAction() === PlayerAction.CANCEL) {
+                this.hide();
+                Umbra.Input.resetInput();
+                return;
+            }
             var action: PlayerAction = getLastPlayerAction();
             var move: Core.Position = convertActionToPosition(action);
             if (move.y === -1 && this.tilePos.y > 0) {
                 this.tilePos.y--;
+                Umbra.Input.resetInput();
             } else if (move.y === 1 && this.tilePos.y < Engine.instance.map.height - 1) {
                 this.tilePos.y++;
+                Umbra.Input.resetInput();
             }
             if (move.x === -1 && this.tilePos.x > 0) {
                 this.tilePos.x--;
+                Umbra.Input.resetInput();
             } else if (move.x === 1 && this.tilePos.x < Engine.instance.map.width - 1) {
                 this.tilePos.x++;
+                Umbra.Input.resetInput();
             }
             switch (action) {
                 case PlayerAction.CANCEL:

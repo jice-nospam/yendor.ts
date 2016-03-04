@@ -55,13 +55,14 @@ module Gizmo {
         con.clearText(32, x, y, w, h);
         con.print(x, y, options.label, active ? getConfiguration().color.foregroundActive : getConfiguration().color.foreground);
         if (pressed || (options.asciiShortcut && Umbra.Input.wasCharPressed(options.asciiShortcut))) {
+            Umbra.Input.resetInput();
             if ( options.eventType ) {
                 Umbra.EventManager.publishEvent(options.eventType, options ? options.eventData : undefined);
             }
             if ( options.callback ) {
                 options.callback(options.eventData);
             }
-            if (options && options.autoHide) {
+            if (options.autoHide) {
                 widget.hide();
             }
         }
