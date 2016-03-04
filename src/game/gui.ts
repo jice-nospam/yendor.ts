@@ -4,6 +4,58 @@
 module Game {
     "use strict";
 
+
+	/********************************************************************************
+	 * Group: menu
+	 ********************************************************************************/
+    export abstract class PopupMenu extends Gizmo.Widget implements Umbra.EventListener {
+        private items: Gizmo.ButtonOption[] = [];
+        private _title: string;
+        constructor() {
+            super();
+            this.hide();
+            this.setModal();
+            this.boundingBox = new Core.Rect(0, Math.floor(Constants.CONSOLE_HEIGHT / 2 - 1), 0, 2);
+        }
+
+        protected set title(value: string) {
+            this._title = value;
+            this.boundingBox.w = Math.max(value.length + 2, this.boundingBox.w);
+            this.boundingBox.x = Math.floor(Constants.CONSOLE_WIDTH / 2 - this.boundingBox.w / 2);
+        }
+
+        protected clearItems() {
+            this.items = [];
+            this.boundingBox.w = this._title ? this._title.length + 2 : 0;
+            this.boundingBox.h = 2;
+        }
+
+        private addItemInternal(label: string) {
+            this.boundingBox.h++;
+            this.boundingBox.w = Math.max(label.length + 2, this.boundingBox.w);
+            this.boundingBox.x = Math.floor(Constants.CONSOLE_WIDTH / 2 - this.boundingBox.w / 2);
+            this.boundingBox.y = Math.floor(Constants.CONSOLE_HEIGHT / 2 - this.boundingBox.h / 2);
+        }
+
+        protected addItem(item: Gizmo.ButtonOption) {
+            this.addItemInternal(item.label);
+            this.items.push(item);
+        }
+
+        onRender(con: Yendor.Console): void {
+            Gizmo.frame(con, this.boundingBox.x, this.boundingBox.y, this.boundingBox.w, this.boundingBox.h, this._title);
+            for (var i: number = 0, len: number = this.items.length; i < len; ++i) {
+                Gizmo.button(this, con, this.boundingBox.x + 1, this.boundingBox.y + 1 + i, this.items[i]);
+            }
+        }
+        onUpdate(time: number): void {
+            if (getLastPlayerAction() === PlayerAction.CANCEL) {
+                this.hide();
+                Umbra.Input.resetInput();
+            }
+        }
+    }
+    
 	/********************************************************************************
 	 * Group: status panel
 	 ********************************************************************************/
@@ -53,19 +105,19 @@ module Game {
                 this.messages.push(new Message(msg.color, lines[j]));
             }
         }
-        
+
         onNewGame() {
             this.clear();
         }
-        
+
         onLoadGame() {
-            Engine.instance.persister.loadFromKey(Constants.PERSISTENCE_STATUS_PANEL, this);            
+            Engine.instance.persister.loadFromKey(Constants.PERSISTENCE_STATUS_PANEL, this);
         }
-        
+
         onSaveGame() {
-            Engine.instance.persister.saveToKey(Constants.PERSISTENCE_STATUS_PANEL, this);            
+            Engine.instance.persister.saveToKey(Constants.PERSISTENCE_STATUS_PANEL, this);
         }
-        
+
         onDeleteSavegame() {
             Engine.instance.persister.deleteKey(Constants.PERSISTENCE_STATUS_PANEL);
         }
@@ -166,11 +218,9 @@ module Game {
         itemListener: ItemListener;
     }
 
-    export class InventoryPanel extends Gizmo.ConsoleWidget implements Umbra.EventListener {
-        private title: string = "=== inventory - ESC to close ===";
+    export class InventoryPanel extends PopupMenu implements Umbra.EventListener {
         private selectedItem: number;
         private itemListener: ItemListener;
-        enableEvents: boolean = true;
 		/*
 			Property: inventory
 			Stacked list of items
@@ -178,9 +228,8 @@ module Game {
         private inventory: Actor[][];
 
         constructor(width: number, height: number) {
-            super(width, height);
-            this.setModal();
-            this.hide();
+            super();
+            this.title = "=== inventory - ESC to close ===";
             this.showOnEventType(EventType[EventType.OPEN_INVENTORY], function(data: OpenInventoryEventData) {
                 this.itemListener = data.itemListener;
                 this.title = "=== " + data.title + " - ESC to close ===";
@@ -204,12 +253,6 @@ module Game {
             }
         }
 
-        handleMouseMove() {
-            if (Umbra.Input.wasMouseMoved()) {
-                this.selectItemAtPos(Umbra.Input.getMouseCellPosition());
-            }
-        }
-
         private selectItemByIndex(index: number) {
             if (index >= 0 && index < this.inventory.length) {
                 var item: Actor = this.inventory[index][0];
@@ -228,58 +271,46 @@ module Game {
             this.buildStackedInventory(player.container);
         }
 
-        hide() {
-            super.hide();
-        }
-
-        private selectItemAtPos(pos: Core.Position) {
-            this.selectedItem = pos.y - (this.boundingBox.y + 1);
-        }
-
         onRender(destination: Yendor.Console) {
-            this.console.clearBack(Constants.INVENTORY_BACKGROUND);
-            this.console.clearText();
-            this.boundingBox.x = Math.floor(destination.width / 2 - this.boundingBox.w / 2);
-            this.boundingBox.y = Math.floor(destination.height / 2 - this.boundingBox.h / 2);
-            var y: number = 1;
-            this.console.print(Math.floor(this.boundingBox.w / 2 - this.title.length / 2), 0, this.title);
+            super.onRender(destination);
             var player: Actor = Engine.instance.actorManager.getPlayer();
-            this.handleMouseMove();
-            for (var i: number = 0; i < this.inventory.length; i++) {
-                var list: Actor[] = this.inventory[i];
-                this.renderItem(list[0], i, y, list.length);
-                y++;
-            }
             var capacity: string = "capacity " + (Math.floor(10 * player.container.computeTotalWeight()) / 10)
                 + "/" + player.container.capacity;
-            this.console.print(Math.floor(this.boundingBox.w / 2 - capacity.length / 2), this.boundingBox.h - 1, capacity);
-            super.onRender(destination);
+            destination.print(this.boundingBox.x + Math.floor((this.boundingBox.w - capacity.length) / 2), this.boundingBox.y + this.boundingBox.h - 1, capacity);
+
+            for (var i: number = 0, len: number = this.inventory.length; i < len; ++i) {
+                var list: Actor[] = this.inventory[i];
+                var item: Actor = list[0];
+                this.renderItemColors(destination, item, i, this.boundingBox.y + 1 + i);
+            }
         }
-        
+
         onUpdate(time: number) {
             this.checkKeyboardInput();
             if (this.selectedItem !== undefined && Umbra.Input.wasMouseButtonReleased(Umbra.MouseButton.LEFT)) {
                 this.selectItemByIndex(this.selectedItem);
                 Umbra.Input.resetInput();
-            }            
+            }
         }
 
-        private renderItem(item: Actor, entryNum: number, y: number, count: number = 1) {
+        private getItemLabel(item: Actor, count: number = 1) {
             var itemDescription = "(" + String.fromCharCode(item.pickable.shortcut + "a".charCodeAt(0)) + ") " + item.ch + " ";
             if (count > 1) {
                 itemDescription += count + " ";
             }
             itemDescription += item.getDescription();
+            return itemDescription;
+        }
 
-            this.console.print(2, y, itemDescription, Constants.INVENTORY_FOREGROUND);
+        private renderItemColors(con: Yendor.Console, item: Actor, entryNum: number, y: number) {
             if (entryNum === this.selectedItem) {
-                this.console.clearBack(Constants.INVENTORY_BACKGROUND_ACTIVE, 0, y, -1, 1);
-                this.console.clearFore(Constants.INVENTORY_FOREGROUND_ACTIVE, 0, y, -1, 1);
+                con.clearBack(Constants.INVENTORY_BACKGROUND_ACTIVE, this.boundingBox.x, y, -1, 1);
+                con.clearFore(Constants.INVENTORY_FOREGROUND_ACTIVE, this.boundingBox.x, y, -1, 1);
             }
             if (item.equipment && item.equipment.isEquipped()) {
-                this.console.clearBack(Constants.INVENTORY_BACKGROUND_EQUIPPED, 5, y, 3, 1);
+                con.clearBack(Constants.INVENTORY_BACKGROUND_EQUIPPED, this.boundingBox.x + 1, y, 3, 1);
             }
-            this.console.fore[6][y] = item.col;
+            con.fore[this.boundingBox.x + 5][y] = item.col;
         }
 
         private getByShortcut(shortcut: number): Actor {
@@ -334,6 +365,22 @@ module Game {
             }
             this.inventory.sort(function(a: Actor[], b: Actor[]) { return a[0].name.localeCompare(b[0].name); });
             this.defineShortcuts();
+            this.createButtons();
+        }
+
+        private createButtons() {
+            this.clearItems();
+            for (var i: number = 0, len: number = this.inventory.length; i < len; ++i) {
+                var list: Actor[] = this.inventory[i];
+                var item: Actor = list[0];
+                this.addItem({
+                    label: this.getItemLabel(item, list.length),
+                    autoHide: true,
+                    callback: this.itemListener.bind(this),
+                    eventData: item,
+                    asciiShortcut: item.pickable.shortcut
+                });
+            }
         }
 
         private defineShortcuts() {
@@ -481,48 +528,14 @@ module Game {
     }
 
 	/********************************************************************************
-	 * Group: menu
+	 * Group: main menu
 	 ********************************************************************************/
-    interface MenuItem {
-        label: string,
-        eventType: string
-    }
-    export abstract class PopupMenu extends Gizmo.Widget implements Umbra.EventListener {
-        private items: MenuItem[] = [];
-        constructor() {
-            super();
-            this.hide();
-            this.setModal();
-            this.boundingBox = new Core.Rect(0, 0, 0, 2);
-        }
-
-        protected addItem(label: string, eventType: string) {
-            this.boundingBox.h++;
-            this.boundingBox.w = Math.max(label.length + 2, this.boundingBox.w);
-            this.boundingBox.x = Math.floor(Constants.CONSOLE_WIDTH / 2 - this.boundingBox.w / 2);
-            this.boundingBox.y = Math.floor(Constants.CONSOLE_HEIGHT / 2 - this.boundingBox.h / 2);
-            this.items.push({ label: label, eventType: eventType });
-        }
-        onRender(con: Yendor.Console): void {
-            Gizmo.frame(con, this.boundingBox.x, this.boundingBox.y, 13, 4);
-            for (var i: number = 0, len: number = this.items.length; i < len; ++i) {
-                Gizmo.button(this, con, this.boundingBox.x, this.boundingBox.y + 1 + i, this.items[i].eventType, this.items[i].label, { autoHide: true });
-            }
-        }
-        onUpdate(time: number): void {
-            if (getLastPlayerAction() === PlayerAction.CANCEL) {
-                this.hide();
-                Umbra.Input.resetInput();
-            }
-        }
-    }
-
     export class MainMenu extends PopupMenu {
         constructor() {
             super();
             this.showOnEventType(EventType[EventType.OPEN_MAIN_MENU]);
-            this.addItem(" Resume game ", EventType[EventType.RESUME_GAME]);
-            this.addItem("   New game  ", EventType[EventType.NEW_GAME]);
+            this.addItem({ label: " Resume game ", eventType: EventType[EventType.RESUME_GAME], autoHide: true });
+            this.addItem({ label: "   New game  ", eventType: EventType[EventType.NEW_GAME], autoHide: true });
         }
     }
 }

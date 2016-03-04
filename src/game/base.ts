@@ -22,6 +22,7 @@ module Game {
         export const MENU_FOREGROUND: Core.Color = 0xFD971F;
         export const MENU_FOREGROUND_ACTIVE: Core.Color = 0xFFDF90;
         export const MENU_FOREGROUND_DISABLED: Core.Color = 0x5C714B;
+        export const TITLE_FOREGROUND: Core.Color = 0xFFFFFF;
         export const HEALTH_BAR_BACKGROUND: Core.Color = 0xFF3F3F;
         export const HEALTH_BAR_FOREGROUND: Core.Color = 0x7F3F3F;
         export const XP_BAR_BACKGROUND: Core.Color = 0x9F3FFF;

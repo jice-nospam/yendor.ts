@@ -2,6 +2,7 @@
 /// <reference path="tsUnit.ts" />
 /// <reference path="../yendor/yendor.ts" />
 /// <reference path="../umbra/umbra.ts" />
+/// <reference path="../gizmo/gizmo.ts" />
 /// <reference path="../game/custom_events.ts" />
 /// <reference path="../game/base.ts" />
 /// <reference path="../game/persistence.ts" />

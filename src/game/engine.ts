@@ -99,8 +99,9 @@ module Game {
                       backgroundActive: Constants.MENU_BACKGROUND_ACTIVE,
                       backgroundDisabled: Constants.MENU_BACKGROUND,
                       foreground: Constants.MENU_FOREGROUND,
-                      foregroundActive: Constants.MENU_FOREGROUND,
-                      foregroundDisabled: Constants.MENU_FOREGROUND
+                      foregroundActive: Constants.MENU_FOREGROUND_ACTIVE,
+                      foregroundDisabled: Constants.MENU_FOREGROUND_DISABLED,
+                      titleForeground: Constants.TITLE_FOREGROUND
                   }
               }  
             );

@@ -50,7 +50,8 @@ module Gizmo {
             backgroundDisabled: Core.Color,
             foreground: Core.Color,
             foregroundActive: Core.Color,
-            foregroundDisabled: Core.Color,            
+            foregroundDisabled: Core.Color,
+            titleForeground: Core.Color,            
         }
     }
     
