@@ -37,7 +37,11 @@ module Umbra {
         }
 
         resize(w: number, h: number) {
-            this.boundingBox.resize(w, h);
+            if ( this.boundingBox ) {
+                this.boundingBox.resize(w, h);
+            } else {
+                this.boundingBox = new Core.Rect(0, 0, w, h);
+            }
         }
 
         getZOrder(): number {
@@ -94,6 +98,18 @@ module Umbra {
         }
 
 		/*
+			Function: initHierarchy
+			Init this node, then this node children in ascending zOrder.
+		*/
+        initHierarchy(): void {
+            this.onInit();
+            for (var i: number = 0, len: number = this.children.length; i < len; ++i) {
+                var node: Node = <Node>this.children[i];
+                node.initHierarchy();
+            }
+        }
+
+		/*
 			Function: renderHierarchy
 			Render this node, then this node children in ascending zOrder.
 
@@ -128,6 +144,18 @@ module Umbra {
         }
 
 		/*
+			Function: termHierarchy
+			Terminate this node children in descending zOrder, then this node.
+		*/
+        termHierarchy(): void {
+            for (var i: number = this.children.length-1; i >= 0; --i) {
+                var node: Node = <Node>this.children[i];
+                node.termHierarchy();
+            }
+            this.onTerm();
+        }
+        
+		/*
 			Function: addChild
 			Add a child keeping children sorted in zOrder.
 
@@ -139,8 +167,14 @@ module Umbra {
 		*/
         addChild(node: Node): number {
             var i: number = 0, len: number = this.children.length;
-            while (i < len && (<Node>this.children[i]).zOrder < node.zOrder) {
-                ++i;
+            if ( node.zOrder !== undefined ) {
+                while (i < len && ((<Node>this.children[i]).zOrder === undefined || (<Node>this.children[i]).zOrder < node.zOrder)) {
+                    ++i;
+                }
+            } else {
+                while (i < len && (<Node>this.children[i]).zOrder === undefined ) {
+                    ++i;
+                }
             }
             if (i === len) {
                 this.children.push(node);

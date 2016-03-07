@@ -13,7 +13,7 @@ module Tests {
 			engine.onInit();
 			this.actors = [];
 			// build a table containing an item of each type
-			for ( var i: number = 0; i < Game.ActorType.LAST_ACTOR_TYPE; ++i) {
+			for ( var i: number = 0; i < Game.ActorType.ACTOR_TYPE_COUNT; ++i) {
 				if (i !== Game.ActorType.PLAYER) {
 					this.actors.push(Game.ActorFactory.create(i));
 				}

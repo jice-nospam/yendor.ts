@@ -597,10 +597,10 @@ module Game {
         get projectile() { return this.projectileId ? Engine.instance.actorManager.getActor(this.projectileId) : undefined; }
         get range() { return this._range; }
 
-        constructor(_damageCoef: number, projectileTypeName: string, loadTime: number, range: number) {
+        constructor(_damageCoef: number, projectileTypeName: ActorClass, loadTime: number, range: number) {
             this.className = "Ranged";
             this._damageCoef = _damageCoef;
-            this._projectileType = ActorClass.buildClassHierarchy("weapon|projectile|" + projectileTypeName);
+            this._projectileType = projectileTypeName;
             this._loadTime = loadTime;
             this._range = range;
         }
@@ -610,7 +610,7 @@ module Game {
             if (!projectile) {
                 // no projectile found. cannot fire
                 if (wearer === Engine.instance.actorManager.getPlayer()) {
-                    log("No " + this._projectileType.name + " available.", 0xFF0000);
+                    log("No " + this._projectileType + " available.", Constants.LOG_WARN_COLOR);
                     return;
                 }
             }

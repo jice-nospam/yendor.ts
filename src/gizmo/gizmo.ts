@@ -23,6 +23,7 @@ module Gizmo {
     */
     export interface Configuration {
         input: {
+            // TODO : these are not handled yet
             /*
                 Field: focusNextWidgetAxisName
                 Button to switch focus to the next widget (like TAB in a web form)

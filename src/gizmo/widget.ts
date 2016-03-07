@@ -18,6 +18,11 @@ module Gizmo {
         private static focus: Widget;
         private modal: boolean = false;
 
+        constructor() {
+            super();
+            this.setZOrder(1);
+        }
+
         static getActiveModal(): Widget { return Widget.activeModal; }
         isModal() { return this.modal; }
         protected setModal() { this.modal = true; }

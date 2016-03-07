@@ -14,17 +14,17 @@ module Game {
         OPEN_INVENTORY,
         // open the main menu. No associated data
         OPEN_MAIN_MENU,
-        // resume current game
+        // resume current game. No associated data
         RESUME_GAME,
         // starts a new game. No associated data
         NEW_GAME,
         // player gains xp. Associated data : number (xp amount)
         GAIN_XP,
-        // game is loading
+        // game is loading. No associated data
         LOAD_GAME,
-        // game is saving
+        // game is saving. No associated data
         SAVE_GAME,
-        // must delete saved game
+        // must delete saved game. No associated data
         DELETE_SAVEGAME,
     }
 }

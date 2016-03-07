@@ -218,16 +218,6 @@ module Game {
         }
 
         computeNextAction() {
-            /*
-            TODO remove
-            for (var action in PlayerAction) {
-                if (isNaN(parseInt(action))) {
-                    if (Umbra.Input.wasButtonPressed(action)) {
-                        this.__nextAction = PlayerAction[<string>action];
-                    }
-                }
-            }
-            */
             this.__nextAction = getLastPlayerAction();
         }
 
@@ -719,7 +709,7 @@ module Game {
         get xpLevel() { return this._xpLevel; }
 
         init(_x: number, _y: number, _ch: string, _name: string, _col: Core.Color) {
-            super.init(_x, _y, _ch, _name, "creature|human", _col);
+            super.init(_x, _y, _ch, _name, _col, ["creature","human"]);
             this.ai = new PlayerAi(Constants.PLAYER_WALK_TIME);
             // default unarmed damages : 3 hit points
             this.attacker = new Attacker(3);

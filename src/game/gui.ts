@@ -20,13 +20,13 @@ module Game {
 
         protected set title(value: string) {
             this._title = value;
-            this.boundingBox.w = Math.max(value.length + 2, this.boundingBox.w);
+            this.boundingBox.w = Math.max(value.length + 4, this.boundingBox.w);
             this.boundingBox.x = Math.floor(Constants.CONSOLE_WIDTH / 2 - this.boundingBox.w / 2);
         }
 
         protected clearItems() {
             this.items = [];
-            this.boundingBox.w = this._title ? this._title.length + 2 : 0;
+            this.boundingBox.w = this._title ? this._title.length + 4 : 0;
             this.boundingBox.h = 2;
             this.boundingBox.y = Math.floor(Constants.CONSOLE_HEIGHT / 2 - 1);
         }
@@ -46,7 +46,7 @@ module Game {
         onRender(con: Yendor.Console): void {
             Gizmo.frame(con, this.boundingBox.x, this.boundingBox.y, this.boundingBox.w, this.boundingBox.h, this._title);
             for (var i: number = 0, len: number = this.items.length; i < len; ++i) {
-                Gizmo.button(this, con, this.boundingBox.x + 1, this.boundingBox.y + 1 + i, this.items[i]);
+                Gizmo.button(con, this.boundingBox.x + 1, this.boundingBox.y + 1 + i, this.items[i]);
             }
         }
         onUpdate(time: number): void {
@@ -85,6 +85,7 @@ module Game {
         private mouseLookText: string = "";
         constructor(width: number, height: number) {
             super(width, height);
+            this.moveTo(0, Constants.CONSOLE_HEIGHT - height);
             this.className = "StatusPanel";
             this.messageHeight = height - 1;
             Umbra.EventManager.registerEventListener(this, EventType[EventType.LOG_MESSAGE]);
@@ -230,9 +231,10 @@ module Game {
 
         constructor(width: number, height: number) {
             super();
+            this.moveTo(Math.floor((Constants.CONSOLE_WIDTH - width) / 2), 0);
             this.showOnEventType(EventType[EventType.OPEN_INVENTORY], function(data: OpenInventoryEventData) {
                 this.itemListener = data.itemListener;
-                this.title = "=== " + data.title + " - ESC to close ===";
+                this.title = data.title + " - ESC to close";
                 var player: Actor = Engine.instance.actorManager.getPlayer();
                 this.buildStackedInventory(player.container);
             }.bind(this));
@@ -352,7 +354,7 @@ module Game {
                 var item: Actor = itemStack[0];
                 this.addItem({
                     label: this.computeItemLabel(item, itemStack.length),
-                    autoHide: true,
+                    autoHideWidget: this,
                     callback: this.itemListener.bind(this),
                     eventData: item,
                     asciiShortcut: "a".charCodeAt(0) + item.pickable.shortcut
@@ -516,8 +518,8 @@ module Game {
         constructor() {
             super();
             this.showOnEventType(EventType[EventType.OPEN_MAIN_MENU]);
-            this.addItem({ label: " Resume game ", eventType: EventType[EventType.RESUME_GAME], autoHide: true });
-            this.addItem({ label: "   New game  ", eventType: EventType[EventType.NEW_GAME], autoHide: true });
+            this.addItem({ label: " Resume game ", eventType: EventType[EventType.RESUME_GAME], autoHideWidget: this });
+            this.addItem({ label: "   New game  ", eventType: EventType[EventType.NEW_GAME], autoHideWidget: this });
         }
     }
 }

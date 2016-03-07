@@ -19,10 +19,10 @@ module Umbra {
 		*/
         export function runScene(scene: Scene): void {
             if (this.currentScene) {
-                this.currentScene.onTerm();
+                this.currentScene.termHierarchy();
             }
             this.currentScene = scene;
-            scene.onInit();
+            scene.initHierarchy();
         }
 
 		/*

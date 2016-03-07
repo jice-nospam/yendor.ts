@@ -7,7 +7,7 @@ module Game {
 		to keep the game from trying to load data with an old format.
 		This should be an integer.
 	*/
-    const SAVEFILE_VERSION: string = "12";
+    const SAVEFILE_VERSION: string = "14";
 
     export abstract class DungeonScene extends Umbra.Scene {
         protected _map: Map;
@@ -24,27 +24,11 @@ module Game {
             this._rng = new Yendor.ComplementaryMultiplyWithCarryRandom();
             this._actorManager = new ActorManager();
             this._map = new Map();
-        }
-
-    }
-
-	/*
-		Class: Engine
-		Handles frame rendering and world updating.
-	*/
-    export class Engine extends DungeonScene implements Umbra.EventListener {
-        static instance: Engine;
-
-        enableEvents: boolean = true;
-
-        private status: GameStatus;
-        public persister: Persister = new LocalStoragePersister();
-        private dungeonLevel: number = 1;
-        private gameTime: number = 0;
-
-        onInit(): void {
-            super.onInit();
-            Engine.instance = this;
+            // adding nodes as children ensure they are updated/rendered by Umbra
+            this.addChild(this._map);
+            this.addChild(this._actorManager);
+            this.createGui();
+            
             // Umbra player input configuration
             Umbra.Input.registerAxes([
                 // cardinal movements
@@ -87,83 +71,70 @@ module Game {
             ]);
             // Gizmo configuration
             Gizmo.setConfiguration(
-              {
-                  input: {
-                      focusNextWidgetAxisName: PlayerAction[PlayerAction.MOVE_SOUTH],
-                      focusPreviousWidgetAxisName: PlayerAction[PlayerAction.MOVE_NORTH],
-                      cancelAxisName: PlayerAction[PlayerAction.CANCEL],
-                      validateAxisName: PlayerAction[PlayerAction.VALIDATE]
-                  },
-                  color: {
-                      background: Constants.MENU_BACKGROUND,
-                      backgroundActive: Constants.MENU_BACKGROUND_ACTIVE,
-                      backgroundDisabled: Constants.MENU_BACKGROUND,
-                      foreground: Constants.MENU_FOREGROUND,
-                      foregroundActive: Constants.MENU_FOREGROUND_ACTIVE,
-                      foregroundDisabled: Constants.MENU_FOREGROUND_DISABLED,
-                      titleForeground: Constants.TITLE_FOREGROUND
-                  }
-              }  
-            );
-            this.registerEvents();
-            this.createStatusPanel();
+                {
+                    input: {
+                        focusNextWidgetAxisName: PlayerAction[PlayerAction.MOVE_SOUTH],
+                        focusPreviousWidgetAxisName: PlayerAction[PlayerAction.MOVE_NORTH],
+                        cancelAxisName: PlayerAction[PlayerAction.CANCEL],
+                        validateAxisName: PlayerAction[PlayerAction.VALIDATE]
+                    },
+                    color: {
+                        background: Constants.MENU_BACKGROUND,
+                        backgroundActive: Constants.MENU_BACKGROUND_ACTIVE,
+                        backgroundDisabled: Constants.MENU_BACKGROUND,
+                        foreground: Constants.MENU_FOREGROUND,
+                        foregroundActive: Constants.MENU_FOREGROUND_ACTIVE,
+                        foregroundDisabled: Constants.MENU_FOREGROUND_DISABLED,
+                        titleForeground: Constants.TITLE_FOREGROUND
+                    }
+                }
+            );            
+        }
+
+        createGui() {
+            this.addChild(new StatusPanel(Constants.CONSOLE_WIDTH, Constants.STATUS_PANEL_HEIGHT));
+            this.addChild(new InventoryPanel(Constants.INVENTORY_PANEL_WIDTH, Constants.INVENTORY_PANEL_HEIGHT));
+            this.addChild(new MainMenu());
+            this.addChild(new TilePicker());
+        }
+    }
+
+	/*
+		Class: Engine
+		Handles frame rendering and world updating.
+	*/
+    export class Engine extends DungeonScene implements Umbra.EventListener {
+        static instance: Engine;
+
+        enableEvents: boolean = true;
+
+        private status: GameStatus;
+        public persister: Persister = new LocalStoragePersister();
+        private dungeonLevel: number = 1;
+        private gameTime: number = 0;
+
+        onInit(): void {
+            super.onInit();
+            Engine.instance = this;
+
+            Umbra.EventManager.registerEventListener(this, EventType[EventType.CHANGE_STATUS]);
+            Umbra.EventManager.registerEventListener(this, EventType[EventType.NEW_GAME]);
 
             var savedVersion = this.persister.loadFromKey(Constants.PERSISTENCE_VERSION_KEY);
             if (savedVersion && savedVersion.toString() === SAVEFILE_VERSION) {
                 this.loadGame();
             } else {
-                this.createNewGame();
+                this.onNewGame();
             }
-            this.createOtherGui();
-        }
-        
-        createStatusPanel() {
-            var statusPanel = new StatusPanel(Constants.CONSOLE_WIDTH, Constants.STATUS_PANEL_HEIGHT);
-            statusPanel.moveTo(0, Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT);
-            this.addChild(statusPanel);
-        }
-        
-        createOtherGui() {
-            var inventoryPanel = new InventoryPanel(Constants.INVENTORY_PANEL_WIDTH, Constants.INVENTORY_PANEL_HEIGHT);
-            inventoryPanel.moveTo(Math.floor(Constants.CONSOLE_WIDTH / 2 - Constants.INVENTORY_PANEL_WIDTH / 2), 0);
-            this.addChild(inventoryPanel);
-            this.addChild(new MainMenu());
-            this.addChild(new TilePicker());
         }
 
-        private registerEvents() {
-            Umbra.EventManager.registerEventListener(this, EventType[EventType.CHANGE_STATUS]);
-            Umbra.EventManager.registerEventListener(this, EventType[EventType.NEW_GAME]);
-            Umbra.EventManager.registerEventListener(this, EventType[EventType.GAIN_XP]);
-            Umbra.EventManager.registerEventListener(this, Gizmo.EventType[Gizmo.EventType.MODAL_SHOW]);
-            Umbra.EventManager.registerEventListener(this, Gizmo.EventType[Gizmo.EventType.MODAL_HIDE]);
-        }
-        
         onChangeStatus(status: GameStatus) {
             this.status = status;
         }
 
         onNewGame() {
             this.dungeonLevel = 1;
-            this.createNewGame();
-        }
-
-        onGainXp(amount: number) {
-            this._actorManager.getPlayer().addXp(amount);
-        }
-
-        onModalShow(w: Gizmo.Widget) {
-            this.actorManager.pause();
-        }
-
-        onModalHide(w: Gizmo.Widget) {
-            this.actorManager.resume();
-        }        
-
-        private createNewGame() {
-            this._actorManager.clear();
-            this._actorManager.createStairs();
-            this._actorManager.createPlayer();
+            this._actorManager.reset(true);
             this._map.init(Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT);
             var dungeonBuilder: BspDungeonBuilder = new BspDungeonBuilder(this.dungeonLevel);
             dungeonBuilder.build(this._map);
@@ -185,7 +156,6 @@ module Game {
             this.dungeonLevel = this.persister.loadFromKey(Constants.PERSISTENCE_DUNGEON_LEVEL);
             this.persister.loadFromKey(Constants.PERSISTENCE_MAP_KEY, this._map);
             ActorFactory.load(this.persister);
-            this._actorManager.load(this.persister);
             // TODO save/restore topologyMap
             Umbra.EventManager.publishEvent(EventType[EventType.LOAD_GAME]);
             this.status = GameStatus.RUNNING;
@@ -200,7 +170,6 @@ module Game {
                 this.persister.saveToKey(Constants.PERSISTENCE_MAP_KEY, this._map);
                 ActorFactory.save(this.persister);
                 Umbra.EventManager.publishEvent(EventType[EventType.SAVE_GAME]);
-                this._actorManager.save(this.persister);
             }
         }
 
@@ -209,12 +178,7 @@ module Game {
             this.persister.deleteKey(Constants.PERSISTENCE_VERSION_KEY);
             this.persister.deleteKey(Constants.PERSISTENCE_MAP_KEY);
             ActorFactory.deleteSavedGame(this.persister);
-            this._actorManager.deleteSavedGame(this.persister);
             Umbra.EventManager.publishEvent(EventType[EventType.DELETE_SAVEGAME]);
-        }
-
-        private computePlayerFov() {
-            this._map.computeFov(this._actorManager.getPlayer().x, this._actorManager.getPlayer().y, Constants.FOV_RADIUS);
         }
 
 		/*
@@ -223,11 +187,8 @@ module Game {
 		*/
         private gotoNextLevel() {
             this.dungeonLevel++;
-            this._actorManager.clear();
-            this._actorManager.createStairs();
-            // don't reset the player
+            this._actorManager.reset(false);
             var player: Actor = this._actorManager.getPlayer();
-            this._actorManager.addCreature(player);
             player.destructible.heal(player.destructible.maxHp / 2);
             log("You take a moment to rest, and recover your strength.", Constants.LOG_WARN_COLOR);
             log("After a rare moment of peace, you descend deeper\ninto the heart of the dungeon...", Constants.LOG_WARN_COLOR);
@@ -244,16 +205,12 @@ module Game {
 
 		/*
 			Function: handleKeyboardInput
-			Checks if the player pressed a key and resume actors simulation when needed.
+			Handle main menu shortcut
 		*/
         private handleKeyboardInput(): void {
-            if (Gizmo.Widget.getActiveModal()) {
-                return;
-            } else if (getLastPlayerAction() === PlayerAction.CANCEL) {
+            if (Gizmo.Widget.getActiveModal() === undefined && getLastPlayerAction() === PlayerAction.CANCEL) {
                 Umbra.Input.resetInput();
                 Umbra.EventManager.publishEvent(EventType[EventType.OPEN_MAIN_MENU]);
-            } else if (getLastPlayerAction() !== undefined ) {
-                this.actorManager.resume();
             }
         }
         
@@ -270,9 +227,6 @@ module Game {
                 this.gotoNextLevel();
                 this.status = GameStatus.RUNNING;
             }
-            if (!this._actorManager.isPaused()) {
-                this._actorManager.updateActors();
-            }
         }
 
         /*
@@ -285,13 +239,6 @@ module Game {
 		*/
         onRender(con: Yendor.Console): void {
             con.clearText();
-            this.computePlayerFov();
-            this._map.render(con);
-            this._actorManager.renderActors(con);
-        }
-
-        onTerm(): void {
-            // empty
         }
     }
 }

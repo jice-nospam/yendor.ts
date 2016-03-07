@@ -1,3 +1,4 @@
+# GeneRogue - a full featured game shell
 This directory contains the source code of GeneRogue, a generic roguelike loosely based on the famous [python roguelike tutorial](http://www.roguebasin.com/index.php?title=Complete_Roguelike_Tutorial,_using_python%2Blibtcod).
 
 The goal of Generogue is not to provide a real, balanced game, but a shell with all the required features to build a real game. Eventually, you might be able to create a game by adding new items, effects, creatures, A.I. without having to mess with the core mechanisms.
@@ -31,15 +32,16 @@ To compile it, run `jake` then open game/index.html in your browser.
 
 Reminder for stuff that might be added to the game. Or not.
 
-* Game
-    - **Engine**
-    - replace GuiManager by Umbra nodes
+* Engine
     - reduce garbage collector usage
-    - **Gameplay**
+    - clean usage of constructors/onInit
+    
+* Gameplay
+    - doors and keys : consume key when unlocking the door
+    - activate action : being able to select the tile when more than one tile is activable 
     - beast A.I. should move randomly when no scent is detected
     - humanoid A.I. (can use weapons and wear armors)
     - poison potion and weapon / projectile poisoning (need onHitEffector on Attacker)
-    - doors and keys : consume key when unlocking the door
     - armors
     - lighting
     - spells and spellbooks
@@ -48,15 +50,8 @@ Reminder for stuff that might be added to the game. Or not.
     - jewelry (necklace, rings)
     - shield should block only one hit per turn
     - dual wielding (you attack with the fastest weapon first, then with the slowest one. Total waitTime is smaller than the sum of the weapons waitTimes. watch out for special cases like crossbow + sword)
-    - **Eye candy**
+    
+* Eye candy
     - background animation (torch flickering)
     - end of turn animation (flying arrows, explosions, ...)
     - blood stains
-
-
-* Gizmo
-
-* Umbra
-
-* Yendor
-
