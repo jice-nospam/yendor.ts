@@ -16,9 +16,13 @@ gizmo.ts provides user interface widgets for umbra.ts
 * [A* pathfinding](http://en.wikipedia.org/wiki/A*_search_algorithm) toolkit
 * a scheduler to handle the order in which creatures with different speed are updated
 
-## Umbra.ts
+## umbra.ts
 * scene graph management
-* input events management
+* user input management
+* event bus
+
+## gizmo.ts
+* basic widget & button support
 
 # Supported browsers
 
