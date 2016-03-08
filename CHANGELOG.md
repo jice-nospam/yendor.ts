@@ -1,7 +1,8 @@
-# 0.5.0 / TBD
+# 0.5.0 / 08-mar-2016
 * upgraded typescript to 1.8.2, pixi to 3.0.9
 * Added Umbra framework for scene management, user input and events
 * Added Gizmo widget toolkit
+
 * Yendor toolkit
 	- the Fov class does not handle the 'isWalkable' property anymore
 	- added CRC32 hashing function Yendor.crc32(s: string): number 

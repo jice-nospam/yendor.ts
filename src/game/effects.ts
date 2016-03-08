@@ -551,8 +551,9 @@ module Game {
                 }
             }
             if (this.destroyOnEffect && success && wearer && wearer.container) {
-                wearer.container.remove(owner, wearer);
+                wearer.container.remove(owner.id, wearer);
                 // actually remove actor from actorManager
+                Engine.instance.actorManager.destroyActor(owner.id);
             }
         }
     }

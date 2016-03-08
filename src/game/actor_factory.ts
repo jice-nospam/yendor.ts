@@ -211,14 +211,14 @@ module Game {
 			WOODEN_SHIELD: (x: number, y: number) => { return ActorFactory.createShield(x, y, "wooden shield",
 				{ defense: 1, color: Constants.WOOD_COLOR } ); },
 			IRON_SHIELD: (x: number, y: number) => { return ActorFactory.createShield(x, y, "iron shield",
-				{ defense: 2, color: Constants.IRON_COLOR } ); },
+				{ defense: 1.5, color: Constants.IRON_COLOR } ); },
 			// 		ranged
 			SHORT_BOW: (x: number, y: number) => { return ActorFactory.createRanged(x, y, "short bow",
-				{ damages: 3, projectileTypeName: "arrow", loadTime: 4, twoHanded: true, range: 15 } ); },
+				{ damages: 4, projectileTypeName: "arrow", loadTime: 4, twoHanded: true, range: 15 } ); },
 			LONG_BOW: (x: number, y: number) => { return ActorFactory.createRanged(x, y, "long bow",
-				{ damages: 6, projectileTypeName: "arrow", loadTime: 6, twoHanded: true, range: 30 } ); },
+				{ damages: 8, projectileTypeName: "arrow", loadTime: 6, twoHanded: true, range: 30 } ); },
 			CROSSBOW: (x: number, y: number) => { return ActorFactory.createRanged(x, y, "crossbow",
-				{ damages: 4, projectileTypeName: "bolt", loadTime: 5, twoHanded: false, range: 10 } ); },
+				{ damages: 8, projectileTypeName: "bolt", loadTime: 5, twoHanded: false, range: 10 } ); },
 			//      staff
 			FROST_WAND: (x: number, y: number) => { return ActorFactory.createConditionStaff(x, y, "wand of frost",
 				{	maxCharges: 5, fireTargetSelectionMethod: TargetSelectionMethod.SELECTED_ACTOR,
@@ -246,7 +246,7 @@ module Game {
 				{ damages: 1.25, projectileTypeName: "arrow", color: Constants.WOOD_COLOR } ); },
 			// 			bolt
 			BOLT: (x: number, y: number) => { return ActorFactory.createProjectile(x, y, "bolt",
-				{ damages: 1, projectileTypeName: "bolt", color: Constants.IRON_COLOR } ); },
+				{ damages: 0.5, projectileTypeName: "bolt", color: Constants.IRON_COLOR } ); },
 			// miscellaneous (under root class)
 			STAIR_UP: (x: number, y: number) => { return ActorFactory.createStairs(x, y, "<", "up"); },
 			STAIR_DOWN: (x: number, y: number) => { return ActorFactory.createStairs(x, y, ">", "down"); },

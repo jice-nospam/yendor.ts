@@ -23,7 +23,7 @@ To compile it, run `jake` then open game/index.html in your browser.
 * t : throw an item
 * f : fire a projectile using an equipped ranged weapon
 * z : zap an equipped magic wand or staff
-* e : activate an adjacent mechanism (lever, torch, door, ...)
+* e : activate an adjacent mechanism (lever, torch, door, ...). You can also unlock/open a door by bumping on it.
 * \> : go down the stairs
 * < : go up the stairs
 * ESC : open game menu
@@ -37,7 +37,8 @@ Reminder for stuff that might be added to the game. Or not.
     - clean usage of constructors/onInit
     
 * Gameplay
-    - doors and keys : consume key when unlocking the door
+    - equipment durability
+    - being able to break certain doors
     - activate action : being able to select the tile when more than one tile is activable 
     - beast A.I. should move randomly when no scent is detected
     - humanoid A.I. (can use weapons and wear armors)

@@ -182,8 +182,8 @@ module Game {
          Something that must be notified when an item is added or removed from the container
     */
     export interface ContainerListener {
-        onAdd(item: Actor, container: Container, owner: Actor);
-        onRemove(item: Actor, container: Container, owner: Actor);
+        onAdd(itemId: ActorId, container: Container, owner: Actor);
+        onRemove(itemId: ActorId, container: Container, owner: Actor);
     }
     /*
          Class: Container
@@ -293,7 +293,7 @@ module Game {
             this.actorIds.push(actor.id);
             actor.pickable.shortcut = undefined;
             if (this.__listener) {
-                this.__listener.onAdd(actor, this, owner);
+                this.__listener.onAdd(actor.id, this, owner);
             }
             return true;
         }
@@ -303,15 +303,15 @@ module Game {
               remove an actor from this container
 
               Parameters:
-              actor - the actor to remove
+              actorId - the id of the actor to remove
               owner - the actor owning the container
         */
-        remove(actor: Actor, owner: Actor) {
-            var idx: number = this.actorIds.indexOf(actor.id);
+        remove(actorId: ActorId, owner: Actor) {
+            var idx: number = this.actorIds.indexOf(actorId);
             if (idx !== -1) {
                 this.actorIds.splice(idx, 1);
                 if (this.__listener) {
-                    this.__listener.onRemove(actor, this, owner);
+                    this.__listener.onRemove(actorId, this, owner);
                 }
             }
         }
@@ -408,7 +408,7 @@ module Game {
 			pos - coordinate if the position is not the wearer's position
 		*/
         drop(owner: Actor, wearer: Actor, pos?: Core.Position, verb: string = "drop", fromFire: boolean = false) {
-            wearer.container.remove(owner, wearer);
+            wearer.container.remove(owner.id, wearer);
             this._container = undefined;
             owner.x = pos ? pos.x : wearer.x;
             owner.y = pos ? pos.y : wearer.y;
@@ -730,8 +730,12 @@ module Game {
                     if (mechanism && mechanism.door) {
                         if (mechanism.lock && mechanism.lock.isLocked()) {
                             // unlock if the activator has the key
-                            if (activator.container && activator.container.contains(mechanism.lock.keyId)) {
-                                mechanism.lock.unlock(mechanism.lock.keyId);
+                            var keyId = mechanism.lock.keyId;
+                            if (activator.container && activator.container.contains(keyId)) {
+                                mechanism.lock.unlock(keyId);
+                                activator.container.remove(keyId, activator);
+                                // actually remove actor from actorManager
+                                Engine.instance.actorManager.destroyActor(keyId);
                                 log(transformMessage("[The actor1] unlock[s] [the actor2].", activator, mechanism));
                             }
                         }

@@ -177,7 +177,7 @@ module Game {
 			for (var i: number = 0, len: number = player.container.size(); i < len; ++i) {
 				var key: Actor = player.container.get(i);
 				if ( key.isA("key") ) {
-					player.container.remove(key, player);
+					player.container.remove(key.id, player);
 					i--;
 					len--;
 					delete this.actors[key.id];
@@ -420,13 +420,14 @@ module Game {
 		}
 
 		/*
-			Function: findAdjacentLever
-			Return the first adjacent item having the lever feature
+			Function: findAdjacentActor
+			Return the first adjacent actor having a specific feature
 
 			Parameters:
 			pos - a position on the map
+            featureType - an <ActorFeatureType>
 		*/
-		findAdjacentLever( pos: Core.Position ): Actor {
+		findAdjacentActorWithFeature( pos: Core.Position, featureType: ActorFeatureType ): Actor {
 			var adjacentCells: Core.Position[] = pos.getAdjacentCells(Engine.instance.map.width, Engine.instance.map.height);
 			var len: number = adjacentCells.length;
 			// scan all 8 adjacent cells
@@ -434,7 +435,7 @@ module Game {
 				if ( !Engine.instance.map.isWall(adjacentCells[i].x, adjacentCells[i].y)) {
 					var items: Actor[] = this.findActorsOnCell(adjacentCells[i], this.itemIds);
 					for ( var j: number = 0, jlen: number = items.length; j < jlen; ++j) {
-						if ( items[j].lever ) {
+						if ( items[j].hasFeature(featureType) ) {
 							return items[j];
 						}
 					}
@@ -528,7 +529,9 @@ module Game {
 			this.col = col;
 			this._singular = singular;
 			if ( types ) {
-                this.classes.concat(types);
+                for (var type in types) {
+                    this.classes.push(types[type]);
+                }
             }
 		}
 
@@ -565,6 +568,10 @@ module Game {
 		}
 
 		// feature getters & setters
+        hasFeature(featureType: ActorFeatureType): boolean {
+            return this.features[featureType] !== undefined;
+        }
+        
 		get destructible(): Destructible { return <Destructible>this.features[ActorFeatureType.DESTRUCTIBLE]; }
 		set destructible(newValue: Destructible) { this.features[ActorFeatureType.DESTRUCTIBLE] = newValue; }
 

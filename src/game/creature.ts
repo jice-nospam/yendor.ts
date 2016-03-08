@@ -123,7 +123,21 @@ module Game {
             return owner.attacker;
         }
 
-
+        /*
+            Function: tryActivate
+            Activate the first found lever in an adjacent tile
+            
+            Parameters:
+			owner - the actor owning this Ai
+        */
+        protected tryActivate(owner: Actor) {
+            // check if there's an adjacent lever
+            var lever: Actor = Engine.instance.actorManager.findAdjacentActorWithFeature(owner, ActorFeatureType.LEVER);
+            if (lever) {
+                lever.lever.activate(owner);
+                this.waitTime += this.walkTime;
+            }
+        }
 
 		/*
 			Function: moveOrAttack
@@ -169,6 +183,16 @@ module Game {
                     return false;
                 }
             }
+            // check for a closed door
+            actors = Engine.instance.actorManager.findActorsOnCell(cellPos, Engine.instance.actorManager.getItemIds());
+            for (var i: number = 0, len: number = actors.length; i < len; ++i) {
+                var actor: Actor = actors[i];
+                if (actor.door && actor.door.isClosed() && actor.lever) {
+                    actor.lever.activate(owner);
+                    this.waitTime += this.walkTime;
+                    return false;
+                }
+            }
             // check for unpassable items
             if (!Engine.instance.map.canWalk(x, y)) {
                 this.waitTime += this.walkTime;
@@ -181,11 +205,11 @@ module Game {
         }
 
         // listen to inventory events to manage OVERENCUMBERED condition
-        onAdd(actor: Actor, container: Container, owner: Actor) {
+        onAdd(actorId: ActorId, container: Container, owner: Actor) {
             this.checkOverencumberedCondition(container, owner);
         }
 
-        onRemove(actor: Actor, container: Container, owner: Actor) {
+        onRemove(actorId: ActorId, container: Container, owner: Actor) {
             this.checkOverencumberedCondition(container, owner);
         }
 
@@ -369,7 +393,7 @@ module Game {
                     this.zap(owner);
                     break;
                 case PlayerAction.ACTIVATE:
-                    this.activate(owner);
+                    this.tryActivate(owner);
                     break;
             }
         }
@@ -483,15 +507,6 @@ module Game {
                 log("There's nothing to pick here.");
             } else if (!pickedItem) {
                 log("Your inventory is full.");
-            }
-        }
-
-        private activate(owner: Actor) {
-            // check if there's an adjacent lever
-            var lever: Actor = Engine.instance.actorManager.findAdjacentLever(owner);
-            if (lever) {
-                lever.lever.activate(owner);
-                this.waitTime += this.walkTime;
             }
         }
     }
@@ -709,7 +724,7 @@ module Game {
         get xpLevel() { return this._xpLevel; }
 
         init(_x: number, _y: number, _ch: string, _name: string, _col: Core.Color) {
-            super.init(_x, _y, _ch, _name, _col, ["creature","human"]);
+            super.init(_x, _y, _ch, _name, _col, ["creature", "human"]);
             this.ai = new PlayerAi(Constants.PLAYER_WALK_TIME);
             // default unarmed damages : 3 hit points
             this.attacker = new Attacker(3);
