@@ -25,6 +25,11 @@ Format: 1.52
 #   yyyy  - Four digit year.  2006 is "2006"
 #   year  - Four digit year.  2006 is "2006"
 
+# These are indexes you deleted, so Natural Docs will not add them again
+# unless you remove them from this line.
+
+Don't Index: Files, Interfaces, Constants, Types
+
 
 # --------------------------------------------------------------------------
 # 
@@ -47,7 +52,17 @@ Format: 1.52
 
 
 File: actors  (actor.ts)
-File: Engine  (main.ts)
+File: actors  (actor_factory.ts)
+File: base.ts  (base.ts)
+File: creatures  (creature.ts)
+File: effects  (effects.ts)
+File: engine.ts  (engine.ts)
+File: GUI  (gui.ts)
+File: items  (item.ts)
+File: map.ts  (map.ts)
+File: map_build_dungeon.ts  (map_build_dungeon.ts)
+File: map_topology.ts  (map_topology.ts)
+File: Persistence  (persistence.ts)
 
 Group: Index  {
 
