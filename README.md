@@ -32,6 +32,8 @@ gizmo.ts provides user interface widgets for umbra.ts
 
 # Links
 * [yendor.ts documentation](http://roguecentral.org/doryen/yendor.ts/doc/yendor/index.html)
+* [umbra.ts documentation](http://roguecentral.org/doryen/yendor.ts/doc/umbra/index.html)
+* [gizmo.ts documentation](http://roguecentral.org/doryen/yendor.ts/doc/gizmo/index.html)
 * [GeneRogue documentation](http://roguecentral.org/doryen/yendor.ts/doc/game/index.html)
 * [Play GeneRogue online](http://roguecentral.org/doryen/yendor.ts/game/index.html)
 * [Run the benchmark online](http://roguecentral.org/doryen/yendor.ts/bench/index.html)
