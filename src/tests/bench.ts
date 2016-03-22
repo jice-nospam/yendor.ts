@@ -127,6 +127,10 @@ module Benchmark {
             }
             this.waitTime += this.turnLength;
         }
+        getWaitTime(): number { return this.waitTime; }
+        reduceWaitTime(time: number) {
+            this.waitTime -= time;
+        }
     }
 
     class PlayerEntity extends ScheduledEntity {
@@ -211,6 +215,27 @@ module Benchmark {
         }
     }
 
+    class NoiseSample implements Sample {
+        name: string = "Noise";
+        private noise: Yendor.Noise;
+        private offset: number = 0;
+        constructor() {
+            this.noise = new Yendor.SimplexNoise(rng, 4);
+        }
+        render(root: Yendor.Console) {
+            for (var x = SAMPLE_SCREEN_X; x < SAMPLE_SCREEN_X + SAMPLE_SCREEN_WIDTH; ++x) {
+                var h: number = this.noise.get1D((x - SAMPLE_SCREEN_X) / SAMPLE_SCREEN_WIDTH + this.offset);
+                h = (h+1)/2;
+                var col = Core.ColorUtils.add(Core.ColorUtils.multiply(0x000064,h), Core.ColorUtils.multiply(0x826E64, 1-h));
+                for (var y = SAMPLE_SCREEN_Y; y < SAMPLE_SCREEN_Y + SAMPLE_SCREEN_HEIGHT; ++y) {
+                    root.back[x][y] = col;
+                }
+            }
+            this.offset += 0.005;
+        }
+        onKeyDown(event: KeyboardEvent) { }
+    }
+
     function render() {
         samples[currentSampleIndex].render(root);
         for (var i: number = 0, len: number = samples.length; i < len; ++i) {
@@ -247,6 +272,7 @@ module Benchmark {
         samples.push(new AStarSample());
         samples.push(new RealTimeSchedulerSample());
         samples.push(new TurnByTurnSchedulerSample());
+        samples.push(new NoiseSample());
         $(document).keydown(function(event: KeyboardEvent) {
             if (event.keyCode === 40) {
                 // DOWN

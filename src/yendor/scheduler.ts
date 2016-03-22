@@ -17,10 +17,16 @@ module Yendor {
         update();
 
 		/*
-			Property: waitTime
+			Function: getWaitTime
 			Time until the next update() call. This is an arbitrary value.
 		*/
-        waitTime: number;
+        getWaitTime(): number;
+        
+        /*
+            Function: reduceWaitTime
+            Decrease amount of time to wait
+        */
+        reduceWaitTime(time: number);
     }
 	/*
 		Class: Scheduler
@@ -40,7 +46,7 @@ module Yendor {
 
         constructor() {
             this.entities = new BinaryHeap<TimedEntity>((entity: TimedEntity) => {
-                return entity.waitTime;
+                return entity.getWaitTime();
             });
         }
 
@@ -106,16 +112,16 @@ module Yendor {
                 return;
             }
             // decrease all entities' wait time
-            var elapsed = this.entities.peek().waitTime;
+            var elapsed = this.entities.peek().getWaitTime();
             if (elapsed > 0) {
                 for (var i: number = 0, len: number = this.entities.size(); i < len; ++i) {
-                    this.entities.peek(i).waitTime -= elapsed;
+                    this.entities.peek(i).reduceWaitTime(elapsed);
                 }
             }
             // update all entities with wait time <= 0
             var updatedEntities: TimedEntity[] = [];
             var entity: TimedEntity = this.entities.peek();
-            while (!this.paused && entity && entity.waitTime <= 0) {
+            while (!this.paused && entity && entity.getWaitTime() <= 0) {
                 updatedEntities.push(entity);
                 this.entities.pop();
                 entity.update();

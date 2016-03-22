@@ -34,10 +34,10 @@ module Game {
             if (y1 === 0) {
                 y1 = 1;
             }
-            if (x2 === map.width - 1) {
+            if (x2 === map.w - 1) {
                 x2--;
             }
-            if (y2 === map.height - 1) {
+            if (y2 === map.h - 1) {
                 y2--;
             }
             // dig
@@ -178,24 +178,28 @@ module Game {
 
         private createItem(x: number, y: number) {
             var probabilities: { [index: string]: number; } = {};
-            probabilities[ActorType.HEALTH_POTION] = this.getValueForDungeon([[0, 40], [5, 30]]);
-            probabilities[ActorType.REGENERATION_POTION] = this.getValueForDungeon([[5, 5]]);
-            probabilities[ActorType.LIGHTNING_BOLT_SCROLL] = this.getValueForDungeon([[3, 10]]);
-            probabilities[ActorType.FIREBALL_SCROLL] = 10;
-            probabilities[ActorType.CONFUSION_SCROLL] = 10;
+            probabilities[ActorType.HEALTH_POTION] = this.getValueForDungeon([[0, 20], [5, 15]]);
+            probabilities[ActorType.REGENERATION_POTION] = this.getValueForDungeon([[0, 20], [5, 15]]);
+            probabilities[ActorType.SCROLL_OF_LIGHTNING_BOLT] = this.getValueForDungeon([[3, 10]]);
+            probabilities[ActorType.SCROLL_OF_FIREBALL] = 7;
+            probabilities[ActorType.SCROLL_OF_CONFUSION] = 7;
             probabilities[ActorType.BONE_ARROW] = 5;
             probabilities[ActorType.IRON_ARROW] = 5;
             probabilities[ActorType.BOLT] = 5;
-            probabilities[ActorType.SHORT_BOW] = this.getValueForDungeon([[1, 1]]);
+            probabilities[ActorType.SHORT_BOW] = 1;
             probabilities[ActorType.LONG_BOW] = this.getValueForDungeon([[5, 1]]);
-            probabilities[ActorType.CROSSBOW] = this.getValueForDungeon([[3, 1]]);
+            probabilities[ActorType.CROSSBOW] = 1;
             probabilities[ActorType.SHORT_SWORD] = this.getValueForDungeon([[4, 1], [12, 0]]);
-            probabilities[ActorType.FROST_WAND] = this.getValueForDungeon([[4, 1]]);
-            probabilities[ActorType.TELEPORT_STAFF] = this.getValueForDungeon([[7, 1]]);
+            probabilities[ActorType.WAND_OF_FROST] = 1;
+            probabilities[ActorType.STAFF_OF_TELEPORTATION] = 1;
+            probabilities[ActorType.STAFF_OF_LIFE_DETECTION] = 1;
+            probabilities[ActorType.STAFF_OF_MAPPING] = 1;
             probabilities[ActorType.WOODEN_SHIELD] = this.getValueForDungeon([[2, 1], [12, 0]]);
-            probabilities[ActorType.LONG_SWORD] = this.getValueForDungeon([[6, 1]]);
+            probabilities[ActorType.LONGSWORD] = this.getValueForDungeon([[6, 1]]);
             probabilities[ActorType.IRON_SHIELD] = this.getValueForDungeon([[7, 1]]);
-            probabilities[ActorType.GREAT_SWORD] = this.getValueForDungeon([[8, 1]]);
+            probabilities[ActorType.GREATSWORD] = this.getValueForDungeon([[8, 1]]);
+            probabilities[ActorType.CANDLE] = 5;
+            probabilities[ActorType.TORCH] = 3;
             var item: ActorType = <ActorType>this.rng.getRandomChance(probabilities);
             return ActorFactory.create(item, x, y);
         }
@@ -240,6 +244,8 @@ module Game {
             var stairsDown: Actor = Engine.instance.actorManager.getStairsDown();
             this._topologyMap = analyzer.buildTopologyMap(map, stairsDown);
             analyzer.findDungeonExits(player, stairsDown);
+            // move player inventory
+            player.moveTo(player.x, player.y);
             analyzer.buildPuzzle(this._topologyMap.getObjectId(player), this._topologyMap.getObjectId(stairsDown));
             stairsUp.x = player.x;
             stairsUp.y = player.y;
@@ -350,7 +356,7 @@ module Game {
         }
 
         protected digMap(map: Map) {
-            var bsp: Yendor.BSPNode = new Yendor.BSPNode(0, 0, map.width, map.height);
+            var bsp: Yendor.BSPNode = new Yendor.BSPNode(0, 0, map.w, map.h);
             bsp.splitRecursive(undefined, 8, Constants.ROOM_MIN_SIZE, 1.5);
             bsp.traverseInvertedLevelOrder(this.visitNode.bind(this), map);
             this.createDoors(map);

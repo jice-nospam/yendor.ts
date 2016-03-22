@@ -132,5 +132,22 @@ module Core {
             this.w = rect.w;
             this.h = rect.h;
         }
+        
+        clamp(xmin: number, ymin: number, xmax: number, ymax: number) {
+            if ( this.x < xmin ) {
+                this.w -= xmin - this.x;
+                this.x = xmin;
+            }
+            if ( this.x + this.w > xmax ) {
+                this.w = xmax - this.x;
+            }
+            if ( this.y < ymin ) {
+                this.h -= ymin - this.y;
+                this.y = ymin;
+            }
+            if ( this.y + this.h > ymax ) {
+                this.h = ymax - this.y;
+            }
+        }
     }
 }

@@ -13,7 +13,6 @@ module Yendor {
 	*/
     export class Fov {
         private _transparent: boolean[][];
-        private _inFov: boolean[][];
         private startAngle: number[];
         private endAngle: number[];
         private _width: number;
@@ -30,10 +29,8 @@ module Yendor {
             this._width = _width;
             this._height = _height;
             this._transparent = [];
-            this._inFov = [];
             for (var x = 0; x < _width; x++) {
                 this._transparent[x] = [];
-                this._inFov[x] = [];
             }
             this.startAngle = [];
             this.endAngle = [];
@@ -79,22 +76,6 @@ module Yendor {
             }
         }
 
-
-		/*
-			Function: isInFov
-			This function always return false until <computeFov> has been called.
-
-			Parameters:
-			x - x coordinate in the map
-			y - y coordinate in the map
-
-			Returns:
-			true if the cell at coordinate x,y is in the last computed field of view
-		*/
-        isInFov(x: number, y: number): boolean {
-            return this._inFov[x] ? this._inFov[x][y] : false;
-        }
-
 		/*
 			Function: computeFov
 			Compute the field of view using <restrictive precise angle shadowcasting 
@@ -106,32 +87,32 @@ module Yendor {
 			maxRadius - maximum distance for a cell to be visible
 			lightWalls - *optional* (default : true) whether walls are included in the field of view.
 		*/
-        computeFov(x: number, y: number, maxRadius: number, lightWalls: boolean = true) {
-            this.clearFov();
-            this._inFov[x][y] = true;
-            this.computeQuadrantVertical(x, y, maxRadius, lightWalls, 1, 1);
-            this.computeQuadrantHorizontal(x, y, maxRadius, lightWalls, 1, 1);
-            this.computeQuadrantVertical(x, y, maxRadius, lightWalls, 1, -1);
-            this.computeQuadrantHorizontal(x, y, maxRadius, lightWalls, 1, -1);
-            this.computeQuadrantVertical(x, y, maxRadius, lightWalls, -1, 1);
-            this.computeQuadrantHorizontal(x, y, maxRadius, lightWalls, -1, 1);
-            this.computeQuadrantVertical(x, y, maxRadius, lightWalls, -1, -1);
-            this.computeQuadrantHorizontal(x, y, maxRadius, lightWalls, -1, -1);
+        computeFov(inFov: boolean[][], x: number, y: number, maxRadius: number, lightWalls: boolean = true) {
+            this.clearFov(inFov);
+            inFov[x][y] = true;
+            this.computeQuadrantVertical(inFov, x, y, maxRadius, lightWalls, 1, 1);
+            this.computeQuadrantHorizontal(inFov, x, y, maxRadius, lightWalls, 1, 1);
+            this.computeQuadrantVertical(inFov, x, y, maxRadius, lightWalls, 1, -1);
+            this.computeQuadrantHorizontal(inFov, x, y, maxRadius, lightWalls, 1, -1);
+            this.computeQuadrantVertical(inFov, x, y, maxRadius, lightWalls, -1, 1);
+            this.computeQuadrantHorizontal(inFov, x, y, maxRadius, lightWalls, -1, 1);
+            this.computeQuadrantVertical(inFov, x, y, maxRadius, lightWalls, -1, -1);
+            this.computeQuadrantHorizontal(inFov, x, y, maxRadius, lightWalls, -1, -1);
         }
 
 		/*
 			Function: clearFov
 			Reset the field of view information. After this, <isInFov> returns false for all the cells.
 		*/
-        private clearFov() {
+        private clearFov(inFov: boolean[][]) {
             for (var x: number = 0; x < this.width; x++) {
                 for (var y: number = 0; y < this.height; y++) {
-                    this._inFov[x][y] = false;
+                    inFov[x][y] = false;
                 }
             }
         }
 
-        private computeQuadrantVertical(xPov: number, yPov: number, maxRadius: number, lightWalls: boolean, dx: number, dy: number) {
+        private computeQuadrantVertical(inFov: boolean[][], xPov: number, yPov: number, maxRadius: number, lightWalls: boolean, dx: number, dy: number) {
             var y: number = yPov + dy;
             var done: boolean = false;
             var iteration: number = 1;
@@ -151,10 +132,10 @@ module Yendor {
                     var endSlope: number = centreSlope + halfSlope;
                     var visible: boolean = true;
                     var extended: boolean = false;
-                    if (lastLineObstacleCount > 0 && !this.isInFov(x, y)) {
+                    if (lastLineObstacleCount > 0 && !inFov[x][y]) {
                         var idx: number = 0;
-                        if (visible && !this.canSee(x, y - dy)
-                            && x - dx >= 0 && x - dx < this.width && !this.canSee(x - dx, y - dy)) {
+                        if (visible && !this.canSee(inFov, x, y - dy)
+                            && x - dx >= 0 && x - dx < this.width && !this.canSee(inFov, x - dx, y - dy)) {
                             visible = false;
                         } else {
                             while (visible && idx < lastLineObstacleCount) {
@@ -180,7 +161,7 @@ module Yendor {
                         }
                     }
                     if (visible) {
-                        this._inFov[x][y] = true;
+                        inFov[x][y] = true;
                         done = false;
                         // if the cell is opaque, block the adjacent slopes 
                         if (!this.isTransparent(x, y)) {
@@ -197,7 +178,7 @@ module Yendor {
                                 totalObstacleCount++;
                             }
                             if (!lightWalls) {
-                                this._inFov[x][y] = false;
+                                inFov[x][y] = false;
                             }
                         }
                     }
@@ -215,7 +196,7 @@ module Yendor {
             }
         }
 
-        private computeQuadrantHorizontal(xPov: number, yPov: number, maxRadius: number, lightWalls: boolean, dx: number, dy: number) {
+        private computeQuadrantHorizontal(inFov: boolean[][], xPov: number, yPov: number, maxRadius: number, lightWalls: boolean, dx: number, dy: number) {
             var x: number = xPov + dx;
             var done: boolean = false;
             var iteration: number = 1;
@@ -235,10 +216,10 @@ module Yendor {
                     var endSlope: number = centreSlope + halfSlope;
                     var visible: boolean = true;
                     var extended: boolean = false;
-                    if (lastLineObstacleCount > 0 && !this.isInFov(x, y)) {
+                    if (lastLineObstacleCount > 0 && !inFov[x][y]) {
                         var idx: number = 0;
-                        if (visible && !this.canSee(x - dx, y)
-                            && y - dy >= 0 && y - dy < this.height && !this.canSee(x - dx, y - dy)) {
+                        if (visible && !this.canSee(inFov, x - dx, y)
+                            && y - dy >= 0 && y - dy < this.height && !this.canSee(inFov, x - dx, y - dy)) {
                             visible = false;
                         } else {
                             while (visible && idx < lastLineObstacleCount) {
@@ -264,7 +245,7 @@ module Yendor {
                         }
                     }
                     if (visible) {
-                        this._inFov[x][y] = true;
+                        inFov[x][y] = true;
                         done = false;
                         // if the cell is opaque, block the adjacent slopes 
                         if (!this.isTransparent(x, y)) {
@@ -281,7 +262,7 @@ module Yendor {
                                 totalObstacleCount++;
                             }
                             if (!lightWalls) {
-                                this._inFov[x][y] = false;
+                                inFov[x][y] = false;
                             }
                         }
                     }
@@ -299,8 +280,8 @@ module Yendor {
             }
         }
 
-        private canSee(x: number, y: number) {
-            return this.isInFov(x, y) && this.isTransparent(x, y);
+        private canSee(inFov: boolean[][], x: number, y: number) {
+            return inFov[x][y] && this.isTransparent(x, y);
         }
     }
 }

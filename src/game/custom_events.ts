@@ -18,13 +18,13 @@ module Game {
         RESUME_GAME,
         // starts a new game. No associated data
         NEW_GAME,
-        // player gains xp. Associated data : number (xp amount)
-        GAIN_XP,
         // game is loading. No associated data
         LOAD_GAME,
         // game is saving. No associated data
         SAVE_GAME,
         // must delete saved game. No associated data
         DELETE_SAVEGAME,
+        // a light has been turned on or off. Associated data : the Actor containing the light
+        LIGHT_ONOFF,
     }
 }

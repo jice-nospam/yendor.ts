@@ -1,4 +1,4 @@
-var TSC_COMMAND='tsc --target ES5 --noImplicitReturns';
+var TSC_COMMAND='tsc --target ES5 --sourceMap --noImplicitReturns';
 var RM_COMMAND='rm -f';
 //var NATURALDOCS_COMMAND='perl ../naturaldocs/NaturalDocs';
 var NATURALDOCS_COMMAND='naturaldocs';

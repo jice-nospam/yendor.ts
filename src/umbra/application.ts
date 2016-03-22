@@ -11,10 +11,16 @@ module Umbra {
         renderDivSelector?: string;
         fontFileName?: string;
         ticksPerSecond?: number;
+        /*
+            Field: backgroundAnimation
+            Whether the scene should be rendered every frame or only after an update
+        */
+        backgroundAnimation?: boolean;
     }
     export class Application {
         protected console: Yendor.Console;
-        protected gameTime: number = 0;
+        protected _gameTime: number = 0;
+        protected _elapsedTime: number = 0;
         protected options: ApplicationOptions;
         protected tickLength: number;
         protected paused: boolean = false;
@@ -32,11 +38,14 @@ module Umbra {
         getConsole(): Yendor.Console {
             return this.console;
         }
+        
+        get gameTime() { return this._gameTime; }
+        get elapsedTime() { return this._elapsedTime; }
 
         run(startingScene: Scene, options: ApplicationOptions = Application.DEFAULT_OPTIONS): void {
             $(window).focus(this.onGainFocus.bind(this));
             $(window).blur(this.onLoseFocus.bind(this));
-            Input.application = this;
+            Umbra.application = this;
             this.options = <ApplicationOptions>{
                 consoleWidth: options.consoleWidth ? options.consoleWidth : DEFAULT_CONSOLE_WIDTH,
                 consoleHeight: options.consoleHeight ? options.consoleHeight : DEFAULT_CONSOLE_HEIGHT,
@@ -44,8 +53,10 @@ module Umbra {
                 defaultForegroundColor: options.defaultForegroundColor ? options.defaultForegroundColor : DEFAULT_FOREGROUND_COLOR,
                 renderDivSelector: options.renderDivSelector ? options.renderDivSelector : DEFAULT_DIV_SELECTOR,
                 fontFileName: options.fontFileName ? options.fontFileName : DEFAULT_FONT_FILE_NAME,
-                ticksPerSecond: options.ticksPerSecond ? options.ticksPerSecond : DEFAULT_TICKS_PER_SECOND
+                ticksPerSecond: options.ticksPerSecond ? options.ticksPerSecond : DEFAULT_TICKS_PER_SECOND,
+                backgroundAnimation : options.backgroundAnimation ? options.backgroundAnimation : DEFAULT_BACKGROUND_ANIMATION,
             };
+            this.dirtyFrame = true;
             this.tickLength = 1.0 / this.options.ticksPerSecond;
             this.console = Yendor.createConsole(this.options.consoleWidth, this.options.consoleHeight,
                 this.options.defaultForegroundColor, this.options.defaultBackgroundColor, this.options.renderDivSelector, this.options.fontFileName);
@@ -77,21 +88,25 @@ module Umbra {
 			Called when the browser renders a new animation frame
 		*/
         protected onNewFrame(time: number): void {
-            var elapsed: number = time - this.gameTime;
+            this._elapsedTime = time - this._gameTime;
             var scene: Scene = SceneManager.getRunningScene();
             // but render every frame to allow background animations (torch flickering, ...)
-            if (!this.paused) {
+            if (!this.paused && this.dirtyFrame) {
                 scene.renderHierarchy(this.console);
                 this.console.render();
+                if ( !this.options.backgroundAnimation ) {
+                    this.dirtyFrame = false;
+                }
             }
-            if (elapsed >= this.tickLength) {
-                this.gameTime = time;
+            if (this._elapsedTime >= this.tickLength) {
+                this._gameTime = time;
                 // update the game only options.ticksPerSecond per second
                 if (!this.paused) {
                     // TODO remove this cyclic dependency
                     Gizmo.initFrame();
                     scene.updateHierarchy(time);
                     Umbra.Input.resetInput();
+                    this.dirtyFrame = true;
                 }
             }
         }

@@ -7,6 +7,7 @@
 /// <reference path="bsp.ts" />
 /// <reference path="fov.ts" />
 /// <reference path="path.ts" />
+/// <reference path="noise.ts" />
 /// <reference path="scheduler.ts" />
 
 /*
@@ -15,7 +16,7 @@
 module Yendor {
     "use strict";
 
-    export const VERSION = "0.5.0";
+    export const VERSION = "0.6.0";
 
 	/*
 		Property: urlParams

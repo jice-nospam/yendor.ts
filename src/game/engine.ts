@@ -7,28 +7,31 @@ module Game {
 		to keep the game from trying to load data with an old format.
 		This should be an integer.
 	*/
-    const SAVEFILE_VERSION: string = "14";
+    const SAVEFILE_VERSION: string = "15";
 
     export abstract class DungeonScene extends Umbra.Scene {
         protected _map: Map;
+        protected _mapRenderer: MapRendererNode;
         protected _topotologyMap: TopologyMap;
         protected _rng: Yendor.Random;
-        protected _actorManager: ActorManager;
+        protected _actorManager: ActorManagerNode;
         // singleton getters
         get map() { return this._map; }
         get topologyMap() { return this._topotologyMap; }
         get rng() { return this._rng; }
         get actorManager() { return this._actorManager; }
+        get mapRenderer() { return this._mapRenderer; }
 
         onInit(): void {
             this._rng = new Yendor.ComplementaryMultiplyWithCarryRandom();
-            this._actorManager = new ActorManager();
+            this._actorManager = new ActorManagerNode();
             this._map = new Map();
+            this._mapRenderer = new DungeonRendererNode(new LightDungeonShader());
             // adding nodes as children ensure they are updated/rendered by Umbra
-            this.addChild(this._map);
+            this.addChild(this._mapRenderer);
             this.addChild(this._actorManager);
             this.createGui();
-            
+
             // Umbra player input configuration
             Umbra.Input.registerAxes([
                 // cardinal movements
@@ -88,12 +91,12 @@ module Game {
                         titleForeground: Constants.TITLE_FOREGROUND
                     }
                 }
-            );            
+            );
         }
 
         createGui() {
             this.addChild(new StatusPanel(Constants.CONSOLE_WIDTH, Constants.STATUS_PANEL_HEIGHT));
-            this.addChild(new InventoryPanel(Constants.INVENTORY_PANEL_WIDTH, Constants.INVENTORY_PANEL_HEIGHT));
+            this.addChild(new InventoryPanel());
             this.addChild(new MainMenu());
             this.addChild(new TilePicker());
         }
@@ -130,23 +133,32 @@ module Game {
 
         onChangeStatus(status: GameStatus) {
             this.status = status;
+            if (status === GameStatus.DEFEAT) {
+                log("You died!", Constants.LOG_CRIT_COLOR);                
+            }
         }
 
         onNewGame() {
             this.dungeonLevel = 1;
-            this._actorManager.reset(true);
+            this.deleteSavedGame();
             this._map.init(Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT);
+            this._actorManager.reset(true);
             var dungeonBuilder: BspDungeonBuilder = new BspDungeonBuilder(this.dungeonLevel);
             dungeonBuilder.build(this._map);
             this._topotologyMap = dungeonBuilder.topologyMap;
             this.status = GameStatus.RUNNING;
+            this._mapRenderer.onInit();
+
+            // starting inventory
+            var player: Actor = this._actorManager.getPlayer();
+            var torch = ActorFactory.create(ActorType.TORCH, player.x, player.y);
+            torch.pickable.pick(torch, player);
 
             // this helps debugging items
             if (Yendor.urlParams[Constants.URL_PARAM_DEBUG]) {
-                var player: Actor = this._actorManager.getPlayer();
-                [ActorType.MAP_REVEAL_STAFF, ActorType.SHORT_SWORD, ActorType.FIREBALL_SCROLL, ActorType.CONFUSION_SCROLL,
-                    ActorType.WOODEN_SHIELD, ActorType.TELEPORT_STAFF,
-                    ActorType.LIFE_DETECT_STAFF, ActorType.REGENERATION_POTION,
+                [ActorType.STAFF_OF_MAPPING, ActorType.SUNROD, ActorType.CANDLE, ActorType.SCROLL_OF_CONFUSION,
+                    ActorType.WOODEN_SHIELD, ActorType.STAFF_OF_TELEPORTATION,
+                    ActorType.STAFF_OF_LIFE_DETECTION, ActorType.REGENERATION_POTION,
                     ActorType.SHORT_BOW
                 ].forEach((type: ActorType) => { this._actorManager.addItem(ActorFactory.create(type, player.x, player.y)); });
             }
@@ -159,6 +171,7 @@ module Game {
             // TODO save/restore topologyMap
             Umbra.EventManager.publishEvent(EventType[EventType.LOAD_GAME]);
             this.status = GameStatus.RUNNING;
+            this._topotologyMap = this.persister.loadFromKey(Constants.PERSISTENCE_TOPOLOGY_MAP);
         }
 
         saveGame() {
@@ -168,6 +181,7 @@ module Game {
                 this.persister.saveToKey(Constants.PERSISTENCE_DUNGEON_LEVEL, this.dungeonLevel);
                 this.persister.saveToKey(Constants.PERSISTENCE_VERSION_KEY, SAVEFILE_VERSION);
                 this.persister.saveToKey(Constants.PERSISTENCE_MAP_KEY, this._map);
+                this.persister.saveToKey(Constants.PERSISTENCE_TOPOLOGY_MAP, this._topotologyMap);
                 ActorFactory.save(this.persister);
                 Umbra.EventManager.publishEvent(EventType[EventType.SAVE_GAME]);
             }
@@ -198,11 +212,6 @@ module Game {
             dungeonBuilder.build(this._map);
         }
 
-        private hasBackgroundAnimation(): boolean {
-            // TODO
-            return false;
-        }
-
 		/*
 			Function: handleKeyboardInput
 			Handle main menu shortcut
@@ -213,7 +222,7 @@ module Game {
                 Umbra.EventManager.publishEvent(EventType[EventType.OPEN_MAIN_MENU]);
             }
         }
-        
+
 		/*
 			Function: onUpdate
 			Update the game world

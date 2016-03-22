@@ -22,6 +22,14 @@ module Core {
             crcTable[n] = c;
         }
     }
+    
+    export function buildMatrix<T>(w: number): T[][] {
+        var ret: T[][] = [];
+        for ( var x: number = 0; x < w; ++x) {
+            ret[x] = [];
+        }
+        return ret;
+    }
 
 	/*
 		Function: crc32

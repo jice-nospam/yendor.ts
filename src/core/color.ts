@@ -67,6 +67,132 @@ module Core {
             b = b < 0 ? 0 : b > 255 ? 255 : b;
             return b | (g << 8) | (r << 16);
         }
+        
+        static max(col1: Color, col2: Color) {
+           var r1,g1,b1,r2,g2,b2: number;
+           if (typeof col1 === "number") {
+                // duplicated toRgbFromNumber code to avoid function call and array allocation
+                r1 = (<number>col1 & 0xFF0000) >> 16;
+                g1 = (<number>col1 & 0x00FF00) >> 8;
+                b1 = <number>col1 & 0x0000FF;
+            } else {
+                var rgb1: number[] = ColorUtils.toRgb(col1);
+                r1 = rgb1[0];
+                g1 = rgb1[1];
+                b1 = rgb1[2];
+            }
+            if (typeof col2 === "number") {
+                // duplicated toRgbFromNumber code to avoid function call and array allocation
+                r2 = (<number>col2 & 0xFF0000) >> 16;
+                g2 = (<number>col2 & 0x00FF00) >> 8;
+                b2 = <number>col2 & 0x0000FF;
+            } else {
+                var rgb2: number[] = ColorUtils.toRgb(col2);
+                r2 = rgb2[0];
+                g2 = rgb2[1];
+                b2 = rgb2[2];
+            }
+            if (r2 > r1) {
+                r1 = r2;
+            }
+            if (g2 > g1) {
+                g1 = g2;
+            }
+            if (b2 > b1) {
+                b1 = b2;
+            }
+            return b1 | (g1 << 8) | (r1 << 16);
+        }
+        
+        static min(col1: Color, col2: Color) {
+           var r1,g1,b1,r2,g2,b2: number;
+           if (typeof col1 === "number") {
+                // duplicated toRgbFromNumber code to avoid function call and array allocation
+                r1 = (<number>col1 & 0xFF0000) >> 16;
+                g1 = (<number>col1 & 0x00FF00) >> 8;
+                b1 = <number>col1 & 0x0000FF;
+            } else {
+                var rgb1: number[] = ColorUtils.toRgb(col1);
+                r1 = rgb1[0];
+                g1 = rgb1[1];
+                b1 = rgb1[2];
+            }
+            if (typeof col2 === "number") {
+                // duplicated toRgbFromNumber code to avoid function call and array allocation
+                r2 = (<number>col2 & 0xFF0000) >> 16;
+                g2 = (<number>col2 & 0x00FF00) >> 8;
+                b2 = <number>col2 & 0x0000FF;
+            } else {
+                var rgb2: number[] = ColorUtils.toRgb(col2);
+                r2 = rgb2[0];
+                g2 = rgb2[1];
+                b2 = rgb2[2];
+            }
+            if (r2 < r1) {
+                r1 = r2;
+            }
+            if (g2 < g1) {
+                g1 = g2;
+            }
+            if (b2 < b1) {
+                b1 = b2;
+            }
+            return b1 | (g1 << 8) | (r1 << 16);
+        }        
+        
+        static colorMultiply(col1: Color, col2: Color) {
+            var r1,g1,b1,r2,g2,b2: number;
+            if (typeof col1 === "number") {
+                // duplicated toRgbFromNumber code to avoid function call and array allocation
+                r1 = (<number>col1 & 0xFF0000) >> 16;
+                g1 = (<number>col1 & 0x00FF00) >> 8;
+                b1 = <number>col1 & 0x0000FF;
+            } else {
+                var rgb1: number[] = ColorUtils.toRgb(col1);
+                r1 = rgb1[0];
+                g1 = rgb1[1];
+                b1 = rgb1[2];
+            }
+            if (typeof col2 === "number") {
+                // duplicated toRgbFromNumber code to avoid function call and array allocation
+                r2 = (<number>col2 & 0xFF0000) >> 16;
+                g2 = (<number>col2 & 0x00FF00) >> 8;
+                b2 = <number>col2 & 0x0000FF;
+            } else {
+                var rgb2: number[] = ColorUtils.toRgb(col2);
+                r2 = rgb2[0];
+                g2 = rgb2[1];
+                b2 = rgb2[2];
+            }           
+            r1 = Math.floor(r1 * r2 / 255);
+            g1 = Math.floor(g1 * g2 / 255);
+            b1 = Math.floor(b1 * b2 / 255);
+            r1 = r1 < 0 ? 0 : r1 > 255 ? 255 : r1;
+            g1 = g1 < 0 ? 0 : g1 > 255 ? 255 : g1;
+            b1 = b1 < 0 ? 0 : b1 > 255 ? 255 : b1;
+            return b1 | (g1 << 8) | (r1 << 16);
+        }
+
+        /*
+            Function: computeIntensity
+            Return the grayscale intensity between 0 and 1
+        */
+        static computeIntensity(color: Color): number {
+            // Colorimetric (luminance-preserving) conversion to grayscale
+            var r, g, b: number;
+            if (typeof color === "number") {
+                // duplicated toRgbFromNumber code to avoid function call and array allocation
+                r = (<number>color & 0xFF0000) >> 16;
+                g = (<number>color & 0x00FF00) >> 8;
+                b = <number>color & 0x0000FF;
+            } else {
+                var rgb: number[] = ColorUtils.toRgb(color);
+                r = rgb[0];
+                g = rgb[1];
+                b = rgb[2];
+            }
+            return (0.2126 * r + 0.7152*g + 0.0722 * b) * (1/255);
+        }
 
 		/*
 			Function: add

@@ -1,3 +1,12 @@
+# 0.6.0 / TBD
+* Yendor toolkit
+    - added noise module with simplex noise implementation + noise sample in benchmark
+    - fov module no longer stores inFov information. You have to provide your own boolean[][].
+      This makes it possible to use the same Yendor.Fov to compute fov from differents places.
+
+* GeneRogue
+    - added lighting, candle, torch, sunrod
+
 # 0.5.0 / 08-mar-2016
 * upgraded typescript to 1.8.2, pixi to 3.0.9
 * Added Umbra framework for scene management, user input and events

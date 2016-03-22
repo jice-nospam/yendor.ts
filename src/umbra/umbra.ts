@@ -14,6 +14,11 @@
 */
 module Umbra {
     "use strict";
+    /*
+        Field: application
+        The currently running application. Set by Application.run. Needed to compute mouse coordinate in console cells coordinates.
+    */
+    export var application: Application;
 
     export function init() {
         Yendor.init();

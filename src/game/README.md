@@ -27,30 +27,58 @@ To compile it, run `jake` then open game/index.html in your browser.
 * \> : go down the stairs
 * < : go up the stairs
 * ESC : open game menu
+* look with mouse. UI also works with mouse
+
+# WORK IN PROGRESS
+    - light producing consummable items : candle, torch
 
 # TODO
 
 Reminder for stuff that might be added to the game. Or not.
+* Bugs
+    - corpses stop updating after reload
+    - monster AI does not wake up in darkness
 
 * Engine
     - reduce garbage collector usage
     - clean usage of constructors/onInit
     
 * Gameplay
-    - equipment durability
-    - being able to break certain doors
-    - activate action : being able to select the tile when more than one tile is activable 
-    - beast A.I. should move randomly when no scent is detected
-    - humanoid A.I. (can use weapons and wear armors)
-    - poison potion and weapon / projectile poisoning (need onHitEffector on Attacker)
-    - armors
-    - lighting
-    - spells and spellbooks
-    - gems and weapons/armors slots
-    - static containers (chests, corpses) + loot GUI
-    - jewelry (necklace, rings)
-    - shield should block only one hit per turn
-    - dual wielding (you attack with the fastest weapon first, then with the slowest one. Total waitTime is smaller than the sum of the weapons waitTimes. watch out for special cases like crossbow + sword)
+    - item durability
+        - grinding stone
+        - being able to break certain doors
+    - light
+        - static light items : wall torchs
+        - refillable light items : lantern + oil flask
+        - magic light items : scroll of floating light
+    - fire
+        - fire effect on items : fireball + dropped torchs should burn scrolls, wooden items
+        - fire 'item' : fireball should leave fire on ground for some time
+        - burning condition : caused by fireball / hitting with a torch (melee or throw) 
+    - multi-keys locks
+    - A.I.
+        - beast A.I. should move randomly when no scent is detected
+        - orcs should have humanoid A.I. (can open door, use equipment)
+        - humanoid A.I. (can use weapons and wear armors)
+    - item conditions
+        - poison potion and weapon / projectile poisoning (need onHitEffector on Attacker)
+        - oil improve blades damages
+    - items
+        - armors
+        - 'any hand' slot
+        - spells and spellbooks
+        - gems and weapons/armors slots
+        - static containers (chests, corpses) + loot GUI
+        - pickable containers to organize inventory (bags, quiver, scroll book, key ring, ...)
+        - jewelry (necklace, rings)
+    - player character
+        - new XP level : being able to increase some stat (health, inventory, ...)
+        - implement classical DEX/INT/CON/CHA/WIS stats 
+    - combat
+        - critical hits
+        - dodge + parry
+        - shield should block only one hit per turn
+        - dual wielding (you attack with the fastest weapon first, then with the slowest one. Total waitTime is smaller than the sum of the weapons waitTimes. watch out for special cases like crossbow + sword)
     
 * Eye candy
     - background animation (torch flickering)

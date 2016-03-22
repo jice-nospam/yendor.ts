@@ -415,14 +415,14 @@ module Game {
         }
 
         applyTo(actor: Actor, coef: number = 1.0): boolean {
-            var x: number = Engine.instance.rng.getNumber(0, Engine.instance.map.width - 1);
-            var y: number = Engine.instance.rng.getNumber(0, Engine.instance.map.height - 1);
+            var x: number = Engine.instance.rng.getNumber(0, Engine.instance.map.w - 1);
+            var y: number = Engine.instance.rng.getNumber(0, Engine.instance.map.h - 1);
             while (!Engine.instance.map.canWalk(x, y)) {
                 x++;
-                if (x === Engine.instance.map.width) {
+                if (x === Engine.instance.map.w) {
                     x = 0;
                     y++;
-                    if (y === Engine.instance.map.height) {
+                    if (y === Engine.instance.map.h) {
                         y = 0;
                     }
                 }

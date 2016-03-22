@@ -113,9 +113,10 @@ module Game {
 		Represents the map as a list of sectors separated by connectors.
 		This is used to generate door/key puzzles.
 	*/
-    export class TopologyMap {
+    export class TopologyMap implements Persistent {
         private width: number;
         private height: number;
+        className: string;
 		/*
 			Property: objectMap
 			Associate a topology object to each walkable map cell (either a sector or a connector)
@@ -136,6 +137,7 @@ module Game {
         get connectors() { return this._connectors; }
 
         constructor(width: number, height: number) {
+            this.className = "TopologyMap";
             this.width = width;
             this.height = height;
             for (var x = 0; x < width; ++x) {
@@ -337,7 +339,7 @@ module Game {
             cellsToVisit.push(seed);
             while (cellsToVisit.length !== 0) {
                 var pos: Core.Position = cellsToVisit.shift();
-                var adjacentCells: Core.Position[] = pos.getAdjacentCells(map.width, map.height);
+                var adjacentCells: Core.Position[] = pos.getAdjacentCells(map.w, map.h);
                 for (var i: number = 0, len: number = adjacentCells.length; i < len; ++i) {
                     var curpos: Core.Position = adjacentCells[i];
                     if (map.isWall(curpos.x, curpos.y) || this.topologyMap.getObjectId(curpos) === sector.id) {
@@ -531,7 +533,7 @@ module Game {
         }
 
         buildTopologyMap(map: Map, seed: Core.Position): TopologyMap {
-            this.topologyMap = new TopologyMap(map.width, map.height);
+            this.topologyMap = new TopologyMap(map.w, map.h);
             this.sectorSeeds.push(seed);
             while (this.sectorSeeds.length !== 0) {
                 var pos: Core.Position = this.sectorSeeds.shift();

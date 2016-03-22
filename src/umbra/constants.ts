@@ -12,6 +12,7 @@ module Umbra {
     export const DEFAULT_DIV_SELECTOR: string = "#console";
     export const DEFAULT_FONT_FILE_NAME: string = "terminal.png";
     export const DEFAULT_TICKS_PER_SECOND: number = 10;
+    export const DEFAULT_BACKGROUND_ANIMATION: boolean = false;
 
     export const enum MouseButton {
         LEFT = 1,

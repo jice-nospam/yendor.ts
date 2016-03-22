@@ -16,3 +16,7 @@ Reminder for stuff that might be added to the framework. Or not.
 * Random number generator
 
 * Scheduler
+
+* Noise
+    - add 2D/3D simplex noise
+    - add fbm & turbulence functions

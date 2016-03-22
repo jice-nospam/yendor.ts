@@ -187,12 +187,6 @@ module Umbra {
             mouseStatus.hasMoved = false;
         }
 
-        /*
-            Field: application
-            The currently running application. Set by Application.run. Needed to compute mouse coordinate in console cells coordinates.
-        */
-        export var application: Application;
-
         export function onMouseMove(event: JQueryMouseEventObject) {
             mouseStatus.pixelPos.x = event.pageX;
             mouseStatus.pixelPos.y = event.pageY;

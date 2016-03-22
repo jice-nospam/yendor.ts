@@ -11,6 +11,8 @@ module Game {
 		The constructor must initialize the className field.
 		Fields starting with two underscores are not persisted.
 		Watch out for cycling dependencies!
+        During game loading phase, the constructor is called without parameters.
+        Then field values are restored from the saved json.
 	*/
     export interface Persistent {
 		/*

@@ -85,7 +85,7 @@ module Gizmo {
         */
         asciiShortcut?: number,
     }
-    
+
     /*
         Function: button
         Renders a button in 'immediate' mode (see http://www.johno.se/book/imgui.html).
@@ -121,5 +121,51 @@ module Gizmo {
             return true;
         }
         return false;
+    }
+
+    /*
+        Function: popupMenu
+        Display a popup menu with optional title and footer and a list of buttons. Pressing the cancel virtual button will hide the containing widget.
+        
+        Parameters :
+        widget - the containing widget (optional)
+        con - the console where to render the menu
+        items - array of <ButtonOption>
+        title - optional title displayed on the top of the frame
+        footer - optional footer displayed on the bottom of the frame
+    */
+    export function popupMenu(widget: Widget, con: Yendor.Console, items: ButtonOption[], title?: string, footer?: string): Core.Rect {
+        if (!title && (!items || items.length === 0)) {
+            // nothing to render
+            return undefined;
+        }
+        // compute popup size
+        var w = title ? title.length + 4 : 0;
+        for (var i: number = 0, len: number = items.length; i < len; ++i) {
+            var labelLen = items[i].label ? items[i].label.length + 4 : 0;
+            if (labelLen > w) {
+                w = labelLen;
+            }
+        }
+        var h = items ? 2 + items.length : 2;
+        // compute popup position
+        var x = Math.floor((Umbra.application.getConsole().width - w) / 2);
+        var y = Math.floor((Umbra.application.getConsole().height - h) / 2);
+        var boundingBox: Core.Rect = new Core.Rect(x, y, w, h); 
+        // render popup
+        frame(con, x, y, w, h, title);
+        if (footer) {
+            con.print(Math.floor(x + (w - footer.length) / 2), y + h - 1, footer);
+        }
+        if (items) {
+            for (var j: number = 0, len: number = items.length; j < len; ++j) {
+                button(con, x + 2, y + 1 + j, items[j]);
+            }
+        }
+        if (widget && Umbra.Input.wasButtonPressed(getConfiguration().input.cancelAxisName)) {
+            widget.hide();
+            Umbra.Input.resetInput();
+        }
+        return boundingBox;
     }
 }

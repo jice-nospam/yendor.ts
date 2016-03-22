@@ -13,10 +13,13 @@ module Game {
 
         // rendering
         export const DARK_WALL: Core.Color = 0x000064;
-        export const LIGHT_WALL: Core.Color = 0x826E32;
+//        export const LIGHT_WALL: Core.Color = 0x826E32;
         export const DARK_GROUND: Core.Color = 0x323296;
-        export const LIGHT_GROUND: Core.Color = 0xC8B432;
-        export const FOV_RADIUS: number = 10;
+//        export const LIGHT_GROUND: Core.Color = 0xC8B432;
+        export const LIGHT_WALL: Core.Color = 0x7E6E4E;
+        export const LIGHT_GROUND: Core.Color = 0xC4B494;
+        // unlimited fov
+        export const FOV_RADIUS: number = 0;
         export const MENU_BACKGROUND: Core.Color = 0x272822;
         export const MENU_BACKGROUND_ACTIVE: Core.Color = 0x383830;
         export const MENU_FOREGROUND: Core.Color = 0xFD971F;
@@ -29,9 +32,7 @@ module Game {
         export const XP_BAR_FOREGROUND: Core.Color = 0x3F007F;
         export const CONDITION_BAR_BACKGROUND: Core.Color = 0x3F9F3F;
         export const CONDITION_BAR_FOREGROUND: Core.Color = 0x007F3F;
-        export const INVENTORY_BACKGROUND: Core.Color = 0x272822;
         export const INVENTORY_BACKGROUND_ACTIVE: Core.Color = 0x383830;
-        export const INVENTORY_FOREGROUND: Core.Color = 0xFD971F;
         export const INVENTORY_FOREGROUND_ACTIVE: Core.Color = 0xFFDF90;
         export const INVENTORY_BACKGROUND_EQUIPPED: Core.Color = 0x585850;
         export const LOG_INFO_COLOR: Core.Color = 0xEEEEEE;
@@ -47,13 +48,15 @@ module Game {
         export const BONE_COLOR: Core.Color = 0xD2D8BC;
         export const IRON_COLOR: Core.Color = 0x7C8081;
         export const STEEL_COLOR: Core.Color = 0x867F70;
+        export const CANDLE_LIGHT_COLOR: Core.Color = 0xDDDD44;
+        export const TORCH_LIGHT_COLOR: Core.Color = 0xFFFF44;
+        export const SUNROD_LIGHT_COLOR: Core.Color = 0xEEEEFF;
+        export const NOLIGHT_COLOR: Core.Color = 0x444444;
 
         // gui
         export const LOG_DARKEN_COEF: number = 0.8;
         export const STATUS_PANEL_HEIGHT: number = 7;
         export const STAT_BAR_WIDTH: number = 20;
-        export const INVENTORY_PANEL_WIDTH: number = 50;
-        export const INVENTORY_PANEL_HEIGHT: number = 28;
 
         // map building
         export const MAX_MONSTERS_PER_ROOM: number = 3;
@@ -63,6 +66,13 @@ module Game {
         export const PUZZLE_STEP_PROBABILITY: number = 0.6;
 
         // gameplay
+        // minimum light level to see actors
+        export const PENUMBRA_THRESHOLD: number = 0.25;
+        export const LIGHT_NORMAL_RANGE_FACTOR = 1 / 20;
+        // character to use for actors in penumbra (63 = '?')
+        export const PENUMBRA_ASCIICODE: number = 63;
+        // light intensity pattern lower value is 48 = '0'
+        export const BASE_LIGHT_PATTERN_ASCIICODE: number = 48;
         // how often the world is updated
         export const TICKS_PER_SECOND: number = 10;
         export const TICK_LENGTH: number = 1.0 / Constants.TICKS_PER_SECOND;
@@ -78,7 +88,7 @@ module Game {
         export const OVEREMCUMBERED_THRESHOLD: number = 0.9;
         // when overencumbered, walkTime is multiplied by this value
         export const OVERENCUMBERED_MULTIPLIER: number = 1.5;
-        export const FROZEN_MULTIPLIER: number = 2;
+        export const FROZEN_MULTIPLIER: number = 3;
 
         // equipment slots names
         export const SLOT_RIGHT_HAND: string = "right hand";
@@ -89,6 +99,7 @@ module Game {
         // persistence local storage keys
         export const PERSISTENCE_VERSION_KEY: string = "version";
         export const PERSISTENCE_DUNGEON_LEVEL: string = "dungeonLevel";
+        export const PERSISTENCE_TOPOLOGY_MAP: string = "topologyMap";
         export const PERSISTENCE_MAP_KEY: string = "map";
         export const PERSISTENCE_ACTORS_KEY: string = "actors";
         export const PERSISTENCE_CREATURE_IDS_KEY: string = "creatureIds";
@@ -185,33 +196,33 @@ module Game {
         The orc hits with an axe for 5 points.
     */
     export var transformMessage = function(text: string, actor1: Actor, actor2?: Actor, value1?: number, value2?: number): string {
-        var newText = text.replace("[The actor1's] ", actor1.getThenames());
-        newText = newText.replace(" [the actor1's] ", actor1.getthenames());
-        newText = newText.replace("[The actor1]", actor1.getThename());
-        newText = newText.replace(" [the actor1]", actor1.getthename());
-        newText = newText.replace("[A actor1]", actor1.getAname());
-        newText = newText.replace(" [a actor1]", actor1.getaname());
+        var newText = text.replace(/\[The actor1\'s\] /g, actor1.getThenames());
+        newText = newText.replace(/ \[the actor1\'s\] /g, actor1.getthenames());
+        newText = newText.replace(/\[The actor1\]/g, actor1.getThename());
+        newText = newText.replace(/ \[the actor1\]/g, actor1.getthename());
+        newText = newText.replace(/\[A actor1\]/g, actor1.getAname());
+        newText = newText.replace(/ \[a actor1\]/g, actor1.getaname());
         newText = newText.replace(/\[s\]/g, actor1.getVerbEnd());
         newText = newText.replace(/ \[it\]/g, actor1.getit());
         newText = newText.replace(/ \[its\] /g, actor1.getits());
         newText = newText.replace(/ \[is\]/g, actor1.getis());
         if (actor2) {
-            newText.replace("[The actor2's] ", actor2.getThenames());
-            newText = newText.replace(" [the actor2's] ", actor2.getthenames());
-            newText = newText.replace("[The actor2]", actor2.getThename());
-            newText = newText.replace(" [the actor2]", actor2.getthename());
-            newText = newText.replace("[A actor2]", actor2.getAname());
-            newText = newText.replace(" [a actor2]", actor2.getaname());
+            newText.replace(/\[The actor2\'s\] /g, actor2.getThenames());
+            newText = newText.replace(/ \[the actor2\'s\] /g, actor2.getthenames());
+            newText = newText.replace(/\[The actor2\]/g, actor2.getThename());
+            newText = newText.replace(/ \[the actor2\]/g, actor2.getthename());
+            newText = newText.replace(/\[A actor2\]/g, actor2.getAname());
+            newText = newText.replace(/ \[a actor2\]/g, actor2.getaname());
             newText = newText.replace(/\[s2\]/g, actor2.getVerbEnd());
             newText = newText.replace(/ \[it2\]/g, actor2.getit());
             newText = newText.replace(/ \[its2\] /g, actor2.getits());
             newText = newText.replace(/ \[is2\]/g, actor2.getis());
         }
         if (value1 !== undefined) {
-            newText = newText.replace("[value1]", "" + value1);
+            newText = newText.replace(/\[value1\]/g, "" + value1);
         }
         if (value2 !== undefined) {
-            newText = newText.replace("[value2]", "" + value2);
+            newText = newText.replace(/\[value2\]/g, "" + value2);
         }
         return newText;
     };
