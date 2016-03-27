@@ -18,7 +18,7 @@ module Game {
             return this._id === c.id;
         }
     }
-	/*
+	/**
 		Class: Connector
 		Represent a map cell connecting two sectors (generally a door)
 	*/
@@ -26,18 +26,18 @@ module Game {
         pos: Core.Position;
         sector1Id: TopologyObjectId;
         sector2Id: TopologyObjectId;
-		/*
+		/**
 			Property: gut
 			Whether there's no alternative route connecting this connectors' adjacent sectors
 		*/
         gut: boolean = false;
-		/*
+		/**
 			Property: lock
 			If not undefined, this connector is locked. This is the key number
 		*/
         lock: number;
 
-		/*
+		/**
 			Function: isDummy
 			Whether this connector connects two parts of the same sector
 		*/
@@ -54,12 +54,12 @@ module Game {
         }
     }
 
-	/*
+	/**
 		Class: Sector
 		Represent a group of connected map cells. There exists a path between any two cells of this sector.
 	*/
     export class Sector extends TopologyObject {
-		/*
+		/**
 			Property: seed
 			Any cell of the sector. This is used to start the floodfilling algorithm.
 		*/
@@ -67,7 +67,7 @@ module Game {
         cellCount: number = 0;
         private deadEnd: boolean = true;
         connectors: TopologyObjectId[] = [];
-		/*
+		/**
 			Property: key
 			If not undefined, this sector contains the key to a lock
 		*/
@@ -96,19 +96,19 @@ module Game {
     }
 
     export interface PuzzleStep {
-		/*
+		/**
 			Property: connectorId
 			the connector that has the locked door
 		*/
         connectorId: TopologyObjectId;
-		/*
+		/**
 			Property: keySectorId
 			the sector that contains the key
 		*/
         keySectorId: TopologyObjectId;
     }
 
-	/*
+	/**
 		Class: TopologyMap
 		Represents the map as a list of sectors separated by connectors.
 		This is used to generate door/key puzzles.
@@ -117,12 +117,12 @@ module Game {
         private width: number;
         private height: number;
         className: string;
-		/*
+		/**
 			Property: objectMap
 			Associate a topology object to each walkable map cell (either a sector or a connector)
 		*/
         private objectMap: TopologyObjectId[][] = [];
-		/*
+		/**
 			Property: objects
 			All existing sectors and connectors
 		*/
@@ -140,23 +140,23 @@ module Game {
             this.className = "TopologyMap";
             this.width = width;
             this.height = height;
-            for (var x = 0; x < width; ++x) {
+            for (let x = 0; x < width; ++x) {
                 this.objectMap[x] = [];
-                for (var y = 0; y < height; ++y) {
+                for (let y = 0; y < height; ++y) {
                     this.objectMap[x][y] = NONE;
                 }
             }
         }
 
         createSector(seed: Core.Position): Sector {
-            var sector: Sector = new Sector(this.objects.length, seed);
+            let sector: Sector = new Sector(this.objects.length, seed);
             this.objects.push(sector);
             this._sectors.push(sector);
             return sector;
         }
 
         createConnector(pos: Core.Position, sector1Id: TopologyObjectId): Connector {
-            var connector: Connector = new Connector(this.objects.length, pos, sector1Id);
+            let connector: Connector = new Connector(this.objects.length, pos, sector1Id);
             this.objects.push(connector);
             this._connectors.push(connector);
             return connector;
@@ -181,7 +181,7 @@ module Game {
         }
 
         private getSectorFromId(id: TopologyObjectId): Sector {
-            var o: TopologyObject = this.objects[id];
+            let o: TopologyObject = this.objects[id];
             if (!(o instanceof Sector)) {
                 throw "TopologyMap : object " + id + " is not a sector";
             }
@@ -203,7 +203,7 @@ module Game {
         }
 
         private getConnectorFromId(id: TopologyObjectId): Connector {
-            var o: TopologyObject = this.objects[id];
+            let o: TopologyObject = this.objects[id];
             if (!(o instanceof Connector)) {
                 throw "TopologyMap : object " + id + " is not a connector";
             }
@@ -215,9 +215,9 @@ module Game {
         }
 
         getRandomPositionInSector(id: TopologyObjectId, rng: Yendor.Random): Core.Position {
-            var pos: Core.Position = new Core.Position(-1, 0);
-            var sector: Sector = this.getSectorFromId(id);
-            var cellNum: number = rng.getNumber(1, sector.cellCount);
+            let pos: Core.Position = new Core.Position(-1, 0);
+            let sector: Sector = this.getSectorFromId(id);
+            let cellNum: number = rng.getNumber(1, sector.cellCount);
             do {
                 do {
                     pos.x++;
@@ -234,7 +234,7 @@ module Game {
             return pos;
         }
 
-		/*
+		/**
 			Function: computePath
 			Compute the shortest path between two sectors using Dijkstra algorithm adapted from http://en.wikipedia.org/wiki/Dijkstra%27s_algorithm.
 
@@ -247,27 +247,27 @@ module Game {
 			returns an array containing only id1.
 		*/
         computePath(id1: TopologyObjectId, id2: TopologyObjectId): TopologyObjectId[] {
-            var dist: number[] = [];
-            var prev: number[] = [];
-            var queue: Yendor.BinaryHeap<Sector> = new Yendor.BinaryHeap((o: Sector) => { return dist[o.id]; });
+            let dist: number[] = [];
+            let prev: number[] = [];
+            let queue: Yendor.BinaryHeap<Sector> = new Yendor.BinaryHeap((o: Sector) => { return dist[o.id]; });
             dist[id1] = 0;
             prev[id1] = undefined;
             queue.push(<Sector>this.objects[id1]);
 
             while (!queue.isEmpty()) {
                 // get sector with lowest distance
-                var sector: Sector = queue.pop();
+                let sector: Sector = queue.pop();
                 if (sector.id === id2) {
                     break;
                 }
-                for (var i: number = 0, len: number = sector.connectors.length; i < len; ++i) {
-                    var connectorId: TopologyObjectId = sector.connectors[i];
-                    var connector: Connector = <Connector>this.objects[connectorId];
+                for (let i: number = 0, len: number = sector.connectors.length; i < len; ++i) {
+                    let connectorId: TopologyObjectId = sector.connectors[i];
+                    let connector: Connector = <Connector>this.objects[connectorId];
                     if (connector.lock === undefined) {
-                        var sector2Id: TopologyObjectId = connector.sector1Id === sector.id ? connector.sector2Id : connector.sector1Id;
-                        var altDist: number = dist[sector.id] + 1;
+                        let sector2Id: TopologyObjectId = connector.sector1Id === sector.id ? connector.sector2Id : connector.sector1Id;
+                        let altDist: number = dist[sector.id] + 1;
                         if (dist[sector2Id] === undefined || dist[sector2Id] > altDist) {
-                            var sector2: Sector = <Sector>this.objects[sector2Id];
+                            let sector2: Sector = <Sector>this.objects[sector2Id];
                             dist[sector2Id] = altDist;
                             prev[sector2Id] = sector.id;
                             if (!queue.contains(sector2)) {
@@ -278,8 +278,8 @@ module Game {
                 }
             }
 
-            var path: TopologyObjectId[] = [];
-            var curSectorId: TopologyObjectId = id2;
+            let path: TopologyObjectId[] = [];
+            let curSectorId: TopologyObjectId = id2;
             while (prev[curSectorId] !== undefined) {
                 path.splice(0, 0, curSectorId);
                 curSectorId = prev[curSectorId];
@@ -288,7 +288,7 @@ module Game {
             return path;
         }
 
-		/*
+		/**
 			Function: findFarthestSector
 			Find the farthest sector from given sector (in term of traversed sectors, not necessarily in terms of distance).
 
@@ -299,12 +299,12 @@ module Game {
 			The id of the farthest sector from origin, or NONE if none found
 		*/
         findFarthestSector(id: TopologyObjectId, onlyDeadEnds: boolean = false): TopologyObjectId {
-            var maxDist: number = 1;
-            var farthestSectorId: TopologyObjectId = NONE;
-            for (var i: number = 0, len: number = this._sectors.length; i < len; ++i) {
-                var sector: Sector = this._sectors[i];
+            let maxDist: number = 1;
+            let farthestSectorId: TopologyObjectId = NONE;
+            for (let i: number = 0, len: number = this._sectors.length; i < len; ++i) {
+                let sector: Sector = this._sectors[i];
                 if (sector.id !== id && (sector.isDeadEnd() || !onlyDeadEnds)) {
-                    var pathLength: number = this.computePath(id, sector.id).length;
+                    let pathLength: number = this.computePath(id, sector.id).length;
                     if (pathLength > maxDist) {
                         maxDist = pathLength;
                         farthestSectorId = sector.id;
@@ -319,8 +319,8 @@ module Game {
         }
 
         log() {
-            for (var i: number = 0, len: number = this.objects.length; i < len; ++i) {
-                var obj: TopologyObject = this.objects[i];
+            for (let i: number = 0, len: number = this.objects.length; i < len; ++i) {
+                let obj: TopologyObject = this.objects[i];
                 console.log(obj.getDescription());
             }
         }
@@ -331,17 +331,17 @@ module Game {
         private sectorSeeds: Core.Position[] = [];
 
         private floodFill(map: Map, x: number, y: number) {
-            var cellsToVisit: Core.Position[] = [];
-            var seed: Core.Position = new Core.Position(x, y);
-            var sector: Sector = this.topologyMap.createSector(seed);
+            let cellsToVisit: Core.Position[] = [];
+            let seed: Core.Position = new Core.Position(x, y);
+            let sector: Sector = this.topologyMap.createSector(seed);
             this.topologyMap.setObjectId(seed, sector.id);
             sector.cellCount++;
             cellsToVisit.push(seed);
             while (cellsToVisit.length !== 0) {
-                var pos: Core.Position = cellsToVisit.shift();
-                var adjacentCells: Core.Position[] = pos.getAdjacentCells(map.w, map.h);
-                for (var i: number = 0, len: number = adjacentCells.length; i < len; ++i) {
-                    var curpos: Core.Position = adjacentCells[i];
+                let pos: Core.Position = cellsToVisit.shift();
+                let adjacentCells: Core.Position[] = pos.getAdjacentCells(map.w, map.h);
+                for (let i: number = 0, len: number = adjacentCells.length; i < len; ++i) {
+                    let curpos: Core.Position = adjacentCells[i];
                     if (map.isWall(curpos.x, curpos.y) || this.topologyMap.getObjectId(curpos) === sector.id) {
                         continue;
                     }
@@ -357,7 +357,7 @@ module Game {
                         }
                     } else if (this.hasDoor(map, curpos)) {
                         // connect to an existing connector ?
-                        var connector: Connector = this.topologyMap.getConnector(curpos);
+                        let connector: Connector = this.topologyMap.getConnector(curpos);
                         if (connector.sector1Id !== sector.id && connector.sector2Id === undefined) {
                             connector.sector2Id = sector.id;
                             this.topologyMap.getSector(connector.sector1Id).addConnector(connector.id);
@@ -369,11 +369,11 @@ module Game {
         }
 
         private hasDoor(map: Map, pos: Core.Position): boolean {
-            var items: Actor[] = Engine.instance.actorManager.findActorsOnCell(pos, Engine.instance.actorManager.getItemIds());
+            let items: Actor[] = Engine.instance.actorManager.findActorsOnCell(pos, Engine.instance.actorManager.getItemIds());
             if (items.length === 0) {
                 return false;
             }
-            for (var i: number = 0, len: number = items.length; i < len; ++i) {
+            for (let i: number = 0, len: number = items.length; i < len; ++i) {
                 if (items[i].door) {
                     return true;
                 }
@@ -382,11 +382,11 @@ module Game {
         }
 
         private newConnector(from: Core.Position, pos: Core.Position, sector1Id: TopologyObjectId): TopologyObjectId {
-            var connector: Connector = this.topologyMap.createConnector(pos, sector1Id);
+            let connector: Connector = this.topologyMap.createConnector(pos, sector1Id);
             // add a new sector seed on the other side of the door
             // note that this cell might be in the same sector as from
             // this could be used to remove useless doors
-            var sectorSeed: Core.Position;
+            let sectorSeed: Core.Position;
             if (from.x === pos.x - 1) {
                 sectorSeed = new Core.Position(pos.x + 1, pos.y);
             } else if (from.x === pos.x + 1) {
@@ -400,37 +400,37 @@ module Game {
             return connector.id;
         }
 
-		/*
+		/**
 			Function: findGuts
 			Detect connectors that are mandatory passage from one sector to another
 		*/
         private findGuts() {
-            for (var i: number = 0, len: number = this.topologyMap.connectors.length; i < len; ++i) {
-                var connector: Connector = this.topologyMap.connectors[i];
+            for (let i: number = 0, len: number = this.topologyMap.connectors.length; i < len; ++i) {
+                let connector: Connector = this.topologyMap.connectors[i];
                 if (!connector.isDummy()) {
                     connector.gut = this.computeGut(connector);
                 }
             }
         }
 
-		/*
+		/**
 			Function: computeGut
 			Check whether this connector is a mandatory passage (i.e there's no alternative route).
 		*/
         private computeGut(connector: Connector): boolean {
-            var toExplore: TopologyObjectId[] = [];
-            var explored: TopologyObjectId[] = [];
+            let toExplore: TopologyObjectId[] = [];
+            let explored: TopologyObjectId[] = [];
             toExplore.push(connector.sector1Id);
             while (toExplore.length > 0) {
-                var sectorId: TopologyObjectId = toExplore.shift();
+                let sectorId: TopologyObjectId = toExplore.shift();
                 if (sectorId === connector.sector2Id) {
                     // found an alternative path
                     return false;
                 }
                 explored.push(sectorId);
-                var sector: Sector = this.topologyMap.getSector(sectorId);
-                for (var i: number = 0, len: number = sector.connectors.length; i < len; ++i) {
-                    var connector2: Connector = this.topologyMap.getConnector(sector.connectors[i]);
+                let sector: Sector = this.topologyMap.getSector(sectorId);
+                for (let i: number = 0, len: number = sector.connectors.length; i < len; ++i) {
+                    let connector2: Connector = this.topologyMap.getConnector(sector.connectors[i]);
                     if (connector2.id !== connector.id) {
                         if (connector2.sector1Id === sector.id && !connector2.isDummy()
                             && explored.indexOf(connector2.sector2Id) === -1) {
@@ -444,7 +444,7 @@ module Game {
             return true;
         }
 
-		/*
+		/**
 			Function: findDungeonExits
 			Move the dungeon entry/exit so that :
 			* if there are dead ends, the exit is in a dead end
@@ -454,18 +454,18 @@ module Game {
 			noDeadEndExit - whether exit should be searched in dead ends only or in any sector
 		*/
         findDungeonExits(entry: Core.Position, exit: Core.Position, noDeadEndExit: boolean = false) {
-            var longestPathLength: number = 0;
-            for (var i: number = 0, len: number = this.topologyMap.sectors.length; i < len; ++i) {
-                var exitSector: Sector = this.topologyMap.sectors[i];
+            let longestPathLength: number = 0;
+            for (let i: number = 0, len: number = this.topologyMap.sectors.length; i < len; ++i) {
+                let exitSector: Sector = this.topologyMap.sectors[i];
                 if (noDeadEndExit || exitSector.isDeadEnd()) {
-                    var farthestSectorId = this.topologyMap.findFarthestSector(exitSector.id);
+                    let farthestSectorId = this.topologyMap.findFarthestSector(exitSector.id);
                     if (farthestSectorId === NONE) {
                         continue;
                     }
-                    var pathLength: number = this.topologyMap.computePath(exitSector.id, farthestSectorId).length;
+                    let pathLength: number = this.topologyMap.computePath(exitSector.id, farthestSectorId).length;
                     if (pathLength > longestPathLength) {
                         longestPathLength = pathLength;
-                        var entrySector: Sector = this.topologyMap.getSector(farthestSectorId);
+                        let entrySector: Sector = this.topologyMap.getSector(farthestSectorId);
                         entry.x = entrySector.seed.x;
                         entry.y = entrySector.seed.y;
                         exit.x = exitSector.seed.x;
@@ -479,7 +479,7 @@ module Game {
             }
         }
 
-		/*
+		/**
 			Function: buildPuzzle
 			Build a door/key puzzle going from entry sector to exit sector.
 			This function sets the sector.key and connector.lock values so that the dungeon is always winnable.
@@ -489,21 +489,21 @@ module Game {
 		*/
         buildPuzzle(entry: TopologyObjectId, exit: TopologyObjectId, keyNumber: number = 0) {
             // compute reverse path
-            var path: TopologyObjectId[] = this.topologyMap.computePath(exit, entry);
+            let path: TopologyObjectId[] = this.topologyMap.computePath(exit, entry);
             if (path.length === 1) {
                 // no path
                 return;
             }
-            var pathIndex: number = 0;
-            var currentSector: Sector = this.topologyMap.getSector(path[pathIndex]);
-            var lastConnector: Connector = undefined;
+            let pathIndex: number = 0;
+            let currentSector: Sector = this.topologyMap.getSector(path[pathIndex]);
+            let lastConnector: Connector = undefined;
             pathIndex++;
             // find the first gut connector along the reverse path
             do {
-                var nextSector: Sector = this.topologyMap.getSector(path[pathIndex]);
+                let nextSector: Sector = this.topologyMap.getSector(path[pathIndex]);
                 pathIndex++;
-                for (var i: number = 0, len: number = currentSector.connectors.length; i < len; ++i) {
-                    var connector: Connector = this.topologyMap.getConnector(currentSector.connectors[i]);
+                for (let i: number = 0, len: number = currentSector.connectors.length; i < len; ++i) {
+                    let connector: Connector = this.topologyMap.getConnector(currentSector.connectors[i]);
                     if (connector.sector1Id === nextSector.id || connector.sector2Id === nextSector.id) {
                         lastConnector = connector;
                         currentSector = nextSector;
@@ -515,7 +515,7 @@ module Game {
                 // found a gut connector. lock its door
                 lastConnector.lock = keyNumber;
                 // and find a sector to put the key
-                var keySectorId = this.topologyMap.findFarthestSector(entry);
+                let keySectorId = this.topologyMap.findFarthestSector(entry);
                 if (keySectorId !== NONE) {
                     this.topologyMap.getSector(keySectorId).key = keyNumber;
                     if (Yendor.urlParams[Constants.URL_PARAM_DEBUG]) {
@@ -536,7 +536,7 @@ module Game {
             this.topologyMap = new TopologyMap(map.w, map.h);
             this.sectorSeeds.push(seed);
             while (this.sectorSeeds.length !== 0) {
-                var pos: Core.Position = this.sectorSeeds.shift();
+                let pos: Core.Position = this.sectorSeeds.shift();
                 // in case of doors not connecting two sectors, the other side of the door is already visited
                 if (this.topologyMap.getObjectId(pos) === NONE) {
                     this.floodFill(map, pos.x, pos.y);

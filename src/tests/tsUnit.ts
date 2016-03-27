@@ -19,7 +19,7 @@ module tsUnit {
             if (functionName.indexOf("_") === 0) {
                 return true;
             }
-            for (var prop in this.testClass) {
+            for (let prop in this.testClass) {
                 if (prop === functionName) {
                     return true;
                 }
@@ -28,13 +28,13 @@ module tsUnit {
         }
 
         run() {
-            var testContext = new TestContext();
-            var testResult = new TestResult();
+            let testContext = new TestContext();
+            let testResult = new TestResult();
 
-            for (var i: number = 0, len: number = this.tests.length; i < len; ++i) {
-                var testClass = this.tests[i].testClass;
-                var testName = this.tests[i].name;
-                for (var prop in testClass) {
+            for (let i: number = 0, len: number = this.tests.length; i < len; ++i) {
+                let testClass = this.tests[i].testClass;
+                let testName = this.tests[i].name;
+                for (let prop in testClass) {
                     if (!this.isReservedFunctionName(prop)) {
                         if (typeof testClass[prop] === "function") {
                             if (typeof testClass[Test.PROP_SETUP] === "function") {
@@ -58,7 +58,7 @@ module tsUnit {
         }
 
         showResults(target: HTMLElement, result: TestResult) {
-            var template = "<article>" +
+            let template = "<article>" +
                 "<h1>" + this.getTestResult(result) + "</h1>" +
                 "<p>" + this.getTestSummary(result) + "</p>" +
                 "<section id='tsFail'>" +
@@ -85,11 +85,11 @@ module tsUnit {
         }
 
         private getTestResultList(testResults: TestDescription[]) {
-            var list = "";
-            var group = "";
-            var isFirst = true;
-            for (var i:number = 0, len:number = testResults.length; i < len; ++i) {
-                var result = testResults[i];
+            let list = "";
+            let group = "";
+            let isFirst = true;
+            for (let i:number = 0, len:number = testResults.length; i < len; ++i) {
+                let result = testResults[i];
                 if (result.testName !== group) {
                     group = result.testName;
                     if (isFirst) {
@@ -99,16 +99,11 @@ module tsUnit {
                     }
                     list += "<li>" + result.testName + "<ul>";
                 }
-                list += "<li>" + result.funcName + "(): " + this.encodeHtmlEntities(result.message) + "</li>";
+                list += "<li>" + result.funcName + "(): " + result.message + "</li>";
             }
             return list + "</ul>";
         }
 
-        private encodeHtmlEntities(input: string) {
-            var entitiesToReplace = { "&": "&amp;", "<": "&lt;", ">": "&gt;" };
-            input.replace(/[&<>]/g, (entity: string) => { return entitiesToReplace[entity] || entity; });
-            return input;
-        }
     }
 
     export class TestContext {
@@ -161,7 +156,7 @@ module tsUnit {
         }
 
         throws(a: { (): void; }) {
-            var isThrown = false;
+            let isThrown = false;
             try {
                 a();
             } catch (ex) {
@@ -188,7 +183,7 @@ module tsUnit {
 
     export class Fake {
         constructor(obj: any) {
-            for (var prop in obj) {
+            for (let prop in obj) {
                 if (typeof obj[prop] === "function") {
                     this[prop] = function() { };
                 } else {

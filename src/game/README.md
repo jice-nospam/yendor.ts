@@ -30,18 +30,20 @@ To compile it, run `jake` then open game/index.html in your browser.
 * look with mouse. UI also works with mouse
 
 # WORK IN PROGRESS
-    - light producing consummable items : candle, torch
+    - light producing items : candle, torch, sunrod, lantern
 
 # TODO
 
 Reminder for stuff that might be added to the game. Or not.
 * Bugs
-    - corpses stop updating after reload
+    - player can move while inventory is open
     - monster AI does not wake up in darkness
+    - monsters don't see the player's light
 
 * Engine
     - reduce garbage collector usage
     - clean usage of constructors/onInit
+    - rewrite Core.Color using faster [r,g,b] format
     
 * Gameplay
     - item durability
@@ -49,8 +51,7 @@ Reminder for stuff that might be added to the game. Or not.
         - being able to break certain doors
     - light
         - static light items : wall torchs
-        - refillable light items : lantern + oil flask
-        - magic light items : scroll of floating light
+        - magic light spells : scroll of floating light
     - fire
         - fire effect on items : fireball + dropped torchs should burn scrolls, wooden items
         - fire 'item' : fireball should leave fire on ground for some time
@@ -81,6 +82,6 @@ Reminder for stuff that might be added to the game. Or not.
         - dual wielding (you attack with the fastest weapon first, then with the slowest one. Total waitTime is smaller than the sum of the weapons waitTimes. watch out for special cases like crossbow + sword)
     
 * Eye candy
-    - background animation (torch flickering)
     - end of turn animation (flying arrows, explosions, ...)
     - blood stains
+    - foot steps

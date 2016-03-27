@@ -47,11 +47,10 @@ module Game {
     export class LightDungeonShader extends BasicMapShader implements Umbra.EventListener {
         enableEvents: boolean = true;
         protected lights: Actor[] = [];
-        /*
+        /** 
             Field: dirty
             Whether the light map must be recomputed
         */
-        protected dirty: boolean = true;
         protected lightMap: Core.Color[][];
         protected inFov: boolean[][];
         constructor() {
@@ -64,11 +63,11 @@ module Game {
             if (! this.lightMap ) {
                 return CellLightLevel.DARKNESS;
             }
-            var lightCol: Core.Color = this.lightMap[x][y];
+            let lightCol: Core.Color = this.lightMap[x][y];
             if (!lightCol) {
                 return CellLightLevel.DARKNESS;
             }
-            var intensity: number = Core.ColorUtils.computeIntensity(lightCol);
+            let intensity: number = Core.ColorUtils.computeIntensity(lightCol);
             if ( intensity > Constants.PENUMBRA_THRESHOLD ) {
                 return CellLightLevel.LIGHT;
             } else if ( intensity > 0 ) {
@@ -81,7 +80,7 @@ module Game {
             if (!actor.fovOnly) {
                 return true;
             }
-            var lightCol: Core.Color = this.lightMap[actor.x][actor.y];
+            let lightCol: Core.Color = this.lightMap[actor.x][actor.y];
             if (!lightCol) {
                 return false;
             }
@@ -93,7 +92,7 @@ module Game {
                 return super.getActorCharCode(actor, renderMode);
             }
 
-            var lightCol: Core.Color = this.lightMap[actor.x][actor.y];
+            let lightCol: Core.Color = this.lightMap[actor.x][actor.y];
             if (!lightCol) {
                 return Constants.PENUMBRA_ASCIICODE;
             }
@@ -106,7 +105,7 @@ module Game {
             if ((!actor.fovOnly && Engine.instance.map.isExplored(actor.x, actor.y)) || renderMode === ActorRenderMode.DETECTED) {
                 return super.getActorColor(actor, renderMode);
             }
-            var lightCol: Core.Color = this.lightMap[actor.x][actor.y];
+            let lightCol: Core.Color = this.lightMap[actor.x][actor.y];
             if (!lightCol) {
                 return 0;
             }
@@ -114,10 +113,10 @@ module Game {
         }
 
         getBackgroundColor(map: Map, x: number, y: number): Core.Color {
-            var lightCol: Core.Color = this.lightMap[x][y];
+            let lightCol: Core.Color = this.lightMap[x][y];
             if (map.isWall(x, y) && map.isExplored(x, y)) {
                 if ( lightCol ) {
-                    var result: Core.Color = Core.ColorUtils.colorMultiply(super.getBackgroundColor(map, x, y), lightCol);
+                    let result: Core.Color = Core.ColorUtils.colorMultiply(super.getBackgroundColor(map, x, y), lightCol);
                     return Core.ColorUtils.max(result, Constants.DARK_WALL);
                 } else {
                      return Constants.DARK_WALL;
@@ -138,16 +137,14 @@ module Game {
             if (! actor.light ) {
                 return;
             }
-            if (actor.light.isEnabled() ) {
+            if (! actor.activable || actor.activable.isActive() ) {
                 if (this.lights.indexOf(actor) === -1) {
                     this.lights.push(actor);
-                    this.dirty = true;
                 }
             } else {
-                var idx: number = this.lights.indexOf(actor);
+                let idx: number = this.lights.indexOf(actor);
                 if (idx !== -1) {
                     this.lights.splice(idx, 1);
-                    this.dirty = true;
                 }
             }
         }
@@ -158,55 +155,55 @@ module Game {
                 this.inFov = Core.buildMatrix<boolean>(Engine.instance.map.w);
             }
             this.clearLightmap();
-            for (var idx: number = 0, len: number = this.lights.length; idx < len; ++idx) {
-                var actor: Actor = this.lights[idx];
-                var intensityCoef: number = actor.light.computeIntensityVariation(Umbra.application.elapsedTime);
+            for (let idx: number = 0, len: number = this.lights.length; idx < len; ++idx) {
+                let actor: Actor = this.lights[idx];
+                let intensityCoef: number = actor.light.computeIntensityVariation(Umbra.application.elapsedTime);
                 this.computeLightMap(actor, intensityCoef);
             }
             // finalement, add the "no light" light
-            var player: Actor = Engine.instance.actorManager.getPlayer();
+            let player: Actor = Engine.instance.actorManager.getPlayer();
             if ( player.light) {
                 this.computeLightMap(player, 1);
             }
         }
 
         private clearLightmap() {
-            var w: number = Engine.instance.map.w;
-            var h: number = Engine.instance.map.h;
-            for (var x: number = 0; x < w; ++x) {
-                for (var y: number = 0; y < h; ++y) {
+            let w: number = Engine.instance.map.w;
+            let h: number = Engine.instance.map.h;
+            for (let x: number = 0; x < w; ++x) {
+                for (let y: number = 0; y < h; ++y) {
                     this.lightMap[x][y] = 0;
                 }
             }
         }
 
         private computeLightMap(actor: Actor, intensityCoef: number) {
-            var range: Core.Rect = new Core.Rect();
+            let range: Core.Rect = new Core.Rect();
             range.x = actor.x - actor.light.options.range;
             range.y = actor.y - actor.light.options.range;
             range.w = actor.light.options.range * 2 + 1;
             range.h = actor.light.options.range * 2 + 1;
             range.clamp(0, 0, Engine.instance.map.w, Engine.instance.map.h);
-            var squaredRange: number = actor.light.options.range;
+            let squaredRange: number = actor.light.options.range;
             squaredRange = squaredRange * squaredRange;
-            var invSquaredRange = 1 / squaredRange;
+            let invSquaredRange = 1 / squaredRange;
             // we use intensity variation coef to also slightly move the light position
-            var posVariationCoef = actor.light.options.intensityVariationRange ? ((1-intensityCoef) / actor.light.options.intensityVariationRange -0.5) * 0.25 : 0;
+            let posVariationCoef = actor.light.options.intensityVariationRange ? ((1-intensityCoef) / actor.light.options.intensityVariationRange -0.5) * 0.25 : 0;
             Engine.instance.map.fov.computeFov(this.inFov, actor.x, actor.y, actor.light.options.range);
-            var lightOperation: (c1:Core.Color, c2:Core.Color) => Core.Color;
+            let lightOperation: (c1:Core.Color, c2:Core.Color) => Core.Color;
             switch( actor.light.options.renderMode) {
                 case LightRenderMode.MAX: lightOperation = Core.ColorUtils.max; break;
                 default:
                 case LightRenderMode.ADDITIVE: lightOperation = Core.ColorUtils.add; break;
             }
-            for (var x: number = range.x, xmax: number = range.x + range.w; x < xmax; ++x) {
-                var dx2 = actor.x - x + posVariationCoef;
+            for (let x: number = range.x, xmax: number = range.x + range.w; x < xmax; ++x) {
+                let dx2 = actor.x - x + posVariationCoef;
                 dx2 = dx2 * dx2;
-                for (var y: number = range.y, ymax: number = range.y + range.h; y < ymax; ++y) {
-                    var dy2 = actor.y - y - posVariationCoef;
+                for (let y: number = range.y, ymax: number = range.y + range.h; y < ymax; ++y) {
+                    let dy2 = actor.y - y - posVariationCoef;
                     dy2 = dy2 * dy2;
                     if (dx2 + dy2 <= squaredRange && this.inFov[x][y]) {
-                        var intensity: number = actor.light.computeIntensity(dx2 + dy2) * intensityCoef;
+                        let intensity: number = actor.light.computeIntensity(dx2 + dy2) * intensityCoef;
                         
                         this.lightMap[x][y] = lightOperation(this.lightMap[x][y], Core.ColorUtils.multiply(actor.light.options.color, intensity));
                     }

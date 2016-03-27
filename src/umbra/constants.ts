@@ -1,4 +1,4 @@
-/*
+/**
 	Section: Constants
 */
 module Umbra {
@@ -141,7 +141,7 @@ module Umbra {
         DOM_VK_META = 224
     };
 
-    /*
+    /**
         Enum : AxisType
     */
     export const enum AxisType {

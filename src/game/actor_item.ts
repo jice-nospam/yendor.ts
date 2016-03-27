@@ -1,4 +1,4 @@
-/*
+/**
 	Section: items
 */
 module Game {
@@ -8,7 +8,7 @@ module Game {
 	 * Group: items
 	 ********************************************************************************/
 
-	/*
+	/**
 		Class: Destructible
 		Something that can take damages and heal/repair.
 	*/
@@ -18,6 +18,10 @@ module Game {
         defense: number = 0;
         hp: number;
         private corpseName: string;
+        private corpseChar: string;
+        private wasBlocking: boolean;
+        private wasTransparent: boolean;
+        private deathMessage: string;
         xp: number = 0;
 
         constructor(def: DestructibleDef) {
@@ -25,11 +29,13 @@ module Game {
             if (def) {
                 this.hp = def.healthPoints;
                 this._maxHp = def.healthPoints;
-                if ( def.defense ) {
+                if (def.defense) {
                     this.defense = def.defense;
                 }
                 this.corpseName = def.corpseName;
-                if ( def.xp ) {
+                this.corpseChar = def.corpseChar;
+                this.deathMessage = def.deathMessage;
+                if (def.xp) {
                     this.xp = def.xp;
                 }
             }
@@ -42,13 +48,13 @@ module Game {
         }
 
         public computeRealDefense(owner: Actor): number {
-            var realDefense = this.defense;
+            let realDefense = this.defense;
             if (owner.container) {
                 // add bonus from equipped items
                 // TODO shield can block only one attack per turn
-                var n: number = owner.container.size();
-                for (var i: number = 0; i < n; i++) {
-                    var item: Actor = owner.container.get(i);
+                let n: number = owner.container.size();
+                for (let i: number = 0; i < n; i++) {
+                    let item: Actor = owner.container.get(i);
                     if (item.equipment && item.equipment.isEquipped()) {
                         realDefense += item.equipment.getDefenseBonus();
                     }
@@ -57,7 +63,7 @@ module Game {
             return realDefense;
         }
 
-		/*
+		/**
 			Function: takeDamage
 			Deals damages to this actor. If health points reach 0, call the die function.
 
@@ -69,6 +75,9 @@ module Game {
 			the actual amount of damage taken
 		*/
         takeDamage(owner: Actor, damage: number): number {
+            if(this.isDead()) {
+                return;
+            }
             damage -= this.computeRealDefense(owner);
             if (damage > 0) {
                 this.hp -= damage;
@@ -82,26 +91,59 @@ module Game {
             return damage;
         }
 
-		/*
+		/**
 			Function: heal
-			Recover some health points
+			Recover some health points. Can resurrect a dead destructible
 
 			Parameters:
+            owner - the actor owning this Destructible
 			amount - amount of health points to recover
 
 			Returns:
 			the actual amount of health points recovered
 		*/
-        heal(amount: number): number {
+        heal(owner: Actor, amount: number): number {
+            let wasDead: boolean = this.isDead();
             this.hp += amount;
             if (this.hp > this._maxHp) {
                 amount -= this.hp - this._maxHp;
                 this.hp = this._maxHp;
             }
+            if (wasDead && this.hp > 0) {
+                this.resurrect(owner);
+            }
             return amount;
         }
 
-		/*
+        private swapNameAndCorpseName(owner: Actor) {
+            if ( this.corpseName ) {
+                let tmp: string = owner.name;
+                owner.name = this.corpseName;
+                this.corpseName = tmp;
+            }
+            if ( this.corpseChar ) {
+                let tmp: string = owner.ch;
+                owner.ch = this.corpseChar;
+                this.corpseChar = owner.ch;
+            }
+
+        }
+
+        private resurrect(owner: Actor) {
+            this.swapNameAndCorpseName(owner);
+            owner.blocks = this.wasBlocking;
+            owner.transparent = this.wasTransparent;
+            if (!owner.transparent) {
+                Engine.instance.map.setTransparent(owner.x, owner.y, false);
+            }
+            if ( owner.activable ) {
+                if (!owner.equipment || owner.equipment.isEquipped()) {
+                    owner.activable.activate(owner);
+                }
+            }
+        }
+
+		/**
 			Function: die
 			Turn this actor into a corpse
 
@@ -109,26 +151,41 @@ module Game {
 			owner - the actor owning this Destructible
 		*/
         die(owner: Actor) {
-            owner.ch = "%";
-            owner.name = this.corpseName;
+            if (this.deathMessage) {
+                let wearer: Actor = owner.getWearer();
+                if ( wearer ) {
+                    log(transformMessage(this.deathMessage, owner, wearer));
+                }
+            }
+            if (!this.corpseName) {
+                Engine.instance.actorManager.destroyActor(owner.id);
+                return;
+            }
+            // save name in case of resurrection
+            this.swapNameAndCorpseName(owner);
+            this.wasBlocking = owner.blocks;
+            this.wasTransparent = owner.transparent;
             owner.blocks = false;
             if (!owner.transparent) {
                 Engine.instance.map.setTransparent(owner.x, owner.y, true);
                 owner.transparent = true;
             }
-            if ( owner === Engine.instance.actorManager.getPlayer()) {
-                Umbra.EventManager.publishEvent(EventType[EventType.CHANGE_STATUS], GameStatus.DEFEAT);            
+            if (owner === Engine.instance.actorManager.getPlayer()) {
+                Umbra.EventManager.publishEvent(EventType[EventType.CHANGE_STATUS], GameStatus.DEFEAT);
+            }
+            if (owner.activable) {
+                owner.activable.deactivate(owner);
             }
         }
     }
 
-	/*
+	/**
 		Class: Attacker
 		An actor that can deal damages to another one
 	*/
     export class Attacker implements ActorFeature {
         className: string;
-		/*
+		/**
 			Property: power
 			Amount of damages given
 		*/
@@ -137,7 +194,7 @@ module Game {
 
         constructor(def: AttackerDef) {
             this.className = "Attacker";
-            if ( def ) {
+            if (def) {
                 this.power = def.hitPoints;
                 this._attackTime = def.attackTime;
             }
@@ -145,7 +202,7 @@ module Game {
 
         get attackTime() { return this._attackTime; }
 
-		/*
+		/**
 			Function: attack
 			Deal damages to another actor
 
@@ -155,17 +212,17 @@ module Game {
 		*/
         attack(owner: Actor, target: Actor) {
             if (target.destructible && !target.destructible.isDead()) {
-                var damage = this.power - target.destructible.computeRealDefense(target);
-                var msg: string = "[The actor1] attack[s] [the actor2]";
-                var msgColor: Core.Color;
-                var gainedXp: number = 0;
+                let damage = this.power - target.destructible.computeRealDefense(target);
+                let msg: string = "[The actor1] attack[s] [the actor2]";
+                let msgColor: Core.Color;
+                let gainedXp: number = 0;
                 if (damage >= target.destructible.hp) {
                     msg += " and kill[s] [it2] !";
                     msgColor = Constants.LOG_WARN_COLOR;
-                    if ( owner.xpHolder && target.destructible.xp ) {
-                        msg+="\n[The actor2] [is2] dead. [The actor1] gain[s] " + target.destructible.xp + " xp.";
+                    if (owner.xpHolder && target.destructible.xp) {
+                        msg += "\n[The actor2] [is2] dead. [The actor1] gain[s] " + target.destructible.xp + " xp.";
                         gainedXp = target.destructible.xp;
-                    }                    
+                    }
                 } else if (damage > 0) {
                     msg += " for " + damage + " hit points.";
                     msgColor = Constants.LOG_WARN_COLOR;
@@ -174,8 +231,8 @@ module Game {
                 }
                 log(transformMessage(msg, owner, target), msgColor);
                 target.destructible.takeDamage(target, this.power);
-                if ( gainedXp > 0) {
-                    owner.xpHolder.addXp(owner, gainedXp);                    
+                if (gainedXp > 0) {
+                    owner.xpHolder.addXp(owner, gainedXp);
                 }
             }
         }
@@ -185,7 +242,7 @@ module Game {
 	 * Group: inventory
 	 ********************************************************************************/
 
-    /*
+    /**
          Interface: ContainerListener
          Something that must be notified when an item is added or removed from the container
     */
@@ -193,7 +250,7 @@ module Game {
         onAdd(itemId: ActorId, container: Container, owner: Actor);
         onRemove(itemId: ActorId, container: Container, owner: Actor);
     }
-    /*
+    /**
          Class: Container
          An actor that can contain other actors :
          - creatures with inventory
@@ -210,7 +267,7 @@ module Game {
         constructor(def: ContainerDef, listener?: ContainerListener) {
             this.className = "Container";
             this.__listener = listener;
-            if ( def ) {
+            if (def) {
                 this._capacity = def.capacity;
             }
         }
@@ -227,7 +284,7 @@ module Game {
         }
 
         contains(actorId: ActorId): boolean {
-            for (var i: number = 0, n: number = this.size(); i < n; i++) {
+            for (let i: number = 0, n: number = this.size(); i < n; i++) {
                 if (actorId === this.actorIds[i]) {
                     return true;
                 }
@@ -236,8 +293,8 @@ module Game {
         }
 
         getFromSlot(slot: string): Actor {
-            for (var i: number = 0, n: number = this.size(); i < n; i++) {
-                var actor: Actor = this.get(i);
+            for (let i: number = 0, n: number = this.size(); i < n; i++) {
+                let actor: Actor = this.get(i);
                 if (actor.equipment && actor.equipment.isEquipped() && actor.equipment.getSlot() === slot) {
                     return actor;
                 }
@@ -269,9 +326,9 @@ module Game {
         }
 
         computeTotalWeight(): number {
-            var weight: number = 0;
+            let weight: number = 0;
             this.actorIds.forEach((actorId: ActorId) => {
-                var actor: Actor = Engine.instance.actorManager.getActor(actorId);
+                let actor: Actor = Engine.instance.actorManager.getActor(actorId);
                 if (actor.pickable) {
                     weight += actor.pickable.weight;
                 }
@@ -279,7 +336,7 @@ module Game {
             return weight;
         }
 
-        /*
+        /**
               Function: add
               add a new actor in this container
 
@@ -290,7 +347,7 @@ module Game {
               false if the operation failed because the container is full
         */
         add(actor: Actor, owner: Actor) {
-            var weight: number = this.computeTotalWeight();
+            let weight: number = this.computeTotalWeight();
             if (actor.pickable.weight + weight > this._capacity) {
                 return false;
             }
@@ -302,7 +359,7 @@ module Game {
             return true;
         }
 
-        /*
+        /**
               Function: remove
               remove an actor from this container
 
@@ -311,7 +368,7 @@ module Game {
               owner - the actor owning the container
         */
         remove(actorId: ActorId, owner: Actor) {
-            var idx: number = this.actorIds.indexOf(actorId);
+            let idx: number = this.actorIds.indexOf(actorId);
             if (idx !== -1) {
                 this.actorIds.splice(idx, 1);
                 if (this.__listener) {
@@ -321,26 +378,26 @@ module Game {
         }
     }
 
-	/*
+	/**
 		Class: Pickable
 		An actor that can be picked by a creature
 	*/
     export class Pickable implements ActorFeature {
         className: string;
-		/*
+		/**
 			Property: onUseEffector
 			What happens when this item is used.
 		*/
         private onUseEffector: Effector;
-		/*
+		/**
 			Property: onThrowEffector
 			What happens when this item is thrown.
 		*/
         private onThrowEffector: Effector;
         private _weight: number;
         private _destroyedWhenThrown: boolean = false;
-        private _container: ActorId;
-		/*
+        private _containerId: ActorId;
+		/**
 			Property: _shortcut
 			Inventory shortcut between 0 (a) and 25 (z)
 		*/
@@ -349,7 +406,7 @@ module Game {
         get weight() { return this._weight; }
         get onThrowEffect() { return this.onThrowEffector ? this.onThrowEffector.effect : undefined; }
         get destroyedWhenThrown() { return this._destroyedWhenThrown; }
-        get container() { return this._container; }
+        get containerId() { return this._containerId; }
         getOnThrowEffector(): Effector {
             return this.onThrowEffector;
         }
@@ -359,15 +416,15 @@ module Game {
 
         constructor(def: PickableDef) {
             this.className = "Pickable";
-            if ( def ) {
+            if (def) {
                 this._weight = def.weight;
                 if (def.destroyedWhenThrown) {
                     this._destroyedWhenThrown = def.destroyedWhenThrown;
                 }
-                if ( def.onUseEffector ) {
+                if (def.onUseEffector) {
                     this.onUseEffector = ActorFactory.createEffector(def.onUseEffector);
                 }
-                if ( def.onThrowEffector ) {
+                if (def.onThrowEffector) {
                     this.onThrowEffector = ActorFactory.createEffector(def.onThrowEffector);
                 }
             }
@@ -381,7 +438,7 @@ module Game {
             this.onThrowEffector = new Effector(effect, targetSelector, message, destroyOnEffect);
         }
 
-		/*
+		/**
 			Function: pick
 			Put this actor in a container actor
 
@@ -394,14 +451,15 @@ module Game {
 		*/
         pick(owner: Actor, wearer: Actor): boolean {
             if (wearer.container && wearer.container.add(owner, wearer)) {
-                this._container = wearer.id;
+                this._containerId = wearer.id;
                 log(transformMessage("[The actor1] pick[s] [the actor2].", wearer, owner));
 
                 if (owner.equipment && wearer.container.isSlotEmpty(owner.equipment.getSlot())) {
                     // equippable and slot is empty : auto-equip
                     owner.equipment.equip(owner, wearer);
-                } else if (owner.light) {
-                    owner.light.disable(owner);
+                } else if (owner.equipment && owner.activable && owner.activable.isActive()) {
+                    // picking an equipable, active item and not equipping it turns it off
+                    owner.activable.deactivate(owner);
                 }
 
                 // remove this actor from item list
@@ -412,7 +470,7 @@ module Game {
             return false;
         }
 
-		/*
+		/**
 			Function: drop
 			Drop this actor on the ground.
 			
@@ -420,22 +478,24 @@ module Game {
 			owner - the actor owning this Pickable (the item)
 			wearer - the container (the creature picking the item)
 			pos - coordinate if the position is not the wearer's position
+            verb - verb to use in the message (drop/throw/...)
+            withMessage - whether a message should be logged
 		*/
-        drop(owner: Actor, wearer: Actor, pos?: Core.Position, verb: string = "drop", fromFire: boolean = false) {
+        drop(owner: Actor, wearer: Actor, pos?: Core.Position, verb: string = "drop", withMessage: boolean = false) {
             wearer.container.remove(owner.id, wearer);
-            this._container = undefined;
+            this._containerId = undefined;
             owner.x = pos ? pos.x : wearer.x;
             owner.y = pos ? pos.y : wearer.y;
             Engine.instance.actorManager.addItem(owner);
             if (owner.equipment) {
                 owner.equipment.unequip(owner, wearer, true);
             }
-            if (!fromFire) {
+            if (!withMessage) {
                 log(wearer.getThename() + " " + verb + wearer.getVerbEnd() + owner.getthename());
             }
         }
 
-		/*
+		/**
 			Function: use
 			Use this item. If it has a onUseEffector, apply the effect and destroy the item.
 			If it's an equipment, equip/unequip it.
@@ -453,6 +513,8 @@ module Game {
             }
             if (owner.equipment) {
                 owner.equipment.use(owner, wearer);
+            } else if (owner.activable) {
+                owner.activable.activate(owner);
             }
             return true;
         }
@@ -461,7 +523,7 @@ module Game {
             this.onUseEffector.applyOnPos(owner, wearer, pos);
         }
 
-		/*
+		/**
 			Function: throw
 			Throw this item. If it has a onUseEffector, apply the effect.
 
@@ -473,19 +535,15 @@ module Game {
             log("Left-click where to throw the " + owner.name
                 + ",\nor right-click to cancel.", Constants.LOG_WARN_COLOR);
             if (!maxRange) {
-                var weight: number = owner.pickable.weight;
-                maxRange = weight < 0.5 ? 3 : 15 / weight;
-                if (owner.equipment && owner.equipment.getSlot() === Constants.SLOT_QUIVER) {
-                    // increase projectile throw range
-                    maxRange *= 2.5;
-                }
+                maxRange = owner.computeThrowRange(wearer);
             }
-            var data: TilePickerEventData = { range: maxRange, origin: new Core.Position(wearer.x, wearer.y) };
+            // create a Core.Position instead of using directly wearer to avoid TilePicker -> actor dependency which would break json serialization
+            let data: TilePickerEventData = { range: maxRange, origin: new Core.Position(wearer.x, wearer.y) };
             Umbra.EventManager.publishEvent(EventType[EventType.PICK_TILE], data);
         }
 
         throwOnPos(owner: Actor, wearer: Actor, fromFire: boolean, pos: Core.Position, coef: number = 1) {
-            owner.pickable.drop(owner, wearer, pos, "throw", fromFire);
+            owner.pickable.drop(owner, wearer, pos, "throw", !fromFire);
             if (owner.pickable.onThrowEffector) {
                 owner.pickable.onThrowEffector.apply(owner, wearer, pos, coef);
                 if (owner.pickable.destroyedWhenThrown) {
@@ -495,7 +553,7 @@ module Game {
         }
     }
 
-	/*
+	/**
 		Class: Equipment
 		An item that can be equipped
 	*/
@@ -507,9 +565,9 @@ module Game {
 
         constructor(def: EquipmentDef) {
             this.className = "Equipment";
-            if ( def ) {
+            if (def) {
                 this.slot = def.slot;
-                if ( def.defense ) {
+                if (def.defense) {
                     this.defenseBonus = def.defense;
                 }
             }
@@ -520,7 +578,7 @@ module Game {
         getSlot(): string { return this.slot; }
         getDefenseBonus(): number { return this.defenseBonus; }
 
-		/*
+		/**
 			Function: use
 			Use (equip or unequip) this item.
 			Parameters:
@@ -536,23 +594,23 @@ module Game {
         }
 
         equip(owner: Actor, wearer: Actor) {
-            var previousEquipped = wearer.container.getFromSlot(this.slot);
+            let previousEquipped = wearer.container.getFromSlot(this.slot);
             if (previousEquipped) {
                 // first unequip previously equipped item
                 previousEquipped.equipment.unequip(previousEquipped, wearer);
             } else if (this.slot === Constants.SLOT_BOTH_HANDS) {
                 // unequip both hands when equipping a two hand weapon
-                var rightHandItem = wearer.container.getFromSlot(Constants.SLOT_RIGHT_HAND);
+                let rightHandItem = wearer.container.getFromSlot(Constants.SLOT_RIGHT_HAND);
                 if (rightHandItem) {
                     rightHandItem.equipment.unequip(rightHandItem, wearer);
                 }
-                var leftHandItem = wearer.container.getFromSlot(Constants.SLOT_LEFT_HAND);
+                let leftHandItem = wearer.container.getFromSlot(Constants.SLOT_LEFT_HAND);
                 if (leftHandItem) {
                     leftHandItem.equipment.unequip(leftHandItem, wearer);
                 }
             } else if (this.slot === Constants.SLOT_RIGHT_HAND || this.slot === Constants.SLOT_LEFT_HAND) {
                 // unequip two hands weapon when equipping single hand weapon
-                var twoHandsItem = wearer.container.getFromSlot(Constants.SLOT_BOTH_HANDS);
+                let twoHandsItem = wearer.container.getFromSlot(Constants.SLOT_BOTH_HANDS);
                 if (twoHandsItem) {
                     twoHandsItem.equipment.unequip(twoHandsItem, wearer);
                 }
@@ -561,9 +619,9 @@ module Game {
             if (wearer === Engine.instance.actorManager.getPlayer()) {
                 log(transformMessage("[The actor1] equip[s] [the actor2] on [its] " + this.slot, wearer, owner), 0xFFA500);
             }
-            if ( owner.light && ! owner.light.isEnabled() ) {
-                owner.light.enable(owner);
-            }            
+            if (owner.activable && !owner.activable.isActive()) {
+                owner.activable.activate(owner);
+            }
         }
 
         unequip(owner: Actor, wearer: Actor, beforeDrop: boolean = false) {
@@ -571,13 +629,13 @@ module Game {
             if (!beforeDrop && wearer === Engine.instance.actorManager.getPlayer()) {
                 log(transformMessage("[The actor1] unequip[s] [the actor2] from [its] " + this.slot, wearer, owner), 0xFFA500);
             }
-            if ( !beforeDrop && owner.light ) {
-                owner.light.disable(owner);
+            if (!beforeDrop && owner.activable) {
+                owner.activable.deactivate(owner);
             }
         }
     }
 
-	/*
+	/**
 		class: Ranged
 		an item that throws other items. It's basically a shortcut to throw projectile items with added damages.
 		For example instead of [t]hrowing an arrow by hand, you equip a bow and [f]ire it. The result is the same
@@ -592,22 +650,22 @@ module Game {
 	*/
     export class Ranged implements ActorFeature {
         className: string;
-		/*
+		/**
 			Property: _damageCoef
 			Damage multiplicator when using this weapon to fire a projectile.
 		*/
         private _damageCoef: number;
-		/*
+		/**
 			Property: _projectileType
 			The actor type that this weapon can fire.
 		*/
-        private _projectileType: ActorClass;
-		/*
+        private _projectileType: string;
+		/**
 			Property: _loadTime
 			Time to load this weapon with a projectile
 		*/
         private _loadTime: number;
-		/*
+		/**
 			Property:  _range
 			This weapon's maximum firing distance
 		*/
@@ -623,7 +681,7 @@ module Game {
 
         constructor(def: RangedDef) {
             this.className = "Ranged";
-            if ( def ) {
+            if (def) {
                 this._damageCoef = def.damageCoef;
                 this._projectileType = def.projectileType;
                 this._loadTime = def.loadTime;
@@ -632,7 +690,7 @@ module Game {
         }
 
         fire(owner: Actor, wearer: Actor) {
-            var projectile: Actor = this.findCompatibleProjectile(wearer);
+            let projectile: Actor = this.findCompatibleProjectile(wearer);
             if (!projectile) {
                 // no projectile found. cannot fire
                 if (wearer === Engine.instance.actorManager.getPlayer()) {
@@ -646,16 +704,16 @@ module Game {
         }
 
         private findCompatibleProjectile(wearer: Actor): Actor {
-            var projectile = undefined;
+            let projectile = undefined;
             if (wearer.container) {
                 // if a projectile type is selected (equipped in quiver), use it
                 projectile = wearer.container.getFromSlot(Constants.SLOT_QUIVER);
                 if (!projectile || !projectile.isA(this._projectileType)) {
                     // else use the first compatible projectile
                     projectile = undefined;
-                    var n: number = wearer.container.size();
-                    for (var i: number = 0; i < n; ++i) {
-                        var item: Actor = wearer.container.get(i);
+                    let n: number = wearer.container.size();
+                    for (let i: number = 0; i < n; ++i) {
+                        let item: Actor = wearer.container.get(i);
                         if (item.isA(this._projectileType)) {
                             projectile = item;
                             break;
@@ -667,7 +725,7 @@ module Game {
         }
     }
 
-	/*
+	/**
 		Class: Magic
 		Item with magic properties (staff wands, ...)
 	*/
@@ -681,14 +739,14 @@ module Game {
 
         constructor(def: MagicDef) {
             this.className = "Magic";
-            if ( def ) {
+            if (def) {
                 this.maxCharges = def.charges;
                 this._charges = def.charges;
                 this.onFireEffector = ActorFactory.createEffector(def.onFireEffect);
             }
         }
 
-		/*
+		/**
 			Function: zap
 			Use the magic power of the item
 
@@ -725,7 +783,7 @@ module Game {
         }
     }
 
-	/*
+	/**
 		Class: Lever
 		Can be activated with E key when standing on an adjacent cell.
 		This can be used to open/close doors, turn wall torchs on/off, or implement actual levers...
@@ -738,7 +796,7 @@ module Game {
         get actorId() { return this._actorId; }
         get action() { return this._action; }
 
-        constructor(def: LeverDef, actorId?:ActorId) {
+        constructor(def: LeverDef, actorId?: ActorId) {
             this.className = "Lever";
             if (def) {
                 this._action = def.action;
@@ -747,13 +805,13 @@ module Game {
         }
 
         activate(activator: Actor) {
-            var mechanism = this._actorId !== undefined ? Engine.instance.actorManager.getActor(this._actorId) : undefined;
+            let mechanism = this._actorId !== undefined ? Engine.instance.actorManager.getActor(this._actorId) : undefined;
             switch (this._action) {
                 case LeverAction.OPEN_CLOSE_DOOR:
                     if (mechanism && mechanism.door) {
                         if (mechanism.lock && mechanism.lock.isLocked()) {
                             // unlock if the activator has the key
-                            var keyId = mechanism.lock.keyId;
+                            let keyId = mechanism.lock.keyId;
                             if (activator.container && activator.container.contains(keyId)) {
                                 mechanism.lock.unlock(keyId);
                                 activator.container.remove(keyId, activator);
@@ -762,47 +820,51 @@ module Game {
                                 log(transformMessage("[The actor1] unlock[s] [the actor2].", activator, mechanism));
                             }
                         }
-                        mechanism.door.openOrClose(mechanism);
+                        mechanism.door.switch(mechanism);
                     }
                     break;
             }
         }
     }
 
-	/*
-		Class: Openable
-		Something that can be open/closed
+	/**
+		Class: Activable
+		Something that can be turned on/off
 	*/
-    export class Openable implements ActorFeature {
+    export class Activable implements ActorFeature {
         className: string;
-        private closed: boolean = true;
+        private active: boolean = false;
 
-        constructor() {
-            this.className = "Openable";
+        constructor(def: ActivableDef) {
+            this.className = "Activable";
         }
 
-        isClosed(): boolean { return this.closed; }
+        isActive(): boolean { return this.active; }
 
-        open(owner: Actor) {
-            this.closed = false;
-            log(transformMessage("[The actor1] is open.", owner));
+        activate(owner: Actor) {
+            this.active = true;
+            if (owner.light) {
+                Umbra.EventManager.publishEvent(EventType[EventType.LIGHT_ONOFF], owner);            
+            }
         }
 
-        close(owner: Actor) {
-            this.closed = true;
-            log(transformMessage("[The actor1] is closed.", owner));
+        deactivate(owner: Actor) {
+            this.active = false;
+            if (owner.light) {
+                Umbra.EventManager.publishEvent(EventType[EventType.LIGHT_ONOFF], owner);            
+            }
         }
 
-        openOrClose(owner: Actor) {
-            if (this.closed) {
-                this.open(owner);
+        switch(owner: Actor) {
+            if (this.active) {
+                this.deactivate(owner);
             } else {
-                this.close(owner);
+                this.activate(owner);
             }
         }
     }
 
-	/*
+	/**
 		Class: Lockable
 		Something that can be locked/unlocked
 	*/
@@ -830,17 +892,25 @@ module Game {
         }
     }
 
-	/*
+	/**
 		Class: Door
 		Can be open/closed. Does not necessarily block sight (portcullis).
 	*/
-    export class Door extends Openable {
+    export class Door extends Activable {
         private seeThrough: boolean;
         constructor(def: DoorDef) {
-            super();
+            super(def);
             this.className = "Door";
-            if ( def ) {
+            if (def) {
                 this.seeThrough = def.seeThrough;
+            }
+        }
+
+        private displayState(owner: Actor) {
+            if (this.isActive()) {
+                log(transformMessage("[The actor1] is open.", owner));                
+            } else {
+                log(transformMessage("[The actor1] is closed.", owner));                
             }
         }
 
@@ -849,7 +919,8 @@ module Game {
                 log(transformMessage("[The actor1] is locked.", owner));
                 return;
             }
-            super.open(owner);
+            super.activate(owner);
+            this.displayState(owner);
             owner.ch = "/";
             owner.blocks = false;
             owner.transparent = true;
@@ -863,12 +934,21 @@ module Game {
                 log(transformMessage("Cannot close [the actor1]", owner));
                 return;
             }
-            super.close(owner);
+            super.deactivate(owner);
+            this.displayState(owner);
             owner.ch = "+";
             owner.blocks = true;
             owner.transparent = this.seeThrough;
             Engine.instance.map.setWalkable(owner.x, owner.y, false);
             Engine.instance.map.setTransparent(owner.x, owner.y, this.seeThrough);
+        }
+        
+        switch(owner: Actor) {
+            if (this.isActive()) {
+                this.close(owner);
+            } else {
+                this.open(owner);
+            }
         }
     }
 }

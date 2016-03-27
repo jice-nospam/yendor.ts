@@ -4,14 +4,14 @@ module Tests {
 		private rng: Yendor.Random = new Yendor.ComplementaryMultiplyWithCarryRandom();
 
 		isInRange() {
-			var a: number = this.rng.getNumber(100, 200);
+			let a: number = this.rng.getNumber(100, 200);
 
 			this.isTrue( a >= 100 && a <= 200, "100 <= " + a + "<= 200" );
 		}
 
 		isNotConstant() {
-			var a: number = this.rng.getNumber(300, 400);
-			var b: number = this.rng.getNumber(300, 400);
+			let a: number = this.rng.getNumber(300, 400);
+			let b: number = this.rng.getNumber(300, 400);
 
 			this.isTrue( a >= 300 && a <= 400, "300 <= " + a + "<= 400" );
 			this.isTrue( b >= 300 && b <= 400, "300 <= " + b + "<= 400" );
@@ -20,26 +20,26 @@ module Tests {
 		}
 
 		handlesInvertedMinMax() {
-			var a: number = this.rng.getNumber(200, 100);
+			let a: number = this.rng.getNumber(200, 100);
 
 			this.isTrue( a >= 100 && a <= 200, "100 <= " + a + "<= 200" );
 		}
 
 		isReproductible() {
-			var rng: Yendor.Random = new Yendor.ComplementaryMultiplyWithCarryRandom(123);
-			var a: number = rng.getNumber(0, 1000);
+			let rng: Yendor.Random = new Yendor.ComplementaryMultiplyWithCarryRandom(123);
+			let a: number = rng.getNumber(0, 1000);
 			rng = new Yendor.ComplementaryMultiplyWithCarryRandom(123);
-			var b: number = rng.getNumber(0, 1000);
+			let b: number = rng.getNumber(0, 1000);
 
 			this.isTrue( a === b, a + "==" + b );
 		}
 
 		checkRandomChances() {
-			var a: string|number = this.rng.getRandomChance({"item_a": 50, "item_b": 50});
+			let a: string|number = this.rng.getRandomChance({"item_a": 50, "item_b": 50});
 			this.isTrue( a === "item_a" || a === "item_b", "a is 'item_a' or 'item_b'");
-			var b: string|number = this.rng.getRandomChance({"item_a": 0, "item_b": 50});
+			let b: string|number = this.rng.getRandomChance({"item_a": 0, "item_b": 50});
 			this.isTrue( b === "item_b" , "b is 'item_b'");
-			var c: string|number = this.rng.getRandomChance({"item_a": 10, "item_b": 0});
+			let c: string|number = this.rng.getRandomChance({"item_a": 10, "item_b": 0});
 			this.isTrue( c === "item_a" , "c is 'item_a'");
 		}
 	}

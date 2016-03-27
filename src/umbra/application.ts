@@ -1,4 +1,4 @@
-/*
+/**
 	Section: Application
 */
 module Umbra {
@@ -11,7 +11,7 @@ module Umbra {
         renderDivSelector?: string;
         fontFileName?: string;
         ticksPerSecond?: number;
-        /*
+        /**
             Field: backgroundAnimation
             Whether the scene should be rendered every frame or only after an update
         */
@@ -64,7 +64,7 @@ module Umbra {
             Yendor.loop(this.onNewFrame.bind(this));
         }
 
-		/*
+		/**
 			Function: onLoseFocus
 			Called when the game window (or browser tab) loses focus
 		*/
@@ -73,7 +73,7 @@ module Umbra {
             console.log("umbra: focus lost");
         }
 
-		/*
+		/**
 			Function: onGainFocus
 			Called when the game window (or browser tab) gains focus
 		*/
@@ -83,13 +83,13 @@ module Umbra {
             console.log("umbra: focus gained");
         }
 
-		/*
+		/**
 			Function: onNewFrame
 			Called when the browser renders a new animation frame
 		*/
         protected onNewFrame(time: number): void {
             this._elapsedTime = time - this._gameTime;
-            var scene: Scene = SceneManager.getRunningScene();
+            let scene: Scene = SceneManager.getRunningScene();
             // but render every frame to allow background animations (torch flickering, ...)
             if (!this.paused && this.dirtyFrame) {
                 scene.renderHierarchy(this.console);

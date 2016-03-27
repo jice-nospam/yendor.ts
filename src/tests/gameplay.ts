@@ -1,7 +1,7 @@
 module Tests {
 	"use strict";
 
-	/*
+	/**
 		Class: GameplayTests
 		Not really unit tests but tools to help balance the game
 	*/
@@ -9,11 +9,11 @@ module Tests {
 		private actors: Game.Actor[];
 		setUp() {
 			Umbra.init();
-			var engine: Game.Engine = new Game.Engine();
+			let engine: Game.Engine = new Game.Engine();
 			engine.onInit();
 			this.actors = [];
 			// build a table containing an item of each type
-			for ( var i: number = 0; i < Game.ActorType.ACTOR_TYPE_COUNT; ++i) {
+			for ( let i: number = 0; i < Game.ActorType.ACTOR_TYPE_COUNT; ++i) {
 				if (i !== Game.ActorType.PLAYER) {
 					this.actors.push(Game.ActorFactory.create(i));
 				}
@@ -35,31 +35,31 @@ module Tests {
 			} );
 		}
 
-		/*
+		/**
 			Function: weaponBalance
 			Display on the console the list of weapons sorted by damages (per unit of time)
 		*/
 		weaponBalance() {
 			console.log("==============");
 			console.log("Weapon damages");
-			var weaponsMinDps: { [index: string]: number } = {};
-			var weaponsMaxDps: { [index: string]: number } = {};
-			var weapons: string[] = [];
+			let weaponsMinDps: { [index: string]: number } = {};
+			let weaponsMaxDps: { [index: string]: number } = {};
+			let weapons: string[] = [];
 			this.actors.forEach( (item: Game.Actor) => {
 				if ( item.equipment && item.attacker ) {
 					// a melee weapon
-					var dps: number = item.attacker.power / item.attacker.attackTime;
+					let dps: number = item.attacker.power / item.attacker.attackTime;
 					weaponsMinDps[item.name] = dps;
 					weaponsMaxDps[item.name] = dps;
 					weapons.push(item.name);
 				} else if ( item.equipment && item.ranged ) {
 					// a ranged weapon.
 					// get range of damage for compatible projectiles
-					var minProjectileDamage: number;
-					var maxProjectileDamage: number;
+					let minProjectileDamage: number;
+					let maxProjectileDamage: number;
 					this.actors.forEach( (projectile: Game.Actor) => {
 						if ( projectile.isA( item.ranged.projectileType ) ) {
-							var effect: Game.InstantHealthEffect = <Game.InstantHealthEffect>projectile.pickable.onThrowEffect;
+							let effect: Game.InstantHealthEffect = <Game.InstantHealthEffect>projectile.pickable.onThrowEffect;
 							if (! minProjectileDamage || minProjectileDamage > -effect.amount ) {
 								minProjectileDamage = -effect.amount;
 							}
@@ -76,15 +76,15 @@ module Tests {
 			this._sortAndDisplayList(weapons, weaponsMinDps, weaponsMaxDps);
 		}
 
-		/*
+		/**
 			Function: weaponBalance
 			Display on the console the list of creatures sorted by damages (per unit of time) * max health
 		*/
 		creatureBalance() {
 			console.log("==============");
 			console.log("Creature power");
-			var minDps: { [index: string]: number } = {};
-			var creatures: string[] = [];
+			let minDps: { [index: string]: number } = {};
+			let creatures: string[] = [];
 			this.actors.forEach( (actor: Game.Actor) => {
 				if ( actor.ai && actor.attacker && actor.destructible ) {
 					// a creature

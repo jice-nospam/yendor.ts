@@ -1,12 +1,12 @@
 /// <reference path="rng.ts" />
 
-/*
+/**
 	Section: Binary space partition tree
 */
 module Yendor {
     "use strict";
 
-	/*
+	/**
 		Enum: BSPTraversalAction
 		Value returned by the callback during a tree traversal.
 		
@@ -16,7 +16,7 @@ module Yendor {
     export const enum BSPTraversalAction { CONTINUE, STOP }
 
 
-	/*
+	/**
 		Class: BSPNode
 		A binary space partition toolkit, making it easy to build, split and traverse a BSP tree.		
 	*/
@@ -29,7 +29,7 @@ module Yendor {
         rightChild: BSPNode;
         userData: any;
 
-		/*
+		/**
 			Constructor: constructor
 
 			Parameters:
@@ -44,7 +44,7 @@ module Yendor {
             this.parent = parent;
         }
 
-		/*
+		/**
 			Group: inspecting the tree
 
 			Function: isLeaf
@@ -56,7 +56,7 @@ module Yendor {
         }
 
 
-		/*
+		/**
 			Function: findNode
 			Find the smallest node in the tree containing a point.
 
@@ -80,7 +80,7 @@ module Yendor {
             return undefined;
         }
 
-		/*
+		/**
 			Group: building the tree
 
 			Function: clear
@@ -94,7 +94,7 @@ module Yendor {
         }
 
 
-		/*
+		/**
 			Function: split
 			Split this node into two sub-nodes, either horizontally (the left child is on top of the right child) 
 			or vertically (the left child is left to the right child).
@@ -115,7 +115,7 @@ module Yendor {
             }
         }
 
-		/*
+		/**
 			Function: splitRecursive
 			Recursively and randomly split this node and its children.
 
@@ -129,7 +129,7 @@ module Yendor {
             if (!rng) {
                 rng = new ComplementaryMultiplyWithCarryRandom();
             }
-            var horiz: boolean;
+            let horiz: boolean;
             if (!minSize) {
                 minSize = 0;
             } else {
@@ -144,7 +144,7 @@ module Yendor {
             if (!horiz) {
                 horiz = rng.getNumber(0, 1) === 0 ? false : true;
             }
-            var splitPos: number = horiz ?
+            let splitPos: number = horiz ?
                 rng.getNumber(minSize, this.w - minSize)
                 : rng.getNumber(minSize, this.h - minSize);
             this.split(horiz, splitPos);
@@ -154,11 +154,11 @@ module Yendor {
             }
         }
 
-		/*
+		/**
 			Group: traversing the tree
 		*/
 
-		/*
+		/**
 			Function: traversePreOrder
 			Traverse the tree in pre-order (node, left child, right child).
 
@@ -181,7 +181,7 @@ module Yendor {
             return BSPTraversalAction.CONTINUE;
         }
 
-		/*
+		/**
 			Function: traverseInOrder
 			Traverse the tree in in-order (left child, node, right child).
 
@@ -202,7 +202,7 @@ module Yendor {
             return BSPTraversalAction.CONTINUE;
         }
 
-		/*
+		/**
 			Function: traversePostOrder
 			Traverse the tree in post-order (left child, right child, node).
 
@@ -222,7 +222,7 @@ module Yendor {
             return callback(this, userData);
         }
 
-		/*
+		/**
 			Function: traverseLevelOrder
 			Traverse the tree level by level (root, then root children, then level 2 children and so on).
 
@@ -231,10 +231,10 @@ module Yendor {
 			userData - *optional* some user data sent to the callback.
 		*/
         traverseLevelOrder(callback: (node: BSPNode, userData: any) => BSPTraversalAction, userData?: any): BSPTraversalAction {
-            var nodes: BSPNode[] = this.buildLevelTraversalNodeArray();
-            var nodeCount: number = nodes.length;
-            for (var i = 0; i < nodeCount; i++) {
-                var node: BSPNode = nodes[i];
+            let nodes: BSPNode[] = this.buildLevelTraversalNodeArray();
+            let nodeCount: number = nodes.length;
+            for (let i = 0; i < nodeCount; i++) {
+                let node: BSPNode = nodes[i];
                 if (callback(node, userData) === BSPTraversalAction.STOP) {
                     return BSPTraversalAction.STOP;
                 }
@@ -242,7 +242,7 @@ module Yendor {
             return BSPTraversalAction.CONTINUE;
         }
 
-		/*
+		/**
 			Function: traverseInvertedLevelOrder
 			Traverse the tree level by level, starting with the lowest levels (lowest leafs, up to the root).
 
@@ -251,10 +251,10 @@ module Yendor {
 			userData - *optional* some user data sent to the callback.
 		*/
         traverseInvertedLevelOrder(callback: (node: BSPNode, userData: any) => BSPTraversalAction, userData?: any): BSPTraversalAction {
-            var nodes: BSPNode[] = this.buildLevelTraversalNodeArray();
-            var nbNodes = nodes.length;
-            for (var i = nbNodes - 1; i >= 0; i--) {
-                var node: BSPNode = nodes[i];
+            let nodes: BSPNode[] = this.buildLevelTraversalNodeArray();
+            let nbNodes = nodes.length;
+            for (let i = nbNodes - 1; i >= 0; i--) {
+                let node: BSPNode = nodes[i];
                 if (callback(node, userData) === BSPTraversalAction.STOP) {
                     return BSPTraversalAction.STOP;
                 }
@@ -263,11 +263,11 @@ module Yendor {
         }
 
         private buildLevelTraversalNodeArray(): BSPNode[] {
-            var nodesToTraverse: BSPNode[] = [];
-            var nodes: BSPNode[] = [];
+            let nodesToTraverse: BSPNode[] = [];
+            let nodes: BSPNode[] = [];
             nodes.push(this);
             while (nodes.length > 0) {
-                var node: BSPNode = nodes.shift();
+                let node: BSPNode = nodes.shift();
                 nodesToTraverse.push(node);
                 if (node.leftChild) {
                     nodes.push(node.leftChild);

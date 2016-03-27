@@ -1,23 +1,23 @@
-/*
+/**
 	Section: Events
 */
 module Umbra {
     "use strict";
 
     export interface EventListener {
-		/*
+		/**
 			Property: enableEvents
 			If false, no events are sent to this listener
 		*/
         enableEvents: boolean;
-		/*
+		/**
 			Property: node
 			Events are sent to listeners without node first, then in descending nodes' z order
 		*/
         node?: Node;
     }
 
-	/*
+	/**
 		Module: EventManager
 		To get events, register to the type :
 		> eventBus.registerEventListener( myListener, "fire_bullet" );
@@ -28,7 +28,7 @@ module Umbra {
 	*/
     export module EventManager {
         // registered event listeners
-        var listeners: Array<EventListener[]> = [];
+        let listeners: Array<EventListener[]> = [];
 
         export function registerEventListener(listener: EventListener, type: string) {
             if (!listeners[type]) {
@@ -39,14 +39,14 @@ module Umbra {
 
         export function unregisterEventListener(listener: EventListener, type: string) {
             if (listeners[type]) {
-                var index: number = listeners[type].indexOf(listener);
+                let index: number = listeners[type].indexOf(listener);
                 if (index > -1) {
                     listeners[type].splice(index, 1);
                 }
             }
         }
 
-        /*
+        /**
             Function: publishEvent
             post the event to every registered listener
             
@@ -56,14 +56,14 @@ module Umbra {
         */
         export function publishEvent(type: string, data?: any) {
             if (listeners[type]) {
-                var selectedListeners: EventListener[] = listeners[type];
-                for (var i: number = 0, len: number = selectedListeners.length; i < len; ++i) {
+                let selectedListeners: EventListener[] = listeners[type];
+                for (let i: number = 0, len: number = selectedListeners.length; i < len; ++i) {
                     processEvent(type, selectedListeners[i], data);
                 }
             }
         }
 
-        /*
+        /**
             Function: processEvent
             call the event callback on a specific listener. The callback function's name
             is deduced from the event type : "on"+CamelCase(type).
@@ -75,8 +75,8 @@ module Umbra {
             data - optional parameter to pass to the callback
         */
         export function processEvent(type: string, eventListener: EventListener, data?: any) {
-            var funcName: string = eventTypeToCallback(type);
-            var func: any = eventListener[funcName];
+            let funcName: string = eventTypeToCallback(type);
+            let func: any = eventListener[funcName];
             if (func && typeof func === "function") {
                 if (data !== undefined) {
                     func.call(eventListener, data);
@@ -93,7 +93,7 @@ module Umbra {
             return "on" + Core.toCamelCase(eventType);
         }
 
-		/*
+		/**
 			Function: addListener
 			add a listener, sorted by descending node.zOrder, listeners without node first
 			
@@ -102,9 +102,9 @@ module Umbra {
 			listenerArray - the listener array to update
 		*/
         function addListener<T extends EventListener>(listener: T, listenerArray: T[]) {
-            var index = 0;
+            let index = 0;
             if (listener.node) {
-                var len = listenerArray.length;
+                let len = listenerArray.length;
                 while (index < len && listenerArray[index].node && listenerArray[index].node.getZOrder() > listener.node.getZOrder()) {
                     ++index;
                 }
@@ -112,7 +112,7 @@ module Umbra {
             listenerArray.splice(index - 1, 0, listener);
         }
 
-		/*
+		/**
 			Function: removeListener
 			remove a listener from an array
 			
@@ -121,7 +121,7 @@ module Umbra {
 			listenerArray - the listener array to update
 		*/
         function removeListener<T>(listener: T, listenerArray: T[]) {
-            var index = listenerArray.indexOf(listener);
+            let index = listenerArray.indexOf(listener);
             if (index != undefined) {
                 listenerArray.splice(index, 1);
             }

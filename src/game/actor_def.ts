@@ -6,32 +6,17 @@ module Game {
 	/********************************************************************************
 	 * Group: actor definitions
 	 ********************************************************************************/
-    export type ActorClass =
-        "creature" |
-          "beast" |
-          "human" |
-        "item" |
-          "potion" |
-          "key" |
-          "scroll" |
-          "light" |
-          "door" |
-          "stair" |
-          "weapon" |
-            "blade" |
-            "shield" |
-            "ranged" |
-            "staff" |
-            "projectile" |
-              "arrow" |
-              "bolt";
     export interface ActorDef {
         ch?: string;
         color?: Core.Color;
-        classes?: ActorClass[];
+        classes?: string[];
+        /** whether the actor's name is singular or plural */
         plural?: boolean;
+        /** can we walk on the cell where the actor is ? */
         blockWalk?: boolean;
+        /** can we see through the cell where the actor is ? */
         blockSight?: boolean;
+        /** once discovered, should the actor be displayed on map even if out of sight ? */
         displayOutOfFov?: boolean;
         pickable?: PickableDef;
         destructible?: DestructibleDef;
@@ -41,19 +26,24 @@ module Game {
         equipment?: EquipmentDef;
         ranged?: RangedDef;
         magic?: MagicDef;
+        activable?: ActivableDef;
         door?: DoorDef;
         lever?: LeverDef;
         xpHolder?: XpHolderDef;
         container?: ContainerDef;
     }
 
+    /**
+        Interface: PickableDef
+        Somethind that can be picked/dropped/thrown by the player
+     */
     export interface PickableDef {
         weight: number;
         destroyedWhenThrown?: boolean;
         onUseEffector?: EffectorDef;
         onThrowEffector?: EffectorDef;
     }
-
+    
     export interface EffectorDef {
         effect: EffectDef;
         targetSelector: TargetSelectorDef;
@@ -75,31 +65,94 @@ module Game {
 
     export interface InstantHealthEffectDef {
         amount: number;
-        successMessage: string;
-        failureMessage: string;
+        /** message if effect succeded. actor1 = this actor. actor2 = the wearer */
+        successMessage?: string;
+        /** message if effect failed. actor1 = this actor. actor2 = the wearer */
+        failureMessage?: string;
     }
 
     export interface TeleportEffectDef {
         successMessage: string;
     }
-
-    export interface ConditionEffectDef {
-        type: ConditionType;
-        nbTurns: number;
-        successMessage: string;
-        additionalArgs?: ConditionAdditionalParam;
+    
+    export interface ActivableDef {
     }
 
+	/*
+		Enum: ConditionType
+
+	 	CONFUSED - moves randomly and attacks anything on path
+	 	STUNNED - don't move or attack, then get confused
+	 	HEALTH_VARIATION - regain/lose {amount} health points over time
+	 	OVERENCUMBERED - walk slower. This also affects all actions relying on walkTime.
+	 	DETECT_LIFE - detect living creatures at {range} distance
+	*/
+    
+    export const enum ConditionType {
+        CONFUSED,
+        STUNNED,
+        FROZEN,
+        HEALTH_VARIATION,
+        OVERENCUMBERED,
+        DETECT_LIFE,
+    }
+
+    export interface ConditionDef {
+        type: ConditionType;
+        /** use 0 for infinite condition */
+        nbTurns: number; 
+        amount?: number;
+        range?: number;
+        /** don't display this condition on UI */
+        noDisplay?: boolean;
+        /** for activable items */
+        onlyIfActive?: boolean;
+        /** to override the condition's default name */
+        name?: string;
+    }
+
+    export interface ConditionEffectDef {
+        condition: ConditionDef;
+        successMessage: string;
+    }
+
+	/**
+		Enum: TargetSelectionMethod
+		Define how we select the actors that are impacted by an effect.
+
+        WEARER - the actor containing this actor
+        WEARER_INVENTORY - an actor from the wearer's inventory. Can be filtered with actorType
+		ACTOR_ON_CELL - whatever actor is on the selected cell
+		CLOSEST_ENEMY - the closest non player creature
+		SELECTED_ACTOR - an actor manually selected
+		ACTORS_RANGE - all actors close to the cell
+		SELECTED_RANGE - all actors close to a manually selected position
+	*/
+    export const enum TargetSelectionMethod {
+        WEARER,
+        WEARER_INVENTORY,
+        ACTOR_ON_CELL,
+        CLOSEST_ENEMY,
+        SELECTED_ACTOR,
+        ACTORS_IN_RANGE,
+        SELECTED_RANGE
+    }
+    
     export interface TargetSelectorDef {
         method: TargetSelectionMethod;
+        actorType?: string;        
         range?: number;
         radius?: number;
     }
 
     export interface DestructibleDef {
         healthPoints: number;
-        defense: number;
-        corpseName: string;
+        /** can use actor1 = the actor owning this destructible and actor2 = the actor wearing actor1 */
+        deathMessage?: string; 
+        defense?: number;
+        /** if no corpse name, actor is destroyed when healthPoints reach 0 */
+        corpseName?: string;         
+        corpseChar?: string;
         xp?: number;
     }
 
@@ -110,6 +163,7 @@ module Game {
 
 
     export enum AiType {
+        ITEM,
         MONSTER,
         PLAYER,
     }
@@ -117,6 +171,7 @@ module Game {
     export interface AiDef {
         type: AiType;
         walkTime: number;
+        conditions?: ConditionDef[];
     }
     
     export interface XpHolderDef {
@@ -149,17 +204,17 @@ module Game {
         color: Core.Color;
         range: number;
         falloffType: LightFalloffType;
-        /*
+        /** 
             Field: intensityVariationPattern
             A string containing numbers 0 to 9 giving the intensity variation curve, or "noise" for a curve computed from a 1D noise
         */
         intensityVariationPattern?: string;
-        /*
+        /** 
             Field: intensityVariationRange
             Percentage of intensity removed when intensityVariationPattern === "0".
         */
         intensityVariationRange?: number;
-        /*
+        /** 
             Field: intensityVariationLength
             delay corresponding to the intensityVariationPattern in milliseconds.
         */
@@ -175,7 +230,7 @@ module Game {
     
     export interface RangedDef {
         damageCoef: number;
-        projectileType: ActorClass;
+        projectileType: string;
         loadTime: number;
         range: number;        
     }
@@ -185,7 +240,7 @@ module Game {
         onFireEffect: EffectorDef;
     }
     
-    export interface DoorDef {
+    export interface DoorDef extends ActivableDef {
         seeThrough: boolean;
     }
     
@@ -201,59 +256,85 @@ module Game {
         capacity: number;
     }
     
-    export var actorDefs: { [index: string]: ActorDef } = {
+    export let actorDefs: { [index: string]: ActorDef } = {
         "creature": {
-            blockWalk: true,            
+            blockWalk: true,                        
+        },
+        "beast": {
+            classes:["creature"]
         },
         "goblin": {
             ch: "g",
             color: 0x3F7F3F,
-            classes: ["creature", "beast"],
+            classes: ["beast"],
             ai: { type: AiType.MONSTER, walkTime: 4 },
-            destructible: { corpseName: "goblin corpse", defense: 0, healthPoints: 3, xp: 10 },
+            destructible: { corpseName: "goblin corpse", corpseChar:"%", defense: 0, healthPoints: 3, xp: 10 },
             attacker: { attackTime: 4, hitPoints: 1 }
         },
         "orc": {
             ch: "o",
             color: 0x3F7F3F,
-            classes: ["creature", "beast"],
+            classes: ["beast"],
             ai: { type: AiType.MONSTER, walkTime: 5 },
-            destructible: { corpseName: "dead orc", defense: 0, healthPoints: 9, xp: 35 },
+            destructible: { corpseName: "dead orc", corpseChar:"%", defense: 0, healthPoints: 9, xp: 35 },
             attacker: { attackTime: 5, hitPoints: 2 }
         },
         "troll": {
             ch: "T",
             color: 0x007F00,
-            classes: ["creature", "beast"],
+            classes: ["beast"],
             blockSight: true,
             ai: { type: AiType.MONSTER, walkTime: 6 },
-            destructible: { corpseName: "troll carcass", defense: 1, healthPoints: 15, xp: 100 },
+            destructible: { corpseName: "troll carcass", corpseChar:"%", defense: 1, healthPoints: 15, xp: 100 },
             attacker: { attackTime: 6, hitPoints: 3 }
+        },
+        "human": {
+            classes:["creature"]
         },
         "player": {
             ch: "@",
             color: 0xFFFFFF,
-            classes: ["creature", "human"],
+            classes: ["human"],
             blockWalk: false,
             ai: { type: AiType.PLAYER, walkTime: Constants.PLAYER_WALK_TIME},
             attacker: { hitPoints: 3, attackTime: Constants.PLAYER_WALK_TIME },
-            destructible: { healthPoints:30, defense:0, corpseName:"your cadaver" },
+            destructible: { healthPoints:30, defense:0, corpseName:"your cadaver", corpseChar:"%" },
             xpHolder: {baseLevel: Constants.XP_BASE_LEVEL, newLevel: Constants.XP_NEW_LEVEL},
             container: { capacity: 20 },
             light: {renderMode: LightRenderMode.MAX, color: Constants.NOLIGHT_COLOR, falloffType: LightFalloffType.NORMAL, range: 3}
         },
-        "potion": {
+        "item":{  
+        },
+        "flask": {
             ch: "!",
             classes: ["item"],
         },
+        "oil flask": {
+          color: Constants.OIL_FLASK_COLOR,
+          classes: ["flask"],
+          pickable: {
+                weight: 1,
+                onUseEffector: {
+                    destroyOnEffect: true,
+                    targetSelector: { method: TargetSelectionMethod.WEARER_INVENTORY, actorType: "lantern" },
+                    effect: {
+                        type: EffectType.INSTANT_HEALTH,
+                        data: {
+                            amount: 200,
+                            successMessage:"[The actor2] refill[s2] [its2] lantern."
+                        }
+                    }
+                },                
+          }
+        },
         "health potion": {
-            color: 0x800080,
-            classes: ["potion"],
+            color: Constants.HEALTH_POTION_COLOR,
+            classes: ["flask"],
             pickable: {
                 weight: 0.5,
                 onUseEffector: {
                     destroyOnEffect: true,
-                    targetSelector: { method: TargetSelectionMethod.ACTOR_ON_CELL },
+                    targetSelector: { method: TargetSelectionMethod.WEARER },
                     effect: {
                         type: EffectType.INSTANT_HEALTH,
                         data: {
@@ -265,11 +346,11 @@ module Game {
                 },
                 onThrowEffector: {
                     destroyOnEffect: true,
-                    targetSelector: { method: TargetSelectionMethod.ACTOR_ON_CELL },
+                    targetSelector: { method: TargetSelectionMethod.SELECTED_RANGE, radius: 1 },
                     effect: {
                         type: EffectType.INSTANT_HEALTH,
                         data: {
-                            amount: 5,
+                            amount: 3,
                             successMessage: "The potion explodes on [the actor1], healing [it] for [value1] hit points.",
                             failureMessage: "The potion explodes on [the actor1] but it has no effect"
                         }
@@ -278,33 +359,39 @@ module Game {
             }
         },
         "regeneration potion": {
-            color: 0x800080,
-            classes: ["potion"],
+            color: Constants.HEALTH_POTION_COLOR,
+            classes: ["flask"],
             pickable: {
                 weight: 0.5,
                 onUseEffector: {
                     destroyOnEffect: true,
-                    targetSelector: { method: TargetSelectionMethod.ACTOR_ON_CELL },
+                    targetSelector: { method: TargetSelectionMethod.WEARER },
                     effect: {
                         type: EffectType.CONDITION,
                         data: {
-                            type: ConditionType.REGENERATION,
-                            nbTurns: 20,
+                            condition: {
+                                type: ConditionType.HEALTH_VARIATION,
+                                name:"regeneration",
+                                nbTurns: 20,
+                                amount: 10
+                            },
                             successMessage: "[The actor1] drink[s] the regeneration potion and feel[s]\nthe life flowing through [it].",
-                            additionalArgs: {amount: 10}
                         }
                     }
                 },
                 onThrowEffector: {
                     destroyOnEffect: true,
-                    targetSelector: { method: TargetSelectionMethod.ACTOR_ON_CELL },
+                    targetSelector: { method: TargetSelectionMethod.SELECTED_RANGE, radius: 1 },
                     effect: {
                         type: EffectType.CONDITION,
                         data: {
-                            type: ConditionType.REGENERATION,
-                            nbTurns: 20,
+                            condition: {
+                                type: ConditionType.HEALTH_VARIATION,
+                                name:"regeneration",
+                                nbTurns: 12,
+                                amount: 6
+                            },
                             successMessage: "The potion explodes on [the actor1].\nLife is flowing through [it].",
-                            additionalArgs: {amount: 10}
                         }
                     }
                 }
@@ -360,8 +447,10 @@ module Game {
                     effect: {
                         type: EffectType.CONDITION,
                         data: {
-                            type: ConditionType.CONFUSED,
-                            nbTurns: 12,
+                            condition: {
+                                type: ConditionType.CONFUSED,
+                                nbTurns: 12,
+                            },
                             successMessage: "[The actor1's] eyes look vacant,\nas [it] start[s] to stumble around!"
                         }
                     }
@@ -371,7 +460,8 @@ module Game {
         "light": {
           ch: "/",
           classes:["item"],
-          equipment: { slot:"left hand" }  
+          equipment: { slot:"left hand" },
+          activable: {}
         },
         "candle": {
             color: Constants.BONE_COLOR,
@@ -381,6 +471,21 @@ module Game {
                 renderMode: LightRenderMode.ADDITIVE,
                 color: Constants.CANDLE_LIGHT_COLOR, falloffType: LightFalloffType.NORMAL, range: 8,
                 intensityVariationLength: 200, intensityVariationRange: 0.25, intensityVariationPattern:"noise" 
+            },
+            destructible: {
+                healthPoints: 160,
+                deathMessage: "[The actor2's] candle has burnt away"
+            },
+            ai: { 
+                type: AiType.ITEM,
+                walkTime: Constants.PLAYER_WALK_TIME,
+                conditions: [{
+                    type: ConditionType.HEALTH_VARIATION,
+                    nbTurns: 0,
+                    amount: -1,
+                    noDisplay: true,
+                    onlyIfActive: true
+                }]
             }
         },
         "torch": {
@@ -389,16 +494,61 @@ module Game {
             pickable: { weight: 0.5 },
             light: {
                 renderMode: LightRenderMode.ADDITIVE,
-                color: Constants.TORCH_LIGHT_COLOR, falloffType: LightFalloffType.LINEAR, range: 10,
+                color: Constants.TORCH_LIGHT_COLOR, falloffType: LightFalloffType.LINEAR, range: 9,
                 intensityVariationLength: 300, intensityVariationRange: 0.15, intensityVariationPattern:"noise"
+            },
+            destructible: {
+                healthPoints: 240,
+                deathMessage: "[The actor2's] torch has burnt away"
+            },
+            ai: { 
+                type: AiType.ITEM,
+                walkTime: Constants.PLAYER_WALK_TIME,
+                conditions: [{
+                    type: ConditionType.HEALTH_VARIATION,
+                    nbTurns: 0,
+                    amount: -1,
+                    noDisplay: true,
+                    onlyIfActive: true
+                }]
             }
         },
+        "lantern": {
+            color: Constants.WOOD_COLOR,
+            classes:["light"],
+            pickable: { weight: 0.5 },
+            light: {
+                renderMode: LightRenderMode.ADDITIVE,
+                color: Constants.TORCH_LIGHT_COLOR, falloffType: LightFalloffType.LINEAR, range: 12,
+                intensityVariationLength: 500, intensityVariationRange: 0.1, intensityVariationPattern:"noise"
+            },
+            destructible: {
+                healthPoints: 500,
+                deathMessage: "[The actor2's] lantern is empty.",
+                // same name to avoid item destruction
+                corpseName: "lantern"
+            },
+            ai: { 
+                type: AiType.ITEM,
+                walkTime: Constants.PLAYER_WALK_TIME,
+                conditions: [{
+                    type: ConditionType.HEALTH_VARIATION,
+                    nbTurns: 0,
+                    amount: -1,
+                    noDisplay: true,
+                    onlyIfActive: true
+                }]
+            }
+        },        
         "weapon": {
             classes:["item"]
         },
+        "blade": {
+            classes:["weapon"]  
+        },
         "short sword": {
             ch: "/",
-            classes:["weapon","blade"],
+            classes:["blade"],
             color: Constants.STEEL_COLOR,
             pickable: { weight: 2,
             onThrowEffector: {
@@ -418,7 +568,7 @@ module Game {
         },
         "longsword": {
             ch: "/",
-            classes:["weapon","blade"],
+            classes:["blade"],
             color: Constants.STEEL_COLOR,
             pickable: { weight: 3,
             onThrowEffector: {
@@ -438,7 +588,7 @@ module Game {
         },
         "greatsword": {
             ch: "/",
-            classes:["weapon","blade"],
+            classes:["blade"],
             color: Constants.STEEL_COLOR,
             pickable: { weight: 4,
                 onThrowEffector: {
@@ -466,8 +616,10 @@ module Game {
                     effect: {
                         type: EffectType.CONDITION,
                         data: {
-                            type: ConditionType.STUNNED,
-                            nbTurns: 2,
+                            condition: {
+                                type: ConditionType.STUNNED,
+                                nbTurns: 2,
+                            },
                             successMessage: "The shield hits [the actor1] and stuns [it]!"
                         }
                     }
@@ -484,35 +636,17 @@ module Game {
             color: Constants.IRON_COLOR,
             equipment: { slot:"left hand", defense: 1.5 }
         },
-        "ranged": {
-            ch: ")",
-            color: Constants.WOOD_COLOR,
-            classes:["weapon"],
-            pickable: { weight: 2 },
-        },
-        "short bow": {
-            classes:["ranged"],
-            equipment: { slot:"hands" },
-            ranged: { damageCoef: 4, projectileType: "arrow", loadTime: 4, range: 15 }
-        },
-        "long bow": {
-            classes:["ranged"],
-            equipment: { slot:"hands" },
-            ranged: { damageCoef: 8, projectileType: "arrow", loadTime: 6, range: 30 }
-        },
-        "crossbow": {
-            classes:["ranged"],
-            equipment: { slot:"right hand" },
-            ranged: { damageCoef: 8, projectileType: "bolt", loadTime: 5, range: 10 }
-        },        
         "projectile": {
             ch:"\\",
             classes:["weapon"],
             equipment: { slot:"quiver" },
         },
+        "arrow": {
+            classes:["projectile"]
+        },
         "bone arrow": {
             color: Constants.BONE_COLOR,
-            classes:["projectile","arrow"],
+            classes:["arrow"],
             pickable: { weight: 0.1,
                 onThrowEffector: {
                     destroyOnEffect: false,
@@ -529,7 +663,7 @@ module Game {
         },
         "iron arrow": {
             color: Constants.WOOD_COLOR,
-            classes:["projectile","arrow"],
+            classes:["arrow"],
             pickable: { weight: 0.1,
                 onThrowEffector: {
                     destroyOnEffect: false,
@@ -560,7 +694,28 @@ module Game {
                     }
                 }                                 
             }
-        },     
+        },             
+        "ranged": {
+            ch: ")",
+            color: Constants.WOOD_COLOR,
+            classes:["weapon"],
+            pickable: { weight: 2 },
+        },
+        "short bow": {
+            classes:["ranged"],
+            equipment: { slot:"hands" },
+            ranged: { damageCoef: 4, projectileType: "arrow", loadTime: 4, range: 15 }
+        },
+        "long bow": {
+            classes:["ranged"],
+            equipment: { slot:"hands" },
+            ranged: { damageCoef: 8, projectileType: "arrow", loadTime: 6, range: 30 }
+        },
+        "crossbow": {
+            classes:["ranged"],
+            equipment: { slot:"right hand" },
+            ranged: { damageCoef: 8, projectileType: "bolt", loadTime: 5, range: 10 }
+        },        
         "staff": {
             ch:"/",
             color: Constants.WOOD_COLOR,
@@ -574,7 +729,8 @@ module Game {
                 renderMode: LightRenderMode.ADDITIVE,
                 color: Constants.SUNROD_LIGHT_COLOR, falloffType: LightFalloffType.LINEAR, range: 15,
                 intensityVariationLength: 1300, intensityVariationRange: 0.15, intensityVariationPattern:"0000000111112222333445566677778888899999998888877776665544333222211111"
-            }            
+            },
+            activable: {}              
         },
         "wand of frost": {
             classes:["staff"],
@@ -589,8 +745,10 @@ module Game {
                     effect: {
                         type: EffectType.CONDITION,                        
                         data: {
-                            type: ConditionType.FROZEN,
-                            nbTurns: 10,
+                            condition: {
+                                type: ConditionType.FROZEN,
+                                nbTurns: 10,
+                            },
                             successMessage: "[The actor1] [is] covered with frost."
                         }
                     }
@@ -622,15 +780,17 @@ module Game {
                 charges: 5,
                 onFireEffect: {
                     destroyOnEffect: false,
-                    targetSelector: { method: TargetSelectionMethod.ACTOR_ON_CELL },
+                    targetSelector: { method: TargetSelectionMethod.WEARER },
                     message:"[The actor1] zap[s] [its] staff.",
                     effect: {
                         type: EffectType.CONDITION,                        
                         data: {
-                            type: ConditionType.DETECT_LIFE,
-                            nbTurns: 10,
+                            condition: {
+                                type: ConditionType.DETECT_LIFE,
+                                nbTurns: 30,
+                                range: 15 
+                            },
                             successMessage: "[The actor1] [is] aware of life around [it].",
-                            additionalArgs: { range: 15 }
                         }
                     }
                 }
@@ -644,7 +804,7 @@ module Game {
                 charges: 5,
                 onFireEffect: {
                     destroyOnEffect: false,
-                    targetSelector: { method: TargetSelectionMethod.ACTOR_ON_CELL },
+                    targetSelector: { method: TargetSelectionMethod.WEARER },
                     message:"[The actor1] zap[s] [its] staff.",
                     effect: {
                         type: EffectType.MAP_REVEAL
@@ -676,18 +836,18 @@ module Game {
             blockSight: false,
             door: { seeThrough: true },
         },
-        "stair": {
+        "stairs": {
             color: 0xFFFFFF,
             displayOutOfFov: true,
             plural: true            
         },
-        "stair up": {
+        "stairs up": {
             ch:"<",
-            classes:["stair"]
+            classes:["stairs"]
         },        
-        "stair down": {
+        "stairs down": {
             ch:">",
-            classes:["stair"]
+            classes:["stairs"]
         },        
     }
 }

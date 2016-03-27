@@ -1,4 +1,4 @@
-/*
+/**
 	Section: items
 */
 module Game {
@@ -7,9 +7,7 @@ module Game {
 	/********************************************************************************
 	 * Group: lighting
 	 ********************************************************************************/
-    export var INTENSITY_NOISE_PATTERN: string;
-
-	/*
+	/**
 		Class: Light
 		An item that produces light
 	*/
@@ -18,9 +16,8 @@ module Game {
         protected _options: LightDef;
         protected rangeFactor1: number;
         protected rangeFactor2: number;
-        protected enabled: boolean = false;
         protected __noise : Yendor.Noise;
-        /*
+        /**
             Field: patternTime
             Position in the pattern in milliseconds
         */
@@ -30,7 +27,6 @@ module Game {
             this._options = options;
         }
         get options(): LightDef { return this._options; }
-        public isEnabled() { return this.enabled; }
         public setRange(newRange: number) {
             this._options.range = newRange;
             switch (this._options.falloffType) {
@@ -46,15 +42,7 @@ module Game {
                     break;
             }
         }
-        public enable(owner: Actor) {
-            this.enabled = true;
-            Umbra.EventManager.publishEvent(EventType[EventType.LIGHT_ONOFF], owner);
-        }
-        public disable(owner: Actor) {
-            this.enabled = false;
-            Umbra.EventManager.publishEvent(EventType[EventType.LIGHT_ONOFF], owner);
-        }
-        /*
+        /**
             Function: computeIntensityVariation
             Compute intensity variation along time from the defined pattern
             
@@ -72,7 +60,7 @@ module Game {
                 // start the pattern at a random position
                 this.patternTime = Engine.instance.rng.getNumber(0, this._options.intensityVariationLength);
             }
-            var value : number;
+            let value : number;
             if (this._options.intensityVariationPattern === "noise") {
                 value = this.computeNoiseIntensityVariation(delay);
             } else {
@@ -94,21 +82,21 @@ module Game {
             while (this.patternTime > this._options.intensityVariationLength) {
                 this.patternTime -= this._options.intensityVariationLength;
             }
-            var patternLen = this._options.intensityVariationPattern.length;
-            var patternPos = patternLen * this.patternTime / this._options.intensityVariationLength;
-            var charPos = Math.floor(patternPos);
-            var interpolateCoef = patternPos - charPos; 
-            var charNextPos = (charPos + 1) % patternLen;
+            let patternLen = this._options.intensityVariationPattern.length;
+            let patternPos = patternLen * this.patternTime / this._options.intensityVariationLength;
+            let charPos = Math.floor(patternPos);
+            let interpolateCoef = patternPos - charPos; 
+            let charNextPos = (charPos + 1) % patternLen;
             // values between 0 and 9
-            var value = this._options.intensityVariationPattern.charCodeAt(charPos) - Constants.BASE_LIGHT_PATTERN_ASCIICODE;
-            var nextValue = this._options.intensityVariationPattern.charCodeAt(charNextPos) - Constants.BASE_LIGHT_PATTERN_ASCIICODE;
+            let value = this._options.intensityVariationPattern.charCodeAt(charPos) - Constants.BASE_LIGHT_PATTERN_ASCIICODE;
+            let nextValue = this._options.intensityVariationPattern.charCodeAt(charNextPos) - Constants.BASE_LIGHT_PATTERN_ASCIICODE;
             // interpolate between the two values
-            var interpolatedValue = (1-interpolateCoef) * value + interpolateCoef * nextValue;
+            let interpolatedValue = (1-interpolateCoef) * value + interpolateCoef * nextValue;
             return interpolatedValue / 9;
         }
 
         public computeIntensity(squaredDistance: number): number {
-            if (!this.rangeFactor1) {
+            if (this.rangeFactor1 === undefined) {
                 // compute factors only once to speed up computation
                 this.setRange(this._options.range);
             }
@@ -119,7 +107,7 @@ module Game {
                     return 1 / (1 + squaredDistance);
                 case LightFalloffType.NORMAL:
                     // see http://roguecentral.org/doryen/articles/lights-in-full-color-roguelikes/
-                    var intensityCoef1: number = 1 / (1 + squaredDistance * Constants.LIGHT_NORMAL_RANGE_FACTOR);
+                    let intensityCoef1: number = 1 / (1 + squaredDistance * Constants.LIGHT_NORMAL_RANGE_FACTOR);
                     return (intensityCoef1 - this.rangeFactor1) * this.rangeFactor2;
                 default:
                     return 1;

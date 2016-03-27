@@ -1,4 +1,4 @@
-/*
+/**
 	Section: Console
 */
 module Yendor {
@@ -100,32 +100,32 @@ module Yendor {
 	export const CHAR_POW2 : number =  253;
 	export const CHAR_BULLET_SQUARE : number =  254;    
 
-	/*
+	/**
 		Class: Console
 		An offscreen console that cannot be rendered on screen, but can be blit on other consoles.
 	*/
     export class Console {
         private _width: number;
         private _height: number;
-		/*
+		/**
 			Property: text
 			Matrix of <number> storing the ascii code. The character at coordinate x,y is text[x][y].
 		*/
         text: number[][];
 
-		/*
+		/**
 			Property: fore
 			Matrix of <Core.Color> storing the foreground color (characters color). The character color at coordinate x,y is fore[x][y].
 		*/
         fore: Core.Color[][];
 
-		/*
+		/**
 			Property: back
 			Matrix of <Core.Color> storing the background color. The background color at coordinate x,y is back[x][y].
 		*/
         back: Core.Color[][];
 
-		/*
+		/**
 			Constructor: constructor
 
 			Parameters:
@@ -146,19 +146,19 @@ module Yendor {
             this.clearBack(background);
         }
 
-		/*
+		/**
 			Property: height
 			The number of rows (read-only)
 		*/
         get height(): number { return this._height; }
 
-		/*
+		/**
 			Property: width
 			The number of columns (read-only)
 		*/
         get width(): number { return this._width; }
 
-		/*
+		/**
 			Function: contains
 			Check if a position is inside the console
 		*/
@@ -166,7 +166,7 @@ module Yendor {
             return pos.x >= 0 && pos.y >= 0 && pos.x < this._width && pos.y < this._height;
         }
 
-		/*
+		/**
 			Function: render
 			To be implemented by non offscreen consoles extending this class.
 		*/
@@ -174,7 +174,7 @@ module Yendor {
             // empty
         }
 
-		/*
+		/**
 			Function: getPositionFromPixels
 			Returns the column and row corresponding to a mouse position in the page.
 
@@ -188,7 +188,7 @@ module Yendor {
 		*/
         getPositionFromPixels(x: number, y: number, pos: Core.Position): Core.Position { return undefined; }
 
-		/*
+		/**
 			Function: print
 			Print a string on the console. If the string starts before the first column (x < 0) or ends after the last rows, it"s truncated.
 
@@ -199,8 +199,8 @@ module Yendor {
 			color - *optional* (default white)
 		*/
         print(x: number, y: number, text: string, color: Core.Color = 0xFFFFFF) {
-            var begin = 0;
-            var end = text.length;
+            let begin = 0;
+            let end = text.length;
             if (x + end > this.width) {
                 end = this.width - x;
             }
@@ -209,12 +209,12 @@ module Yendor {
                 x = 0;
             }
             this.clearFore(color, x, y, end, 1);
-            for (var i = begin; i < end; ++i) {
+            for (let i = begin; i < end; ++i) {
                 this.text[i + x][y] = text.charCodeAt(i);
             }
         }
 
-		/*
+		/**
 			Function: clearText
 			Fill the text on the console (don't change foreground/background colors)
 
@@ -230,7 +230,7 @@ module Yendor {
             this.clearTable(this.text, asciiCode, x, y, width, height);
         }
 
-		/*
+		/**
 			Function: clearFore
 			Change all the foreground colors of a rectangular zone. If width and height are undefined, fills the area to the border of the console.
 			Using
@@ -250,7 +250,7 @@ module Yendor {
         }
 
 
-		/*
+		/**
 			Function: clearBack
 			Change all the background colors of a rectangular zone. If width and height are undefined, fills the area to the border of the console.
 			Using
@@ -269,7 +269,7 @@ module Yendor {
             this.clearTable(this.back, color, x, y, width, height);
         }
 
-		/*
+		/**
 			Function: blit
 			Copy a part of a console on another console.
 
@@ -296,10 +296,10 @@ module Yendor {
             if (y + srcHeight > console.height) {
                 srcHeight = console.height - y;
             }
-            for (var desty = y; desty < y + srcHeight; ++desty) {
-                for (var destx = x; destx < x + srcWidth; ++destx) {
-                    var sourcex = xSrc + destx - x;
-                    var sourcey = ySrc + desty - y;
+            for (let desty = y; desty < y + srcHeight; ++desty) {
+                for (let destx = x; destx < x + srcWidth; ++destx) {
+                    let sourcex = xSrc + destx - x;
+                    let sourcey = ySrc + desty - y;
                     console.text[destx][desty] = this.text[sourcex][sourcey];
                     console.back[destx][desty] = this.back[sourcex][sourcey];
                     console.fore[destx][desty] = this.fore[sourcex][sourcey];
@@ -315,16 +315,16 @@ module Yendor {
             if (height === -1) {
                 height = this.height - y;
             }
-            for (var cy = y; cy < y + height; ++cy) {
-                for (var cx = x; cx < x + width; ++cx) {
+            for (let cy = y; cy < y + height; ++cy) {
+                for (let cx = x; cx < x + width; ++cx) {
                     table[cx][cy] = value;
                 }
             }
         }
 
         private newTable(): any[][] {
-            var table = [];
-            for (var i = 0; i < this.width; ++i) {
+            let table = [];
+            for (let i = 0; i < this.width; ++i) {
                 table[i] = [];
             }
             return table;

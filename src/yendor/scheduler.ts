@@ -1,34 +1,34 @@
-/*
+/**
 	Section: Scheduler
 */
 module Yendor {
     "use strict";
 
-	/*
+	/**
 		Interface: TimedEntity
 		Something that must be updated every once in a while
 	*/
     export interface TimedEntity {
-		/*
+		/**
 			Function: update
 			Update the entity and set its new waitTime.
 			Any call to update MUST increase waitTime to keep the creature from locking the scheduler.
 		*/
         update();
 
-		/*
+		/**
 			Function: getWaitTime
 			Time until the next update() call. This is an arbitrary value.
 		*/
         getWaitTime(): number;
         
-        /*
+        /**
             Function: reduceWaitTime
             Decrease amount of time to wait
         */
         reduceWaitTime(time: number);
     }
-	/*
+	/**
 		Class: Scheduler
 		Handles timed entities and the order in which they are updated. This class stores a sorted list of entities by waitTime.
 		Each time <run> is called, the game time advances by the lowest entity wait time amount.
@@ -43,6 +43,7 @@ module Yendor {
     export class Scheduler {
         private entities: BinaryHeap<TimedEntity>;
         private paused: boolean = false;
+        private updatedEntities: TimedEntity[] = [];
 
         constructor() {
             this.entities = new BinaryHeap<TimedEntity>((entity: TimedEntity) => {
@@ -50,28 +51,43 @@ module Yendor {
             });
         }
 
-		/*
+		/**
 			Function: add
 		*/
         add(entity: TimedEntity) {
-            this.entities.push(entity);
+            if ( !this.entities.contains(entity)) {
+                this.entities.push(entity);
+            }
         }
 
-		/*
+		/**
 			Function: addAll
 		*/
         addAll(entities: TimedEntity[]) {
             this.entities.pushAll(entities);
         }
+        
+        /**
+            Functin: contains
+        */
+        contains(entity: TimedEntity) {
+            return this.entities.contains(entity);
+        }
 
-		/*
+		/**
 			Function: remove
 		*/
         remove(entity: TimedEntity) {
-            this.entities.remove(entity);
+            if (!this.entities.remove(entity)) {
+                // when removing entity during update, entity might not be in the heap
+                let index: number = this.updatedEntities.indexOf(entity);
+                if ( index !== -1 ) {
+                    this.updatedEntities.splice(index, 1);
+                }
+            }
         }
 
-		/*
+		/**
 			Function: clear
 			Remove all timed entities from the scheduler.
 		*/
@@ -79,7 +95,7 @@ module Yendor {
             this.entities.clear();
         }
 
-		/*
+		/**
 			Function: pause
 			Calling <run> has no effect until <resume> is called. You can use this to wait for a keypress in turn by turn games.
 		*/
@@ -87,21 +103,21 @@ module Yendor {
             this.paused = true;
         }
 
-		/*
+		/**
 			Function: resume
 		*/
         resume() {
             this.paused = false;
         }
 
-		/*
+		/**
 			Function: isPaused
 		*/
         isPaused() {
             return this.paused;
         }
 
-		/*
+		/**
 			Function: run
 			Update all entities that are ready and put them back in the sorted queue.
 
@@ -112,23 +128,23 @@ module Yendor {
                 return;
             }
             // decrease all entities' wait time
-            var elapsed = this.entities.peek().getWaitTime();
+            let elapsed = this.entities.peek().getWaitTime();
             if (elapsed > 0) {
-                for (var i: number = 0, len: number = this.entities.size(); i < len; ++i) {
+                for (let i: number = 0, len: number = this.entities.size(); i < len; ++i) {
                     this.entities.peek(i).reduceWaitTime(elapsed);
                 }
             }
             // update all entities with wait time <= 0
-            var updatedEntities: TimedEntity[] = [];
-            var entity: TimedEntity = this.entities.peek();
+            let entity: TimedEntity = this.entities.peek();
+            this.updatedEntities = [];
             while (!this.paused && entity && entity.getWaitTime() <= 0) {
-                updatedEntities.push(entity);
+                this.updatedEntities.push(entity);
                 this.entities.pop();
                 entity.update();
                 entity = this.entities.peek();
             }
             // push updated entities back to the heap
-            this.entities.pushAll(updatedEntities);
+            this.entities.pushAll(this.updatedEntities);
         }
     }
 }

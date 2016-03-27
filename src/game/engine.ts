@@ -1,7 +1,7 @@
 module Game {
     "use strict";
 
-	/*
+	/**
 		Property: SAVEFILE_VERSION
 		This is the savegame format version. To be incremented when the format changes
 		to keep the game from trying to load data with an old format.
@@ -102,7 +102,7 @@ module Game {
         }
     }
 
-	/*
+	/**
 		Class: Engine
 		Handles frame rendering and world updating.
 	*/
@@ -123,7 +123,7 @@ module Game {
             Umbra.EventManager.registerEventListener(this, EventType[EventType.CHANGE_STATUS]);
             Umbra.EventManager.registerEventListener(this, EventType[EventType.NEW_GAME]);
 
-            var savedVersion = this.persister.loadFromKey(Constants.PERSISTENCE_VERSION_KEY);
+            let savedVersion = this.persister.loadFromKey(Constants.PERSISTENCE_VERSION_KEY);
             if (savedVersion && savedVersion.toString() === SAVEFILE_VERSION) {
                 this.loadGame();
             } else {
@@ -143,35 +143,38 @@ module Game {
             this.deleteSavedGame();
             this._map.init(Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT);
             this._actorManager.reset(true);
-            var dungeonBuilder: BspDungeonBuilder = new BspDungeonBuilder(this.dungeonLevel);
+            let dungeonBuilder: BspDungeonBuilder = new BspDungeonBuilder(this.dungeonLevel);
             dungeonBuilder.build(this._map);
             this._topotologyMap = dungeonBuilder.topologyMap;
             this.status = GameStatus.RUNNING;
             this._mapRenderer.onInit();
 
             // starting inventory
-            var player: Actor = this._actorManager.getPlayer();
-            var torch = ActorFactory.create(ActorType.TORCH, player.x, player.y);
+            let player: Actor = this._actorManager.getPlayer();
+            let torch = ActorFactory.create(ActorType.TORCH, player.x, player.y);
+            this._actorManager.addItem(torch);
             torch.pickable.pick(torch, player);
 
             // this helps debugging items
             if (Yendor.urlParams[Constants.URL_PARAM_DEBUG]) {
-                [ActorType.STAFF_OF_MAPPING, ActorType.SUNROD, ActorType.CANDLE, ActorType.SCROLL_OF_CONFUSION,
-                    ActorType.WOODEN_SHIELD, ActorType.STAFF_OF_TELEPORTATION,
-                    ActorType.STAFF_OF_LIFE_DETECTION, ActorType.REGENERATION_POTION,
-                    ActorType.SHORT_BOW
+                [ActorType.SUNROD
                 ].forEach((type: ActorType) => { this._actorManager.addItem(ActorFactory.create(type, player.x, player.y)); });
             }
         }
 
         private loadGame() {
-            this.dungeonLevel = this.persister.loadFromKey(Constants.PERSISTENCE_DUNGEON_LEVEL);
-            this.persister.loadFromKey(Constants.PERSISTENCE_MAP_KEY, this._map);
-            ActorFactory.load(this.persister);
-            // TODO save/restore topologyMap
-            Umbra.EventManager.publishEvent(EventType[EventType.LOAD_GAME]);
-            this.status = GameStatus.RUNNING;
-            this._topotologyMap = this.persister.loadFromKey(Constants.PERSISTENCE_TOPOLOGY_MAP);
+            try {
+                this.dungeonLevel = this.persister.loadFromKey(Constants.PERSISTENCE_DUNGEON_LEVEL);
+                this.persister.loadFromKey(Constants.PERSISTENCE_MAP_KEY, this._map);
+                ActorFactory.load(this.persister);
+                // TODO save/restore topologyMap
+                Umbra.EventManager.publishEvent(EventType[EventType.LOAD_GAME]);
+                this.status = GameStatus.RUNNING;
+                this._topotologyMap = this.persister.loadFromKey(Constants.PERSISTENCE_TOPOLOGY_MAP);
+            } catch (e) {
+                console.log("Error while loading game :" + e.fileName + ":" + e.lineNumber + " : " + e.message)
+                this.onNewGame();
+            }
         }
 
         saveGame() {
@@ -195,24 +198,24 @@ module Game {
             Umbra.EventManager.publishEvent(EventType[EventType.DELETE_SAVEGAME]);
         }
 
-		/*
+		/**
 			Function: gotoNextLevel
 			Go down one level in the dungeon
 		*/
         private gotoNextLevel() {
             this.dungeonLevel++;
             this._actorManager.reset(false);
-            var player: Actor = this._actorManager.getPlayer();
-            player.destructible.heal(player.destructible.maxHp / 2);
+            let player: Actor = this._actorManager.getPlayer();
+            player.destructible.heal(player, player.destructible.maxHp / 2);
             log("You take a moment to rest, and recover your strength.", Constants.LOG_WARN_COLOR);
             log("After a rare moment of peace, you descend deeper\ninto the heart of the dungeon...", Constants.LOG_WARN_COLOR);
             log("Level..." + this.dungeonLevel, Constants.LOG_WARN_COLOR);
             this._map.init(Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT);
-            var dungeonBuilder: BspDungeonBuilder = new BspDungeonBuilder(this.dungeonLevel);
+            let dungeonBuilder: BspDungeonBuilder = new BspDungeonBuilder(this.dungeonLevel);
             dungeonBuilder.build(this._map);
         }
 
-		/*
+		/**
 			Function: handleKeyboardInput
 			Handle main menu shortcut
 		*/
@@ -223,7 +226,7 @@ module Game {
             }
         }
 
-		/*
+		/**
 			Function: onUpdate
 			Update the game world
 
@@ -238,7 +241,7 @@ module Game {
             }
         }
 
-        /*
+        /**
 			Function: onRender
 			The actual frame rendering. Render objects in this order:
 			- the map

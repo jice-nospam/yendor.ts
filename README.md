@@ -6,6 +6,8 @@ umbra.ts is a [TypeScript](http://www.typescriptlang.org) lightweight game frame
 
 gizmo.ts provides user interface widgets for umbra.ts
 
+GeneRogue is a generic roguelike loosely based on the famous [python roguelike tutorial](http://www.roguebasin.com/index.php?title=Complete_Roguelike_Tutorial,_using_python%2Blibtcod).
+
 # Features
 
 ## yendor.ts
@@ -23,6 +25,12 @@ gizmo.ts provides user interface widgets for umbra.ts
 
 ## gizmo.ts
 * basic widget & button support
+
+## GeneRogue
+* multi-level procedurally generated dungeon
+* key/lock puzzles
+* melee combat, ranged combat, magic items and scrolls
+* lighting
 
 # Supported browsers
 

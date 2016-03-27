@@ -1,4 +1,4 @@
-/*
+/**
 	Section: Scene management
 */
 module Umbra {
@@ -7,10 +7,10 @@ module Umbra {
     }
 
     export module SceneManager {
-        var currentScene: Scene;
-        var sceneStack: Scene[] = [];
+        let currentScene: Scene;
+        let sceneStack: Scene[] = [];
 
-		/*
+		/**
 			Function: runScene
 			Terminate the current scene and replace it with a new one
 			
@@ -25,7 +25,7 @@ module Umbra {
             scene.initHierarchy();
         }
 
-		/*
+		/**
 			Function: getRunningScene
 			
 			Returns:
@@ -35,7 +35,7 @@ module Umbra {
             return this.currentScene;
         }
 
-		/*
+		/**
 			Function: pushScene
 			stack the current scene
 		*/
@@ -43,7 +43,7 @@ module Umbra {
             this.sceneStack.push(this.currentScene);
         }
 
-		/*
+		/**
 			Function: popScene
 			Terminate the current scene and start the one at the top of the stack
 			

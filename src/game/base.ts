@@ -10,6 +10,7 @@ module Game {
         // URL parameters
         export const URL_PARAM_DEBUG: string = "debug";
         export const URL_PARAM_NO_MONSTER: string = "nomonster";
+        export const URL_PARAM_NO_ITEM: string = "noitem";
 
         // rendering
         export const DARK_WALL: Core.Color = 0x000064;
@@ -40,7 +41,6 @@ module Game {
         export const LOG_CRIT_COLOR: Core.Color = 0xFF2222;
         export const TILEPICKER_OK_COLOR: Core.Color = 0x00FF00;
         export const TILEPICKER_KO_COLOR: Core.Color = 0xFF2222;
-        export const FROST_COLOR: Core.Color = 0xE0E0FF;
 
         // some material colors
         export const WOOD_COLOR: Core.Color = 0x7F3300;
@@ -52,6 +52,9 @@ module Game {
         export const TORCH_LIGHT_COLOR: Core.Color = 0xFFFF44;
         export const SUNROD_LIGHT_COLOR: Core.Color = 0xEEEEFF;
         export const NOLIGHT_COLOR: Core.Color = 0x444444;
+        export const FROST_COLOR: Core.Color = 0xE0E0FF;
+        export const HEALTH_POTION_COLOR: Core.Color = 0x800080;
+        export const OIL_FLASK_COLOR: Core.Color = 0xBBBBBB;
 
         // gui
         export const LOG_DARKEN_COEF: number = 0.8;
@@ -147,15 +150,15 @@ module Game {
     }
 
     // utilities
-    /*
+    /**
         Function: log
         Add a log to the status panel by sending a LOG_MESSAGE event on the event bus.
     */
-    export var log = function(text: string, color: Core.Color = Constants.LOG_INFO_COLOR) {
+    export let log = function(text: string, color: Core.Color = Constants.LOG_INFO_COLOR) {
         Umbra.EventManager.publishEvent(EventType[EventType.LOG_MESSAGE], new Message(color, text));
     };
 
-    /*
+    /**
         Function: transformMessage
         Convert variables inside a text into their actual value.
         Available variables (example for actor1  = a sword or the player) :
@@ -195,19 +198,22 @@ module Game {
 
         The orc hits with an axe for 5 points.
     */
-    export var transformMessage = function(text: string, actor1: Actor, actor2?: Actor, value1?: number, value2?: number): string {
-        var newText = text.replace(/\[The actor1\'s\] /g, actor1.getThenames());
-        newText = newText.replace(/ \[the actor1\'s\] /g, actor1.getthenames());
-        newText = newText.replace(/\[The actor1\]/g, actor1.getThename());
-        newText = newText.replace(/ \[the actor1\]/g, actor1.getthename());
-        newText = newText.replace(/\[A actor1\]/g, actor1.getAname());
-        newText = newText.replace(/ \[a actor1\]/g, actor1.getaname());
-        newText = newText.replace(/\[s\]/g, actor1.getVerbEnd());
-        newText = newText.replace(/ \[it\]/g, actor1.getit());
-        newText = newText.replace(/ \[its\] /g, actor1.getits());
-        newText = newText.replace(/ \[is\]/g, actor1.getis());
+    export let transformMessage = function(text: string, actor1: Actor, actor2?: Actor, value1?: number, value2?: number): string {
+        let newText = text;
+        if ( actor1) {
+            newText = newText.replace(/\[The actor1\'s\] /g, actor1.getThenames());
+            newText = newText.replace(/ \[the actor1\'s\] /g, actor1.getthenames());
+            newText = newText.replace(/\[The actor1\]/g, actor1.getThename());
+            newText = newText.replace(/ \[the actor1\]/g, actor1.getthename());
+            newText = newText.replace(/\[A actor1\]/g, actor1.getAname());
+            newText = newText.replace(/ \[a actor1\]/g, actor1.getaname());
+            newText = newText.replace(/\[s\]/g, actor1.getVerbEnd());
+            newText = newText.replace(/ \[it\]/g, actor1.getit());
+            newText = newText.replace(/ \[its\] /g, actor1.getits());
+            newText = newText.replace(/ \[is\]/g, actor1.getis());
+        }
         if (actor2) {
-            newText.replace(/\[The actor2\'s\] /g, actor2.getThenames());
+            newText = newText.replace(/\[The actor2\'s\] /g, actor2.getThenames());
             newText = newText.replace(/ \[the actor2\'s\] /g, actor2.getthenames());
             newText = newText.replace(/\[The actor2\]/g, actor2.getThename());
             newText = newText.replace(/ \[the actor2\]/g, actor2.getthename());
@@ -227,20 +233,20 @@ module Game {
         return newText;
     };
 
-    export var getLastPlayerAction = function(): PlayerAction {
-        var lastActionName: string = Umbra.Input.getLastAxisName();
+    export let getLastPlayerAction = function(): PlayerAction {
+        let lastActionName: string = Umbra.Input.getLastAxisName();
         return lastActionName ? PlayerAction[lastActionName] : undefined;
     } 
 
-    /*
+    /**
         Function: convertActionToPosition
         convert a movement action into an actual dx, dy movement
 
         Returns:
         the Core.Position containing the movement, 0,0 if the action is not a movement action
     */
-    export var convertActionToPosition = function(action: PlayerAction): Core.Position {        
-        var move: Core.Position = new Core.Position(0, 0);
+    export let convertActionToPosition = function(action: PlayerAction): Core.Position {        
+        let move: Core.Position = new Core.Position(0, 0);
         switch (action) {
             case PlayerAction.MOVE_NORTH:
                 move.y = -1;

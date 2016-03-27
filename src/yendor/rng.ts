@@ -1,18 +1,18 @@
-/*
+/**
 	Section: Random number generator
 */
 module Yendor {
     "use strict";
 
-	/*
+	/**
 		Class: Random
 		Base for all RNG implementations.
 
-		> var rng: Yendor.Random = new ComplementaryMultiplyWithCarryRandom();
-		> var n: number = rng.getNumber(0,100);
+		> let rng: Yendor.Random = new ComplementaryMultiplyWithCarryRandom();
+		> let n: number = rng.getNumber(0,100);
 	*/
     export abstract class Random {
-		/*
+		/**
 			Function: getNumber
 			Get a random number between two values.
 
@@ -25,7 +25,7 @@ module Yendor {
 		*/
         abstract getNumber(min: number, max: number): number;
 
-	    /*
+	    /**
 	        Function: getRandomChance
 	        Choose one value from a list, taking chances into account.
 	        For example with hashmap {"orc":30, "troll":10}, the function returns "orc" with a probability 
@@ -45,8 +45,8 @@ module Yendor {
 
 	    */
         getRandomChance(chances: { [index: string]: number }): string | number {
-            var chancesSum: number = 0;
-            for (var key in chances) {
+            let chancesSum: number = 0;
+            for (let key in chances) {
                 if (chances.hasOwnProperty(key)) {
                     if (chances[key] <= 0) {
                         chances[key] = undefined;
@@ -56,9 +56,9 @@ module Yendor {
                 }
             }
             // the dice will land on some number between 1 and the sum of the chances
-            var dice: number = this.getNumber(0, chancesSum);
-            var currentChanceSum = 0;
-            for (var key2 in chances) {
+            let dice: number = this.getNumber(0, chancesSum);
+            let currentChanceSum = 0;
+            for (let key2 in chances) {
                 if (chances.hasOwnProperty(key2) && chances[key2] !== undefined) {
                     // go through all chances, keeping the sum so far
                     currentChanceSum += chances[key2];
@@ -72,7 +72,7 @@ module Yendor {
         }
     }
 
-	/*
+	/**
 		Class: ComplementaryMultiplyWithCarryRandom
 		Implements a RNG using <complementary multiply with carry 
 		at https://en.wikipedia.org/wiki/Multiply-with-carry> algorithm by George Marsaglia.
@@ -83,7 +83,7 @@ module Yendor {
         private Q: number[];
         private c: number;
 
-		/*
+		/**
 			Constructor: constructor
 
 			Parameters:
@@ -95,9 +95,9 @@ module Yendor {
                 seed = Math.floor(Math.random() * 0x7FFFFFFF);
             }
             // fill the Q array with pseudorandom seeds
-            var s = seed;
+            let s = seed;
             this.Q = [];
-            for (var i = 0; i < 4096; i++) {
+            for (let i = 0; i < 4096; i++) {
                 s = ((s * 1103515245) + 12345) % 0x100000000; // glibc LCG 
                 this.Q[i] = s;
             }
@@ -109,17 +109,17 @@ module Yendor {
                 return min;
             }
             if (max < min) {
-                var tmp = max;
+                let tmp = max;
                 max = min;
                 min = tmp;
             }
-            var delta = max - min + 1;
+            let delta = max - min + 1;
             return (Math.abs(this.getCMWCNumber() % delta)) + min;
         }
 
         private getCMWCNumber(): number {
-            var t: number;
-            var x: number;
+            let t: number;
+            let x: number;
             this.cur = (this.cur + 1) % 4096;
             t = 18782 * this.Q[this.cur] + this.c;
             this.c = Math.floor(t * ComplementaryMultiplyWithCarryRandom.DIVIDER);

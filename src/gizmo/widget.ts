@@ -1,4 +1,4 @@
-/*
+/**
 	Section: Widgets
 */
 module Gizmo {
@@ -6,12 +6,12 @@ module Gizmo {
 
     export abstract class Widget extends Umbra.Node implements Umbra.EventListener {
         enableEvents: boolean = true;
-		/*
+		/**
 			Property: activeModal
 			There can only be one active modal at a time. Showing a modal widget hides the previous modal widget.
 		*/
         private static activeModal: Widget;
-        /*
+        /**
             Property: focus
             The widget that currently has focus
         */
@@ -53,7 +53,7 @@ module Gizmo {
             super.hide();
         }
         
-        /*
+        /**
             Function: showOnEventType
             Automatically show this widget when an event is published
         */
@@ -68,7 +68,7 @@ module Gizmo {
         }
     }
 
-	/*
+	/**
 		Class: ConsoleWidget
 		A widget that uses an offscreen console to store its content. Widgets should extend this class and render stuff on __console before calling super.onRender.
 	*/

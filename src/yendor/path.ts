@@ -1,10 +1,10 @@
-/*
+/**
 	Section: Path finding
 */
 module Yendor {
     "use strict";
 
-	/*
+	/**
 		Class: BinaryHeap
 		A min heap used for A* algorithm.
 		Adapted from http://www.openbookproject.net/books/mi2pwjs/app_b.html#binary-heaps-appendix
@@ -20,8 +20,8 @@ module Yendor {
             this.bubbleUp(this.content.length - 1);
         }
         pushAll(elements: T[]) {
-            var len: number = elements.length;
-            for (var i: number = 0; i < len; ++i) {
+            let len: number = elements.length;
+            for (let i: number = 0; i < len; ++i) {
                 this.push(elements[i]);
             }
         }
@@ -32,43 +32,42 @@ module Yendor {
             this.content = [];
         }
         pop(): T {
-            var result: T = this.content[0];
-            var end: T = this.content.pop();
+            let result: T = this.content[0];
+            let end: T = this.content.pop();
             if (this.content.length > 0) {
                 this.content[0] = end;
                 this.sinkDown(0);
             }
             return result;
         }
-		/*
+		/**
 			Function: contains
 			Check if the heap contains en element. Only works if the elements implements <Comparable>
 		*/
         contains(element: T): boolean {
-            var len: number = this.content.length;
-            for (var i: number = 0; i < len; ++i) {
+            let len: number = this.content.length;
+            for (let i: number = 0; i < len; ++i) {
                 if ((<any>element).equals(<any>(this.content[i]))) {
                     return true;
                 }
             }
             return false;
         }
-        remove(element: T) {
-            var len: number = this.content.length;
-            for (var i: number = 0; i < len; ++i) {
-                if (this.content[i] === element) {
-                    var end: T = this.content.pop();
-                    if (i !== len - 1) {
-                        this.content[i] = end;
-                        if (this.scoreFunction(end) < this.scoreFunction(element)) {
-                            this.bubbleUp(i);
-                        } else {
-                            this.sinkDown(i);
-                        }
-                    }
-                    return;
+        remove(element: T): boolean {
+            let index: number = this.content.indexOf(element);
+            if ( index === -1 ) {
+                return false;
+            }
+            let end: T = this.content.pop();
+            if (index !== this.content.length ) {
+                this.content[index] = end;
+                if (this.scoreFunction(end) < this.scoreFunction(element)) {
+                    this.bubbleUp(index);
+                } else {
+                    this.sinkDown(index);
                 }
             }
+            return true;
         }
         size(): number {
             return this.content.length;
@@ -77,11 +76,11 @@ module Yendor {
             return this.content.length === 0;
         }
         private bubbleUp(n: number) {
-            var element: T = this.content[n];
+            let element: T = this.content[n];
             while (n > 0) {
-                var parentN: number = Math.floor((n + 1) / 2) - 1;
-                var parent: T = this.content[parentN];
-                if (this.scoreFunction(element) < this.scoreFunction(parent)) {
+                let parentN: number = Math.floor((n + 1) / 2) - 1;
+                let parent: T = this.content[parentN];
+                if (this.scoreFunction(element) <= this.scoreFunction(parent)) {
                     this.content[parentN] = element;
                     this.content[n] = parent;
                     n = parentN;
@@ -91,23 +90,24 @@ module Yendor {
             }
         }
         private sinkDown(n: number) {
-            var length: number = this.content.length;
-            var element: T = this.content[n];
-            var elemScore: number = this.scoreFunction(element);
+            let length: number = this.content.length;
+            let element: T = this.content[n];
+            let elemScore: number = this.scoreFunction(element);
             while (true) {
-                var child2N: number = (n + 1) * 2;
-                var child1N: number = child2N - 1;
-                var swap: number = undefined;
+                let child2N: number = (n + 1) * 2;
+                let child1N: number = child2N - 1;
+                let swap: number = undefined;
+                let child1Score: number;
                 if (child1N < length) {
-                    var child1 = this.content[child1N];
-                    var child1Score = this.scoreFunction(child1);
+                    let child1 = this.content[child1N];
+                    child1Score = this.scoreFunction(child1);
                     if (child1Score < elemScore) {
                         swap = child1N;
                     }
                 }
                 if (child2N < length) {
-                    var child2 = this.content[child2N];
-                    var child2Score = this.scoreFunction(child2);
+                    let child2 = this.content[child2N];
+                    let child2Score = this.scoreFunction(child2);
                     if (child2Score < (swap === undefined ? elemScore : child1Score)) {
                         swap = child2N;
                     }
@@ -123,7 +123,7 @@ module Yendor {
         }
     }
 
-	/*
+	/**
 		Class: PathFinder
 		Find the shortest path on a map using A* algorithm.
 		Adapted from https://en.wikipedia.org/wiki/A*_search_algorithm
@@ -136,7 +136,7 @@ module Yendor {
         // limit the number of steps to keep the pathfinder from sucking all cpu
         private maxSteps: number;
 
-		/*
+		/**
 			Constructor: constructor
 			Parameters:
 			mapWidth - width of the map
@@ -159,8 +159,8 @@ module Yendor {
         }
 
         private arrayContains(array: Core.Position[], pos: Core.Position): boolean {
-            var len: number = array.length;
-            for (var i: number = 0; i < len; ++i) {
+            let len: number = array.length;
+            for (let i: number = 0; i < len; ++i) {
                 if (array[i].x === pos.x && array[i].y === pos.y) {
                     return true;
                 }
@@ -168,7 +168,7 @@ module Yendor {
             return false;
         }
 
-        /*
+        /**
             Function: getPath
             Compute the shortest path between two positions.
 
@@ -177,43 +177,43 @@ module Yendor {
             Returns undefined if no path can be found (no path exists or destination is too far away)
         */
         getPath(from: Core.Position, to: Core.Position): Core.Position[] {
-            var closedSet: Core.Position[] = [];
-            var cameFrom: { [index: number]: Core.Position } = {};
+            let closedSet: Core.Position[] = [];
+            let cameFrom: { [index: number]: Core.Position } = {};
             // walk cost from start to this cell
-            var gScore: { [index: number]: number } = {};
+            let gScore: { [index: number]: number } = {};
             // estimated walk cost from start to the destination cell, going through this cell
-            var fScore: { [index: number]: number } = {};
-            var pathFinderThis: PathFinder = this;
-            var openSet: BinaryHeap<Core.Position> = new BinaryHeap<Core.Position>(
+            let fScore: { [index: number]: number } = {};
+            let pathFinderThis: PathFinder = this;
+            let openSet: BinaryHeap<Core.Position> = new BinaryHeap<Core.Position>(
                 function(pos: Core.Position): number {
                     return fScore[pathFinderThis.pos2Offset(pos)];
                 }
             );
-            var fromOffset: number = this.pos2Offset(from);
+            let fromOffset: number = this.pos2Offset(from);
             gScore[fromOffset] = 0;
             fScore[fromOffset] = gScore[fromOffset] + this.heuristicFunction(from, to);
             this.maxSteps = fScore[fromOffset] * 10;
             openSet.push(new Core.Position(from.x, from.y));
-            var step: number = this.maxSteps;
+            let step: number = this.maxSteps;
             while (openSet.size() > 0 && step > 0) {
                 step--;
-                var current: Core.Position = <Core.Position>openSet.pop();
+                let current: Core.Position = <Core.Position>openSet.pop();
                 if (current.x === to.x && current.y === to.y) {
                     // reached destination. build path
                     return this.reconstructPath(cameFrom, current);
                 }
                 closedSet.push(current);
-                var currentOffset: number = this.pos2Offset(current);
-                var adjacentCells: Core.Position[] = current.getAdjacentCells(this.mapWidth, this.mapHeight);
-                var len: number = adjacentCells.length;
-                for (var i: number = 0; i < len; ++i) {
-                    var neighbor: Core.Position = adjacentCells[i];
+                let currentOffset: number = this.pos2Offset(current);
+                let adjacentCells: Core.Position[] = current.getAdjacentCells(this.mapWidth, this.mapHeight);
+                let len: number = adjacentCells.length;
+                for (let i: number = 0; i < len; ++i) {
+                    let neighbor: Core.Position = adjacentCells[i];
                     if (!this.arrayContains(closedSet, neighbor)) {
-                        var neighborOffset: number = this.pos2Offset(neighbor);
-                        var cost: number = this.walkCostFunction(current, neighbor);
+                        let neighborOffset: number = this.pos2Offset(neighbor);
+                        let cost: number = this.walkCostFunction(current, neighbor);
                         if (cost > 0) {
-                            var tentativeGScore: number = gScore[currentOffset] + cost;
-                            var neighborInOpenSet: boolean = openSet.contains(neighbor);
+                            let tentativeGScore: number = gScore[currentOffset] + cost;
+                            let neighborInOpenSet: boolean = openSet.contains(neighbor);
                             if (!neighborInOpenSet || tentativeGScore < gScore[neighborOffset]) {
                                 cameFrom[neighborOffset] = current;
                                 gScore[neighborOffset] = tentativeGScore;
@@ -235,8 +235,8 @@ module Yendor {
         }
 
         private reconstructPath(cameFrom: { [index: number]: Core.Position }, current: Core.Position): Core.Position[] {
-            var path: Core.Position[] = [current];
-            var currentOffset = this.pos2Offset(current);
+            let path: Core.Position[] = [current];
+            let currentOffset = this.pos2Offset(current);
             while (cameFrom[currentOffset]) {
                 current = cameFrom[currentOffset];
                 currentOffset = this.pos2Offset(current);

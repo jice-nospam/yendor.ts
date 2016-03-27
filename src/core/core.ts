@@ -10,13 +10,13 @@ module Core {
     "use strict";
 
     // CRC32 utility. Adapted from http://stackoverflow.com/questions/18638900/javascript-crc32
-    var crcTable: number[];
+    let crcTable: number[];
     function makeCRCTable() {
-        var c: number;
+        let c: number;
         crcTable = [];
-        for (var n: number = 0; n < 256; n++) {
+        for (let n: number = 0; n < 256; n++) {
             c = n;
-            for (var k: number = 0; k < 8; k++) {
+            for (let k: number = 0; k < 8; k++) {
                 c = ((c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1));
             }
             crcTable[n] = c;
@@ -24,8 +24,8 @@ module Core {
     }
     
     export function buildMatrix<T>(w: number): T[][] {
-        var ret: T[][] = [];
-        for ( var x: number = 0; x < w; ++x) {
+        let ret: T[][] = [];
+        for ( let x: number = 0; x < w; ++x) {
             ret[x] = [];
         }
         return ret;
@@ -40,8 +40,8 @@ module Core {
         if (!crcTable) {
             makeCRCTable();
         }
-        var crc: number = 0 ^ (-1);
-        for (var i: number = 0, len: number = str.length; i < len; ++i) {
+        let crc: number = 0 ^ (-1);
+        for (let i: number = 0, len: number = str.length; i < len; ++i) {
             crc = (crc >>> 8) ^ crcTable[(crc ^ str.charCodeAt(i)) & 0xFF];
         }
         return (crc ^ (-1)) >>> 0;

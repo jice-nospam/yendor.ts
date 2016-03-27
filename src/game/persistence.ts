@@ -1,11 +1,11 @@
-/*
+/**
 	Section: Persistence
 */
 
 module Game {
     "use strict";
 
-	/*
+	/**
 		Interface: Persistent
 		Anything that can be saved and restored.
 		The constructor must initialize the className field.
@@ -15,14 +15,14 @@ module Game {
         Then field values are restored from the saved json.
 	*/
     export interface Persistent {
-		/*
+		/**
 			Property: className
 			The name of the class must be saved along with the object properties
 			to be able to restore the right type of object when loading from
 			the database
 		*/
         className: string;
-		/*
+		/**
 			Function: load
 			Optional custom loading function.
 
@@ -30,19 +30,19 @@ module Game {
 			jsonData - parsed json data to load from
 		*/
         load?: (jsonData: any) => any;
-		/*
+		/**
 			Function: postLoad
 			Optional function called after the object is loaded.
 		*/
         postLoad?: () => void;
     }
 
-	/*
+	/**
 		Interface: Persister
 		Can save/load objects from a repository
 	*/
     export interface Persister {
-		/*
+		/**
 			Function: loadFromKey
 			Retrieve an object from a given database key.
 
@@ -51,7 +51,7 @@ module Game {
 			object - if not provided, the persister must create the object
 		*/
         loadFromKey(key: string, object?: any): any;
-		/*
+		/**
 			Function: saveToKey
 			Save an object into a database and associate it with given key
 
@@ -60,7 +60,7 @@ module Game {
 			object - the object to save
 		*/
         saveToKey(key: string, object: any);
-		/*
+		/**
 			Function: deleteKey
 			Delete the object associated with a key in the database
 
@@ -70,7 +70,7 @@ module Game {
         deleteKey(key: string);
     }
 
-	/*
+	/**
 		Class: LocalStoragePersister
 		Implements Persister useing the browser's HTML5 local storage.
 		Note : in internet explorer, this only works with http://... URL. Local storage
@@ -86,7 +86,7 @@ module Game {
                 return undefined;
             }
             // TODO use a JSON reviver to skip intermediate jsonData step
-            var jsonString: string = this.localStorage.getItem(key);
+            let jsonString: string = this.localStorage.getItem(key);
             if (!jsonString) {
                 return undefined;
             }
@@ -117,7 +117,7 @@ module Game {
         }
 
         loadFromKey(localStorageKey: string, object?: any): any {
-            var jsonData: any = this.getDataFromKey(localStorageKey);
+            let jsonData: any = this.getDataFromKey(localStorageKey);
             if (!jsonData) {
                 return undefined;
             }
@@ -128,7 +128,7 @@ module Game {
             if (jsonData instanceof Array) {
                 return this.loadArrayFromData(jsonData);
             } else if (typeof jsonData === "object") {
-                var obj: any = this.loadObjectFromData(jsonData, object);
+                let obj: any = this.loadObjectFromData(jsonData, object);
                 if (obj.postLoad) {
                     obj.postLoad();
                 }
@@ -139,8 +139,8 @@ module Game {
         }
 
         private loadArrayFromData(jsonData: any): Array<any> {
-            var array = [];
-            for (var i: number = 0, len: number = jsonData.length; i < len; ++i) {
+            let array = [];
+            for (let i: number = 0, len: number = jsonData.length; i < len; ++i) {
                 array[i] = this.loadFromData(jsonData[i]);
             }
             return array;
@@ -160,7 +160,7 @@ module Game {
                 object.load(jsonData);
             } else {
                 // use generic loading method
-                for (var field in jsonData) {
+                for (let field in jsonData) {
                     if (jsonData.hasOwnProperty(field)) {
                         object[field] = this.loadFromData(jsonData[field]);
                     }

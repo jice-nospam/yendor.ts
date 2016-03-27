@@ -18,12 +18,12 @@ module Game {
         protected dig(map: Map, x1: number, y1: number, x2: number, y2: number) {
             // sort coordinates
             if (x2 < x1) {
-                var tmp: number = x2;
+                let tmp: number = x2;
                 x2 = x1;
                 x1 = tmp;
             }
             if (y2 < y1) {
-                var tmp2: number = y2;
+                let tmp2: number = y2;
                 y2 = y1;
                 y1 = tmp2;
             }
@@ -41,8 +41,8 @@ module Game {
                 y2--;
             }
             // dig
-            for (var tilex: number = x1; tilex <= x2; tilex++) {
-                for (var tiley: number = y1; tiley <= y2; tiley++) {
+            for (let tilex: number = x1; tilex <= x2; tilex++) {
+                for (let tiley: number = y1; tiley <= y2; tiley++) {
                     if (map.isWall(tilex, tiley)) {
                         map.setFloor(tilex, tiley);
                     }
@@ -54,8 +54,8 @@ module Game {
             this.dig(map, x1, y1, x2, y2);
             if (first) {
                 // put the player and stairs up in the first room
-                var player: Actor = Engine.instance.actorManager.getPlayer();
-                var stairsUp: Actor = Engine.instance.actorManager.getStairsUp();
+                let player: Actor = Engine.instance.actorManager.getPlayer();
+                let stairsUp: Actor = Engine.instance.actorManager.getStairsUp();
                 player.x = Math.floor((x1 + x2) / 2);
                 player.y = Math.floor((y1 + y2) / 2);
                 stairsUp.x = player.x;
@@ -64,30 +64,30 @@ module Game {
                 this.createMonsters(x1, y1, x2, y2, map);
                 this.createItems(x1, y1, x2, y2, map);
                 // stairs down will be in the last room
-                var stairsDown: Actor = Engine.instance.actorManager.getStairsDown();
+                let stairsDown: Actor = Engine.instance.actorManager.getStairsDown();
                 stairsDown.x = Math.floor((x1 + x2) / 2);
                 stairsDown.y = Math.floor((y1 + y2) / 2);
             }
         }
 
         protected createDoor(pos: Core.Position) {
-            var probabilities: { [index: string]: number; } = {};
+            let probabilities: { [index: string]: number; } = {};
             probabilities[ActorType.WOODEN_DOOR] = 80;
             probabilities[ActorType.IRON_PORTCULLIS] = 20;
-            var doorType: ActorType = <ActorType>this.rng.getRandomChance(probabilities);
+            let doorType: ActorType = <ActorType>this.rng.getRandomChance(probabilities);
             Engine.instance.actorManager.addItem(ActorFactory.create(doorType, pos.x, pos.y));
         }
 
         protected getDoor(pos: Core.Position): Actor {
-            var doors: Actor[] = Engine.instance.actorManager.filter(function(actor: Actor): boolean {
+            let doors: Actor[] = Engine.instance.actorManager.filter(function(actor: Actor): boolean {
                 return actor.x === pos.x && actor.y === pos.y && actor.door !== undefined;
             });
             return doors.length === 0 ? undefined : doors[0];
         }
 
         protected findVDoorPosition(map: Map, x: number, y1: number, y2: number) {
-            var y = y1 < y2 ? y1 : y2;
-            var endy = y1 < y2 ? y2 : y1;
+            let y = y1 < y2 ? y1 : y2;
+            let endy = y1 < y2 ? y2 : y1;
             do {
                 if (this.isAVDoorPosition(map, x, y)) {
                     return new Core.Position(x, y);
@@ -98,8 +98,8 @@ module Game {
         }
 
         protected findHDoorPosition(map: Map, x1: number, x2: number, y: number) {
-            var x = x1 < x2 ? x1 : x2;
-            var endx = x1 < x2 ? x2 : x1;
+            let x = x1 < x2 ? x1 : x2;
+            let endx = x1 < x2 ? x2 : x1;
             do {
                 if (this.isAHDoorPosition(map, x, y)) {
                     return new Core.Position(x, y);
@@ -113,7 +113,7 @@ module Game {
             if (!map.canWalk(x, y)) {
                 return false;
             }
-            var items: Actor[] = Engine.instance.actorManager.findActorsOnCell(new Core.Position(x, y), Engine.instance.actorManager.getItemIds());
+            let items: Actor[] = Engine.instance.actorManager.findActorsOnCell(new Core.Position(x, y), Engine.instance.actorManager.getItemIds());
             if (items.length === 0) {
                 return true;
             }
@@ -135,7 +135,7 @@ module Game {
         }
 
         protected findFloorTile(x: number, y: number, w: number, h: number, map: Map): Core.Position {
-            var pos: Core.Position = new Core.Position(Math.floor(x + w / 2), Math.floor(y + h / 2));
+            let pos: Core.Position = new Core.Position(Math.floor(x + w / 2), Math.floor(y + h / 2));
             while (map.isWall(pos.x, pos.y)) {
                 pos.x++;
                 if (pos.x === x + w) {
@@ -149,15 +149,15 @@ module Game {
             return pos;
         }
 
-		/*
+		/**
 			Function: getValueForDungeon
 			Get a value adapted to current dungeon level.
 			Parameters:
 			steps: array of (dungeon level, value) pairs 
 		*/
         private getValueForDungeon(steps: number[][]): number {
-            var stepCount = steps.length;
-            for (var step = stepCount - 1; step >= 0; --step) {
+            let stepCount = steps.length;
+            for (let step = stepCount - 1; step >= 0; --step) {
                 if (this.dungeonLevel >= steps[step][0]) {
                     return steps[step][1];
                 }
@@ -166,18 +166,18 @@ module Game {
         }
 
         private createMonster(x: number, y: number) {
-            var probabilities: { [index: string]: number; } = {};
+            let probabilities: { [index: string]: number; } = {};
             probabilities[ActorType.GOBLIN] = 60;
             probabilities[ActorType.ORC] = 30;
             // no trolls before level 3. then probability 10/(60+30+10)=0.1 until level 5, 
             // 20/(60+30+20)=0.18 until level 7 and 30/(60+30+30)=0.23 beyond
             probabilities[ActorType.TROLL] = this.getValueForDungeon([[3, 10], [5, 20], [7, 30]]);
-            var monster: ActorType = <ActorType>this.rng.getRandomChance(probabilities);
+            let monster: ActorType = <ActorType>this.rng.getRandomChance(probabilities);
             return ActorFactory.create(monster, x, y);
         }
 
         private createItem(x: number, y: number) {
-            var probabilities: { [index: string]: number; } = {};
+            let probabilities: { [index: string]: number; } = {};
             probabilities[ActorType.HEALTH_POTION] = this.getValueForDungeon([[0, 20], [5, 15]]);
             probabilities[ActorType.REGENERATION_POTION] = this.getValueForDungeon([[0, 20], [5, 15]]);
             probabilities[ActorType.SCROLL_OF_LIGHTNING_BOLT] = this.getValueForDungeon([[3, 10]]);
@@ -198,20 +198,20 @@ module Game {
             probabilities[ActorType.LONGSWORD] = this.getValueForDungeon([[6, 1]]);
             probabilities[ActorType.IRON_SHIELD] = this.getValueForDungeon([[7, 1]]);
             probabilities[ActorType.GREATSWORD] = this.getValueForDungeon([[8, 1]]);
-            probabilities[ActorType.CANDLE] = 5;
-            probabilities[ActorType.TORCH] = 3;
-            var item: ActorType = <ActorType>this.rng.getRandomChance(probabilities);
+            probabilities[ActorType.CANDLE] = 10;
+            probabilities[ActorType.OIL_FLASK] = 5;
+            probabilities[ActorType.TORCH] = 5;
+            probabilities[ActorType.LANTERN] = 1;
+            probabilities[ActorType.SUNROD] = 1;
+            let item: ActorType = <ActorType>this.rng.getRandomChance(probabilities);
             return ActorFactory.create(item, x, y);
         }
 
         private createMonsters(x1: number, y1: number, x2: number, y2: number, map: Map) {
-            var monsterCount = this.rng.getNumber(0, Constants.MAX_MONSTERS_PER_ROOM);
-            if (Yendor.urlParams[Constants.URL_PARAM_NO_MONSTER]) {
-                monsterCount = 0;
-            }
+            let monsterCount = Yendor.urlParams[Constants.URL_PARAM_NO_MONSTER] ? 0 : this.rng.getNumber(0, Constants.MAX_MONSTERS_PER_ROOM);
             while (monsterCount > 0) {
-                var x = this.rng.getNumber(x1, x2);
-                var y = this.rng.getNumber(y1, y2);
+                let x = this.rng.getNumber(x1, x2);
+                let y = this.rng.getNumber(y1, y2);
                 if (map.canWalk(x, y)) {
                     Engine.instance.actorManager.addCreature(this.createMonster(x, y));
                 }
@@ -220,10 +220,10 @@ module Game {
         }
 
         private createItems(x1: number, y1: number, x2: number, y2: number, map: Map) {
-            var itemCount = this.rng.getNumber(0, Constants.MAX_ITEMS_PER_ROOM);
+            let itemCount = Yendor.urlParams[Constants.URL_PARAM_NO_ITEM] ? 0 : this.rng.getNumber(0, Constants.MAX_ITEMS_PER_ROOM);
             while (itemCount > 0) {
-                var x = this.rng.getNumber(x1, x2);
-                var y = this.rng.getNumber(y1, y2);
+                let x = this.rng.getNumber(x1, x2);
+                let y = this.rng.getNumber(y1, y2);
                 if (map.canWalk(x, y)) {
                     Engine.instance.actorManager.addItem(this.createItem(x, y));
                 }
@@ -237,11 +237,11 @@ module Game {
 
         build(map: Map) {
             this.digMap(map);
-            var analyzer: TopologyAnalyzer = new TopologyAnalyzer();
+            let analyzer: TopologyAnalyzer = new TopologyAnalyzer();
             // find suitable dungeon entry and exit
-            var player: Actor = Engine.instance.actorManager.getPlayer();
-            var stairsUp: Actor = Engine.instance.actorManager.getStairsUp();
-            var stairsDown: Actor = Engine.instance.actorManager.getStairsDown();
+            let player: Actor = Engine.instance.actorManager.getPlayer();
+            let stairsUp: Actor = Engine.instance.actorManager.getStairsUp();
+            let stairsDown: Actor = Engine.instance.actorManager.getStairsDown();
             this._topologyMap = analyzer.buildTopologyMap(map, stairsDown);
             analyzer.findDungeonExits(player, stairsDown);
             // move player inventory
@@ -258,26 +258,26 @@ module Game {
             this.applyPuzzle();
         }
 
-		/*
+		/**
 			Function: applyPuzzle
 			actually implement the puzzle by locking doors and putting keys in the dungeon
 		*/
         private applyPuzzle() {
-            for (var i: number = 0, len: number = this._topologyMap.puzzle.length; i < len; ++i) {
-                var prob: number = this.rng.getNumber(0.0, 1.0);
+            for (let i: number = 0, len: number = this._topologyMap.puzzle.length; i < len; ++i) {
+                let prob: number = this.rng.getNumber(0.0, 1.0);
                 if ( prob > Constants.PUZZLE_STEP_PROBABILITY ) {
                     // skip this lock
                     continue;
                 }
-                var puzzleStep: PuzzleStep = this._topologyMap.puzzle[i];
-                var connector: Connector = this._topologyMap.getConnector(puzzleStep.connectorId);
-                var door: Actor = this.getDoor(connector.pos);
+                let puzzleStep: PuzzleStep = this._topologyMap.puzzle[i];
+                let connector: Connector = this._topologyMap.getConnector(puzzleStep.connectorId);
+                let door: Actor = this.getDoor(connector.pos);
                 if (!door) {
                     throw "Error : connector " + connector.id + " with no door";
                 }
                 // found a door to be locked. look for a position for the key
-                var pos: Core.Position = this._topologyMap.getRandomPositionInSector(puzzleStep.keySectorId, this.rng);
-                var key: Actor = ActorFactory.create(ActorType.KEY, pos.x, pos.y);
+                let pos: Core.Position = this._topologyMap.getRandomPositionInSector(puzzleStep.keySectorId, this.rng);
+                let key: Actor = ActorFactory.create(ActorType.KEY, pos.x, pos.y);
                 Engine.instance.actorManager.addItem(key);
                 ActorFactory.setLock(door, key);
             }
@@ -292,8 +292,8 @@ module Game {
         }
 
         private createRandomRoom(node: Yendor.BSPNode, map: Map) {
-            var x, y, w, h: number;
-            var horiz: boolean = node.parent.horiz;
+            let x, y, w, h: number;
+            let horiz: boolean = node.parent.horiz;
             if (horiz) {
                 w = this.rng.getNumber(Constants.ROOM_MIN_SIZE, node.w - 1);
                 h = this.rng.getNumber(Constants.ROOM_MIN_SIZE, node.h - 2);
@@ -318,14 +318,14 @@ module Game {
         }
 
         private connectChildren(node: Yendor.BSPNode, map: Map) {
-            var left: Yendor.BSPNode = node.leftChild;
-            var right: Yendor.BSPNode = node.rightChild;
-            var leftPos: Core.Position = this.findFloorTile(left.x, left.y, left.w, left.h, map);
-            var rightPos: Core.Position = this.findFloorTile(right.x, right.y, right.w, right.h, map);
+            let left: Yendor.BSPNode = node.leftChild;
+            let right: Yendor.BSPNode = node.rightChild;
+            let leftPos: Core.Position = this.findFloorTile(left.x, left.y, left.w, left.h, map);
+            let rightPos: Core.Position = this.findFloorTile(right.x, right.y, right.w, right.h, map);
             this.dig(map, leftPos.x, leftPos.y, leftPos.x, rightPos.y);
             this.dig(map, leftPos.x, rightPos.y, rightPos.x, rightPos.y);
             // try to find a potential door position
-            var doorPos: Core.Position = this.findVDoorPosition(map, leftPos.x, leftPos.y, rightPos.y);
+            let doorPos: Core.Position = this.findVDoorPosition(map, leftPos.x, leftPos.y, rightPos.y);
             if (!doorPos) {
                 doorPos = this.findHDoorPosition(map, leftPos.x, rightPos.x, rightPos.y);
             }
@@ -337,8 +337,8 @@ module Game {
         }
 
         private createDoors(map: Map) {
-            for (var i: number = 0, len: number = this.potentialDoorPos.length; i < len; ++i) {
-                var pos: Core.Position = this.potentialDoorPos[i];
+            for (let i: number = 0, len: number = this.potentialDoorPos.length; i < len; ++i) {
+                let pos: Core.Position = this.potentialDoorPos[i];
                 if (this.isADoorPosition(map, pos.x, pos.y)) {
                     this.createDoor(pos);
                 }
@@ -346,7 +346,7 @@ module Game {
         }
 
         private visitNode(node: Yendor.BSPNode, userData: any): Yendor.BSPTraversalAction {
-            var map: Map = <Map>userData;
+            let map: Map = <Map>userData;
             if (node.isLeaf()) {
                 this.createRandomRoom(node, map);
             } else {
@@ -356,7 +356,7 @@ module Game {
         }
 
         protected digMap(map: Map) {
-            var bsp: Yendor.BSPNode = new Yendor.BSPNode(0, 0, map.w, map.h);
+            let bsp: Yendor.BSPNode = new Yendor.BSPNode(0, 0, map.w, map.h);
             bsp.splitRecursive(undefined, 8, Constants.ROOM_MIN_SIZE, 1.5);
             bsp.traverseInvertedLevelOrder(this.visitNode.bind(this), map);
             this.createDoors(map);

@@ -47,14 +47,14 @@ module Core {
 			A new color as a number between 0x000000 and 0xFFFFFF
 		*/
         static multiply(color: Color, coef: number): Color {
-            var r, g, b: number;
+            let r, g, b: number;
             if (typeof color === "number") {
                 // duplicated toRgbFromNumber code to avoid function call and array allocation
                 r = (<number>color & 0xFF0000) >> 16;
                 g = (<number>color & 0x00FF00) >> 8;
                 b = <number>color & 0x0000FF;
             } else {
-                var rgb: number[] = ColorUtils.toRgb(color);
+                let rgb: number[] = ColorUtils.toRgb(color);
                 r = rgb[0];
                 g = rgb[1];
                 b = rgb[2];
@@ -69,14 +69,14 @@ module Core {
         }
         
         static max(col1: Color, col2: Color) {
-           var r1,g1,b1,r2,g2,b2: number;
+           let r1,g1,b1,r2,g2,b2: number;
            if (typeof col1 === "number") {
                 // duplicated toRgbFromNumber code to avoid function call and array allocation
                 r1 = (<number>col1 & 0xFF0000) >> 16;
                 g1 = (<number>col1 & 0x00FF00) >> 8;
                 b1 = <number>col1 & 0x0000FF;
             } else {
-                var rgb1: number[] = ColorUtils.toRgb(col1);
+                let rgb1: number[] = ColorUtils.toRgb(col1);
                 r1 = rgb1[0];
                 g1 = rgb1[1];
                 b1 = rgb1[2];
@@ -87,7 +87,7 @@ module Core {
                 g2 = (<number>col2 & 0x00FF00) >> 8;
                 b2 = <number>col2 & 0x0000FF;
             } else {
-                var rgb2: number[] = ColorUtils.toRgb(col2);
+                let rgb2: number[] = ColorUtils.toRgb(col2);
                 r2 = rgb2[0];
                 g2 = rgb2[1];
                 b2 = rgb2[2];
@@ -105,14 +105,14 @@ module Core {
         }
         
         static min(col1: Color, col2: Color) {
-           var r1,g1,b1,r2,g2,b2: number;
+           let r1,g1,b1,r2,g2,b2: number;
            if (typeof col1 === "number") {
                 // duplicated toRgbFromNumber code to avoid function call and array allocation
                 r1 = (<number>col1 & 0xFF0000) >> 16;
                 g1 = (<number>col1 & 0x00FF00) >> 8;
                 b1 = <number>col1 & 0x0000FF;
             } else {
-                var rgb1: number[] = ColorUtils.toRgb(col1);
+                let rgb1: number[] = ColorUtils.toRgb(col1);
                 r1 = rgb1[0];
                 g1 = rgb1[1];
                 b1 = rgb1[2];
@@ -123,7 +123,7 @@ module Core {
                 g2 = (<number>col2 & 0x00FF00) >> 8;
                 b2 = <number>col2 & 0x0000FF;
             } else {
-                var rgb2: number[] = ColorUtils.toRgb(col2);
+                let rgb2: number[] = ColorUtils.toRgb(col2);
                 r2 = rgb2[0];
                 g2 = rgb2[1];
                 b2 = rgb2[2];
@@ -141,14 +141,14 @@ module Core {
         }        
         
         static colorMultiply(col1: Color, col2: Color) {
-            var r1,g1,b1,r2,g2,b2: number;
+            let r1,g1,b1,r2,g2,b2: number;
             if (typeof col1 === "number") {
                 // duplicated toRgbFromNumber code to avoid function call and array allocation
                 r1 = (<number>col1 & 0xFF0000) >> 16;
                 g1 = (<number>col1 & 0x00FF00) >> 8;
                 b1 = <number>col1 & 0x0000FF;
             } else {
-                var rgb1: number[] = ColorUtils.toRgb(col1);
+                let rgb1: number[] = ColorUtils.toRgb(col1);
                 r1 = rgb1[0];
                 g1 = rgb1[1];
                 b1 = rgb1[2];
@@ -159,7 +159,7 @@ module Core {
                 g2 = (<number>col2 & 0x00FF00) >> 8;
                 b2 = <number>col2 & 0x0000FF;
             } else {
-                var rgb2: number[] = ColorUtils.toRgb(col2);
+                let rgb2: number[] = ColorUtils.toRgb(col2);
                 r2 = rgb2[0];
                 g2 = rgb2[1];
                 b2 = rgb2[2];
@@ -179,14 +179,14 @@ module Core {
         */
         static computeIntensity(color: Color): number {
             // Colorimetric (luminance-preserving) conversion to grayscale
-            var r, g, b: number;
+            let r, g, b: number;
             if (typeof color === "number") {
                 // duplicated toRgbFromNumber code to avoid function call and array allocation
                 r = (<number>color & 0xFF0000) >> 16;
                 g = (<number>color & 0x00FF00) >> 8;
                 b = <number>color & 0x0000FF;
             } else {
-                var rgb: number[] = ColorUtils.toRgb(color);
+                let rgb: number[] = ColorUtils.toRgb(color);
                 r = rgb[0];
                 g = rgb[1];
                 b = rgb[2];
@@ -207,9 +207,9 @@ module Core {
 			A new color as a number between 0x000000 and 0xFFFFFF
 		*/
         static add(col1: Color, col2: Color): Color {
-            var r = ((<number>col1 & 0xFF0000) >> 16) + ((<number>col2 & 0xFF0000) >> 16);
-            var g = ((<number>col1 & 0x00FF00) >> 8) + ((<number>col2 & 0x00FF00) >> 8);
-            var b = (<number>col1 & 0x0000FF) + (<number>col2 & 0x0000FF);
+            let r = ((<number>col1 & 0xFF0000) >> 16) + ((<number>col2 & 0xFF0000) >> 16);
+            let g = ((<number>col1 & 0x00FF00) >> 8) + ((<number>col2 & 0x00FF00) >> 8);
+            let b = (<number>col1 & 0x0000FF) + (<number>col2 & 0x0000FF);
             if (r > 255) {
                 r = 255;
             }
@@ -265,8 +265,8 @@ module Core {
 		*/
         static toWeb(color: Color): string {
             if (typeof color === "number") {
-                var ret: string = color.toString(16);
-                var missingZeroes: number = 6 - ret.length;
+                let ret: string = color.toString(16);
+                let missingZeroes: number = 6 - ret.length;
                 if (missingZeroes > 0) {
                     ret = "000000".substr(0, missingZeroes) + ret;
                 }
@@ -277,15 +277,15 @@ module Core {
         }
 
         private static toRgbFromNumber(color: number): number[] {
-            var r = (color & 0xFF0000) >> 16;
-            var g = (color & 0x00FF00) >> 8;
-            var b = color & 0x0000FF;
+            let r = (color & 0xFF0000) >> 16;
+            let g = (color & 0x00FF00) >> 8;
+            let b = color & 0x0000FF;
             return [r, g, b];
         }
 
         private static toRgbFromString(color: String): number[] {
             color = color.toLowerCase();
-            var stdColValues: number[] = ColorUtils.stdCol[String(color)];
+            let stdColValues: number[] = ColorUtils.stdCol[String(color)];
             if (stdColValues) {
                 return stdColValues;
             }
@@ -296,13 +296,13 @@ module Core {
                     color = "#" + color.charAt(1) + color.charAt(1) + color.charAt(2)
                         + color.charAt(2) + color.charAt(3) + color.charAt(3);
                 }
-                var r: number = parseInt(color.substr(1, 2), 16);
-                var g: number = parseInt(color.substr(3, 2), 16);
-                var b: number = parseInt(color.substr(5, 2), 16);
+                let r: number = parseInt(color.substr(1, 2), 16);
+                let g: number = parseInt(color.substr(3, 2), 16);
+                let b: number = parseInt(color.substr(5, 2), 16);
                 return [r, g, b];
             } else if (color.indexOf("rgb(") === 0) {
                 // rgb(r,g,b) format
-                var rgbList = color.substr(4, color.length - 5).split(",");
+                let rgbList = color.substr(4, color.length - 5).split(",");
                 return [parseInt(rgbList[0], 10), parseInt(rgbList[1], 10), parseInt(rgbList[2], 10)];
             }
             return [0, 0, 0];
@@ -321,11 +321,11 @@ module Core {
             if (typeof color === "number") {
                 return <number>color;
             }
-            var scol: String = <String>color;
+            let scol: String = <String>color;
             if (scol.charAt(0) === "#" && scol.length === 7) {
                 return parseInt(scol.substr(1), 16);
             } else {
-                var rgb = ColorUtils.toRgbFromString(scol);
+                let rgb = ColorUtils.toRgbFromString(scol);
                 return rgb[0] * 65536 + rgb[1] * 256 + rgb[2];
             }
         }

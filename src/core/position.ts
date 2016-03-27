@@ -65,8 +65,8 @@ module Core {
 			the distance between two Position
 		*/
         static distance(p1: Position, p2: Position): number {
-            var dx: number = p1.x - p2.x;
-            var dy: number = p1.y - p2.y;
+            let dx: number = p1.x - p2.x;
+            let dy: number = p1.y - p2.y;
             return Math.sqrt(dx * dx + dy * dy);
         }
 
@@ -85,11 +85,11 @@ module Core {
 			an array of Position containing all adjacent cells
 		*/
         getAdjacentCells(mapWidth: number, mapHeight: number): Position[] {
-            var adjacents: Position[] = [];
-            for (var i: number = 0; i < 8; ++i) {
-                var x = this.x + Position.TDX[i];
+            let adjacents: Position[] = [];
+            for (let i: number = 0; i < 8; ++i) {
+                let x = this.x + Position.TDX[i];
                 if (x >= 0 && x < mapWidth) {
-                    var y = this.y + Position.TDY[i];
+                    let y = this.y + Position.TDY[i];
                     if (y >= 0 && y < mapHeight) {
                         adjacents.push(new Position(x, y));
                     }

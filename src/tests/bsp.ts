@@ -2,7 +2,7 @@ module Tests {
 	export class BspTests extends tsUnit.TestClass {
 
 		bsnNodeProperties() {
-			var root: Yendor.BSPNode = new Yendor.BSPNode(0, 0, 50, 50);
+			let root: Yendor.BSPNode = new Yendor.BSPNode(0, 0, 50, 50);
 
 			this.isTrue( root.isLeaf() );
 			this.isTrue( root.contains(25, 25) );
@@ -11,7 +11,7 @@ module Tests {
 		}
 
 		horizontalSplit() {
-			var root: Yendor.BSPNode = new Yendor.BSPNode(10, 10, 50, 50);
+			let root: Yendor.BSPNode = new Yendor.BSPNode(10, 10, 50, 50);
 			root.split(true, 10);
 
 			this.isFalse( root.isLeaf(), "root.isLeaf()" );
@@ -28,7 +28,7 @@ module Tests {
 		}
 
 		verticalSplit() {
-			var root: Yendor.BSPNode = new Yendor.BSPNode(0, 0, 50, 50);
+			let root: Yendor.BSPNode = new Yendor.BSPNode(0, 0, 50, 50);
 			root.split(false, 40);
 
 			this.isFalse( root.isLeaf(), "root.isLeaf()" );
@@ -45,7 +45,7 @@ module Tests {
 		}
 
 		recursiveSplit() {
-			var root: Yendor.BSPNode = new Yendor.BSPNode(0, 0, 50, 50);
+			let root: Yendor.BSPNode = new Yendor.BSPNode(0, 0, 50, 50);
 			root.splitRecursive(undefined, 2);
 
 			this.isFalse( root.isLeaf(), "root.isLeaf()" );
@@ -60,21 +60,21 @@ module Tests {
 		}
 
 		minSizeHoriz() {
-			var root: Yendor.BSPNode = new Yendor.BSPNode(0, 0, 50, 70);
+			let root: Yendor.BSPNode = new Yendor.BSPNode(0, 0, 50, 70);
 			root.splitRecursive(undefined, 2, 30);
 
 			this.isTrue( root.isLeaf(), "root.isLeaf()" );
 		}
 
 		minSizeVectic() {
-			var root: Yendor.BSPNode = new Yendor.BSPNode(0, 0, 70, 50);
+			let root: Yendor.BSPNode = new Yendor.BSPNode(0, 0, 70, 50);
 			root.splitRecursive(undefined, 2, 30);
 
 			this.isTrue( root.isLeaf(), "root.isLeaf()" );
 		}
 
 		private buildTraverseTree() : Yendor.BSPNode {
-			var root: Yendor.BSPNode = new Yendor.BSPNode(0, 0, 50, 50);
+			let root: Yendor.BSPNode = new Yendor.BSPNode(0, 0, 50, 50);
 			root.splitRecursive(undefined, 2);
 			root.userData = "1";
 			root.leftChild.userData = "2";
@@ -87,9 +87,9 @@ module Tests {
 		}
 
 		traversePreOrder() {
-			var root: Yendor.BSPNode = this.buildTraverseTree();
-			var s: string = "";
-			var result: Yendor.BSPTraversalAction =
+			let root: Yendor.BSPNode = this.buildTraverseTree();
+			let s: string = "";
+			let result: Yendor.BSPTraversalAction =
 				root.traversePreOrder(
 					function(node: Yendor.BSPNode, userData: any) {
 						s = s + node.userData;
@@ -102,9 +102,9 @@ module Tests {
 		}
 
 		traverseInOrder() {
-			var root: Yendor.BSPNode = this.buildTraverseTree();
-			var s: string = "";
-			var result: Yendor.BSPTraversalAction =
+			let root: Yendor.BSPNode = this.buildTraverseTree();
+			let s: string = "";
+			let result: Yendor.BSPTraversalAction =
 				root.traverseInOrder(
 					function(node: Yendor.BSPNode, userData: any) {
 						s = s + node.userData;
@@ -117,9 +117,9 @@ module Tests {
 		}
 
 		traversePostOrder() {
-			var root: Yendor.BSPNode = this.buildTraverseTree();
-			var s: string = "";
-			var result: Yendor.BSPTraversalAction =
+			let root: Yendor.BSPNode = this.buildTraverseTree();
+			let s: string = "";
+			let result: Yendor.BSPTraversalAction =
 				root.traversePostOrder(
 					function(node: Yendor.BSPNode, userData: any) {
 						s = s + node.userData;
@@ -132,9 +132,9 @@ module Tests {
 		}
 
 		traverseLevelOrder() {
-			var root: Yendor.BSPNode = this.buildTraverseTree();
-			var s: string = "";
-			var result: Yendor.BSPTraversalAction =
+			let root: Yendor.BSPNode = this.buildTraverseTree();
+			let s: string = "";
+			let result: Yendor.BSPTraversalAction =
 				root.traverseLevelOrder(
 					function(node: Yendor.BSPNode, userData: any) {
 						s = s + node.userData;
@@ -147,9 +147,9 @@ module Tests {
 		}
 
 		traverseInvertedLevelOrder() {
-			var root: Yendor.BSPNode = this.buildTraverseTree();
-			var s: string = "";
-			var result: Yendor.BSPTraversalAction =
+			let root: Yendor.BSPNode = this.buildTraverseTree();
+			let s: string = "";
+			let result: Yendor.BSPTraversalAction =
 				root.traverseInvertedLevelOrder(
 					function(node: Yendor.BSPNode, userData: any) {
 						s = s + node.userData;

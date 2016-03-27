@@ -1,4 +1,4 @@
-/*
+/**
 	Section: Virtual axes and buttons
 */
 module Umbra {
@@ -10,52 +10,52 @@ module Umbra {
             name: string;
             positiveDescription?: string;
             negativeDescription?: string;
-            /*
+            /**
                 Field:positiveButton
                 The button used to push the axis in the positive direction.
             */
             positiveButton: ButtonDef;
-            /*
+            /**
                 Field:negativeButton
                 The button used to push the axis in the negative direction.
             */
             negativeButton?: ButtonDef;
-            /*
+            /**
                 Field: altPositiveButton
                 Alternative button used to push the axis in the positive direction.
             */
             altPositiveButton?: ButtonDef;
-            /*
+            /**
                 Field: altNegativeButton
                 Alternative button used to push the axis in the negative direction.
             */
             altNegativeButton?: ButtonDef;
-            /*
+            /**
                 Field: gravity
                 Speed in units per second that the axis falls toward neutral when no buttons are pressed.
             */
             gravity?: number;
-            /*
+            /**
                 Field: deadZone
                 Size of the analog dead zone. All analog device values within this range result map to neutral.
             */
             deadZone?: number;
-            /*
+            /**
                 Field: sensitivity
                 Speed in units per second that the the axis will move toward the target value. This is for digital devices only.
             */
             sensitivity?: number;
-            /*
+            /**
                 Field: snap
                 If enabled, the axis value will reset to zero when pressing a button of the opposite direction.
             */
             snap?: boolean;
-            /*
+            /**
                 Field: invert
                 If enabled, the Negative Buttons provide a positive value, and vice-versa.
             */
             invert?: boolean;
-            /*
+            /**
                 Field: type
                 The type of inputs that will control this axis.
             */
@@ -69,31 +69,31 @@ module Umbra {
             released?: boolean;
         }
 
-        var axesMap: { [name: string]: AxisData; } = {};
+        let axesMap: { [name: string]: AxisData; } = {};
 
-        /*
+        /**
             Field: keyCodeToAxis
             Maps key codes to corresponding axis
         */
-        var keyCodeToAxis: { [keyCode: number]: AxisData } = {};
-        /*
+        let keyCodeToAxis: { [keyCode: number]: AxisData } = {};
+        /**
             Field: asciiCodeToAxis
             Maps an ascii code to corresponding axis
         */
-        var asciiCodeToAxis: { [asciiCode: number]: AxisData } = {};
-        /*
+        let asciiCodeToAxis: { [asciiCode: number]: AxisData } = {};
+        /**
             Field: mouseButtonToAxis
             Maps mouse buttons (map key = MouseButton) to corresponding axis
         */
-        var mouseButtonToAxis: { [mouseButton: number]: AxisData } = {};
+        let mouseButtonToAxis: { [mouseButton: number]: AxisData } = {};
 
-        var lastAxisName: string;
-        /*
+        let lastAxisName: string;
+        /**
             Function: registerAxes
             Register an array of axis or virtual button.
         */
         export function registerAxes(data: AxisDef[]) {
-            for (var i: number = 0, len: number = data.length; i < len; ++i) {
+            for (let i: number = 0, len: number = data.length; i < len; ++i) {
                 registerAxis(data[i]);
             }
         }
@@ -103,8 +103,8 @@ module Umbra {
         }
 
         export function updateMouseButtonAxes(button: MouseButton, pressed: boolean) {
-            var val = pressed ? 1 : 0;
-            var axis = mouseButtonToAxis[button];
+            let val = pressed ? 1 : 0;
+            let axis = mouseButtonToAxis[button];
             if (axis) {
                 axis.rawValue = val;
                 axis.pressed = pressed;
@@ -116,8 +116,8 @@ module Umbra {
         }
 
         export function updateKeyCodeAxes(keyCode: number, pressed: boolean) {
-            var val = pressed ? 1 : 0;
-            var axis = keyCodeToAxis[keyCode];
+            let val = pressed ? 1 : 0;
+            let axis = keyCodeToAxis[keyCode];
             if (axis) {
                 axis.rawValue = val;
                 axis.pressed = pressed;
@@ -129,7 +129,7 @@ module Umbra {
         }
 
         export function updateAsciiCodeAxes(asciiCode: MouseButton) {
-            var axis = asciiCodeToAxis[asciiCode];
+            let axis = asciiCodeToAxis[asciiCode];
             if (axis) {
                 axis.rawValue = 1;
                 axis.pressed = true;
@@ -139,7 +139,7 @@ module Umbra {
         }
 
         export function resetAxes() {
-            for (var name in axesMap) {
+            for (let name in axesMap) {
                 if (axesMap[name].pressed) {
                     axesMap[name].pressed = false;
                 }
@@ -148,7 +148,7 @@ module Umbra {
                 }
             }
             // no keyreleased event for a keypress event. autorelease every frame
-            for (var asciiCode in asciiCodeToAxis) {
+            for (let asciiCode in asciiCodeToAxis) {
                 asciiCodeToAxis[asciiCode].rawValue = 0;
             }
             lastAxisName = undefined;
@@ -167,12 +167,12 @@ module Umbra {
             }
         }
 
-        /*
+        /**
             Function: registerAxis
             Register a new axis or virtual button.
         */
         export function registerAxis(def: AxisDef) {
-            var data: AxisData = {
+            let data: AxisData = {
                 altNegativeButton: def.altNegativeButton,
                 altPositiveButton: def.altPositiveButton,
                 deadZone: def.deadZone,
@@ -204,7 +204,7 @@ module Umbra {
                 registerButtonHandler(data.negativeButton, data);
             }
         }
-        /*
+        /**
             Function: getAxis
             Return the value of a virtual axis. In the range -1..1
             
@@ -214,7 +214,7 @@ module Umbra {
         export function getAxis(name: string): number {
             return axesMap[name] ? axesMap[name].value : undefined;
         }
-        /*
+        /**
             Function: getAxisRaw
             Return the value of a virtual axis with no smoothing filtering applied. In the range -1..1
 
@@ -224,7 +224,7 @@ module Umbra {
         export function getAxisRaw(name: string): number {
             return axesMap[name] ? axesMap[name].rawValue : undefined;
         }
-        /*
+        /**
             Function: isButtonDown
             Whether a virtual button is currently pressed
             
@@ -234,7 +234,7 @@ module Umbra {
         export function isButtonDown(name: string): boolean {
             return axesMap[name] ? axesMap[name].value > 0 : undefined;
         }
-        /*
+        /**
             Function: wasButtonPressed
             Whether a virtual button was pressed during this frame
             
@@ -244,7 +244,7 @@ module Umbra {
         export function wasButtonPressed(name: string): boolean {
             return axesMap[name] ? !!axesMap[name].pressed : undefined;
         }
-        /*
+        /**
             Function: wasButtonReleased
             Whether a virtual button was released during this frame
             

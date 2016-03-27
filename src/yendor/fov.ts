@@ -1,13 +1,13 @@
 // field of view algorithm : restrictive precise angle shadowcasting by Dominik Marczuk
 // http://www.roguebasin.com/index.php?title=Restrictive_Precise_Angle_Shadowcasting
 
-/*
+/**
 	Section: Field of view
 */
 module Yendor {
     "use strict";
 
-	/*
+	/**
 		Class: Fov
 		Stores the map properties and compute the field of view from a point.
 	*/
@@ -18,7 +18,7 @@ module Yendor {
         private _width: number;
         private _height: number;
 
-		/*
+		/**
 			Constructor: constructor
 
 			Parameters:
@@ -29,26 +29,26 @@ module Yendor {
             this._width = _width;
             this._height = _height;
             this._transparent = [];
-            for (var x = 0; x < _width; x++) {
+            for (let x = 0; x < _width; x++) {
                 this._transparent[x] = [];
             }
             this.startAngle = [];
             this.endAngle = [];
         }
 
-		/*
+		/**
 			Property: width
 			Return the map width (read-only)
 		*/
         get width() { return this._width; }
 
-		/*
+		/**
 			Property: height
 			Return the map height (read-only)
 		*/
         get height() { return this._height; }
 
-		/*
+		/**
 			Function: isTransparent
 
 			Parameters:
@@ -62,7 +62,7 @@ module Yendor {
             return this._transparent[x] ? this._transparent[x][y] : false;
         }
 
-		/*
+		/**
 			Function: setTransparent
 
 			Parameters:
@@ -76,7 +76,7 @@ module Yendor {
             }
         }
 
-		/*
+		/**
 			Function: computeFov
 			Compute the field of view using <restrictive precise angle shadowcasting 
 			at http://www.roguebasin.com/index.php?title=Restrictive_Precise_Angle_Shadowcasting> by Dominik Marczuk
@@ -100,40 +100,40 @@ module Yendor {
             this.computeQuadrantHorizontal(inFov, x, y, maxRadius, lightWalls, -1, -1);
         }
 
-		/*
+		/**
 			Function: clearFov
 			Reset the field of view information. After this, <isInFov> returns false for all the cells.
 		*/
         private clearFov(inFov: boolean[][]) {
-            for (var x: number = 0; x < this.width; x++) {
-                for (var y: number = 0; y < this.height; y++) {
+            for (let x: number = 0; x < this.width; x++) {
+                for (let y: number = 0; y < this.height; y++) {
                     inFov[x][y] = false;
                 }
             }
         }
 
         private computeQuadrantVertical(inFov: boolean[][], xPov: number, yPov: number, maxRadius: number, lightWalls: boolean, dx: number, dy: number) {
-            var y: number = yPov + dy;
-            var done: boolean = false;
-            var iteration: number = 1;
-            var minAngle: number = 0;
-            var lastLineObstacleCount: number = 0;
-            var totalObstacleCount = 0;
+            let y: number = yPov + dy;
+            let done: boolean = false;
+            let iteration: number = 1;
+            let minAngle: number = 0;
+            let lastLineObstacleCount: number = 0;
+            let totalObstacleCount = 0;
             while (!done && y >= 0 && y < this.height) {
-                var slopePerCell: number = 1 / iteration;
-                var halfSlope: number = slopePerCell * 0.5;
-                var processedCell: number = Math.floor((minAngle + halfSlope) / slopePerCell);
-                var xMin: number = Math.max(0, xPov - iteration);
-                var xMax: number = Math.min(this.width - 1, xPov + iteration);
+                let slopePerCell: number = 1 / iteration;
+                let halfSlope: number = slopePerCell * 0.5;
+                let processedCell: number = Math.floor((minAngle + halfSlope) / slopePerCell);
+                let xMin: number = Math.max(0, xPov - iteration);
+                let xMax: number = Math.min(this.width - 1, xPov + iteration);
                 done = true;
-                for (var x: number = xPov + processedCell * dx; x >= xMin && x <= xMax; x += dx) {
-                    var centreSlope: number = processedCell * slopePerCell;
-                    var startSlope: number = centreSlope - halfSlope;
-                    var endSlope: number = centreSlope + halfSlope;
-                    var visible: boolean = true;
-                    var extended: boolean = false;
+                for (let x: number = xPov + processedCell * dx; x >= xMin && x <= xMax; x += dx) {
+                    let centreSlope: number = processedCell * slopePerCell;
+                    let startSlope: number = centreSlope - halfSlope;
+                    let endSlope: number = centreSlope + halfSlope;
+                    let visible: boolean = true;
+                    let extended: boolean = false;
                     if (lastLineObstacleCount > 0 && !inFov[x][y]) {
-                        var idx: number = 0;
+                        let idx: number = 0;
                         if (visible && !this.canSee(inFov, x, y - dy)
                             && x - dx >= 0 && x - dx < this.width && !this.canSee(inFov, x - dx, y - dy)) {
                             visible = false;
@@ -197,27 +197,27 @@ module Yendor {
         }
 
         private computeQuadrantHorizontal(inFov: boolean[][], xPov: number, yPov: number, maxRadius: number, lightWalls: boolean, dx: number, dy: number) {
-            var x: number = xPov + dx;
-            var done: boolean = false;
-            var iteration: number = 1;
-            var minAngle: number = 0;
-            var lastLineObstacleCount: number = 0;
-            var totalObstacleCount = 0;
+            let x: number = xPov + dx;
+            let done: boolean = false;
+            let iteration: number = 1;
+            let minAngle: number = 0;
+            let lastLineObstacleCount: number = 0;
+            let totalObstacleCount = 0;
             while (!done && x >= 0 && x < this.width) {
-                var slopePerCell: number = 1 / iteration;
-                var halfSlope: number = slopePerCell * 0.5;
-                var processedCell: number = Math.floor((minAngle + halfSlope) / slopePerCell);
-                var yMin: number = Math.max(0, yPov - iteration);
-                var yMax: number = Math.min(this.height - 1, yPov + iteration);
+                let slopePerCell: number = 1 / iteration;
+                let halfSlope: number = slopePerCell * 0.5;
+                let processedCell: number = Math.floor((minAngle + halfSlope) / slopePerCell);
+                let yMin: number = Math.max(0, yPov - iteration);
+                let yMax: number = Math.min(this.height - 1, yPov + iteration);
                 done = true;
-                for (var y: number = yPov + processedCell * dy; y >= yMin && y <= yMax; y += dy) {
-                    var centreSlope: number = processedCell * slopePerCell;
-                    var startSlope: number = centreSlope - halfSlope;
-                    var endSlope: number = centreSlope + halfSlope;
-                    var visible: boolean = true;
-                    var extended: boolean = false;
+                for (let y: number = yPov + processedCell * dy; y >= yMin && y <= yMax; y += dy) {
+                    let centreSlope: number = processedCell * slopePerCell;
+                    let startSlope: number = centreSlope - halfSlope;
+                    let endSlope: number = centreSlope + halfSlope;
+                    let visible: boolean = true;
+                    let extended: boolean = false;
                     if (lastLineObstacleCount > 0 && !inFov[x][y]) {
-                        var idx: number = 0;
+                        let idx: number = 0;
                         if (visible && !this.canSee(inFov, x - dx, y)
                             && y - dy >= 0 && y - dy < this.height && !this.canSee(inFov, x - dx, y - dy)) {
                             visible = false;

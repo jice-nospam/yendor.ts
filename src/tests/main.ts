@@ -6,9 +6,12 @@
 /// <reference path="../game/custom_events.ts" />
 /// <reference path="../game/base.ts" />
 /// <reference path="../game/persistence.ts" />
+/// <reference path="../game/actor_def.ts" />
 /// <reference path="../game/actor_factory.ts" />
 /// <reference path="../game/actor.ts" />
+/// <reference path="../game/actor_manager.ts" />
 /// <reference path="../game/effects.ts" />
+/// <reference path="../game/actor_light.ts" />
 /// <reference path="../game/actor_item.ts" />
 /// <reference path="../game/actor_creature.ts" />
 /// <reference path="../game/map_topology.ts" />
@@ -17,6 +20,9 @@
 /// <reference path="../game/map_render.ts" />
 /// <reference path="../game/map_build_dungeon.ts" />
 /// <reference path="../game/gui.ts" />
+/// <reference path="../game/gui_inventory.ts" />
+/// <reference path="../game/gui_status.ts" />
+/// <reference path="../game/gui_tilepicker.ts" />
 /// <reference path="../game/engine.ts" />
 /// <reference path="rng.ts" />
 /// <reference path="bsp.ts" />
@@ -36,7 +42,7 @@ module Tests {
 
 $(function() {
 	// new instance of tsUnit
-	var test = new tsUnit.Test();
+	let test = new tsUnit.Test();
 
 	test.addTestClass(new Tests.MainTests(), "main");
 	test.addTestClass(new Tests.RngTests(), "rng");

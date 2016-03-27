@@ -1,12 +1,12 @@
 /// <reference path="../yendor/yendor.ts" />
 
-/*
+/**
 	Section: DivConsole
 */
 module Yendor {
     "use strict";
 
-	/*
+	/**
 		Class: DivConsole
 		A console that can be rendered as divs (one per row) filled with spans.
 	*/
@@ -14,19 +14,19 @@ module Yendor {
         private divSelector: string;
         private div: HTMLElement;
 
-		/*
+		/**
 			Property: charWidth
 			A character's width in pixels.
 		*/
         private charWidth: number;
 
-		/*
+		/**
 			Property: charHeight
 			A character's height in pixels.
 		*/
         private charHeight: number;
 
-		/*
+		/**
 			Constructor: constructor
 
 			Parameters:
@@ -47,7 +47,7 @@ module Yendor {
             this.computeCharSize();
         }
 
-		/*
+		/**
 			Function: computeCharSize
 			Compute the size of a character in pixels. This is needed to convert mouse coordinates from pixels to console position.
 		*/
@@ -57,9 +57,9 @@ module Yendor {
             this.fore[0][0] = 0x000000;
             this.render();
             // get the resulting span size
-            var oldId = this.div.id;
+            let oldId = this.div.id;
             this.div.id = "__yendor_div";
-            var span: JQuery = $("#__yendor_div div.line span");
+            let span: JQuery = $("#__yendor_div div.line span");
             this.charWidth = span.width();
             this.charHeight = span.height();
             console.log("Char size : " + this.charWidth + " x " + this.charHeight);
@@ -70,7 +70,7 @@ module Yendor {
             this.render();
         }
 
-		/*
+		/**
 			Function: render
 			Update the content of the HTML element
 		*/
@@ -78,7 +78,7 @@ module Yendor {
             this.div.innerHTML = this.getHTML();
         }
 
-		/*
+		/**
 			Function: getPositionFromPixels
 			Returns the column and row corresponding to a mouse position in the page.
 
@@ -91,31 +91,31 @@ module Yendor {
 			The <Core.Position> in the console.
 		*/
         getPositionFromPixels(x: number, y: number, pos: Core.Position): Core.Position {
-            var ret = pos ? pos : new Core.Position();
-            var dx: number = x - $(this.divSelector).offset().left;
-            var dy: number = y - $(this.divSelector).offset().top;
+            let ret = pos ? pos : new Core.Position();
+            let dx: number = x - $(this.divSelector).offset().left;
+            let dy: number = y - $(this.divSelector).offset().top;
             ret.x = Math.floor(dx / this.charWidth);
             ret.y = Math.floor(dy / this.charHeight);
             return ret;
         }
 
 
-		/*
+		/**
 			Function: getHTML
 
 			Returns:
 			A HTML representation of the console
 		*/
         getHTML(): string {
-            var s = "";
-            for (var i = 0; i < this.height; i++) {
+            let s = "";
+            for (let i = 0; i < this.height; i++) {
                 s += "<div class='line'>" + this.getLineHTML(i) + "</div>";
             }
             return s;
         }
 
         private getChar(x: number, y: number) {
-            var ascii = this.text[x][y];
+            let ascii = this.text[x][y];
             if (ascii === 0) {
                 return " ";
             }
@@ -123,12 +123,12 @@ module Yendor {
         }
 
         private getLineHTML(line: number): string {
-            var currentFore = Core.ColorUtils.toWeb(this.fore[0][line]);
-            var currentBack = Core.ColorUtils.toWeb(this.back[0][line]);
-            var s = "<span style='color:" + currentFore + ";background-color:" + currentBack + "'>" + this.getChar(0, line);
-            for (var i = 1; i < this.width; i++) {
-                var nextFore = Core.ColorUtils.toWeb(this.fore[i][line]);
-                var nextBack = Core.ColorUtils.toWeb(this.back[i][line]);
+            let currentFore = Core.ColorUtils.toWeb(this.fore[0][line]);
+            let currentBack = Core.ColorUtils.toWeb(this.back[0][line]);
+            let s = "<span style='color:" + currentFore + ";background-color:" + currentBack + "'>" + this.getChar(0, line);
+            for (let i = 1; i < this.width; i++) {
+                let nextFore = Core.ColorUtils.toWeb(this.fore[i][line]);
+                let nextBack = Core.ColorUtils.toWeb(this.back[i][line]);
                 if (nextFore !== currentFore || nextBack !== currentBack) {
                     currentFore = nextFore;
                     currentBack = nextBack;

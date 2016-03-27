@@ -1,4 +1,4 @@
-/*
+/**
 	Section: creatures
 */
 module Game {
@@ -8,7 +8,7 @@ module Game {
 	 * Group: articifial intelligence
 	 ********************************************************************************/
 
-	/*
+	/**
 		Class: Ai
 		Owned by self-updating actors
 	*/
@@ -52,9 +52,9 @@ module Game {
             if (!this._conditions) {
                 return;
             }
-            for (var i: number = 0, n: number = this._conditions.length; i < n; ++i) {
-                var cond: Condition = this._conditions[i];
-                if (!cond.update(owner)) {
+            for (let i: number = 0, n: number = this._conditions.length; i < n; ++i) {
+                let cond: Condition = this._conditions[i];
+                if ((!cond.onlyIfActive || !owner.activable || owner.activable.isActive()) && !cond.update(owner)) {
                     cond.onRemove(owner);
                     this._conditions.splice(i, 1);
                     i--;
@@ -75,7 +75,7 @@ module Game {
             if (!this._conditions) {
                 return;
             }
-            for (var i: number = 0, n: number = this._conditions.length; i < n; ++i) {
+            for (let i: number = 0, n: number = this._conditions.length; i < n; ++i) {
                 if (this._conditions[i].type === cond) {
                     this._conditions.splice(i, 1);
                     break;
@@ -88,8 +88,8 @@ module Game {
         }
 
         hasActiveConditions(): boolean {
-            var n: number = this._conditions ? this._conditions.length : 0;
-            for (var i: number = 0; i < n; i++) {
+            let n: number = this._conditions ? this._conditions.length : 0;
+            for (let i: number = 0; i < n; i++) {
                 if (this._conditions[i].time > 0) {
                     return true;
                 }
@@ -98,8 +98,8 @@ module Game {
         }
 
         getCondition(type: ConditionType): Condition {
-            var n: number = this._conditions ? this._conditions.length : 0;
-            for (var i: number = 0; i < n; i++) {
+            let n: number = this._conditions ? this._conditions.length : 0;
+            for (let i: number = 0; i < n; i++) {
                 if (this._conditions[i].type === type) {
                     return this._conditions[i];
                 }
@@ -111,7 +111,7 @@ module Game {
             return this.getCondition(type) !== undefined;
         }
 
-		/*
+		/**
 			Function: getAttacker
 			Determin what will be used to attack
 		*/
@@ -122,8 +122,8 @@ module Game {
             if (owner.container) {
                 // check for equipped weapons
                 // TODO each equipped weapon should be used only once per turn
-                for (var i: number = 0, n: number = owner.container.size(); i < n; ++i) {
-                    var item: Actor = owner.container.get(i);
+                for (let i: number = 0, n: number = owner.container.size(); i < n; ++i) {
+                    let item: Actor = owner.container.get(i);
                     if (item.equipment && item.equipment.isEquipped() && item.attacker) {
                         return item.attacker;
                     }
@@ -132,7 +132,7 @@ module Game {
             return owner.attacker;
         }
 
-        /*
+        /**
             Function: tryActivate
             Activate the first found lever in an adjacent tile
             
@@ -141,14 +141,14 @@ module Game {
         */
         protected tryActivate(owner: Actor) {
             // check if there's an adjacent lever
-            var lever: Actor = Engine.instance.actorManager.findAdjacentActorWithFeature(owner, ActorFeatureType.LEVER);
+            let lever: Actor = Engine.instance.actorManager.findAdjacentActorWithFeature(owner, ActorFeatureType.LEVER);
             if (lever) {
                 lever.lever.activate(owner);
                 this.wait(this.walkTime);
             }
         }
 
-		/*
+		/**
 			Function: moveOrAttack
 			Try to move the owner to a new map cell. If there's a living creature on this map cell, attack it.
 
@@ -180,13 +180,13 @@ module Game {
                 return false;
             }
             // check for living creatures on the destination cell
-            var cellPos: Core.Position = new Core.Position(x, y);
-            var actors: Actor[] = Engine.instance.actorManager.findActorsOnCell(cellPos, Engine.instance.actorManager.getCreatureIds());
-            for (var i: number = 0, len: number = actors.length; i < len; ++i) {
-                var actor: Actor = actors[i];
+            let cellPos: Core.Position = new Core.Position(x, y);
+            let actors: Actor[] = Engine.instance.actorManager.findActorsOnCell(cellPos, Engine.instance.actorManager.getCreatureIds());
+            for (let i: number = 0, len: number = actors.length; i < len; ++i) {
+                let actor: Actor = actors[i];
                 if (actor.destructible && !actor.destructible.isDead()) {
                     // attack the first living actor found on the cell
-                    var attacker: Attacker = this.getAttacker(owner);
+                    let attacker: Attacker = this.getAttacker(owner);
                     attacker.attack(owner, actor);
                     this.wait(attacker.attackTime);
                     return false;
@@ -194,9 +194,9 @@ module Game {
             }
             // check for a closed door
             actors = Engine.instance.actorManager.findActorsOnCell(cellPos, Engine.instance.actorManager.getItemIds());
-            for (var i: number = 0, len: number = actors.length; i < len; ++i) {
-                var actor: Actor = actors[i];
-                if (actor.door && actor.door.isClosed() && actor.lever) {
+            for (let i: number = 0, len: number = actors.length; i < len; ++i) {
+                let actor: Actor = actors[i];
+                if (actor.door && !actor.door.isActive() && actor.lever) {
                     actor.lever.activate(owner);
                     this.wait(this.walkTime);
                     return false;
@@ -225,7 +225,7 @@ module Game {
         private checkOverencumberedCondition(container: Container, owner: Actor) {
             if (!this.hasCondition(ConditionType.OVERENCUMBERED)
                 && container.computeTotalWeight() >= container.capacity * Constants.OVEREMCUMBERED_THRESHOLD) {
-                this.addCondition(Condition.create(ConditionType.OVERENCUMBERED, -1), owner);
+                this.addCondition(Condition.create({type:ConditionType.OVERENCUMBERED, nbTurns:-1}), owner);
             } else if (this.hasCondition(ConditionType.OVERENCUMBERED)
                 && container.computeTotalWeight() < container.capacity * Constants.OVEREMCUMBERED_THRESHOLD) {
                 this.removeCondition(ConditionType.OVERENCUMBERED);
@@ -234,7 +234,14 @@ module Game {
         }
     }
 
-	/*
+    export class ItemAi extends Ai {
+        update(owner: Actor) {
+            super.update(owner);
+            this.wait(this.walkTime);
+        }
+    }
+
+	/**
 		Class: PlayerAi
 		Handles player input. Determin if a new game turn must be started.
 	*/
@@ -262,7 +269,7 @@ module Game {
             Engine.instance.actorManager.resume();
         }
 
-		/*
+		/**
 			Function: update
 			Updates the player, eventually sends a CHANGE_STATUS event if a new turn has started.
 
@@ -296,7 +303,7 @@ module Game {
                 case PlayerAction.MOVE_NE:
                 case PlayerAction.MOVE_SW:
                 case PlayerAction.MOVE_SE:
-                    var move: Core.Position = convertActionToPosition(this.__nextAction);
+                    let move: Core.Position = convertActionToPosition(this.__nextAction);
                     // move to the target cell or attack if there's a creature
                     this.moveOrAttack(owner, owner.x + move.x, owner.y + move.y);
                     break;
@@ -321,7 +328,7 @@ module Game {
             this.__nextAction = undefined;
         }
 
-		/*
+		/**
 			Function: moveOrAttack
 			Try to move the player to a new map call. if there's a living creature on this map cell, attack it.
 
@@ -337,7 +344,7 @@ module Game {
             if (!super.moveOrAttack(owner, x, y)) {
                 return false;
             }
-            var cellPos: Core.Position = new Core.Position(owner.x, owner.y);
+            let cellPos: Core.Position = new Core.Position(owner.x, owner.y);
             // no living actor. Log exising corpses and items
             Engine.instance.actorManager.findActorsOnCell(cellPos, Engine.instance.actorManager.getCorpseIds()).forEach(function(actor: Actor) {
                 log(actor.getTheresaname() + " here.");
@@ -354,7 +361,7 @@ module Game {
                     this.pickupItem(owner);
                     break;
                 case PlayerAction.MOVE_DOWN:
-                    var stairsDown: Actor = Engine.instance.actorManager.getStairsDown();
+                    let stairsDown: Actor = Engine.instance.actorManager.getStairsDown();
                     if (stairsDown.x === owner.x && stairsDown.y === owner.y) {
                         Umbra.EventManager.publishEvent(EventType[EventType.CHANGE_STATUS], GameStatus.NEXT_LEVEL);
                     } else {
@@ -362,7 +369,7 @@ module Game {
                     }
                     break;
                 case PlayerAction.MOVE_UP:
-                    var stairsUp: Actor = Engine.instance.actorManager.getStairsUp();
+                    let stairsUp: Actor = Engine.instance.actorManager.getStairsUp();
                     if (stairsUp.x === owner.x && stairsUp.y === owner.y) {
                         log("The stairs have collapsed. You can't go up anymore...");
                     } else {
@@ -413,7 +420,7 @@ module Game {
             this.__lastAction = undefined;
         }
 
-		/*
+		/**
 			Function: fire
 			Fire a projectile using a ranged weapon.
 		*/
@@ -424,7 +431,7 @@ module Game {
                     Engine.instance.actorManager.getPlayer(), true, this.__lastActionPos, this.__lastActionItem.ranged.damageCoef);
             } else {
                 // load the weapon and starts the tile picker
-                var weapon: Actor = owner.container.getFromSlot(Constants.SLOT_RIGHT_HAND);
+                let weapon: Actor = owner.container.getFromSlot(Constants.SLOT_RIGHT_HAND);
                 if (!weapon || !weapon.ranged) {
                     weapon = owner.container.getFromSlot(Constants.SLOT_BOTH_HANDS);
                 }
@@ -442,7 +449,7 @@ module Game {
             }
         }
 
-		/*
+		/**
 			Function: zap
 			Use a magic wand/staff/rod.
 		*/
@@ -452,7 +459,7 @@ module Game {
                 this.__lastActionItem.magic.zapOnPos(this.__lastActionItem, Engine.instance.actorManager.getPlayer(), this.__lastActionPos);
                 this.wait(this.walkTime);
             } else {
-                var staff: Actor = owner.container.getFromSlot(Constants.SLOT_RIGHT_HAND);
+                let staff: Actor = owner.container.getFromSlot(Constants.SLOT_RIGHT_HAND);
                 if (!staff || !staff.magic) {
                     staff = owner.container.getFromSlot(Constants.SLOT_BOTH_HANDS);
                 }
@@ -495,11 +502,11 @@ module Game {
         }
 
         private pickupItem(owner: Actor) {
-            var foundItem: boolean = false;
-            var pickedItem: boolean = false;
+            let foundItem: boolean = false;
+            let pickedItem: boolean = false;
             this.wait(this.walkTime);
             Engine.instance.actorManager.getItemIds().some(function(itemId: ActorId) {
-                var item: Actor = Engine.instance.actorManager.getActor(itemId);
+                let item: Actor = Engine.instance.actorManager.getActor(itemId);
                 if (item.pickable && item.x === owner.x && item.y === owner.y) {
                     foundItem = true;
                     if (owner.container.canContain(item)) {
@@ -520,7 +527,7 @@ module Game {
         }
     }
 
-	/*
+	/**
 		Class: MonsterAi
 		NPC monsters articial intelligence. Attacks the player when he is at melee range, 
 		else moves towards him using scent tracking.
@@ -533,7 +540,7 @@ module Game {
             this.className = "MonsterAi";
         }
 
-		/*
+		/**
 			Function: update
 
 			Parameters:
@@ -551,7 +558,7 @@ module Game {
             this.searchPlayer(owner);
         }
 
-		/*
+		/**
 			Function: searchPlayer
 			If the player is at range, attack him. If in sight, move towards him, else try to track his scent.
 
@@ -561,9 +568,9 @@ module Game {
         searchPlayer(owner: Actor) {
             if (Engine.instance.map.isInFov(owner.x, owner.y)) {
                 // player is visible, go towards him
-                var player: Actor = Engine.instance.actorManager.getPlayer();
-                var dx = player.x - owner.x;
-                var dy = player.y - owner.y;
+                let player: Actor = Engine.instance.actorManager.getPlayer();
+                let dx = player.x - owner.x;
+                let dy = player.y - owner.y;
                 if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
                     if (!this.hasPath()
                         || this.__path[0].x !== player.x || this.__path[0].y !== player.y) {
@@ -601,20 +608,20 @@ module Game {
 
         private followPath(owner: Actor) {
             // use precomputed path
-            var pos: Core.Position = this.__path.pop();
+            let pos: Core.Position = this.__path.pop();
             this.moveToCell(owner, pos);
         }
 
         private moveToCell(owner: Actor, pos: Core.Position) {
-            var dx: number = pos.x - owner.x;
-            var dy: number = pos.y - owner.y;
+            let dx: number = pos.x - owner.x;
+            let dy: number = pos.y - owner.y;
             // compute the move vector
-            var stepdx: number = dx > 0 ? 1 : (dx < 0 ? -1 : 0);
-            var stepdy: number = dy > 0 ? 1 : (dy < 0 ? -1 : 0);
+            let stepdx: number = dx > 0 ? 1 : (dx < 0 ? -1 : 0);
+            let stepdy: number = dy > 0 ? 1 : (dy < 0 ? -1 : 0);
             this.move(owner, stepdx, stepdy);
         }
 
-		/*
+		/**
 			Function: move
 			Move to a destination cell, avoiding potential obstacles (walls, other creatures)
 
@@ -624,8 +631,8 @@ module Game {
 			stepdy - vertical direction
 		*/
         private move(owner: Actor, stepdx: number, stepdy: number) {
-            var x: number = owner.x;
-            var y: number = owner.y;
+            let x: number = owner.x;
+            let y: number = owner.y;
             if (Engine.instance.map.canWalk(owner.x + stepdx, owner.y + stepdy)) {
                 // can walk
                 x += stepdx;
@@ -640,7 +647,7 @@ module Game {
             super.moveOrAttack(owner, x, y);
         }
 
-		/*
+		/**
 			Function: findHighestScentCell
 			Find the adjacent cell with the highest scent value
 
@@ -651,15 +658,15 @@ module Game {
 			the cell position or undefined if no adjacent cell has enough scent.
 		*/
         private findHighestScentCell(owner: Actor): Core.Position {
-            var bestScentLevel: number = 0;
-            var bestCell: Core.Position;
-            var adjacentCells: Core.Position[] = owner.getAdjacentCells(Engine.instance.map.w, Engine.instance.map.h);
-            var len: number = adjacentCells.length;
+            let bestScentLevel: number = 0;
+            let bestCell: Core.Position;
+            let adjacentCells: Core.Position[] = owner.getAdjacentCells(Engine.instance.map.w, Engine.instance.map.h);
+            let len: number = adjacentCells.length;
             // scan all 8 adjacent cells
-            for (var i: number = 0; i < len; ++i) {
+            for (let i: number = 0; i < len; ++i) {
                 if (!Engine.instance.map.isWall(adjacentCells[i].x, adjacentCells[i].y)) {
                     // not a wall, check if scent is higher
-                    var scentAmount = Engine.instance.map.getScent(adjacentCells[i].x, adjacentCells[i].y);
+                    let scentAmount = Engine.instance.map.getScent(adjacentCells[i].x, adjacentCells[i].y);
                     if (scentAmount > Engine.instance.map.currentScentValue - Constants.SCENT_THRESHOLD
                         && scentAmount > bestScentLevel) {
                         // scent is higher. New candidate
@@ -671,13 +678,13 @@ module Game {
             return bestCell;
         }
 
-		/*
+		/**
 			Function: trackScent
 			Move towards the adjacent cell with the highest scent value
 		*/
         private trackScent(owner: Actor) {
             // get the adjacent cell with the highest scent value
-            var bestCell: Core.Position = this.findHighestScentCell(owner);
+            let bestCell: Core.Position = this.findHighestScentCell(owner);
             if (bestCell) {
                 this.moveToCell(owner, bestCell);
             } else {
@@ -708,7 +715,7 @@ module Game {
         }
         addXp(owner: Actor, amount: number) {
             this._xp += amount;
-            var nextLevelXp = this.getNextLevelXp();
+            let nextLevelXp = this.getNextLevelXp();
             if (this._xp >= nextLevelXp) {
                 this._xpLevel++;
                 this._xp -= nextLevelXp;

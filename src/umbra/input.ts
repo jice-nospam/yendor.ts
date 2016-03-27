@@ -1,4 +1,4 @@
-/*
+/**
 	Section: Input
 */
 module Umbra {
@@ -6,17 +6,17 @@ module Umbra {
 
     export module Input {
         interface ButtonStatus {
-            /*
+            /**
                 Field: status
                 Whether the button is currently pressed (true) or released (false)
             */
             status: boolean;
-            /*
+            /**
                 Field: pressed
                 Whether the button was pressed this frame
             */
             pressed: boolean;
-            /*
+            /**
                 Field: released
                 Whether the button was released this frame
             */
@@ -24,45 +24,45 @@ module Umbra {
         }
 
         interface MouseStatus {
-            /*
+            /**
                 Field: pixelPos
                 The current mouse position in pixels (0,0 for the windows top left corner).
             */
             pixelPos: Core.Position;
-            /*
+            /**
                 Field: cellPos
                 The current mouse position in console cells (0,0 for the console top left cell)
                 
             */
             cellPos: Core.Position;
-            /*
+            /**
                 Field: buttons
             */
             buttons: ButtonStatus[];
-            /*
+            /**
                 Field: hasMoved
                 Whether the mouse pointer was moved this frame
             */
             hasMoved: boolean;
         }
 
-        /*
+        /**
             Field: mouseStatus
             Stores the mouse current status : position and state of each button
         */
-        var mouseStatus: MouseStatus = { pixelPos: new Core.Position(), cellPos: new Core.Position(), buttons: [], hasMoved: false };
-        /*
+        let mouseStatus: MouseStatus = { pixelPos: new Core.Position(), cellPos: new Core.Position(), buttons: [], hasMoved: false };
+        /**
             Field: keyboardStatus
             Store the state of each key on the keyboard. The map keys are key codes (see <enum KeyCode>)
         */
-        var keyboardStatus: { [key: number]: ButtonStatus; } = {};
-        /*
+        let keyboardStatus: { [key: number]: ButtonStatus; } = {};
+        /**
             Field: charPressed
             Whether a specific char was sent by the keyboard this frame. The map keys are ascii codes.
         */
-        var charPressed: { [key: number]: boolean; } = {};
+        let charPressed: { [key: number]: boolean; } = {};
         
-        /*
+        /**
             Function: wasMouseMoved
             Return true if the mouse was moved during this frame
         */
@@ -70,21 +70,21 @@ module Umbra {
             return mouseStatus.hasMoved;
         }
 
-        /*
+        /**
             Function: getMousePixelPosition
             Returns : the current mouse position in pixels (0,0 for the windows top left corner)
         */
         export function getMousePixelPosition(): Core.Position {
             return mouseStatus.pixelPos;
         }
-        /*
+        /**
             Function: getMouseCellPosition
             Returns : the current mouse position in console cells (0,0 for the console top left cell)
         */
         export function getMouseCellPosition(): Core.Position {
             return mouseStatus.cellPos;
         }        
-        /*
+        /**
             Function: getMouseScrollDelta
             Returns : the current mouse scroll delta
         */
@@ -92,7 +92,7 @@ module Umbra {
             // TODO
             return undefined;
         }
-        /*
+        /**
             Function: isKeyDown
             Whether a key is currently pressed
             
@@ -102,7 +102,7 @@ module Umbra {
         export function isKeyDown(key: KeyCode): boolean {
             return keyboardStatus[key] ? keyboardStatus[key].status : false;
         }
-        /*
+        /**
             Function: wasKeyPressed
             Whether a key was pressed during this frame
             
@@ -112,7 +112,7 @@ module Umbra {
         export function wasKeyPressed(key: KeyCode): boolean {
             return keyboardStatus[key] ? keyboardStatus[key].pressed : false;
         }
-        /*
+        /**
             Function: wasCharPressed
             Whether a specific character was sent by the keyboard during this frame
             
@@ -122,7 +122,7 @@ module Umbra {
         export function wasCharPressed(char: number | string): boolean {
             return typeof char === "string" ? charPressed[char.charCodeAt(0)] : charPressed[char];
         }
-        /*
+        /**
            Function: wasKeyReleased
            Whether a key was released during this frame
            
@@ -132,7 +132,7 @@ module Umbra {
         export function wasKeyReleased(key: KeyCode): boolean {
             return keyboardStatus[key] ? keyboardStatus[key].released : false;
         }
-        /*
+        /**
             Function: isMouseButtonDown
             Whether a mouse button is currently pressed
             
@@ -142,7 +142,7 @@ module Umbra {
         export function isMouseButtonDown(buttonNum: number): boolean {
             return mouseStatus.buttons[buttonNum] ? mouseStatus.buttons[buttonNum].status : false;
         }
-        /*
+        /**
             Function: wasMouseButtonPressed
             Whether a mouse button was pressed during this frame
             
@@ -152,7 +152,7 @@ module Umbra {
         export function wasMouseButtonPressed(buttonNum: number): boolean {
             return mouseStatus.buttons[buttonNum] ? mouseStatus.buttons[buttonNum].pressed : false;
         }
-        /*
+        /**
             Function: wasMouseButtonReleased
             Whether a mouse button was released during this frame
             
@@ -163,24 +163,24 @@ module Umbra {
             return mouseStatus.buttons[buttonNum] ? mouseStatus.buttons[buttonNum].released : false;
         }
 
-        /*
+        /**
             Function: resetInput
             Resets all input. After ResetInputAxes all axes return to 0 and all buttons return to 0 for one frame.
             This can be useful when respawning the player and you don't want any input from keys that might still be held down,
             or if you want to "consume"" the last frame input so that it doesn't trigger anything else.
         */
         export function resetInput() {
-            for (var i: number = 0, len: number = mouseStatus.buttons.length; i < len; ++i) {
+            for (let i: number = 0, len: number = mouseStatus.buttons.length; i < len; ++i) {
                 if (mouseStatus.buttons[i]) {
                     mouseStatus.buttons[i].pressed = false;
                     mouseStatus.buttons[i].released = false;
                 }
             }
-            for (var keyCode in keyboardStatus) {
+            for (let keyCode in keyboardStatus) {
                 keyboardStatus[keyCode].pressed = false;
                 keyboardStatus[keyCode].released = false;
             }
-            for (var asciiCode in charPressed) {
+            for (let asciiCode in charPressed) {
                 charPressed[asciiCode] = false;
             }
             resetAxes();
@@ -190,7 +190,9 @@ module Umbra {
         export function onMouseMove(event: JQueryMouseEventObject) {
             mouseStatus.pixelPos.x = event.pageX;
             mouseStatus.pixelPos.y = event.pageY;
-            application.getConsole().getPositionFromPixels(event.pageX, event.pageY, mouseStatus.cellPos);
+            if ( application ) {
+                application.getConsole().getPositionFromPixels(event.pageX, event.pageY, mouseStatus.cellPos);
+            }
             mouseStatus.hasMoved = true;
         }
 

@@ -10,7 +10,7 @@
 /// <reference path="noise.ts" />
 /// <reference path="scheduler.ts" />
 
-/*
+/**
 	Section: yendor.ts
 */
 module Yendor {
@@ -18,22 +18,22 @@ module Yendor {
 
     export const VERSION = "0.6.0";
 
-	/*
+	/**
 		Property: urlParams
 		A map storing all parameters from the URL. If the game is started with :
 		> http://server/index.html?param=value
 		You can retrieve the value with :
 		> Yendor.urlParams["param"]
 	*/
-    export var urlParams: { [index: string]: string; };
-    var frameLoop: (callback: (elapsedTime: number) => void) => void;
-	/*
+    export let urlParams: { [index: string]: string; };
+    let frameLoop: (callback: (elapsedTime: number) => void) => void;
+	/**
 		Function: init
 
 		Initialize the library. Must be called before anything else.
 	 */
     export function init() {
-		/*
+		/**
 		Provides requestAnimationFrame in a cross browser way.
 		http://paulirish.com/2011/requestanimationframe-for-smart-animating/
 		*/
@@ -52,10 +52,10 @@ module Yendor {
     }
 
     function parseUrlParams(): { [index: string]: string; } {
-        var params: string[] = window.location.search.substring(1).split("&");
-        var paramMap: { [index: string]: string; } = {};
-        for (var i: number = 0, len: number = params.length; i < len; ++i) {
-            var p = params[i].split("=");
+        let params: string[] = window.location.search.substring(1).split("&");
+        let paramMap: { [index: string]: string; } = {};
+        for (let i: number = 0, len: number = params.length; i < len; ++i) {
+            let p = params[i].split("=");
             if (p.length === 2) {
                 paramMap[p[0]] = decodeURIComponent(p[1].replace(/\+/g, " "));
             }
@@ -63,7 +63,7 @@ module Yendor {
         return paramMap;
     }
 
-	/*
+	/**
 		Function: createConsole
 		Create a console. If the renderer is not defined by the 'renderer' URL parameter, it is automatically defined.
 
@@ -89,7 +89,7 @@ module Yendor {
         }
     }
 
-	/*
+	/**
 		Interface: FrameRenderer
 		Renders the game screen
 	*/
@@ -97,13 +97,13 @@ module Yendor {
         (elapsedTime: number): void;
     }
 
-    var renderer: FrameRenderer;
+    let renderer: FrameRenderer;
     function frameFunc(elapsedTime: number) {
         frameLoop(frameFunc);
         renderer(elapsedTime);
     }
 
-	/*
+	/**
 		Function: loop
 
 		Start the frame rendering loop.

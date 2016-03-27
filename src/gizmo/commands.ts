@@ -1,10 +1,10 @@
-/*
+/**
 	Section: utilities
 */
 module Gizmo {
     "use strict";
 
-    /*
+    /**
         Function: hline
         Draw an horizontal line using <Yendor.CHAR_HLINE> character
     */
@@ -12,7 +12,7 @@ module Gizmo {
         con.clearText(Yendor.CHAR_HLINE, x, y, w, 1);
     }
 
-    /*
+    /**
         Function: vline
         Draw a vertical line using <Yendor.CHAR_VLINE> character
     */
@@ -20,7 +20,7 @@ module Gizmo {
         con.clearText(Yendor.CHAR_VLINE, x, y, 1, h);
     }
 
-    /*
+    /**
         Function: rectangle
         Draw a rectangle using special characters
     */
@@ -35,7 +35,7 @@ module Gizmo {
         con.text[x + w - 1][y + h - 1] = Yendor.CHAR_SE;
     }
 
-    /*
+    /**
         Function: frame
         Draw a frame with an optional title
     */
@@ -45,8 +45,8 @@ module Gizmo {
         con.clearText(32, x + 1, y + 1, w - 2, h - 2);
         rectangle(con, x, y, w, h);
         if (title) {
-            var len = title.length;
-            var xTitle = x + Math.floor((w - len) / 2);
+            let len = title.length;
+            let xTitle = x + Math.floor((w - len) / 2);
             con.text[xTitle - 1][y] = Yendor.CHAR_TEEW;
             con.text[xTitle + len][y] = Yendor.CHAR_TEEE;
             con.print(xTitle, y, title, getConfiguration().color.titleForeground);
@@ -54,39 +54,39 @@ module Gizmo {
     }
 
     export interface ButtonOption {
-        /*
+        /**
             Field: label
             text displayed on the button
         */
         label: string,
-        /*
+        /**
             Field: autoHide
             optional widget to hide when the button is clicked
         */
         autoHideWidget?: Widget,
-        /*
+        /**
             Field: eventData
             optional data to send with the event when the button is clicked
         */
         eventData?: any,
-        /*
+        /**
             Field: eventType
             optional event type sent when this button is clicked
         */
         eventType?: string,
-        /*
+        /**
             Field: callback
             optional callback called when this button is clicked. The data parameter will have the eventData value.
         */
         callback?: (data: any) => void,
-        /*
+        /**
             Field: asciiShortcut
             optional ascii code to trigger the button action with a keypress
         */
         asciiShortcut?: number,
     }
 
-    /*
+    /**
         Function: button
         Renders a button in 'immediate' mode (see http://www.johno.se/book/imgui.html).
         
@@ -100,10 +100,10 @@ module Gizmo {
         true if the button was activated, by keyboard shortcut or by mouse click
     */
     export function button(con: Yendor.Console, x: number, y: number, options: ButtonOption): boolean {
-        var w = options.label.length, h = 1;
-        var rect: Core.Rect = new Core.Rect(x, y, w, h);
-        var active: boolean = rect.contains(Umbra.Input.getMouseCellPosition());
-        var pressed: boolean = active && Umbra.Input.wasMouseButtonReleased(Umbra.MouseButton.LEFT);
+        let w = options.label.length, h = 1;
+        let rect: Core.Rect = new Core.Rect(x, y, w, h);
+        let active: boolean = rect.contains(Umbra.Input.getMouseCellPosition());
+        let pressed: boolean = active && Umbra.Input.wasMouseButtonReleased(Umbra.MouseButton.LEFT);
         con.clearBack(active ? getConfiguration().color.backgroundActive : getConfiguration().color.background, x, y, w, h);
         con.clearText(32, x, y, w, h);
         con.print(x, y, options.label, active ? getConfiguration().color.foregroundActive : getConfiguration().color.foreground);
@@ -123,7 +123,7 @@ module Gizmo {
         return false;
     }
 
-    /*
+    /**
         Function: popupMenu
         Display a popup menu with optional title and footer and a list of buttons. Pressing the cancel virtual button will hide the containing widget.
         
@@ -140,25 +140,25 @@ module Gizmo {
             return undefined;
         }
         // compute popup size
-        var w = title ? title.length + 4 : 0;
-        for (var i: number = 0, len: number = items.length; i < len; ++i) {
-            var labelLen = items[i].label ? items[i].label.length + 4 : 0;
+        let w = title ? title.length + 4 : 0;
+        for (let i: number = 0, len: number = items.length; i < len; ++i) {
+            let labelLen = items[i].label ? items[i].label.length + 4 : 0;
             if (labelLen > w) {
                 w = labelLen;
             }
         }
-        var h = items ? 2 + items.length : 2;
+        let h = items ? 2 + items.length : 2;
         // compute popup position
-        var x = Math.floor((Umbra.application.getConsole().width - w) / 2);
-        var y = Math.floor((Umbra.application.getConsole().height - h) / 2);
-        var boundingBox: Core.Rect = new Core.Rect(x, y, w, h); 
+        let x = Math.floor((Umbra.application.getConsole().width - w) / 2);
+        let y = Math.floor((Umbra.application.getConsole().height - h) / 2);
+        let boundingBox: Core.Rect = new Core.Rect(x, y, w, h); 
         // render popup
         frame(con, x, y, w, h, title);
         if (footer) {
             con.print(Math.floor(x + (w - footer.length) / 2), y + h - 1, footer);
         }
         if (items) {
-            for (var j: number = 0, len: number = items.length; j < len; ++j) {
+            for (let j: number = 0, len: number = items.length; j < len; ++j) {
                 button(con, x + 2, y + 1 + j, items[j]);
             }
         }

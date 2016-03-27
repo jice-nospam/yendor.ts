@@ -5,7 +5,9 @@
       This makes it possible to use the same Yendor.Fov to compute fov from differents places.
 
 * GeneRogue
-    - added lighting, candle, torch, sunrod
+    - lighting
+    - more generic actor factory
+    - new items : candle, torch, sunrod, lantern, oil flask
 
 # 0.5.0 / 08-mar-2016
 * upgraded typescript to 1.8.2, pixi to 3.0.9

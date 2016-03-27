@@ -1,20 +1,20 @@
 /// <reference path="../decl/jquery.d.ts" />
 /// <reference path="../yendor/yendor.ts" />
-var root: Yendor.Console;
+let root: Yendor.Console;
 
 module Benchmark {
     "use strict";
     // these are the dimensions of the libtcod benchmark sample
-    var WIDTH: number = 80;
-    var HEIGHT: number = 60;
-    var SAMPLE_SCREEN_WIDTH: number = 46;
-    var SAMPLE_SCREEN_HEIGHT: number = 20;
-    var SAMPLE_SCREEN_X: number = 20;
-    var SAMPLE_SCREEN_Y: number = 10;
-    var rng: Yendor.Random = new Yendor.ComplementaryMultiplyWithCarryRandom();
-    var framesPerSecond: number = 0;
-    var currentFrameCount: number = 0;
-    var fpsTimer: number = 0;
+    let WIDTH: number = 80;
+    let HEIGHT: number = 60;
+    let SAMPLE_SCREEN_WIDTH: number = 46;
+    let SAMPLE_SCREEN_HEIGHT: number = 20;
+    let SAMPLE_SCREEN_X: number = 20;
+    let SAMPLE_SCREEN_Y: number = 10;
+    let rng: Yendor.Random = new Yendor.ComplementaryMultiplyWithCarryRandom();
+    let framesPerSecond: number = 0;
+    let currentFrameCount: number = 0;
+    let fpsTimer: number = 0;
 
     interface Sample {
         name: string;
@@ -22,14 +22,14 @@ module Benchmark {
         onKeyDown(event: KeyboardEvent);
     }
 
-    var samples: Sample[] = [];
-    var currentSampleIndex: number = 0;
+    let samples: Sample[] = [];
+    let currentSampleIndex: number = 0;
 
     class PerfSample implements Sample {
         name: string = "True color";
         render(root: Yendor.Console) {
-            for (var x = SAMPLE_SCREEN_X; x < SAMPLE_SCREEN_X + SAMPLE_SCREEN_WIDTH; ++x) {
-                for (var y = SAMPLE_SCREEN_Y; y < SAMPLE_SCREEN_Y + SAMPLE_SCREEN_HEIGHT; ++y) {
+            for (let x = SAMPLE_SCREEN_X; x < SAMPLE_SCREEN_X + SAMPLE_SCREEN_WIDTH; ++x) {
+                for (let y = SAMPLE_SCREEN_Y; y < SAMPLE_SCREEN_Y + SAMPLE_SCREEN_HEIGHT; ++y) {
                     root.back[x][y] = rng.getNumber(0, 0xFFFFFF);
                     root.fore[x][y] = rng.getNumber(0, 0xFFFFFF);
                     root.text[x][y] = rng.getNumber(32, 128);
@@ -68,7 +68,7 @@ module Benchmark {
             "########       #####      ####################",
             "##############################################"];
         constructor() {
-            var thisMap: string[] = this.map;
+            let thisMap: string[] = this.map;
             this.pathFinder = new Yendor.PathFinder(SAMPLE_SCREEN_WIDTH, SAMPLE_SCREEN_HEIGHT,
                 function(from: Core.Position, to: Core.Position): number {
                     return thisMap[to.y][to.x] === "#" ? 0 : 1;
@@ -85,8 +85,8 @@ module Benchmark {
             }
         }
         private drawMap(root: Yendor.Console) {
-            for (var y: number = 0; y < SAMPLE_SCREEN_HEIGHT; ++y) {
-                for (var x: number = 0; x < SAMPLE_SCREEN_WIDTH; ++x) {
+            for (let y: number = 0; y < SAMPLE_SCREEN_HEIGHT; ++y) {
+                for (let x: number = 0; x < SAMPLE_SCREEN_WIDTH; ++x) {
                     root.back[SAMPLE_SCREEN_X + x][SAMPLE_SCREEN_Y + y] =
                         this.map[y][x] === "#" ? AStarSample.DARK_WALL : AStarSample.DARK_GROUND;
                 }
@@ -100,9 +100,9 @@ module Benchmark {
                 this.setNewDestination();
             } while (!this.isDestinationWalkable());
             this.drawMap(root);
-            var path: Core.Position[] = this.pathFinder.getPath(this.from, this.to);
+            let path: Core.Position[] = this.pathFinder.getPath(this.from, this.to);
             if (path) {
-                var pos: Core.Position = path.pop();
+                let pos: Core.Position = path.pop();
                 while (pos) {
                     root.back[SAMPLE_SCREEN_X + pos.x][SAMPLE_SCREEN_Y + pos.y] = AStarSample.LIGHT_WALL;
                     pos = path.pop();
@@ -162,7 +162,7 @@ module Benchmark {
             this.scheduler.addAll(this.entities);
         }
         render(root: Yendor.Console) {
-            var y: number = 2;
+            let y: number = 2;
             root.clearText();
             root.print(SAMPLE_SCREEN_X, SAMPLE_SCREEN_Y + 15, "Press any key to move");
             this.entities.forEach((entity: ScheduledEntity) => {
@@ -223,11 +223,11 @@ module Benchmark {
             this.noise = new Yendor.SimplexNoise(rng, 4);
         }
         render(root: Yendor.Console) {
-            for (var x = SAMPLE_SCREEN_X; x < SAMPLE_SCREEN_X + SAMPLE_SCREEN_WIDTH; ++x) {
-                var h: number = this.noise.get1D((x - SAMPLE_SCREEN_X) / SAMPLE_SCREEN_WIDTH + this.offset);
+            for (let x = SAMPLE_SCREEN_X; x < SAMPLE_SCREEN_X + SAMPLE_SCREEN_WIDTH; ++x) {
+                let h: number = this.noise.get1D((x - SAMPLE_SCREEN_X) / SAMPLE_SCREEN_WIDTH + this.offset);
                 h = (h+1)/2;
-                var col = Core.ColorUtils.add(Core.ColorUtils.multiply(0x000064,h), Core.ColorUtils.multiply(0x826E64, 1-h));
-                for (var y = SAMPLE_SCREEN_Y; y < SAMPLE_SCREEN_Y + SAMPLE_SCREEN_HEIGHT; ++y) {
+                let col = Core.ColorUtils.add(Core.ColorUtils.multiply(0x000064,h), Core.ColorUtils.multiply(0x826E64, 1-h));
+                for (let y = SAMPLE_SCREEN_Y; y < SAMPLE_SCREEN_Y + SAMPLE_SCREEN_HEIGHT; ++y) {
                     root.back[x][y] = col;
                 }
             }
@@ -238,8 +238,8 @@ module Benchmark {
 
     function render() {
         samples[currentSampleIndex].render(root);
-        for (var i: number = 0, len: number = samples.length; i < len; ++i) {
-            var sample: Sample = samples[i];
+        for (let i: number = 0, len: number = samples.length; i < len; ++i) {
+            let sample: Sample = samples[i];
             root.print(1, 40 + i, sample.name);
             if (i === currentSampleIndex) {
                 root.clearBack(0x323296, 0, 40 + i, 26, 1);

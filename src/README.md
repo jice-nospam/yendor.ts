@@ -36,4 +36,6 @@ __name1 type;
 private __name2 type;
 ```
 
+## comments
+* prefix fields and methods declarations with natural doc comments using javadov delimiter /** (it's visual studio code friendly)
 

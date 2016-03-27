@@ -1,4 +1,4 @@
-/*
+/**
 	Section: actors
 */
 module Game {
@@ -6,7 +6,7 @@ module Game {
 	/********************************************************************************
 	 * Group: classes, types and factory
 	 ********************************************************************************/
-	/*
+	/**
 		Enum: ActorType
 		enum for all the actors existing in the game.
 	*/
@@ -18,7 +18,8 @@ module Game {
         TROLL,
         // 		human
         PLAYER,
-        // potion
+        // flask
+        OIL_FLASK,
         HEALTH_POTION,
         REGENERATION_POTION,
         // scroll
@@ -52,9 +53,10 @@ module Game {
         // light
         CANDLE,
         TORCH,
+        LANTERN,
         // miscellaneous
-        STAIR_UP,
-        STAIR_DOWN,
+        STAIRS_UP,
+        STAIRS_DOWN,
         WOODEN_DOOR,
         IRON_PORTCULLIS,
         KEY,
@@ -62,13 +64,14 @@ module Game {
         ACTOR_TYPE_COUNT
     };
 
-	/*
+	/**
 		Class: ActorFactory
 		Built an actor.
 	*/
     export class ActorFactory {
         private static seq: number = 0;
-		/*
+        private static unknownClasses: { [index: string]: boolean } = {};
+		/**
 			Function: create
 			Create an actor of given type
 
@@ -78,39 +81,48 @@ module Game {
 			y - the actor y coordinate (default 0)
 		*/
         static create(type: ActorType, x: number = 0, y: number = 0): Actor {
-            var name: string = ActorType[type].toLowerCase().replace(/_/g, " ");
+            let name: string = ActorType[type].toLowerCase().replace(/_/g, " ");
             if (actorDefs[name]) {
                 return ActorFactory.createActor(type, x, y, name, actorDefs[name]);
             }
-            log("ERROR : unknown actor type " + ActorType[type], Constants.LOG_CRIT_COLOR);
+            if (!ActorFactory.unknownClasses[name]) {
+                log("WARN : unknown actor type " + ActorType[type], Constants.LOG_WARN_COLOR);
+                ActorFactory.unknownClasses[name] = true;
+            }
             return undefined;
         }
 
         private static createActor(type: ActorType, x: number, y: number, name: string, def: ActorDef) {
-            var actor: Actor = type === ActorType.PLAYER ? new Player(name + "|" + ActorFactory.seq) : new Actor(name + "|" + ActorFactory.seq);
+            let actor: Actor = type === ActorType.PLAYER ? new Player(name + "|" + ActorFactory.seq) : new Actor(name + "|" + ActorFactory.seq);
             ActorFactory.seq++;
-            if (def.classes) {
-                for (var i: number = 0, len: number = def.classes.length; i < len; ++i) {
-                    var className = def.classes[i];
-                    if (actorDefs[className]) {
-                        ActorFactory.populateActor(type, actor, actorDefs[className]);
-                    }
-                }
-            }
             ActorFactory.populateActor(type, actor, def);
             actor.name = name;
             actor.moveTo(x, y);
+            if (!actor.charCode) {
+                log("ERROR : no character defined for actor type " + ActorType[type], Constants.LOG_CRIT_COLOR);
+            }
             return actor;
         }
 
-        private static populateActor(type: ActorType,actor: Actor, def: ActorDef) {
+        private static populateActor(type: ActorType, actor: Actor, def: ActorDef) {
+            if (def.classes) {
+                for (let i: number = 0, len: number = def.classes.length; i < len; ++i) {
+                    let className = def.classes[i];
+                    if (actorDefs[className]) {
+                        ActorFactory.populateActor(type, actor, actorDefs[className]);
+                    } else if (!ActorFactory.unknownClasses[className]) {
+                        log("WARN : unknown actor class " + className, Constants.LOG_WARN_COLOR);
+                        ActorFactory.unknownClasses[className] = true;
+                    }
+                }
+            }
             actor.init(def.ch, name, def.color, def.classes, def.plural,
                 def.blockWalk, def.blockSight, def.displayOutOfFov);
             if (def.pickable) {
                 actor.pickable = new Pickable(def.pickable);
             }
             if (def.ai) {
-                actor.ai = ActorFactory.createAi(def.ai);
+                actor.ai = ActorFactory.createAi(actor, def.ai);
             }
             if (def.attacker) {
                 actor.attacker = new Attacker(def.attacker);
@@ -120,9 +132,6 @@ module Game {
             }
             if (def.light) {
                 actor.light = new Light(def.light);
-                if ( type != ActorType.PLAYER ) {
-                    actor.light.enable(actor);
-                }
             }
             if (def.equipment) {
                 actor.equipment = new Equipment(def.equipment);
@@ -139,11 +148,14 @@ module Game {
             if (def.lever) {
                 actor.lever = new Lever(def.lever, actor.id);
             }
-            if ( def.xpHolder) {
+            if (def.xpHolder) {
                 actor.xpHolder = new XpHolder(def.xpHolder);
             }
-            if ( def.container) {
+            if (def.container) {
                 actor.container = new Container(def.container, actor.ai);
+            }
+            if (def.activable) {
+                actor.activable = new Activable(def);
             }
         }
 
@@ -152,36 +164,53 @@ module Game {
         }
 
         private static createTargetSelector(def: TargetSelectorDef) {
-            return new TargetSelector(def.method, def.range, def.radius);
+            return new TargetSelector(def);
         }
 
         private static createEffect(def: EffectDef) {
             switch (def.type) {
                 case EffectType.CONDITION:
-                    var conditionData: ConditionEffectDef = <ConditionEffectDef>def.data;
-                    return new ConditionEffect(conditionData.type, conditionData.nbTurns, conditionData.successMessage, conditionData.additionalArgs);
+                    let conditionData: ConditionEffectDef = <ConditionEffectDef>def.data;
+                    return new ConditionEffect(conditionData.condition, conditionData.successMessage);
                 case EffectType.INSTANT_HEALTH:
-                    var instantHealthData: InstantHealthEffectDef = <InstantHealthEffectDef>def.data;
+                    let instantHealthData: InstantHealthEffectDef = <InstantHealthEffectDef>def.data;
                     return new InstantHealthEffect(instantHealthData.amount, instantHealthData.successMessage, instantHealthData.failureMessage);
                 case EffectType.MAP_REVEAL:
                     return new MapRevealEffect();
                 case EffectType.TELEPORT:
-                    var teleportData: TeleportEffectDef = <TeleportEffectDef>def.data;
+                    let teleportData: TeleportEffectDef = <TeleportEffectDef>def.data;
                     return new TeleportEffect(teleportData.successMessage);
                 default:
                     return undefined;
             }
         }
 
-        private static createAi(def: AiDef): Ai {
+        private static createCondition(def: ConditionDef): Condition {
+            return Condition.create(def);
+        }
+
+        private static createAi(owner: Actor, def: AiDef): Ai {
+            let ai: Ai;
             switch (def.type) {
+                case AiType.ITEM:
+                    ai = new ItemAi(def.walkTime);
+                    break;
                 case AiType.MONSTER:
-                    return new MonsterAi(def.walkTime);
+                    ai = new MonsterAi(def.walkTime);
+                    break;
                 case AiType.PLAYER:
-                    return new PlayerAi(def.walkTime);
+                    ai = new PlayerAi(def.walkTime);
+                    break;
                 default:
                     return undefined;
             }
+            if (def.conditions) {
+                for (let i: number = 0, len: number = def.conditions.length; i < len; ++i) {
+                    let conditionDef: ConditionDef = def.conditions[i];
+                    ai.addCondition(ActorFactory.createCondition(conditionDef), owner);
+                }
+            }
+            return ai;
         }
 
         static load(persister: Persister) {
@@ -196,7 +225,7 @@ module Game {
             persister.deleteKey(Constants.PERSISTENCE_ACTORS_SEQ_KEY);
         }
 
-		/*
+		/**
 			Function: setLock
 			Associate a door with a key to create a locked door that can only be opened by this key
 		*/
