@@ -113,7 +113,7 @@ module Game {
 		Represents the map as a list of sectors separated by connectors.
 		This is used to generate door/key puzzles.
 	*/
-    export class TopologyMap implements Persistent {
+    export class TopologyMap implements Core.Persistent {
         private width: number;
         private height: number;
         className: string;
@@ -137,7 +137,7 @@ module Game {
         get connectors() { return this._connectors; }
 
         constructor(width: number, height: number) {
-            this.className = "TopologyMap";
+            this.className = "Game.TopologyMap";
             this.width = width;
             this.height = height;
             for (let x = 0; x < width; ++x) {
@@ -236,7 +236,8 @@ module Game {
 
 		/**
 			Function: computePath
-			Compute the shortest path between two sectors using Dijkstra algorithm adapted from http://en.wikipedia.org/wiki/Dijkstra%27s_algorithm.
+			Compute the shortest path (in term of traversed sectors, not necessarily in terms of distance) between two sectors
+            using Dijkstra algorithm adapted from http://en.wikipedia.org/wiki/Dijkstra%27s_algorithm.
 
 			Parameters:
 			id1 - id of the origin sector
@@ -294,6 +295,7 @@ module Game {
 
 			Parameters:
 			id - id of the origin sector
+            onlyDeadEnds - if true, only consider sectors that are dead ends (that only have one connector).
 
 			Returns:
 			The id of the farthest sector from origin, or NONE if none found
@@ -369,16 +371,10 @@ module Game {
         }
 
         private hasDoor(map: Map, pos: Core.Position): boolean {
-            let items: Actor[] = Engine.instance.actorManager.findActorsOnCell(pos, Engine.instance.actorManager.getItemIds());
-            if (items.length === 0) {
-                return false;
-            }
-            for (let i: number = 0, len: number = items.length; i < len; ++i) {
-                if (items[i].door) {
-                    return true;
-                }
-            }
-            return false;
+            let doorCount: number = Engine.instance.actorManager.filterAndCount(function(actor: Actor):boolean {
+                return actor.pos.equals(pos) && actor.isA("door");
+            });
+            return doorCount > 0;
         }
 
         private newConnector(from: Core.Position, pos: Core.Position, sector1Id: TopologyObjectId): TopologyObjectId {

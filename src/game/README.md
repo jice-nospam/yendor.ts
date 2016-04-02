@@ -30,7 +30,7 @@ To compile it, run `jake` then open game/index.html in your browser.
 * look with mouse. UI also works with mouse
 
 # WORK IN PROGRESS
-    - light producing items : candle, torch, sunrod, lantern
+    - light producing items : candle, torch, sunrod, lantern, wall torches
 
 # TODO
 
@@ -49,14 +49,13 @@ Reminder for stuff that might be added to the game. Or not.
     - item durability
         - grinding stone
         - being able to break certain doors
-    - light
-        - static light items : wall torchs
-        - magic light spells : scroll of floating light
     - fire
         - fire effect on items : fireball + dropped torchs should burn scrolls, wooden items
         - fire 'item' : fireball should leave fire on ground for some time
-        - burning condition : caused by fireball / hitting with a torch (melee or throw) 
-    - multi-keys locks
+        - burning condition : caused by walking in fire / fireballs / hitting with a torch (melee or throw)
+    - map building 
+        - multi-keys locks
+        - remove monsters from dungeon's first room
     - A.I.
         - beast A.I. should move randomly when no scent is detected
         - orcs should have humanoid A.I. (can open door, use equipment)
@@ -74,7 +73,9 @@ Reminder for stuff that might be added to the game. Or not.
         - jewelry (necklace, rings)
     - player character
         - new XP level : being able to increase some stat (health, inventory, ...)
-        - implement classical DEX/INT/CON/CHA/WIS stats 
+        - implement classical DEX/INT/CON/CHA/WIS stats
+    - magic
+        - scroll of floating light     
     - combat
         - critical hits
         - dodge + parry

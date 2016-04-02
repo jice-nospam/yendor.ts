@@ -23,7 +23,7 @@ module Game {
         */
         protected patternTime: number;
         constructor(options: LightDef) {
-            this.className = "Light";
+            this.className = "Game.Light";
             this._options = options;
         }
         get options(): LightDef { return this._options; }
@@ -41,6 +41,18 @@ module Game {
                     this.rangeFactor1 = 0;
                     break;
             }
+        }
+        getPosition(owner: Actor) {
+            if ( !owner.wallActor ) {
+                return owner.pos;
+            }
+            let cells:Core.Position[] = owner.pos.getAdjacentCells(Engine.instance.map.w, Engine.instance.map.h);
+            for (let i: number = 0, len: number = cells.length; i < len; ++i ) {
+                if (!Engine.instance.map.isWall(cells[i].x, cells[i].y)) {
+                    return cells[i];
+                }
+            }
+            return owner.pos;
         }
         /**
             Function: computeIntensityVariation

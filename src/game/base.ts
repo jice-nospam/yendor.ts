@@ -54,7 +54,7 @@ module Game {
         export const NOLIGHT_COLOR: Core.Color = 0x444444;
         export const FROST_COLOR: Core.Color = 0xE0E0FF;
         export const HEALTH_POTION_COLOR: Core.Color = 0x800080;
-        export const OIL_FLASK_COLOR: Core.Color = 0xBBBBBB;
+        export const OIL_FLASK_COLOR: Core.Color = 0xAF5320;
 
         // gui
         export const LOG_DARKEN_COEF: number = 0.8;
@@ -62,10 +62,12 @@ module Game {
         export const STAT_BAR_WIDTH: number = 20;
 
         // map building
-        export const MAX_MONSTERS_PER_ROOM: number = 3;
+        export const MAX_MONSTERS_PER_ROOM: number = 2;
         export const MAX_ITEMS_PER_ROOM: number = 2;
         export const ROOM_MAX_SIZE: number = 8;
         export const ROOM_MIN_SIZE: number = 4;
+        export const DUNGEON_MAX_TORCHES: number = 10;
+        export const DUNGEON_MIN_TORCHES: number = 4;
         export const PUZZLE_STEP_PROBABILITY: number = 0.6;
 
         // gameplay
@@ -105,11 +107,7 @@ module Game {
         export const PERSISTENCE_TOPOLOGY_MAP: string = "topologyMap";
         export const PERSISTENCE_MAP_KEY: string = "map";
         export const PERSISTENCE_ACTORS_KEY: string = "actors";
-        export const PERSISTENCE_CREATURE_IDS_KEY: string = "creatureIds";
         export const PERSISTENCE_ACTORS_SEQ_KEY: string = "actorsSeq";
-        export const PERSISTENCE_ITEM_IDS_KEY: string = "itemIds";
-        export const PERSISTENCE_CORPSE_IDS_KEY: string = "corpseIds";
-        export const PERSISTENCE_UPDATING_CORPSE_IDS_KEY: string = "updatingCorpseIds";
         export const PERSISTENCE_STATUS_PANEL: string = "statusPanel";
 
     }

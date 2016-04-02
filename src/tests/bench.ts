@@ -112,12 +112,12 @@ module Benchmark {
         onKeyDown(event: KeyboardEvent) { }
     }
 
-    class ScheduledEntity implements Yendor.TimedEntity {
-        waitTime: number = 0;
+    class ScheduledEntity extends Yendor.TimedEntity {
         turnLength: number;
         position: number = 0;
         char: number = "r".charCodeAt(0);
         constructor(turnLength: number) {
+            super();
             this.turnLength = turnLength;
         }
         update() {
@@ -125,11 +125,7 @@ module Benchmark {
             if (this.position === SAMPLE_SCREEN_WIDTH) {
                 this.position = 0;
             }
-            this.waitTime += this.turnLength;
-        }
-        getWaitTime(): number { return this.waitTime; }
-        reduceWaitTime(time: number) {
-            this.waitTime -= time;
+            this.wait(this.turnLength);
         }
     }
 
@@ -144,7 +140,7 @@ module Benchmark {
                 super.update();
                 this.move = false;
             } else {
-                this.waitTime += this.turnLength;
+                this.wait(this.turnLength);
             }
         }
     }
@@ -218,22 +214,56 @@ module Benchmark {
     class NoiseSample implements Sample {
         name: string = "Noise";
         private noise: Yendor.Noise;
+        private frequency: number = 2;
         private offset: number = 0;
+        private octaves: number = 3;
+        private dim: number = 0;
+        private fbm: boolean = false;
         constructor() {
-            this.noise = new Yendor.SimplexNoise(rng, 4);
+            this.noise = new Yendor.SimplexNoise(rng);
         }
         render(root: Yendor.Console) {
+            root.clearText();
+            root.print(SAMPLE_SCREEN_X, SAMPLE_SCREEN_Y + 15, "+/- : frequency (" + this.frequency + ")");
+            root.print(SAMPLE_SCREEN_X, SAMPLE_SCREEN_Y + 16, "any key : " + (this.dim % 3 + 1) + "D" + (this.fbm ? " FBM": ""));
             for (let x = SAMPLE_SCREEN_X; x < SAMPLE_SCREEN_X + SAMPLE_SCREEN_WIDTH; ++x) {
-                let h: number = this.noise.get1D((x - SAMPLE_SCREEN_X) / SAMPLE_SCREEN_WIDTH + this.offset);
-                h = (h+1)/2;
-                let col = Core.ColorUtils.add(Core.ColorUtils.multiply(0x000064,h), Core.ColorUtils.multiply(0x826E64, 1-h));
+                let h: number;
+                if (this.dim % 3 === 0) {
+                    h = this.fbm ?
+                        this.noise.fbm1D((x - SAMPLE_SCREEN_X) / SAMPLE_SCREEN_WIDTH + this.offset, this.frequency, this.octaves) 
+                        : this.noise.get1D((x - SAMPLE_SCREEN_X) / SAMPLE_SCREEN_WIDTH + this.offset, this.frequency);
+                    h = (h + 1) / 2;
+                }
                 for (let y = SAMPLE_SCREEN_Y; y < SAMPLE_SCREEN_Y + SAMPLE_SCREEN_HEIGHT; ++y) {
+                    if (this.dim % 3 === 1) {
+                        h = this.fbm ? 
+                            this.noise.fbm2D((x - SAMPLE_SCREEN_X) / SAMPLE_SCREEN_WIDTH + this.offset, (y - SAMPLE_SCREEN_Y) / SAMPLE_SCREEN_HEIGHT + this.offset, this.frequency, this.octaves)
+                            : this.noise.get2D((x - SAMPLE_SCREEN_X) / SAMPLE_SCREEN_WIDTH + this.offset, (y - SAMPLE_SCREEN_Y) / SAMPLE_SCREEN_HEIGHT + this.offset, this.frequency);
+                        h = (h + 1) / 2;
+                    } else if ( this.dim % 3 === 2 ) {
+                        h = this.fbm ? 
+                            this.noise.fbm3D((x - SAMPLE_SCREEN_X) / SAMPLE_SCREEN_WIDTH + this.offset, (y - SAMPLE_SCREEN_Y) / SAMPLE_SCREEN_HEIGHT + this.offset, this.offset, this.frequency, this.octaves)
+                            : this.noise.get3D((x - SAMPLE_SCREEN_X) / SAMPLE_SCREEN_WIDTH + this.offset, (y - SAMPLE_SCREEN_Y) / SAMPLE_SCREEN_HEIGHT + this.offset, this.offset, this.frequency);
+                        h = (h + 1) / 2;
+                    }
+                    let col = Core.ColorUtils.add(Core.ColorUtils.multiply(0x000064, h), Core.ColorUtils.multiply(0x826E64, 1 - h));
                     root.back[x][y] = col;
                 }
             }
             this.offset += 0.005;
         }
-        onKeyDown(event: KeyboardEvent) { }
+        onKeyDown(event: KeyboardEvent) {
+            if (event.key === "+") {
+                this.frequency++;
+            } else if (event.key === "-") {
+                if (this.frequency > 1) {
+                    this.frequency--;
+                }
+            } else {
+                this.dim = (this.dim + 1) % 6;
+                this.fbm = this.dim >= 3;
+            }
+        }
     }
 
     function render() {

@@ -17,6 +17,7 @@ GeneRogue is a generic roguelike loosely based on the famous [python roguelike t
 * field of view toolkit using [restrictive precise angle shadowcasting](http://www.roguebasin.com/index.php?title=Restrictive_Precise_Angle_Shadowcasting)
 * [A* pathfinding](http://en.wikipedia.org/wiki/A*_search_algorithm) toolkit
 * a scheduler to handle the order in which creatures with different speed are updated
+* a simplex noise toolkit
 
 ## umbra.ts
 * scene graph management

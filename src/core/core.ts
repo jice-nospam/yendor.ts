@@ -1,9 +1,10 @@
+/// <reference path="persistence.ts" />
 /// <reference path="color.ts" />
 /// <reference path="position.ts" />
 /// <reference path="rect.ts" />
 /// <reference path="tree.ts" />
 
-/*
+/**
 	Section: core.ts
 */
 module Core {
@@ -31,7 +32,7 @@ module Core {
         return ret;
     }
 
-	/*
+	/**
 		Function: crc32
 		Returns:
 		the CRC32 hash of a string
@@ -47,7 +48,7 @@ module Core {
         return (crc ^ (-1)) >>> 0;
     };
 
-	/*
+	/**
 		Function: toCamelCase
 		Convert a string like EVENT_TYPE to camel case like EventType
 	*/

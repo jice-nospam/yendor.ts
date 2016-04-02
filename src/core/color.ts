@@ -1,9 +1,9 @@
-/*
+/**
 	Section: Color
 */
 module Core {
     "use strict";
-	/*
+	/**
 		Interface: Color
 		Typesafe number or string color wrapper. 
 		Stores colors using a number value between 0 and 0xFFFFFF or a CSS string 
@@ -29,12 +29,12 @@ module Core {
 	*/
     export type Color = String | number;
 
-	/*
+	/**
 		Class: ColorUtils
 		Some color manipulation utilities.
 	*/
     export class ColorUtils {
-		/*
+		/**
 			Function: multiply
 			Multiply a color with a number. 
 			> (r,g,b) * n == (r*n, g*n, b*n)
@@ -173,7 +173,7 @@ module Core {
             return b1 | (g1 << 8) | (r1 << 16);
         }
 
-        /*
+        /**
             Function: computeIntensity
             Return the grayscale intensity between 0 and 1
         */
@@ -194,7 +194,7 @@ module Core {
             return (0.2126 * r + 0.7152*g + 0.0722 * b) * (1/255);
         }
 
-		/*
+		/**
 			Function: add
 			Add two colors.
 			> (r1,g1,b1) + (r2,g2,b2) = (r1+r2,g1+g2,b1+b2)
@@ -241,7 +241,7 @@ module Core {
             "white": [255, 255, 255],
             "yellow": [255, 255, 0]
         };
-		/*
+		/**
 			Function: toRgb
 			Convert a string color into a [r,g,b] number array.
 
@@ -259,7 +259,7 @@ module Core {
             }
         }
 
-		/*
+		/**
 			Function: toWeb
 			Convert a color into a CSS color format (as a string)
 		*/
@@ -307,7 +307,8 @@ module Core {
             }
             return [0, 0, 0];
         }
-		/*
+        
+		/**
 			Function: toNumber
 			Convert a string color into a number.
 

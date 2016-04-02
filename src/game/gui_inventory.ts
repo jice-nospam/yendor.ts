@@ -11,13 +11,20 @@ module Game {
         (item: Actor): void;
     }
     export interface OpenInventoryEventData {
+        /** custom title for the inventory window */
         title: string;
-        itemListener: ItemListener;
+        /** listener to call when an actor is selected */
+        itemListener?: ItemListener;
+        /** event to publish when an actor is selected (associated data = the selected actor) */
+        eventType?: EventType;
+        /** display only items of this class */
+        itemClassFilter?: string;
     }
 
     export class InventoryPanel extends Gizmo.Widget implements Umbra.EventListener {
         private selectedItem: number;
         private itemListener: ItemListener;
+        private eventType: EventType;
 		/**
 			Property: inventory
 			Stacked list of items
@@ -32,23 +39,17 @@ module Game {
             this.hide();
             this.showOnEventType(EventType[EventType.OPEN_INVENTORY], function(data: OpenInventoryEventData) {
                 this.itemListener = data.itemListener;
+                this.eventType = data.eventType;
                 this.title = data.title + " - ESC to close";
                 let player: Actor = Engine.instance.actorManager.getPlayer();
                 this.capacityMessage = "capacity " + (Math.floor(10 * player.container.computeTotalWeight()) / 10)
-                    + "/" + player.container.capacity;                
-                this.buildStackedInventory(player.container);
+                    + "/" + player.container.capacity;
+                this.buildStackedInventory(player.container, data.itemClassFilter);
             }.bind(this));
         }
 
-        private selectItemByIndex(index: number) {
-            if (index >= 0 && index < this.inventory.length) {
-                let item: Actor = this.inventory[index][0];
-                this.itemListener(item);
-            }
-        }
-
         onRender(destination: Yendor.Console) {
-            this.boundingBox = Gizmo.popupMenu(this, destination,  this.buttons, this.title, this.capacityMessage);
+            this.boundingBox = Gizmo.popupMenu(this, destination, this.buttons, this.title, this.capacityMessage);
             for (let i: number = 0, len: number = this.inventory.length; i < len; ++i) {
                 let list: Actor[] = this.inventory[i];
                 let item: Actor = list[0];
@@ -58,7 +59,7 @@ module Game {
 
         onUpdate(time: number): void {
         }
-        
+
         private computeItemLabel(item: Actor, count: number = 1) {
             let itemDescription = "(" + String.fromCharCode(item.pickable.shortcut + "a".charCodeAt(0)) + ") " + item.ch + " ";
             if (count > 1) {
@@ -118,16 +119,18 @@ module Game {
             return false;
         }
 
-        private buildStackedInventory(container: Container) {
+        private buildStackedInventory(container: Container, itemClassFilter?: string) {
             let player: Actor = Engine.instance.actorManager.getPlayer();
             this.inventory = [];
             for (let i: number = 0, len: number = player.container.size(); i < len; ++i) {
                 let item: Actor = player.container.get(i);
-                let found: boolean = item.isStackable() && this.addItemToStack(item);
-                if (!found) {
-                    let itemTab: Actor[] = [];
-                    itemTab.push(item);
-                    this.inventory.push(itemTab);
+                if (!itemClassFilter || item.isA(itemClassFilter)) {
+                    let found: boolean = item.isStackable() && this.addItemToStack(item);
+                    if (!found) {
+                        let itemTab: Actor[] = [];
+                        itemTab.push(item);
+                        this.inventory.push(itemTab);
+                    }
                 }
             }
             this.inventory.sort(function(a: Actor[], b: Actor[]) { return a[0].name.localeCompare(b[0].name); });
@@ -143,7 +146,8 @@ module Game {
                 options.push({
                     label: this.computeItemLabel(item, itemStack.length),
                     autoHideWidget: this,
-                    callback: this.itemListener.bind(this),
+                    eventType: this.eventType ? EventType[this.eventType] : undefined,
+                    callback: this.itemListener ? this.itemListener.bind(this) : undefined,
                     eventData: item,
                     asciiShortcut: "a".charCodeAt(0) + item.pickable.shortcut
                 });

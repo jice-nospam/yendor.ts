@@ -32,10 +32,6 @@ module Game {
         MAGIC,
         /** can be turned on and off */
         ACTIVABLE,
-        /** can be open/closed. Can be combined with a lockable */
-        DOOR,
-        /** can be triggered by pressing E when standing on an adjacent cell */
-        LEVER,
         /** can be locked/unlocked */
         LOCKABLE,
         /** can produce light */
@@ -46,7 +42,7 @@ module Game {
         AMMO,
     }
 
-    export interface ActorFeature extends Persistent {
+    export interface ActorFeature extends Core.Persistent {
     }
 
     /*
@@ -55,7 +51,8 @@ module Game {
          Actor shouldn't hold references to other Actors, else there might be cyclic dependencies which
          keep the json serializer from working. Instead, hold ActorId and use ActorManager.getActor()
     */
-    export class Actor extends Core.Position implements Persistent, Yendor.TimedEntity {
+    export class Actor extends Yendor.TimedEntity implements Core.Persistent {
+        _pos: Core.Position;
         // persister classname
         className: string;
         private classes: string[] = [];
@@ -70,13 +67,15 @@ module Game {
 
         private features: { [index: number]: ActorFeature } = {};
 
-        // whether you can walk on the tile where this actor is
+        /** whether you can walk on the tile where this actor is */
         blocks: boolean = false;
-        // whether light goes through this actor
+        /** whether light goes through this actor */
         transparent: boolean = true;
-        // whether you can see this actor only if it's in your field of view
+        /** whether you can see this actor only if it's in your field of view */
         fovOnly: boolean = true;
-        // whether this actor name is singular (you can write "a <name>")
+        /** whether this actor should be placed on a floor or wall tile */
+        wallActor: boolean = false;
+        /** whether this actor name is singular (you can write "a <name>") */
         private _singular: boolean = true;
 
         get id() { return this._id; }
@@ -84,7 +83,8 @@ module Game {
 
         constructor(readableId?: string) {
             super();
-            this.className = "Actor";
+            this._pos = new Core.Position();
+            this.className = "Game.Actor";
             if (readableId) {
                 // readableId is undefined when loading a game
                 this._readableId = readableId;
@@ -97,43 +97,49 @@ module Game {
             return this._id === c._id;
         }
 
-        init(_ch: string, _name: string, col: Core.Color,
-            types: string[], plural?: boolean, blocks?: boolean, blockSight?: boolean, displayOutOfFov?: boolean) {
-            if (_ch) {
-                this._ch = _ch.charCodeAt(0);
+        init(name: string, def: ActorDef) {
+            if (!def) {
+                return;
             }
-            if (_name) {
-                this.name = _name;
+            if (def.ch) {
+                this._ch = def.ch.charCodeAt(0);
             }
-            if (col !== undefined) {
-                this.col = col;
+            if (name) {
+                this.name = name;
             }
-            if (plural !== undefined) {
-                this._singular = !plural;
+            if (def.color !== undefined) {
+                this.col = def.color;
             }
-            if (blocks !== undefined) {
-                this.blocks = blocks;
+            if (def.plural !== undefined) {
+                this._singular = !def.plural;
             }
-            if (blockSight !== undefined) {
-                this.transparent = !blockSight;
+            if (def.blockWalk !== undefined) {
+                this.blocks = def.blockWalk;
             }
-            if (displayOutOfFov !== undefined) {
-                this.fovOnly = !displayOutOfFov;
+            if (def.blockSight !== undefined) {
+                this.transparent = !def.blockSight;
             }
-            if (types) {
-                for (let type in types) {
-                    this.classes.push(types[type]);
+            if (def.wallActor) {
+                this.wallActor = def.wallActor;
+            }
+            if (def.displayOutOfFov !== undefined) {
+                this.fovOnly = !def.displayOutOfFov;
+            }
+            if (def.classes) {
+                for (let type in def.classes) {
+                    this.classes.push(def.classes[type]);
                 }
             }
         }
 
+        get pos(): Core.Position { return this._pos; }
         moveTo(x: number, y: number) {
             if (!this.transparent) {
-                Engine.instance.map.setTransparent(this.x, this.y, true);
-                super.moveTo(x, y);
-                Engine.instance.map.setTransparent(this.x, this.y, false);
+                Engine.instance.map.setTransparent(this.pos.x, this.pos.y, true);
+                this._pos.moveTo(x, y);
+                Engine.instance.map.setTransparent(this.pos.x, this.pos.y, false);
             } else {
-                super.moveTo(x, y);
+                this._pos.moveTo(x, y);
             }
             if (this.container) {
                 // move items in inventory (needed for lights)
@@ -141,18 +147,6 @@ module Game {
                     let actor: Actor = this.container.get(i);
                     actor.moveTo(x, y);
                 }
-            }
-        }
-
-        getWaitTime() { return this.ai ? this.ai.getWaitTime() : undefined; }
-        reduceWaitTime(amount: number) {
-            if (this.ai) {
-                this.ai.reduceWaitTime(amount);
-            }
-        }
-        wait(time: number) {
-            if (this.ai) {
-                this.ai.wait(time);
             }
         }
 
@@ -187,13 +181,13 @@ module Game {
         hasFeature(featureType: ActorFeatureType): boolean {
             return this.features[featureType] !== undefined;
         }
-        
+
         /**
             Function: getWearer
             Return the actor wearing (containing) this actor
          */
         getWearer(): Actor {
-            if ( this.pickable && this.pickable.containerId) {
+            if (this.pickable && this.pickable.containerId) {
                 return Engine.instance.actorManager.getActor(this.pickable.containerId);
             }
             return undefined;
@@ -225,15 +219,9 @@ module Game {
 
         get activable(): Activable { return <Activable>this.features[ActorFeatureType.ACTIVABLE]; }
         set activable(newValue: Activable) { this.features[ActorFeatureType.ACTIVABLE] = newValue; }
-        
-        get door(): Door { return <Door>this.features[ActorFeatureType.DOOR]; }
-        set door(newValue: Door) { this.features[ActorFeatureType.DOOR] = newValue; }
 
         get lock(): Lockable { return <Lockable>this.features[ActorFeatureType.LOCKABLE]; }
         set lock(newValue: Lockable) { this.features[ActorFeatureType.LOCKABLE] = newValue; }
-
-        get lever(): Lever { return <Lever>this.features[ActorFeatureType.LEVER]; }
-        set lever(newValue: Lever) { this.features[ActorFeatureType.LEVER] = newValue; }
 
         get light(): Light { return <Light>this.features[ActorFeatureType.LIGHT]; }
         set light(newValue: Light) { this.features[ActorFeatureType.LIGHT] = newValue; }
@@ -242,6 +230,9 @@ module Game {
         set xpHolder(newValue: XpHolder) { this.features[ActorFeatureType.XP_HOLDER] = newValue; }
 
         isInContainer(): boolean { return this.pickable && this.pickable.containerId !== undefined; }
+        contains(actorId: ActorId): boolean {
+            return this.container && this.container.contains(actorId);
+        }
 
         getname(): string {
             if (this.ai && this.ai.hasCondition(ConditionType.FROZEN)) {
@@ -360,7 +351,7 @@ module Game {
 
         update() {
             if (this.ai) {
-                this.ai.update(this);
+                this.ai.update();
             }
         }
 

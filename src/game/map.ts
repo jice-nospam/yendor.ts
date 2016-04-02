@@ -14,7 +14,7 @@ module Game {
         scentAmount: number = 0;
     }
 
-    export class Map extends Core.Rect implements Persistent {
+    export class Map extends Core.Rect implements Core.Persistent {
         className: string;
         private tiles: Tile[][];
         private __inFov: boolean[][];
@@ -25,9 +25,9 @@ module Game {
 
         constructor() {
             super();
-            this.className = "Map";
+            this.className = "Game.Map";
         }
-        
+
         init(width: number, height: number) {
             this.resize(width, height);
             this.tiles = [];
@@ -53,22 +53,27 @@ module Game {
             }
             return true;
         }
+        isWallWithAdjacentFloor(x: number, y: number): boolean {
+            if (! this.isWall(x,y)) {
+                return false;
+            }
+            let cells:Core.Position[] = new Core.Position(x,y).getAdjacentCells(this.w, this.h);
+            for (let i: number = 0, len: number = cells.length; i < len; ++i ) {
+                if (!this.isWall(cells[i].x, cells[i].y)) {
+                    return true;
+                }
+            }
+            return false;
+        }
 
         canWalk(x: number, y: number): boolean {
             if (this.isWall(x, y)) {
                 return false;
             }
-            let pos: Core.Position = new Core.Position(x, y);
-            let actorManager: ActorManagerNode = Engine.instance.actorManager;
-            let actorsOnCell: Actor[] = actorManager.findActorsOnCell(pos, actorManager.getItemIds());
-            actorsOnCell = actorsOnCell.concat(actorManager.findActorsOnCell(pos, actorManager.getCreatureIds()));
-            for (let i: number = 0; i < actorsOnCell.length; i++) {
-                let actor: Actor = actorsOnCell[i];
-                if (actor.blocks) {
-                    return false;
-                }
-            }
-            return true;
+            let actorsOnCell: Actor[] = Engine.instance.actorManager.filter(function(actor: Actor): boolean {
+                return actor.pos.x === x && actor.pos.y === y && actor.blocks;
+            });
+            return actorsOnCell.length === 0;
         }
 
         isExplored(x: number, y: number): boolean {
@@ -99,8 +104,8 @@ module Game {
                 this._fov.computeFov(this.__inFov, x, y, radius);
                 for (let x = 0; x < this.w; x++) {
                     for (let y = 0; y < this.h; y++) {
-                        if (this.__inFov[x] && this.__inFov[x][y] && ! this.tiles[x][y].explored) {
-                            if ( Engine.instance.mapRenderer.getCellLightLevel(x,y) !== CellLightLevel.DARKNESS) {
+                        if (this.__inFov[x] && this.__inFov[x][y] && !this.tiles[x][y].explored) {
+                            if (Engine.instance.mapRenderer.getCellLightLevel(x, y) !== CellLightLevel.DARKNESS) {
                                 this.tiles[x][y].explored = true;
                             }
                         }
@@ -141,6 +146,9 @@ module Game {
 
         // Persistent interface
         load(jsonData: any): boolean {
+            if (jsonData.w != Constants.CONSOLE_WIDTH || jsonData.h != Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT) {
+                throw "Cannot load game: wrong map size " + jsonData.w + "x" + jsonData.h + " instead of " + Constants.CONSOLE_WIDTH + "x" + (Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT);
+            }
             this.init(jsonData.w, jsonData.h);
             this._fov = new Yendor.Fov(this.w, this.h);
             for (let x = 0; x < this.w; x++) {

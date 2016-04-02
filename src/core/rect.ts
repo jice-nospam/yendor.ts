@@ -1,24 +1,24 @@
-/*
+/**
 	Section: Rect
 */
 module Core {
     "use strict";
-	/*
+	/**
 		Class: Rect
 		Stores a position and size
 	*/
     export class Rect extends Position implements Comparable {
-		/*
+		/**
 			Property: w
 		*/
         w: number;
 
-		/*
+		/**
 			Property: h
 		*/
         h: number;
 
-		/*
+		/**
 			Constructor: constructor
 
 			Parameters:
@@ -29,11 +29,12 @@ module Core {
 		*/
         constructor(_x: number = 0, _y: number = 0, _w: number = 0, _h: number = 0) {
             super(_x, _y);
+            this.className="Core.Rect";
             this.w = _w;
             this.h = _h;
         }
 
-		/*
+		/**
 			Function: resize
 			Update the size of this rectangle.
 
@@ -50,7 +51,7 @@ module Core {
             return this.x === r.x && this.y === r.y && this.w === r.w && this.h === r.h;
         }
 
-		/*
+		/**
 			Function: contains
 			Check if a point is inside this rectangle.
 
@@ -71,7 +72,7 @@ module Core {
             }
         }
 
-		/*
+		/**
 			Function: containsRect
 			Check if a rectangle is inside this rectangle.
 
@@ -87,7 +88,7 @@ module Core {
                 && this.y + this.h >= rect.y + rect.h;
         }
         
-		/*
+		/**
 			Function: intersects
 			Check if a rectangle is intersecting this rectangle.
 
@@ -104,7 +105,7 @@ module Core {
                 || rect.y + rect.h <= this.y);
         }
         
-        /*
+        /**
             Function: expand
             Grows this rectangle so that it contains a point
             

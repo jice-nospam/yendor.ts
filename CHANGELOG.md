@@ -3,11 +3,12 @@
     - added noise module with simplex noise implementation + noise sample in benchmark
     - fov module no longer stores inFov information. You have to provide your own boolean[][].
       This makes it possible to use the same Yendor.Fov to compute fov from differents places.
+    - more robust scheduler. Won't loop infinitely if an entity doesn't increase its wait time.
 
 * GeneRogue
     - lighting
-    - more generic actor factory
-    - new items : candle, torch, sunrod, lantern, oil flask
+    - a lot of code refactoring, including actor factory and actor manager. Things should be simpler and more robust.
+    - new items : candle, torch, sunrod, lantern, oil flask, wall torches
 
 # 0.5.0 / 08-mar-2016
 * upgraded typescript to 1.8.2, pixi to 3.0.9

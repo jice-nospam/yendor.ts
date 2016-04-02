@@ -15,22 +15,27 @@ module Game {
     export class Ai implements ActorFeature, ContainerListener {
         className: string;
         private _conditions: Condition[];
-        // time until next turn.
-        private _waitTime: number = 0;
         // time to make a step
         private _walkTime: number;
+        private ownerId: ActorId;
+        private __owner: Actor;
 
-        constructor(walkTime: number) {
-            this.className = "Ai";
-            this.walkTime = walkTime;
+        constructor(walkTime: number, owner: Actor) {
+            this.className = "Game.Ai";
+            this._walkTime = walkTime;
+            if (owner) {
+                this.ownerId = owner.id;
+                this.__owner = owner;
+            }
         }
 
-        getWaitTime() { return this._waitTime; }
-        
-        reduceWaitTime(amount: number) {
-            this._waitTime -= amount;
+        get owner(): Actor {
+            if (this.__owner === undefined) {
+                this.__owner = Engine.instance.actorManager.getActor(this.ownerId);
+            }
+            return this.__owner;
         }
-        
+
         wait(time: number) {
             if (this.hasCondition(ConditionType.OVERENCUMBERED)) {
                 time *= Constants.OVERENCUMBERED_MULTIPLIER;
@@ -38,7 +43,7 @@ module Game {
             if (this.hasCondition(ConditionType.FROZEN)) {
                 time *= Constants.FROZEN_MULTIPLIER;
             }
-            this._waitTime += time;            
+            this.owner.wait(time);
         }
 
         get conditions() { return this._conditions; }
@@ -48,14 +53,14 @@ module Game {
         }
         set walkTime(newValue: number) { this._walkTime = newValue; }
 
-        update(owner: Actor) {
+        update() {
             if (!this._conditions) {
                 return;
             }
             for (let i: number = 0, n: number = this._conditions.length; i < n; ++i) {
                 let cond: Condition = this._conditions[i];
-                if ((!cond.onlyIfActive || !owner.activable || owner.activable.isActive()) && !cond.update(owner)) {
-                    cond.onRemove(owner);
+                if ((!cond.onlyIfActive || !this.owner.activable || this.owner.activable.isActive()) && !cond.update(this.owner)) {
+                    cond.onRemove(this.owner);
                     this._conditions.splice(i, 1);
                     i--;
                     n--;
@@ -63,12 +68,12 @@ module Game {
             }
         }
 
-        addCondition(cond: Condition, owner: Actor) {
+        addCondition(cond: Condition) {
             if (!this._conditions) {
                 this._conditions = [];
             }
             this._conditions.push(cond);
-            cond.onApply(owner);
+            cond.onApply(this.owner);
         }
 
         removeCondition(cond: ConditionType) {
@@ -115,36 +120,37 @@ module Game {
 			Function: getAttacker
 			Determin what will be used to attack
 		*/
-        private getAttacker(owner: Actor): Attacker {
-            if (!owner) {
+        private getAttacker(): Attacker {
+            if (!this.owner) {
                 return undefined;
             }
-            if (owner.container) {
+            if (this.owner.container) {
                 // check for equipped weapons
                 // TODO each equipped weapon should be used only once per turn
-                for (let i: number = 0, n: number = owner.container.size(); i < n; ++i) {
-                    let item: Actor = owner.container.get(i);
+                for (let i: number = 0, n: number = this.owner.container.size(); i < n; ++i) {
+                    let item: Actor = this.owner.container.get(i);
                     if (item.equipment && item.equipment.isEquipped() && item.attacker) {
                         return item.attacker;
                     }
                 }
             }
-            return owner.attacker;
+            return this.owner.attacker;
         }
 
         /**
             Function: tryActivate
             Activate the first found lever in an adjacent tile
-            
-            Parameters:
-			owner - the actor owning this Ai
         */
-        protected tryActivate(owner: Actor) {
-            // check if there's an adjacent lever
-            let lever: Actor = Engine.instance.actorManager.findAdjacentActorWithFeature(owner, ActorFeatureType.LEVER);
-            if (lever) {
-                lever.lever.activate(owner);
-                this.wait(this.walkTime);
+        protected tryActivate() {
+            // check if there's an adjacent door
+            let actors: Actor[] = Engine.instance.actorManager.filter(function(actor: Actor): boolean {
+                return actor.activable && ! actor.pickable && Math.abs(actor.pos.x - this.owner.pos.x) <= 1 && Math.abs(actor.pos.y - this.owner.pos.y) <= 1;
+            }.bind(this));
+            if (actors.length > 0) {
+                actors[0].activable.switch(actors[0], this.owner);
+                this.owner.wait(this._walkTime);
+            } else {
+                log("There's nothing to activate here.");
             }
         }
 
@@ -153,63 +159,59 @@ module Game {
 			Try to move the owner to a new map cell. If there's a living creature on this map cell, attack it.
 
 			Parameters:
-			owner - the actor owning this Ai
 			x - the destination cell x coordinate
 			y - the destination cell y coordinate
 
 			Returns:
 			true if the owner actually moved to the new cell
 		*/
-        protected moveOrAttack(owner: Actor, x: number, y: number): boolean {
+        protected moveOrAttack(x: number, y: number): boolean {
             if (this.hasCondition(ConditionType.STUNNED)) {
-                this.wait(this.walkTime);
+                this.owner.wait(this._walkTime);
                 return false;
             }
             if (this.hasCondition(ConditionType.CONFUSED)) {
                 // random move
-                x = owner.x + Engine.instance.rng.getNumber(-1, 1);
-                y = owner.y + Engine.instance.rng.getNumber(-1, 1);
+                x = this.owner.pos.x + Engine.instance.rng.getNumber(-1, 1);
+                y = this.owner.pos.y + Engine.instance.rng.getNumber(-1, 1);
             }
-            if (x === owner.x && y === owner.y) {
-                this.wait(this.walkTime);
+            if (x === this.owner.pos.x && y === this.owner.pos.y) {
+                this.owner.wait(this._walkTime);
                 return false;
             }
             // cannot move or attack a wall! 
             if (Engine.instance.map.isWall(x, y)) {
-                this.wait(this.walkTime);
+                this.owner.wait(this._walkTime);
                 return false;
             }
             // check for living creatures on the destination cell
-            let cellPos: Core.Position = new Core.Position(x, y);
-            let actors: Actor[] = Engine.instance.actorManager.findActorsOnCell(cellPos, Engine.instance.actorManager.getCreatureIds());
-            for (let i: number = 0, len: number = actors.length; i < len; ++i) {
-                let actor: Actor = actors[i];
-                if (actor.destructible && !actor.destructible.isDead()) {
-                    // attack the first living actor found on the cell
-                    let attacker: Attacker = this.getAttacker(owner);
-                    attacker.attack(owner, actor);
-                    this.wait(attacker.attackTime);
-                    return false;
-                }
+            let actors: Actor[] = Engine.instance.actorManager.filter(function(actor: Actor): boolean {
+                return actor.pos.x === x && actor.pos.y === y && actor.isA("creature") && !actor.destructible.isDead();
+            });
+            if (actors.length > 0) {
+                // attack the first living actor found on the cell
+                let attacker: Attacker = this.getAttacker();
+                attacker.attack(this.owner, actors[0]);
+                this.owner.wait(attacker.attackTime);
+                return false;
             }
             // check for a closed door
-            actors = Engine.instance.actorManager.findActorsOnCell(cellPos, Engine.instance.actorManager.getItemIds());
-            for (let i: number = 0, len: number = actors.length; i < len; ++i) {
-                let actor: Actor = actors[i];
-                if (actor.door && !actor.door.isActive() && actor.lever) {
-                    actor.lever.activate(owner);
-                    this.wait(this.walkTime);
-                    return false;
-                }
+            actors = Engine.instance.actorManager.filter(function(actor: Actor): boolean {
+                return actor.pos.x === x && actor.pos.y === y && actor.isA("door") && !actor.activable.isActive();
+            });
+            if (actors.length > 0) {
+                actors[0].activable.activate(actors[0], this.owner);
+                this.owner.wait(this._walkTime);
+                return false;
             }
             // check for unpassable items
             if (!Engine.instance.map.canWalk(x, y)) {
-                this.wait(this.walkTime);
+                this.owner.wait(this._walkTime);
                 return false;
             }
             // move the creature
-            this.wait(this.walkTime);
-            owner.moveTo(x, y);
+            this.owner.wait(this._walkTime);
+            this.owner.moveTo(x, y);
             return true;
         }
 
@@ -225,19 +227,23 @@ module Game {
         private checkOverencumberedCondition(container: Container, owner: Actor) {
             if (!this.hasCondition(ConditionType.OVERENCUMBERED)
                 && container.computeTotalWeight() >= container.capacity * Constants.OVEREMCUMBERED_THRESHOLD) {
-                this.addCondition(Condition.create({type:ConditionType.OVERENCUMBERED, nbTurns:-1}), owner);
+                this.addCondition(Condition.create({ type: ConditionType.OVERENCUMBERED, nbTurns: -1 }));
             } else if (this.hasCondition(ConditionType.OVERENCUMBERED)
                 && container.computeTotalWeight() < container.capacity * Constants.OVEREMCUMBERED_THRESHOLD) {
                 this.removeCondition(ConditionType.OVERENCUMBERED);
             }
-
         }
     }
 
     export class ItemAi extends Ai {
-        update(owner: Actor) {
-            super.update(owner);
-            this.wait(this.walkTime);
+        constructor(walkTime: number, owner: Actor) {
+            super(walkTime, owner);
+            this.className = "Game.ItemAi";
+        }
+
+        update() {
+            super.update();
+            this.owner.wait(this.walkTime);
         }
     }
 
@@ -248,17 +254,30 @@ module Game {
     export class PlayerAi extends Ai implements Umbra.EventListener {
         private __lastAction: PlayerAction;
         private __nextAction: PlayerAction;
+        /** when using an item requires another player interaction, this is the item to use */
         private __lastActionItem: Actor;
+        /** when using an item requires to select another actor, this is the selected actor */
+        private __lastActionItem2: Actor;
+        /** when using an item requires to select a tile, this is the selected tile */
         private __lastActionPos: Core.Position;
         enableEvents: boolean = true;
-        constructor(walkTime: number) {
-            super(walkTime);
-            this.className = "PlayerAi";
+        constructor(walkTime: number, owner: Actor) {
+            super(walkTime, owner);
+            this.className = "Game.PlayerAi";
             Umbra.EventManager.registerEventListener(this, EventType[EventType.TILE_SELECTED]);
+            Umbra.EventManager.registerEventListener(this, EventType[EventType.ACTOR_SELECTED]);
         }
 
         computeNextAction() {
             this.__nextAction = getLastPlayerAction();
+        }
+
+        onActorSelected(actor: Actor) {
+            if (!this.__lastAction) {
+                return;
+            }
+            this.__lastActionItem2 = actor;
+            Engine.instance.actorManager.resume();
         }
 
         onTileSelected(pos: Core.Position) {
@@ -269,32 +288,34 @@ module Game {
             Engine.instance.actorManager.resume();
         }
 
+        private hasPendingAction(): boolean {
+            if (this.owner.destructible.isDead()) {
+                return false;
+            }
+            this.computeNextAction();
+            return (this.__nextAction !== undefined || this.__lastActionPos !== undefined || this.__lastActionItem2 !== undefined);
+        }
+
 		/**
 			Function: update
 			Updates the player, eventually sends a CHANGE_STATUS event if a new turn has started.
-
-			Parameters:
-			owner - the actor owning this PlayerAi (obviously, the player)
 		*/
-        update(owner: Actor) {
-            this.computeNextAction();
-            if (this.__nextAction === undefined) {
-                if (this.__lastActionPos) {
-                    this.handleAction(owner, this.__lastAction);
-                    this.clearLastAction();
-                    return;
-                }
+        update() {
+            if (!this.hasPendingAction()) {
                 Engine.instance.actorManager.pause();
                 return;
             }
-            super.update(owner);
-            // don't update a dead actor
-            if (owner.destructible && owner.destructible.isDead()) {
+            // update conditions
+            super.update();
+            // conditions might have killed the actor
+            if (this.hasCondition(ConditionType.STUNNED) || (this.owner.destructible && this.owner.destructible.isDead())) {
                 this.__nextAction = undefined;
-                this.wait(this.walkTime);
+                this.clearLastAction();
+                this.owner.wait(this.walkTime);
                 return;
             }
-            switch (this.__nextAction) {
+            let action: PlayerAction = this.__nextAction !== undefined ? this.__nextAction : this.__lastAction;
+            switch (action) {
                 case PlayerAction.MOVE_NORTH:
                 case PlayerAction.MOVE_SOUTH:
                 case PlayerAction.MOVE_EAST:
@@ -303,12 +324,12 @@ module Game {
                 case PlayerAction.MOVE_NE:
                 case PlayerAction.MOVE_SW:
                 case PlayerAction.MOVE_SE:
-                    let move: Core.Position = convertActionToPosition(this.__nextAction);
+                    let move: Core.Position = convertActionToPosition(action);
                     // move to the target cell or attack if there's a creature
-                    this.moveOrAttack(owner, owner.x + move.x, owner.y + move.y);
+                    this.moveOrAttack(this.owner.pos.x + move.x, this.owner.pos.y + move.y);
                     break;
                 case PlayerAction.WAIT:
-                    this.wait(this.walkTime);
+                    this.owner.wait(this.walkTime);
                     break;
                 case PlayerAction.GRAB:
                 case PlayerAction.USE_ITEM:
@@ -319,8 +340,8 @@ module Game {
                 case PlayerAction.MOVE_UP:
                 case PlayerAction.MOVE_DOWN:
                 case PlayerAction.ACTIVATE:
-                    if (!this.hasCondition(ConditionType.CONFUSED) && !this.hasCondition(ConditionType.STUNNED)) {
-                        this.handleAction(owner, this.__nextAction);
+                    if (!this.hasCondition(ConditionType.CONFUSED)) {
+                        this.handleAction(action);
                     }
                     break;
             }
@@ -340,29 +361,29 @@ module Game {
 			Returns:
 			true if the player actually moved to the new cell
 		*/
-        protected moveOrAttack(owner: Actor, x: number, y: number): boolean {
-            if (!super.moveOrAttack(owner, x, y)) {
+        protected moveOrAttack(x: number, y: number): boolean {
+            if (!super.moveOrAttack(x, y)) {
                 return false;
             }
-            let cellPos: Core.Position = new Core.Position(owner.x, owner.y);
+            let cellPos: Core.Position = new Core.Position(this.owner.pos.x, this.owner.pos.y);
+            let player: Actor = Engine.instance.actorManager.getPlayer();
             // no living actor. Log exising corpses and items
-            Engine.instance.actorManager.findActorsOnCell(cellPos, Engine.instance.actorManager.getCorpseIds()).forEach(function(actor: Actor) {
-                log(actor.getTheresaname() + " here.");
-            });
-            Engine.instance.actorManager.findActorsOnCell(cellPos, Engine.instance.actorManager.getItemIds()).forEach(function(actor: Actor) {
+            Engine.instance.actorManager.filter(function(actor: Actor): boolean {
+                return actor.pos.x === x && actor.pos.y === y && actor !== player && !player.contains(actor.id);
+            }).forEach(function(actor: Actor) {
                 log(actor.getTheresaname() + " here.");
             });
             return true;
         }
 
-        private handleAction(owner: Actor, action: PlayerAction) {
+        private handleAction(action: PlayerAction) {
             switch (action) {
                 case PlayerAction.GRAB:
-                    this.pickupItem(owner);
+                    this.pickupItem();
                     break;
                 case PlayerAction.MOVE_DOWN:
                     let stairsDown: Actor = Engine.instance.actorManager.getStairsDown();
-                    if (stairsDown.x === owner.x && stairsDown.y === owner.y) {
+                    if (stairsDown.pos.equals(this.owner.pos)) {
                         Umbra.EventManager.publishEvent(EventType[EventType.CHANGE_STATUS], GameStatus.NEXT_LEVEL);
                     } else {
                         log("There are no stairs going down here.");
@@ -370,12 +391,11 @@ module Game {
                     break;
                 case PlayerAction.MOVE_UP:
                     let stairsUp: Actor = Engine.instance.actorManager.getStairsUp();
-                    if (stairsUp.x === owner.x && stairsUp.y === owner.y) {
+                    if (stairsUp.pos.equals(this.owner.pos)) {
                         log("The stairs have collapsed. You can't go up anymore...");
                     } else {
                         log("There are no stairs going up here.");
                     }
-                    this.wait(this.walkTime);
                     break;
                 case PlayerAction.USE_ITEM:
                     if (this.__lastActionPos) {
@@ -383,7 +403,13 @@ module Game {
                         this.__lastActionItem.pickable.useOnPos(this.__lastActionItem,
                             Engine.instance.actorManager.getPlayer(), this.__lastActionPos);
                         this.clearLastAction();
-                        this.wait(this.walkTime);
+                        this.owner.wait(this.walkTime);
+                    } else if (this.__lastActionItem2) {
+                        // use on selected item
+                        this.__lastActionItem.pickable.useOnActor(this.__lastActionItem,
+                            Engine.instance.actorManager.getPlayer(), this.__lastActionItem2);
+                        this.clearLastAction();
+                        this.owner.wait(this.walkTime);
                     } else {
                         Umbra.EventManager.publishEvent(EventType[EventType.OPEN_INVENTORY], { title: "use an item", itemListener: this.useItem.bind(this) });
                     }
@@ -397,19 +423,19 @@ module Game {
                         this.__lastActionItem.pickable.throwOnPos(this.__lastActionItem,
                             Engine.instance.actorManager.getPlayer(), false, this.__lastActionPos);
                         this.clearLastAction();
-                        this.wait(this.walkTime);
+                        this.owner.wait(this.walkTime);
                     } else {
                         Umbra.EventManager.publishEvent(EventType[EventType.OPEN_INVENTORY], { title: "throw an item", itemListener: this.throwItem.bind(this) });
                     }
                     break;
                 case PlayerAction.FIRE:
-                    this.fire(owner);
+                    this.fire();
                     break;
                 case PlayerAction.ZAP:
-                    this.zap(owner);
+                    this.zap();
                     break;
                 case PlayerAction.ACTIVATE:
-                    this.tryActivate(owner);
+                    this.tryActivate();
                     break;
             }
         }
@@ -417,6 +443,7 @@ module Game {
         private clearLastAction() {
             this.__lastActionPos = undefined;
             this.__lastActionItem = undefined;
+            this.__lastActionItem2 = undefined;
             this.__lastAction = undefined;
         }
 
@@ -424,28 +451,30 @@ module Game {
 			Function: fire
 			Fire a projectile using a ranged weapon.
 		*/
-        private fire(owner: Actor) {
+        private fire() {
             if (this.__lastActionPos) {
                 // throw the projectile
                 this.__lastActionItem.pickable.throwOnPos(this.__lastActionItem.ranged.projectile,
                     Engine.instance.actorManager.getPlayer(), true, this.__lastActionPos, this.__lastActionItem.ranged.damageCoef);
+                this.clearLastAction();
+                this.owner.wait(this.walkTime);
             } else {
                 // load the weapon and starts the tile picker
-                let weapon: Actor = owner.container.getFromSlot(Constants.SLOT_RIGHT_HAND);
+                let weapon: Actor = this.owner.container.getFromSlot(Constants.SLOT_RIGHT_HAND);
                 if (!weapon || !weapon.ranged) {
-                    weapon = owner.container.getFromSlot(Constants.SLOT_BOTH_HANDS);
+                    weapon = this.owner.container.getFromSlot(Constants.SLOT_BOTH_HANDS);
                 }
                 if (!weapon || !weapon.ranged) {
-                    weapon = owner.container.getFromSlot(Constants.SLOT_LEFT_HAND);
+                    weapon = this.owner.container.getFromSlot(Constants.SLOT_LEFT_HAND);
                 }
                 if (!weapon || !weapon.ranged) {
                     log("You have no ranged weapon equipped.", 0xFF0000);
                     return;
                 }
                 this.__lastActionItem = weapon;
-                weapon.ranged.fire(weapon, owner);
+                weapon.ranged.fire(weapon, this.owner);
                 // note : this time is spent before you select the target. loading the projectile takes time
-                this.wait(weapon.ranged.loadTime);
+                this.owner.wait(weapon.ranged.loadTime);
             }
         }
 
@@ -453,26 +482,27 @@ module Game {
 			Function: zap
 			Use a magic wand/staff/rod.
 		*/
-        private zap(owner: Actor) {
+        private zap() {
             if (this.__lastActionPos) {
                 // zap on selected position
                 this.__lastActionItem.magic.zapOnPos(this.__lastActionItem, Engine.instance.actorManager.getPlayer(), this.__lastActionPos);
-                this.wait(this.walkTime);
+                this.clearLastAction();
+                this.owner.wait(this.walkTime);
             } else {
-                let staff: Actor = owner.container.getFromSlot(Constants.SLOT_RIGHT_HAND);
+                let staff: Actor = this.owner.container.getFromSlot(Constants.SLOT_RIGHT_HAND);
                 if (!staff || !staff.magic) {
-                    staff = owner.container.getFromSlot(Constants.SLOT_BOTH_HANDS);
+                    staff = this.owner.container.getFromSlot(Constants.SLOT_BOTH_HANDS);
                 }
                 if (!staff || !staff.magic) {
-                    staff = owner.container.getFromSlot(Constants.SLOT_LEFT_HAND);
+                    staff = this.owner.container.getFromSlot(Constants.SLOT_LEFT_HAND);
                 }
                 if (!staff || !staff.magic) {
                     log("You have no magic item equipped.", 0xFF0000);
                     return;
                 }
                 this.__lastActionItem = staff;
-                if (staff.magic.zap(staff, owner)) {
-                    this.wait(this.walkTime);
+                if (staff.magic.zap(staff, this.owner)) {
+                    this.owner.wait(this.walkTime);
                 }
             }
         }
@@ -481,7 +511,7 @@ module Game {
             if (item.pickable) {
                 this.__lastActionItem = item;
                 if (item.pickable.use(item, Engine.instance.actorManager.getPlayer())) {
-                    this.wait(this.walkTime);
+                    this.owner.wait(this.walkTime);
                 }
             }
         }
@@ -490,7 +520,7 @@ module Game {
             if (item.pickable) {
                 item.pickable.drop(item, Engine.instance.actorManager.getPlayer());
             }
-            this.wait(this.walkTime);
+            this.owner.wait(this.walkTime);
         }
 
         private throwItem(item: Actor) {
@@ -501,16 +531,15 @@ module Game {
             }
         }
 
-        private pickupItem(owner: Actor) {
+        private pickupItem() {
             let foundItem: boolean = false;
             let pickedItem: boolean = false;
-            this.wait(this.walkTime);
-            Engine.instance.actorManager.getItemIds().some(function(itemId: ActorId) {
-                let item: Actor = Engine.instance.actorManager.getActor(itemId);
-                if (item.pickable && item.x === owner.x && item.y === owner.y) {
+            this.owner.wait(this.walkTime);
+            Engine.instance.actorManager.map(function(item: Actor) {
+                if (item.pickable && item.pos.equals(this.owner.pos) && !this.owner.contains(item.id)) {
                     foundItem = true;
-                    if (owner.container.canContain(item)) {
-                        item.pickable.pick(item, owner);
+                    if (this.owner.container.canContain(item)) {
+                        item.pickable.pick(item, this.owner);
                         pickedItem = true;
                         return true;
                     }
@@ -518,7 +547,7 @@ module Game {
                 } else {
                     return false;
                 }
-            });
+            }.bind(this));
             if (!foundItem) {
                 log("There's nothing to pick here.");
             } else if (!pickedItem) {
@@ -535,69 +564,63 @@ module Game {
     export class MonsterAi extends Ai {
         private __path: Core.Position[];
         private static __pathFinder: Yendor.PathFinder;
-        constructor(walkTime: number) {
-            super(walkTime);
-            this.className = "MonsterAi";
+        constructor(walkTime: number, owner: Actor) {
+            super(walkTime, owner);
+            this.className = "Game.MonsterAi";
         }
 
 		/**
 			Function: update
-
-			Parameters:
-			owner - the actor owning this MonsterAi (the monster)
 		*/
-        update(owner: Actor) {
-            super.update(owner);
+        update() {
+            super.update();
 
             // don't update a dead monster
-            if (owner.destructible && owner.destructible.isDead()) {
-                this.wait(this.walkTime);
+            if (this.owner.destructible && this.owner.destructible.isDead()) {
+                this.owner.wait(this.walkTime);
                 return;
             }
             // attack the player when at melee range, else try to track his scent
-            this.searchPlayer(owner);
+            this.searchPlayer();
         }
 
 		/**
 			Function: searchPlayer
 			If the player is at range, attack him. If in sight, move towards him, else try to track his scent.
-
-			Parameters:
-			owner - the actor owning this MonsterAi (the monster)
 		*/
-        searchPlayer(owner: Actor) {
-            if (Engine.instance.map.isInFov(owner.x, owner.y)) {
+        searchPlayer() {
+            if (Engine.instance.map.isInFov(this.owner.pos.x, this.owner.pos.y)) {
                 // player is visible, go towards him
                 let player: Actor = Engine.instance.actorManager.getPlayer();
-                let dx = player.x - owner.x;
-                let dy = player.y - owner.y;
+                let dx = player.pos.x - this.owner.pos.x;
+                let dy = player.pos.y - this.owner.pos.y;
                 if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
                     if (!this.hasPath()
-                        || this.__path[0].x !== player.x || this.__path[0].y !== player.y) {
+                        || this.__path[0].x !== player.pos.x || this.__path[0].y !== player.pos.y) {
                         if (!MonsterAi.__pathFinder) {
                             MonsterAi.__pathFinder = new Yendor.PathFinder(Engine.instance.map.w, Engine.instance.map.h,
                                 function(from: Core.Position, to: Core.Position): number {
                                     return Engine.instance.map.canWalk(to.x, to.y) ? 1 : 0;
                                 });
                         }
-                        this.__path = MonsterAi.__pathFinder.getPath(owner, player);
+                        this.__path = MonsterAi.__pathFinder.getPath(this.owner.pos, player.pos);
                     }
                     if (this.__path) {
-                        this.followPath(owner);
+                        this.followPath();
                     } else {
-                        this.wait(this.walkTime);
+                        this.owner.wait(this.walkTime);
                     }
                 } else {
                     // at melee range. attack
-                    this.move(owner, dx, dy);
+                    this.move(dx, dy);
                 }
             } else {
                 if (this.hasPath()) {
                     // go to last known position
-                    this.followPath(owner);
+                    this.followPath();
                 } else {
                     // player not visible. Use scent tracking
-                    this.trackScent(owner);
+                    this.trackScent();
                 }
             }
         }
@@ -606,19 +629,19 @@ module Game {
             return this.__path && this.__path.length > 0;
         }
 
-        private followPath(owner: Actor) {
+        private followPath() {
             // use precomputed path
             let pos: Core.Position = this.__path.pop();
-            this.moveToCell(owner, pos);
+            this.moveToCell(pos);
         }
 
-        private moveToCell(owner: Actor, pos: Core.Position) {
-            let dx: number = pos.x - owner.x;
-            let dy: number = pos.y - owner.y;
+        private moveToCell(pos: Core.Position) {
+            let dx: number = pos.x - this.owner.pos.x;
+            let dy: number = pos.y - this.owner.pos.y;
             // compute the move vector
             let stepdx: number = dx > 0 ? 1 : (dx < 0 ? -1 : 0);
             let stepdy: number = dy > 0 ? 1 : (dy < 0 ? -1 : 0);
-            this.move(owner, stepdx, stepdy);
+            this.move(stepdx, stepdy);
         }
 
 		/**
@@ -626,41 +649,37 @@ module Game {
 			Move to a destination cell, avoiding potential obstacles (walls, other creatures)
 
 			Parameters:
-			owner - the actor owning this MonsterAi (the monster)
 			stepdx - horizontal direction
 			stepdy - vertical direction
 		*/
-        private move(owner: Actor, stepdx: number, stepdy: number) {
-            let x: number = owner.x;
-            let y: number = owner.y;
-            if (Engine.instance.map.canWalk(owner.x + stepdx, owner.y + stepdy)) {
+        private move(stepdx: number, stepdy: number) {
+            let x: number = this.owner.pos.x;
+            let y: number = this.owner.pos.y;
+            if (Engine.instance.map.canWalk(x + stepdx, y + stepdy)) {
                 // can walk
                 x += stepdx;
                 y += stepdy;
-            } else if (Engine.instance.map.canWalk(owner.x + stepdx, owner.y)) {
+            } else if (Engine.instance.map.canWalk(x + stepdx, y)) {
                 // horizontal slide
                 x += stepdx;
-            } else if (Engine.instance.map.canWalk(owner.x, owner.y + stepdy)) {
+            } else if (Engine.instance.map.canWalk(x, y + stepdy)) {
                 // vertical slide
                 y += stepdy;
             }
-            super.moveOrAttack(owner, x, y);
+            super.moveOrAttack(x, y);
         }
 
 		/**
 			Function: findHighestScentCell
 			Find the adjacent cell with the highest scent value
 
-			Parameters:
-			owner - the actor owning this MonsterAi (the monster)
-
 			Returns:
 			the cell position or undefined if no adjacent cell has enough scent.
 		*/
-        private findHighestScentCell(owner: Actor): Core.Position {
+        private findHighestScentCell(): Core.Position {
             let bestScentLevel: number = 0;
             let bestCell: Core.Position;
-            let adjacentCells: Core.Position[] = owner.getAdjacentCells(Engine.instance.map.w, Engine.instance.map.h);
+            let adjacentCells: Core.Position[] = this.owner.pos.getAdjacentCells(Engine.instance.map.w, Engine.instance.map.h);
             let len: number = adjacentCells.length;
             // scan all 8 adjacent cells
             for (let i: number = 0; i < len; ++i) {
@@ -682,32 +701,32 @@ module Game {
 			Function: trackScent
 			Move towards the adjacent cell with the highest scent value
 		*/
-        private trackScent(owner: Actor) {
+        private trackScent() {
             // get the adjacent cell with the highest scent value
-            let bestCell: Core.Position = this.findHighestScentCell(owner);
+            let bestCell: Core.Position = this.findHighestScentCell();
             if (bestCell) {
-                this.moveToCell(owner, bestCell);
+                this.moveToCell(bestCell);
             } else {
-                this.wait(this.walkTime);
+                this.owner.wait(this.walkTime);
             }
         }
     }
-    
+
     export class XpHolder implements ActorFeature {
         className: string;
         private _xpLevel: number = 0;
         private baseLevel: number;
         private newLevel: number;
         private _xp: number = 0;
-        
+
         constructor(def: XpHolderDef) {
-            this.className="XpHolder";
+            this.className = "Game.XpHolder";
             if (def) {
                 this.baseLevel = def.baseLevel;
                 this.newLevel = def.newLevel;
             }
         }
-        
+
         get xpLevel() { return this._xpLevel; }
         get xp() { return this._xp; }
         getNextLevelXp(): number {
@@ -721,7 +740,7 @@ module Game {
                 this._xp -= nextLevelXp;
                 log(transformMessage("[The actor1's] battle skills grow stronger! [The actor1] reached level " + this.xpLevel, owner), 0xFF0000);
             }
-        }        
+        }
     }
 
 	/********************************************************************************
@@ -730,7 +749,7 @@ module Game {
     export class Player extends Actor {
         constructor(readableId: string) {
             super(readableId);
-            this.className = "Player";
+            this.className = "Game.Player";
         }
 
         moveTo(x: number, y: number) {

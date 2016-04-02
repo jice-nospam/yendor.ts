@@ -5,49 +5,49 @@ module Yendor {
     "use strict";
 
 	/**
-		Interface: TimedEntity
+		Class: TimedEntity
 		Something that must be updated every once in a while
 	*/
-    export interface TimedEntity {
+    export abstract class TimedEntity {
+		/**
+			Field: _nextActionTime
+			Time when the next update() should be called. This is an arbitrary value.
+		*/
+        private _nextActionTime: number = 0;
+        
+        getNextActionTime(): number { return this._nextActionTime; }
+        
 		/**
 			Function: update
-			Update the entity and set its new waitTime.
-			Any call to update MUST increase waitTime to keep the creature from locking the scheduler.
+			Update the entity and call <wait()>.
 		*/
-        update();
-
-		/**
-			Function: getWaitTime
-			Time until the next update() call. This is an arbitrary value.
-		*/
-        getWaitTime(): number;
+        abstract update();
         
-        /**
-            Function: reduceWaitTime
-            Decrease amount of time to wait
-        */
-        reduceWaitTime(time: number);
+        wait(time: number) {
+            this._nextActionTime += time;
+        }
     }
 	/**
 		Class: Scheduler
 		Handles timed entities and the order in which they are updated. This class stores a sorted list of entities by waitTime.
 		Each time <run> is called, the game time advances by the lowest entity wait time amount.
-		Every entity with 0 wait time is pulled out of the list, updated (which should increase its wait time again),
+		Every entity with a _nextActionTime in the past is pulled out of the list, updated (which should set its _nextActionTime in the future again),
 		then put back in the list.
 
-		<TimedEntity.waitTime> should not be modified outside of the <update()> function, else the scheduler's list is not sorted anymore.
-
-		The update function should always increase the entity wait time, else it will stay at first position forever,
-		keeping other entities from updating.
+		<TimedEntity.wait> should not be called outside of the <update()> function, else the scheduler's list is not sorted anymore.
+        <Scheduler.remove(entity: TimedEntity)> can be called inside the <update()> function to remove an entity from the scheduler
+        (for example when a creature dies and shouldn't be updated anymore).
 	*/
     export class Scheduler {
         private entities: BinaryHeap<TimedEntity>;
         private paused: boolean = false;
-        private updatedEntities: TimedEntity[] = [];
+        /** entity being currently updated */
+        private currentEntity: TimedEntity;
+        private currentTime: number = 0;
 
         constructor() {
             this.entities = new BinaryHeap<TimedEntity>((entity: TimedEntity) => {
-                return entity.getWaitTime();
+                return entity.getNextActionTime();
             });
         }
 
@@ -57,6 +57,9 @@ module Yendor {
         add(entity: TimedEntity) {
             if ( !this.entities.contains(entity)) {
                 this.entities.push(entity);
+                if ( entity.getNextActionTime() < this.currentTime ) {
+                    entity.wait(this.currentTime - entity.getNextActionTime());
+                }
             }
         }
 
@@ -78,12 +81,10 @@ module Yendor {
 			Function: remove
 		*/
         remove(entity: TimedEntity) {
-            if (!this.entities.remove(entity)) {
-                // when removing entity during update, entity might not be in the heap
-                let index: number = this.updatedEntities.indexOf(entity);
-                if ( index !== -1 ) {
-                    this.updatedEntities.splice(index, 1);
-                }
+            if ( entity === this.currentEntity ) {
+                this.currentEntity = undefined;
+            } else {
+                this.entities.remove(entity);
             }
         }
 
@@ -127,24 +128,32 @@ module Yendor {
             if (this.paused || this.entities.isEmpty()) {
                 return;
             }
-            // decrease all entities' wait time
-            let elapsed = this.entities.peek().getWaitTime();
-            if (elapsed > 0) {
-                for (let i: number = 0, len: number = this.entities.size(); i < len; ++i) {
-                    this.entities.peek(i).reduceWaitTime(elapsed);
-                }
-            }
+            this.currentTime = this.entities.peek().getNextActionTime();
             // update all entities with wait time <= 0
-            let entity: TimedEntity = this.entities.peek();
-            this.updatedEntities = [];
-            while (!this.paused && entity && entity.getWaitTime() <= 0) {
-                this.updatedEntities.push(entity);
-                this.entities.pop();
-                entity.update();
-                entity = this.entities.peek();
+            let entitiesToPushBack: TimedEntity[] = [];
+            /** the entity that called scheduler.pause() during its update */
+            let pausingEntity: TimedEntity;
+            while(  !this.entities.isEmpty() && this.entities.peek().getNextActionTime() <= this.currentTime ) {
+                this.currentEntity = this.entities.pop();
+                let oldTime = this.currentEntity.getNextActionTime();
+                this.currentEntity.update();
+                if (this.paused && pausingEntity === undefined) {
+                    pausingEntity = this.currentEntity;
+                } else if ( this.currentEntity !== undefined ) { 
+                    // currentEntity is undefined if it was removed from scheduler during its update                
+                    if (!this.paused && this.currentEntity.getNextActionTime() === oldTime) {
+                        console.log("WARNING : scheduler : entity didn't wait after update");
+                        this.currentEntity.wait(1);
+                    }
+                    entitiesToPushBack.push(this.currentEntity);
+                }
+                this.currentEntity = undefined;
             }
-            // push updated entities back to the heap
-            this.entities.pushAll(this.updatedEntities);
+            this.entities.pushAll(entitiesToPushBack);
+            if ( pausingEntity ) {
+                // push pausing entity last so that it's updated first on next run
+                this.entities.push(pausingEntity);
+            }
         }
     }
 }

@@ -10,6 +10,8 @@ module Game {
         PICK_TILE,
         /** A tile has been selected by the TilePicker. Associated data : the Core.Position of the tile */
         TILE_SELECTED,
+        /** An actor has been selected in the inventory. Associated data: the selected actor */
+        ACTOR_SELECTED,
         /** open the inventory. Associated data : OpenInventoryEventData */
         OPEN_INVENTORY,
         /** open the main menu. No associated data */

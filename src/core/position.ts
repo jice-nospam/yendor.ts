@@ -1,13 +1,13 @@
-/*
+/**
 	Section: Position
 */
 module Core {
     "use strict";
-	/*
+	/**
 		Interface: Comparable
 	*/
     export interface Comparable {
-		/*
+		/**
 			Function: equals
 			Returns:
 			true if two Comparable are equals
@@ -15,22 +15,23 @@ module Core {
         equals(c: Comparable): boolean;
     }
 
-	/*
+	/**
 		Class: Position
 		Stores the position of a cell in the console (column, row)
 	*/
-    export class Position implements Comparable {
-		/*
+    export class Position implements Comparable, Persistent {
+        className: string;
+		/**
 			Property: x
 		*/
         x: number;
 
-		/*
+		/**
 			Property: y
 		*/
         y: number;
 
-		/*
+		/**
 			Constructor: constructor
 
 			Parameters:
@@ -38,11 +39,12 @@ module Core {
 			_y : the row
 		*/
         constructor(_x: number = 0, _y: number = 0) {
+            this.className="Core.Position";
             this.x = _x;
             this.y = _y;
         }
 
-		/*
+		/**
 			Function: moveTo
 			Update this position.
 
@@ -59,7 +61,7 @@ module Core {
             return this.x === pos.x && this.y === pos.y;
         }
 
-		/*
+		/**
 			Function: distance
 			Returns : 
 			the distance between two Position
@@ -73,7 +75,7 @@ module Core {
         // static arrays to help scan adjacent cells
         private static TDX: number[] = [-1, 0, 1, -1, 1, -1, 0, 1];
         private static TDY: number[] = [-1, -1, -1, 0, 0, 1, 1, 1];
-		/*
+		/**
 			Function: getAdjacentCells
 			Returns all cells adjacent to this position. The map width/height are used to handle border cases.
 

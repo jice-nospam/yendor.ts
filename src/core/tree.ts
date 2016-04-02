@@ -1,24 +1,24 @@
-/*
+/**
 	Section: Tree
 */
 module Core {
     "use strict";
-	/*
+	/**
 		Class: TreeNode
 		Tree data structure
 	*/
     export class TreeNode {
-		/*
+		/**
 			Property: parent
 		*/
         protected parent: TreeNode;
 
-		/*
+		/**
 			Property: children
 		*/
         protected children: TreeNode[] = [];
 
-		/*
+		/**
 			Constructor: constructor
 
 			Parameters:

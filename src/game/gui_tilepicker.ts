@@ -34,8 +34,8 @@ module Game {
                 this.data = data;
                 this.tileIsValid = true;
                 let player: Actor = Engine.instance.actorManager.getPlayer();
-                this.tilePos.x = player.x;
-                this.tilePos.y = player.y;
+                this.tilePos.x = player.pos.x;
+                this.tilePos.y = player.pos.y;
             }.bind(this));
         }
 

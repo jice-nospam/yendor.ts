@@ -8,10 +8,12 @@ module Game {
 	 ********************************************************************************/
 
     export interface ActorProcessor {
-        (actor: Actor): void;
+        /** return true to stop iterating */
+        (actor: Actor): boolean;
     }
 
     export interface ActorFilter {
+        /** return true to select the actor */
         (actor: Actor): boolean;
     }
 
@@ -23,10 +25,6 @@ module Game {
         private playerId: ActorId;
         private stairsUpId: ActorId;
         private stairsDownId: ActorId;
-        private creatureIds: ActorId[];
-        private corpseIds: ActorId[];
-        private updatingCorpseIds: ActorId[];
-        private itemIds: ActorId[];
         private scheduler: Yendor.Scheduler = new Yendor.Scheduler();
         private actors: { [index: number]: Actor } = {};
         public enableEvents: boolean = true;
@@ -59,7 +57,9 @@ module Game {
         map(actorProcessor: ActorProcessor) {
             for (let index in this.actors) {
                 if (this.actors.hasOwnProperty(index)) {
-                    actorProcessor(this.actors[index]);
+                    if (actorProcessor(this.actors[index])) {
+                        return;
+                    }
                 }
             }
         }
@@ -73,6 +73,16 @@ module Game {
             }
             return selectedActors;
         }
+        
+        filterAndCount(actorFilter: ActorFilter): number {
+            let actorCount: number = 0;
+            for (let index in this.actors) {
+                if (this.actors.hasOwnProperty(index) && actorFilter(this.actors[index])) {
+                    actorCount++;
+                }
+            }
+            return actorCount;
+        }        
 
         registerActor(actor: Actor) {
             if (Yendor.urlParams[Constants.URL_PARAM_DEBUG]) {
@@ -81,36 +91,17 @@ module Game {
             this.actors[actor.id] = actor;
         }
 
-        addCreature(actor: Actor) {
+        addActor(actor: Actor) {
             if (actor) {
-                this.creatureIds.push(actor.id);
-                this.scheduler.add(actor);
-                // possibly set the map transparency
-                actor.moveTo(actor.x, actor.y);
-            }
-        }
-
-        addItem(actor: Actor) {
-            if (actor) {
-                this.itemIds.push(actor.id);
                 if (actor.ai) {
                     this.scheduler.add(actor);
                 }
+                if (actor.light && (!actor.activable || actor.activable.isActive())) {
+                    Umbra.EventManager.publishEvent(EventType[EventType.LIGHT_ONOFF], actor);
+                }
                 // possibly set the map transparency
-                actor.moveTo(actor.x, actor.y);
+                actor.moveTo(actor.pos.x, actor.pos.y);
             }
-        }
-
-        getCreatureIds(): ActorId[] {
-            return this.creatureIds;
-        }
-
-        getItemIds(): ActorId[] {
-            return this.itemIds;
-        }
-
-        getCorpseIds(): ActorId[] {
-            return this.corpseIds;
         }
 
         getStairsUp(): Actor {
@@ -130,107 +121,39 @@ module Game {
             if (actor.ai) {
                 this.scheduler.remove(actor);
             }
-            if (actor.activable && actor.activable.isActive()) {
-                actor.activable.deactivate(actor);
-            }
-            delete this.actors[actorId];
-            let idList: ActorId[] = this.creatureIds;
-            let index: number = idList.indexOf(actorId);
-            if (index !== -1) {
-                idList.splice(index, 1);
-            }
-            idList = this.itemIds;
-            index = idList.indexOf(actorId);
-            if (index !== -1) {
-                idList.splice(index, 1);
-            }
-            idList = this.corpseIds;
-            index = idList.indexOf(actorId);
-            if (index !== -1) {
-                idList.splice(index, 1);
-            }
-            idList = this.updatingCorpseIds;
-            index = idList.indexOf(actorId);
-            if (index !== -1) {
-                idList.splice(index, 1);
-            }
-        }
-
-        deleteActor(actorId: ActorId) {
-            let actor: Actor = this.actors[actorId];
-            if (!actor) {
-                return;
-            }
-            if (actor.activable && actor.activable.isActive()) {
+            if (actor.activable && actor.activable.isActive() && actor.light) {
                 actor.activable.deactivate(actor);
             }
             if (actor.container) {
-                for (let i: number = 0, len: number = actor.container.size(); i < len; ++i) {
-                    this.deleteActor(actor.container.get(i).id);
+                let i: number = actor.container.size();
+                while ( i > 0 ) {
+                    this.destroyActor(actor.container.get(0).id);
+                    --i;
                 }
             }
             delete this.actors[actorId];
         }
 
-        clear() {
-            // remove all actors but the player and its inventory
-            if (this.creatureIds) {
-                let player: Player = this.getPlayer();
-                this.creatureIds.forEach((actorId: ActorId) => {
-                    if (actorId !== this.playerId) { this.deleteActor(actorId); }
-                });
-                this.itemIds.forEach((actorId: ActorId) => { if (!player.container.contains(actorId)) { this.deleteActor(actorId); } });
-                this.corpseIds.forEach((actorId: ActorId) => { this.deleteActor(actorId); });
-                this.updatingCorpseIds.forEach((actorId: ActorId) => { this.deleteActor(actorId); });
-            }
-            // TODO remove creature inventory items when creatures have inventory
-            this.removePlayerKeys();
-            this.creatureIds = [];
-            this.corpseIds = [];
-            this.updatingCorpseIds = [];
-            this.itemIds = [];
-            this.scheduler.clear();
-        }
-
-        private removePlayerKeys() {
+        newLevel() {
+            // remove all actors but the player and its inventory (except unused keys)
             let player: Player = this.getPlayer();
-            if (player === undefined) {
-                return;
-            }
-            for (let i: number = 0, len: number = player.container.size(); i < len; ++i) {
-                let key: Actor = player.container.get(i);
-                if (key.isA("key")) {
-                    player.container.remove(key.id, player);
-                    i--;
-                    len--;
-                    delete this.actors[key.id];
+            this.map(function(actor: Actor): boolean {
+                if ( actor !== player && (actor.isA("key") || !player.contains(actor.id))) {
+                    this.destroyActor(actor.id);
                 }
-            }
-        }
-
-        /**
-            Function: reset
-            Reset the actors for a new level/game
-        */
-        reset(newGame: boolean) {
-            this.clear();
+                return false;
+            }.bind(this));
             this.createStairs();
-            if (newGame) {
-                this.createPlayer();
-            } else {
-                // don't recreate the player in case of new level
-                let player: Player = this.getPlayer();
-                this.addCreature(player);
-                for (let i: number = 0, len: number = player.container.size(); i < len; ++i) {
-                    let item: Actor = player.container.get(i);
-                    if (item.ai) {
-                        this.scheduler.add(item);
-                    }
-                }
-            }
         }
-
-
+        
+        newGame() {
+            this.map(function(actor: Actor): boolean {
+                this.destroyActor(actor.id);
+                return false;
+            }.bind(this));
+            this.createStairs();
+            this.createPlayer();
+        }
 
         onRender(root: Yendor.Console) {
         }
@@ -242,7 +165,6 @@ module Game {
 		/**
 			Function: onUpdate
 			Triggers actors' A.I. during a new game turn.
-			Moves the dead actors from the actor list to the corpse list.
 		*/
         onUpdate(time: number) {
             if (Gizmo.Widget.getActiveModal() === undefined && getLastPlayerAction() !== undefined) {
@@ -252,46 +174,12 @@ module Game {
                 return;
             }
             let player: Actor = this.getPlayer();
-            let oldPlayerX: number = player.x;
-            let oldPlayerY: number = player.y;
+            let oldPlayerX: number = player.pos.x;
+            let oldPlayerY: number = player.pos.y;
             this.scheduler.run();
-            this.moveDeadToCorpse();
-            this.updateCorpses();
-            if (player.x !== oldPlayerX || player.y !== oldPlayerY) {
+            if (player.pos.x !== oldPlayerX || player.pos.y !== oldPlayerY) {
                 // the player moved. Recompute the field of view
-                Engine.instance.map.computeFov(player.x, player.y, Constants.FOV_RADIUS);
-            }
-        }
-
-        private moveDeadToCorpse() {
-            for (let i: number = 0, len: number = this.creatureIds.length; i < len; ++i) {
-                let actor: Actor = this.actors[this.creatureIds[i]];
-                if (actor.isA("creature") && actor.destructible && actor.destructible.isDead()) {
-                    // actor is dead. move it to corpse list
-                    // note that corpses must still be updated until they have no active conditions
-                    // for example, to make it possible for corpses to unfreeze.
-                    if (!actor.ai.hasActiveConditions()) {
-                        this.scheduler.remove(actor);
-                    } else {
-                        this.updatingCorpseIds.push(actor.id);
-                    }
-                    this.creatureIds.splice(i, 1);
-                    i--;
-                    len--;
-                    this.corpseIds.push(actor.id);
-                }
-            }
-        }
-
-        private updateCorpses() {
-            for (let i: number = 0, len: number = this.updatingCorpseIds.length; i < len; ++i) {
-                let actor: Actor = this.actors[this.updatingCorpseIds[i]];
-                if (!actor.ai.hasActiveConditions()) {
-                    this.scheduler.remove(actor);
-                    this.updatingCorpseIds.splice(i, 1);
-                    i--;
-                    len--;
-                }
+                Engine.instance.map.computeFov(player.pos.x, player.pos.y, Constants.FOV_RADIUS);
             }
         }
 
@@ -310,13 +198,6 @@ module Game {
             return this.scheduler.isPaused();
         }
 
-        removeItem(itemId: ActorId) {
-            let idx: number = this.itemIds.indexOf(itemId);
-            if (idx !== -1) {
-                this.itemIds.splice(idx, 1);
-            }
-        }
-
 		/**
 			Function: createStairs
 			Create the actors for up and down stairs. The position is not important, actors will be placed by the dungeon builder.
@@ -324,56 +205,46 @@ module Game {
         createStairs() {
             this.stairsUpId = ActorFactory.create(ActorType.STAIRS_UP).id;
             this.stairsDownId = ActorFactory.create(ActorType.STAIRS_DOWN).id;
-            this.itemIds.push(this.stairsUpId);
-            this.itemIds.push(this.stairsDownId);
         }
 
         createPlayer() {
             let player: Actor = ActorFactory.create(ActorType.PLAYER);
             this.playerId = player.id;
-            this.addCreature(player);
+            this.addActor(player);
         }
 
         onLoadGame() {
-            let persister: Persister = Engine.instance.persister;
+            let persister: Core.Persister = Engine.instance.persister;
             this.actors = persister.loadFromKey(Constants.PERSISTENCE_ACTORS_KEY);
-            this.creatureIds = persister.loadFromKey(Constants.PERSISTENCE_CREATURE_IDS_KEY);
-            for (let i: number = 0, len: number = this.creatureIds.length; i < len; ++i) {
-                this.scheduler.add(this.actors[this.creatureIds[i]]);
-            }
-            this.playerId = this.creatureIds[0];
-            this.itemIds = persister.loadFromKey(Constants.PERSISTENCE_ITEM_IDS_KEY);
-            for (let i: number = 0, len: number = this.itemIds.length; i < len; ++i) {
-                let item: Actor = this.actors[this.itemIds[i]];
-                if (item.ai) {
-                    this.scheduler.add(item);
+            this.map(function(actor: Actor): boolean {
+                if ( actor.isA("player")) {
+                    this.playerId = actor.id;
+                } else if ( actor.isA("stairs up")) {
+                    this.stairsUpId = actor.id;
+                } else if ( actor.isA("stairs down")) {
+                    this.stairsDownId = actor.id;
                 }
-            }
-            this.stairsUpId = this.itemIds[0];
-            this.stairsDownId = this.itemIds[1];
-            this.corpseIds = persister.loadFromKey(Constants.PERSISTENCE_CORPSE_IDS_KEY);
-            this.updatingCorpseIds = persister.loadFromKey(Constants.PERSISTENCE_UPDATING_CORPSE_IDS_KEY);
-            for (let i: number = 0, len: number = this.updatingCorpseIds.length; i < len; ++i) {
-                this.scheduler.add(this.actors[this.updatingCorpseIds[i]]);
-            }
+                if (actor.ai) {
+                    this.scheduler.add(actor);
+                }
+                /*
+                already done in actor.postLoad
+                if ( actor.light && (!actor.activable || actor.activable.isActive())) {
+                    Umbra.EventManager.publishEvent(EventType[EventType.LIGHT_ONOFF], actor);
+                }
+                */
+                return false;
+            }.bind(this));
         }
 
         onSaveGame() {
-            let persister: Persister = Engine.instance.persister;
+            let persister: Core.Persister = Engine.instance.persister;
             persister.saveToKey(Constants.PERSISTENCE_ACTORS_KEY, this.actors);
-            persister.saveToKey(Constants.PERSISTENCE_CREATURE_IDS_KEY, this.creatureIds);
-            persister.saveToKey(Constants.PERSISTENCE_ITEM_IDS_KEY, this.itemIds);
-            persister.saveToKey(Constants.PERSISTENCE_CORPSE_IDS_KEY, this.corpseIds);
-            persister.saveToKey(Constants.PERSISTENCE_UPDATING_CORPSE_IDS_KEY, this.updatingCorpseIds);
         }
 
         onDeleteSavegame() {
-            let persister: Persister = Engine.instance.persister;
+            let persister: Core.Persister = Engine.instance.persister;
             persister.deleteKey(Constants.PERSISTENCE_ACTORS_KEY);
-            persister.deleteKey(Constants.PERSISTENCE_CREATURE_IDS_KEY);
-            persister.deleteKey(Constants.PERSISTENCE_ITEM_IDS_KEY);
-            persister.deleteKey(Constants.PERSISTENCE_CORPSE_IDS_KEY);
-            persister.deleteKey(Constants.PERSISTENCE_UPDATING_CORPSE_IDS_KEY);
         }
 
 		/**
@@ -382,94 +253,23 @@ module Game {
 			In the `actors` array, find the closest actor (except the player) from position `pos` within `range`.
 			If range is 0, no range limitation.
 		*/
-        findClosestActor(pos: Core.Position, range: number, actorIds: ActorId[]): Actor {
+        findClosestEnemy(pos: Core.Position, range: number): Actor {
             let bestDistance: number = 1E8;
             let closestActor: Actor;
-            let nbActors: number = actorIds.length;
-            for (let i: number = 0; i < nbActors; i++) {
-                let actorId: ActorId = actorIds[i];
-                if (actorId !== this.playerId) {
-                    let actor: Actor = this.actors[actorId];
-                    let distance: number = Core.Position.distance(pos, actor);
-                    if (distance < bestDistance && (distance < range || range === 0)) {
-                        bestDistance = distance;
-                        closestActor = actor;
-                    }
-                }
-            }
-            return closestActor;
-        }
-
-		/**
-			Function: findActorsOnCell
-
-			Parameters:
-			pos - a position on the map
-			actors - the list of actors to scan (either actors, corpses or items)
-
-			Returns:
-			an array containing all the living actors on the cell
-
-		*/
-        findActorsOnCell(pos: Core.Position, actorIds: ActorId[]): Actor[] {
-            let actorsOnCell: Actor[] = [];
-            let nbActors: number = actorIds.length;
-            for (let i: number = 0; i < nbActors; i++) {
-                let actor: Actor = this.actors[actorIds[i]];
-                if (actor.x === pos.x && actor.y === pos.y) {
-                    actorsOnCell.push(actor);
-                }
-            }
-            return actorsOnCell;
-        }
-
-		/**
-			Function: findActorsInRange
-			Returns all actor near a position
-
-			Parameters:
-			pos - a position on the map
-			range - maximum distance from position
-			actors - actor array to look up
-
-			Returns:
-			an actor array containing all actor within range
-		*/
-        findActorsInRange(pos: Core.Position, range: number, actorIds: ActorId[]): Actor[] {
-            let actorsInRange: Actor[] = [];
-            let nbActors: number = actorIds.length;
-            for (let i: number = 0; i < nbActors; i++) {
-                let actor: Actor = this.actors[actorIds[i]];
-                if (Core.Position.distance(pos, actor) <= range) {
-                    actorsInRange.push(actor);
-                }
-            }
-            return actorsInRange;
-        }
-
-		/**
-			Function: findAdjacentActor
-			Return the first adjacent actor having a specific feature
-
-			Parameters:
-			pos - a position on the map
-            featureType - an <ActorFeatureType>
-		*/
-        findAdjacentActorWithFeature(pos: Core.Position, featureType: ActorFeatureType): Actor {
-            let adjacentCells: Core.Position[] = pos.getAdjacentCells(Engine.instance.map.w, Engine.instance.map.h);
-            let len: number = adjacentCells.length;
-            // scan all 8 adjacent cells
-            for (let i: number = 0; i < len; ++i) {
-                if (!Engine.instance.map.isWall(adjacentCells[i].x, adjacentCells[i].y)) {
-                    let items: Actor[] = this.findActorsOnCell(adjacentCells[i], this.itemIds);
-                    for (let j: number = 0, jlen: number = items.length; j < jlen; ++j) {
-                        if (items[j].hasFeature(featureType)) {
-                            return items[j];
+            let player: Actor = this.getPlayer();
+            for (let index in this.actors) {
+                if (this.actors.hasOwnProperty(index)) {
+                    let actor: Actor = this.actors[index];
+                    if (actor !== player && actor.isA("creature") && ! actor.destructible.isDead()) {
+                        let distance: number = Core.Position.distance(pos, actor.pos);
+                        if (distance < bestDistance && (distance < range || range === 0)) {
+                            bestDistance = distance;
+                            closestActor = actor;
                         }
                     }
                 }
             }
-            return undefined;
+            return closestActor;
         }
     }
 

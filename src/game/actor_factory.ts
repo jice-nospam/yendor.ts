@@ -54,6 +54,7 @@ module Game {
         CANDLE,
         TORCH,
         LANTERN,
+        WALL_TORCH,
         // miscellaneous
         STAIRS_UP,
         STAIRS_DOWN,
@@ -80,10 +81,10 @@ module Game {
 			x - the actor x coordinate (default 0)
 			y - the actor y coordinate (default 0)
 		*/
-        static create(type: ActorType, x: number = 0, y: number = 0): Actor {
+        static create(type: ActorType): Actor {
             let name: string = ActorType[type].toLowerCase().replace(/_/g, " ");
             if (actorDefs[name]) {
-                return ActorFactory.createActor(type, x, y, name, actorDefs[name]);
+                return ActorFactory.createActor(type, name, actorDefs[name]);
             }
             if (!ActorFactory.unknownClasses[name]) {
                 log("WARN : unknown actor type " + ActorType[type], Constants.LOG_WARN_COLOR);
@@ -92,12 +93,11 @@ module Game {
             return undefined;
         }
 
-        private static createActor(type: ActorType, x: number, y: number, name: string, def: ActorDef) {
+        private static createActor(type: ActorType, name: string, def: ActorDef) {
             let actor: Actor = type === ActorType.PLAYER ? new Player(name + "|" + ActorFactory.seq) : new Actor(name + "|" + ActorFactory.seq);
             ActorFactory.seq++;
             ActorFactory.populateActor(type, actor, def);
             actor.name = name;
-            actor.moveTo(x, y);
             if (!actor.charCode) {
                 log("ERROR : no character defined for actor type " + ActorType[type], Constants.LOG_CRIT_COLOR);
             }
@@ -116,8 +116,7 @@ module Game {
                     }
                 }
             }
-            actor.init(def.ch, name, def.color, def.classes, def.plural,
-                def.blockWalk, def.blockSight, def.displayOutOfFov);
+            actor.init(name, def);
             if (def.pickable) {
                 actor.pickable = new Pickable(def.pickable);
             }
@@ -142,12 +141,6 @@ module Game {
             if (def.magic) {
                 actor.magic = new Magic(def.magic);
             }
-            if (def.door) {
-                actor.door = new Door(def.door);
-            }
-            if (def.lever) {
-                actor.lever = new Lever(def.lever, actor.id);
-            }
             if (def.xpHolder) {
                 actor.xpHolder = new XpHolder(def.xpHolder);
             }
@@ -155,7 +148,21 @@ module Game {
                 actor.container = new Container(def.container, actor.ai);
             }
             if (def.activable) {
-                actor.activable = new Activable(def);
+                if ( actor.activable ) {
+                    actor.activable.init(def.activable);
+                } else {
+                    switch (def.activable.type) {
+                        case ActivableType.NORMAL :
+                            actor.activable = new Activable(def.activable);
+                            break;
+                        case ActivableType.DOOR :
+                            actor.activable = new Door(<DoorDef>def.activable);
+                            break;
+                        case ActivableType.LEVER :
+                            actor.activable = new Lever(def.activable);
+                            break;
+                    }
+                }
             }
         }
 
@@ -174,7 +181,7 @@ module Game {
                     return new ConditionEffect(conditionData.condition, conditionData.successMessage);
                 case EffectType.INSTANT_HEALTH:
                     let instantHealthData: InstantHealthEffectDef = <InstantHealthEffectDef>def.data;
-                    return new InstantHealthEffect(instantHealthData.amount, instantHealthData.successMessage, instantHealthData.failureMessage);
+                    return new InstantHealthEffect(instantHealthData);
                 case EffectType.MAP_REVEAL:
                     return new MapRevealEffect();
                 case EffectType.TELEPORT:
@@ -193,13 +200,13 @@ module Game {
             let ai: Ai;
             switch (def.type) {
                 case AiType.ITEM:
-                    ai = new ItemAi(def.walkTime);
+                    ai = new ItemAi(def.walkTime, owner);
                     break;
                 case AiType.MONSTER:
-                    ai = new MonsterAi(def.walkTime);
+                    ai = new MonsterAi(def.walkTime, owner);
                     break;
                 case AiType.PLAYER:
-                    ai = new PlayerAi(def.walkTime);
+                    ai = new PlayerAi(def.walkTime, owner);
                     break;
                 default:
                     return undefined;
@@ -207,21 +214,21 @@ module Game {
             if (def.conditions) {
                 for (let i: number = 0, len: number = def.conditions.length; i < len; ++i) {
                     let conditionDef: ConditionDef = def.conditions[i];
-                    ai.addCondition(ActorFactory.createCondition(conditionDef), owner);
+                    ai.addCondition(ActorFactory.createCondition(conditionDef));
                 }
             }
             return ai;
         }
 
-        static load(persister: Persister) {
+        static load(persister: Core.Persister) {
             ActorFactory.seq = persister.loadFromKey(Constants.PERSISTENCE_ACTORS_SEQ_KEY);
         }
 
-        static save(persister: Persister) {
+        static save(persister: Core.Persister) {
             persister.saveToKey(Constants.PERSISTENCE_ACTORS_SEQ_KEY, ActorFactory.seq);
         }
 
-        static deleteSavedGame(persister: Persister) {
+        static deleteSavedGame(persister: Core.Persister) {
             persister.deleteKey(Constants.PERSISTENCE_ACTORS_SEQ_KEY);
         }
 

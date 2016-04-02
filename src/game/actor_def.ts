@@ -14,6 +14,8 @@ module Game {
         plural?: boolean;
         /** can we walk on the cell where the actor is ? */
         blockWalk?: boolean;
+        /** this actor is placed on a wall tile (like levers, wall torches, ...) */
+        wallActor?: boolean;
         /** can we see through the cell where the actor is ? */
         blockSight?: boolean;
         /** once discovered, should the actor be displayed on map even if out of sight ? */
@@ -26,9 +28,7 @@ module Game {
         equipment?: EquipmentDef;
         ranged?: RangedDef;
         magic?: MagicDef;
-        activable?: ActivableDef;
-        door?: DoorDef;
-        lever?: LeverDef;
+        activable?: ActivableDef | DoorDef;
         xpHolder?: XpHolderDef;
         container?: ContainerDef;
     }
@@ -65,6 +65,8 @@ module Game {
 
     export interface InstantHealthEffectDef {
         amount: number;
+        /** does this effect also work on deads (defult : false) */
+        canResurrect?: boolean;
         /** message if effect succeded. actor1 = this actor. actor2 = the wearer */
         successMessage?: string;
         /** message if effect failed. actor1 = this actor. actor2 = the wearer */
@@ -75,9 +77,30 @@ module Game {
         successMessage: string;
     }
     
-    export interface ActivableDef {
+    /**
+        enum: ActivableType
+        What type of feature to create
+        NORMAL - Activable
+        DOOR - Door
+        LEVER - Lever
+     */
+    export enum ActivableType {
+        NORMAL,
+        DOOR,
+        LEVER
     }
-
+    
+    export interface ActivableDef {
+        type: ActivableType;
+        activateMessage?: string;
+        deactivateMessage?: string;
+        activeByDefault?: boolean;
+    }
+    
+    export interface DoorDef extends ActivableDef {
+        seeThrough: boolean;
+    }
+    
 	/*
 		Enum: ConditionType
 
@@ -240,18 +263,6 @@ module Game {
         onFireEffect: EffectorDef;
     }
     
-    export interface DoorDef extends ActivableDef {
-        seeThrough: boolean;
-    }
-    
-    export enum LeverAction {
-        OPEN_CLOSE_DOOR
-    }
-
-    export interface LeverDef {
-        action: LeverAction;        
-    }
-    
     export interface ContainerDef {
         capacity: number;
     }
@@ -321,6 +332,7 @@ module Game {
                         type: EffectType.INSTANT_HEALTH,
                         data: {
                             amount: 200,
+                            canResurrect: true,
                             successMessage:"[The actor2] refill[s2] [its2] lantern."
                         }
                     }
@@ -332,6 +344,7 @@ module Game {
             classes: ["flask"],
             pickable: {
                 weight: 0.5,
+                destroyedWhenThrown: true,
                 onUseEffector: {
                     destroyOnEffect: true,
                     targetSelector: { method: TargetSelectionMethod.WEARER },
@@ -363,6 +376,7 @@ module Game {
             classes: ["flask"],
             pickable: {
                 weight: 0.5,
+                destroyedWhenThrown: true,
                 onUseEffector: {
                     destroyOnEffect: true,
                     targetSelector: { method: TargetSelectionMethod.WEARER },
@@ -460,12 +474,15 @@ module Game {
         "light": {
           ch: "/",
           classes:["item"],
+          activable: { type: ActivableType.NORMAL, activateMessage:"[The actor1] is on.", deactivateMessage:"[The actor1] is off."  }
+        },
+        "pickableLight": {
+          classes:["light"],  
           equipment: { slot:"left hand" },
-          activable: {}
         },
         "candle": {
             color: Constants.BONE_COLOR,
-            classes:["light"],
+            classes:["pickableLight"],
             pickable: { weight: 0.5 },
             light: {
                 renderMode: LightRenderMode.ADDITIVE,
@@ -490,7 +507,7 @@ module Game {
         },
         "torch": {
             color: Constants.WOOD_COLOR,
-            classes:["light"],
+            classes:["pickableLight"],
             pickable: { weight: 0.5 },
             light: {
                 renderMode: LightRenderMode.ADDITIVE,
@@ -515,7 +532,7 @@ module Game {
         },
         "lantern": {
             color: Constants.WOOD_COLOR,
-            classes:["light"],
+            classes:["pickableLight"],
             pickable: { weight: 0.5 },
             light: {
                 renderMode: LightRenderMode.ADDITIVE,
@@ -539,6 +556,18 @@ module Game {
                     onlyIfActive: true
                 }]
             }
+        },        
+        "wall torch": {
+            color: Constants.WOOD_COLOR,
+            classes:["light"],
+            wallActor: true,
+            displayOutOfFov: true,
+            light: {
+                renderMode: LightRenderMode.ADDITIVE,
+                color: Constants.TORCH_LIGHT_COLOR, falloffType: LightFalloffType.LINEAR, range: 18,
+                intensityVariationLength: 300, intensityVariationRange: 0.15, intensityVariationPattern:"noise"
+            },
+            activable: { type:ActivableType.NORMAL, activeByDefault: true }
         },        
         "weapon": {
             classes:["item"]
@@ -730,7 +759,7 @@ module Game {
                 color: Constants.SUNROD_LIGHT_COLOR, falloffType: LightFalloffType.LINEAR, range: 15,
                 intensityVariationLength: 1300, intensityVariationRange: 0.15, intensityVariationPattern:"0000000111112222333445566677778888899999998888877776665544333222211111"
             },
-            activable: {}              
+            activable: { type: ActivableType.NORMAL }              
         },
         "wand of frost": {
             classes:["staff"],
@@ -821,20 +850,19 @@ module Game {
         "door": {
             ch:"+",
             displayOutOfFov: true,
-            blockWalk: true,
-            lever: { action: LeverAction.OPEN_CLOSE_DOOR }
+            blockWalk: true
         },
         "wooden door": {
             classes:["door"],
             color: Constants.WOOD_COLOR,
             blockSight: true,
-            door: { seeThrough: false },
+            activable: {  type: ActivableType.DOOR, seeThrough: false, activateMessage:"[The actor1] is open", deactivateMessage:"[The actor1] is closed." },
         },
         "iron portcullis": {
             classes:["door"],
             color: Constants.IRON_COLOR,
             blockSight: false,
-            door: { seeThrough: true },
+            activable: {  type: ActivableType.DOOR, seeThrough: true, activateMessage:"[The actor1] is open", deactivateMessage:"[The actor1] is closed." },
         },
         "stairs": {
             color: 0xFFFFFF,

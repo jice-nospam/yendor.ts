@@ -7,7 +7,7 @@ module Game {
 		to keep the game from trying to load data with an old format.
 		This should be an integer.
 	*/
-    const SAVEFILE_VERSION: string = "15";
+    const SAVEFILE_VERSION: string = "16";
 
     export abstract class DungeonScene extends Umbra.Scene {
         protected _map: Map;
@@ -112,7 +112,7 @@ module Game {
         enableEvents: boolean = true;
 
         private status: GameStatus;
-        public persister: Persister = new LocalStoragePersister();
+        public persister: Core.Persister = new Core.LocalStoragePersister();
         private dungeonLevel: number = 1;
         private gameTime: number = 0;
 
@@ -134,7 +134,7 @@ module Game {
         onChangeStatus(status: GameStatus) {
             this.status = status;
             if (status === GameStatus.DEFEAT) {
-                log("You died!", Constants.LOG_CRIT_COLOR);                
+                log("You died!", Constants.LOG_CRIT_COLOR);
             }
         }
 
@@ -142,7 +142,7 @@ module Game {
             this.dungeonLevel = 1;
             this.deleteSavedGame();
             this._map.init(Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT);
-            this._actorManager.reset(true);
+            this._actorManager.newGame();
             let dungeonBuilder: BspDungeonBuilder = new BspDungeonBuilder(this.dungeonLevel);
             dungeonBuilder.build(this._map);
             this._topotologyMap = dungeonBuilder.topologyMap;
@@ -151,14 +151,19 @@ module Game {
 
             // starting inventory
             let player: Actor = this._actorManager.getPlayer();
-            let torch = ActorFactory.create(ActorType.TORCH, player.x, player.y);
-            this._actorManager.addItem(torch);
+            let torch = ActorFactory.create(ActorType.TORCH);
+            torch.moveTo(player.pos.x, player.pos.y);
+            this._actorManager.addActor(torch);
             torch.pickable.pick(torch, player);
 
             // this helps debugging items
             if (Yendor.urlParams[Constants.URL_PARAM_DEBUG]) {
-                [ActorType.SUNROD
-                ].forEach((type: ActorType) => { this._actorManager.addItem(ActorFactory.create(type, player.x, player.y)); });
+                [ActorType.LANTERN, ActorType.LANTERN,ActorType.OIL_FLASK
+                ].forEach((type: ActorType) => {
+                    let actor : Actor =  ActorFactory.create(type);
+                    this._actorManager.addActor(actor);
+                    actor.moveTo(player.pos.x, player.pos.y);
+                });
             }
         }
 
@@ -172,7 +177,7 @@ module Game {
                 this.status = GameStatus.RUNNING;
                 this._topotologyMap = this.persister.loadFromKey(Constants.PERSISTENCE_TOPOLOGY_MAP);
             } catch (e) {
-                console.log("Error while loading game :" + e.fileName + ":" + e.lineNumber + " : " + e.message)
+                console.log("Error while loading game :" + e);
                 this.onNewGame();
             }
         }
@@ -204,7 +209,7 @@ module Game {
 		*/
         private gotoNextLevel() {
             this.dungeonLevel++;
-            this._actorManager.reset(false);
+            this._actorManager.newLevel();
             let player: Actor = this._actorManager.getPlayer();
             player.destructible.heal(player, player.destructible.maxHp / 2);
             log("You take a moment to rest, and recover your strength.", Constants.LOG_WARN_COLOR);

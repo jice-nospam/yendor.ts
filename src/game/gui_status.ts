@@ -7,12 +7,12 @@ module Game {
 	/********************************************************************************
 	 * Group: status panel
 	 ********************************************************************************/
-    export class Message implements Persistent {
+    export class Message implements Core.Persistent {
         className: string;
         private _color: Core.Color;
         private _text: string;
         constructor(_color: Core.Color, _text: string) {
-            this.className = "Message";
+            this.className = "Game.Message";
             this._color = _color;
             this._text = _text;
         }
@@ -24,7 +24,7 @@ module Game {
         }
     }
 
-    export class StatusPanel extends Gizmo.ConsoleWidget implements Umbra.EventListener, Persistent {
+    export class StatusPanel extends Gizmo.ConsoleWidget implements Umbra.EventListener, Core.Persistent {
         private static MESSAGE_X = Constants.STAT_BAR_WIDTH + 2;
         className: string;
         private messageHeight: number;
@@ -33,7 +33,7 @@ module Game {
         constructor(width: number, height: number) {
             super(width, height);
             this.moveTo(0, Constants.CONSOLE_HEIGHT - height);
-            this.className = "StatusPanel";
+            this.className = "Game.StatusPanel";
             this.messageHeight = height - 1;
             Umbra.EventManager.registerEventListener(this, EventType[EventType.LOG_MESSAGE]);
             Umbra.EventManager.registerEventListener(this, EventType[EventType.NEW_GAME]);
@@ -43,6 +43,9 @@ module Game {
         }
 
         onLogMessage(msg: Message) {
+            if ( Yendor.urlParams[Constants.URL_PARAM_DEBUG] ) {
+                console.log(msg.text);
+            }
             let lines = msg.text.split("\n");
             if (this.messages.length + lines.length > this.messageHeight) {
                 this.messages.splice(0, this.messages.length + lines.length - this.messageHeight);
@@ -79,7 +82,7 @@ module Game {
             let mousePos: Core.Position = Umbra.Input.getMouseCellPosition();
             if (Engine.instance.map.contains(mousePos.x, mousePos.y) && Engine.instance.map.isExplored(mousePos.x, mousePos.y)) {
                 let actorsOnCell: Actor[] = Engine.instance.actorManager.filter(function(actor: Actor): boolean {
-                    return actor.x === mousePos.x && actor.y === mousePos.y;
+                    return actor.pos.equals(mousePos);
                 });
                 this.handleMouseLook(actorsOnCell, mousePos);
             }

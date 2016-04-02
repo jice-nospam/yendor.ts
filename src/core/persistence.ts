@@ -2,7 +2,7 @@
 	Section: Persistence
 */
 
-module Game {
+module Core {
     "use strict";
 
 	/**
@@ -72,7 +72,7 @@ module Game {
 
 	/**
 		Class: LocalStoragePersister
-		Implements Persister useing the browser's HTML5 local storage.
+		Implements Persister using the browser's HTML5 local storage.
 		Note : in internet explorer, this only works with http://... URL. Local storage
 		will be disabled if you open the game with a file://... URL.
 	*/
@@ -102,7 +102,7 @@ module Game {
         }
 
         private jsonReplacer(key: string, value: any) {
-            // don't stingify fields starting with __
+            // don't stringify fields starting with __
             if (key.indexOf("__") === 0) {
                 return undefined;
             }
@@ -151,7 +151,8 @@ module Game {
                 if (!jsonData.className) {
                     object = {};
                 } else {
-                    object = Object.create(window[Constants.MAIN_MODULE_NAME][jsonData.className].prototype);
+                    let classNames = (<string>jsonData.className).split(".");
+                    object = Object.create(window[classNames[0]][classNames[1]].prototype);
                     object.constructor.apply(object, []);
                 }
             }

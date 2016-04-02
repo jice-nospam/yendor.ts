@@ -25,7 +25,7 @@ module Game {
         xp: number = 0;
 
         constructor(def: DestructibleDef) {
-            this.className = "Destructible";
+            this.className = "Game.Destructible";
             if (def) {
                 this.hp = def.healthPoints;
                 this._maxHp = def.healthPoints;
@@ -134,7 +134,7 @@ module Game {
             owner.blocks = this.wasBlocking;
             owner.transparent = this.wasTransparent;
             if (!owner.transparent) {
-                Engine.instance.map.setTransparent(owner.x, owner.y, false);
+                Engine.instance.map.setTransparent(owner.pos.x, owner.pos.y, false);
             }
             if ( owner.activable ) {
                 if (!owner.equipment || owner.equipment.isEquipped()) {
@@ -167,7 +167,7 @@ module Game {
             this.wasTransparent = owner.transparent;
             owner.blocks = false;
             if (!owner.transparent) {
-                Engine.instance.map.setTransparent(owner.x, owner.y, true);
+                Engine.instance.map.setTransparent(owner.pos.x, owner.pos.y, true);
                 owner.transparent = true;
             }
             if (owner === Engine.instance.actorManager.getPlayer()) {
@@ -193,7 +193,7 @@ module Game {
         private _attackTime: number = Constants.PLAYER_WALK_TIME;
 
         constructor(def: AttackerDef) {
-            this.className = "Attacker";
+            this.className = "Game.Attacker";
             if (def) {
                 this.power = def.hitPoints;
                 this._attackTime = def.attackTime;
@@ -265,7 +265,7 @@ module Game {
         get capacity() { return this._capacity; }
 
         constructor(def: ContainerDef, listener?: ContainerListener) {
-            this.className = "Container";
+            this.className = "Game.Container";
             this.__listener = listener;
             if (def) {
                 this._capacity = def.capacity;
@@ -415,7 +415,7 @@ module Game {
         }
 
         constructor(def: PickableDef) {
-            this.className = "Pickable";
+            this.className = "Game.Pickable";
             if (def) {
                 this._weight = def.weight;
                 if (def.destroyedWhenThrown) {
@@ -461,9 +461,6 @@ module Game {
                     // picking an equipable, active item and not equipping it turns it off
                     owner.activable.deactivate(owner);
                 }
-
-                // remove this actor from item list
-                Engine.instance.actorManager.removeItem(owner.id);
                 return true;
             }
             // wearer is not a container or is full
@@ -484,9 +481,9 @@ module Game {
         drop(owner: Actor, wearer: Actor, pos?: Core.Position, verb: string = "drop", withMessage: boolean = false) {
             wearer.container.remove(owner.id, wearer);
             this._containerId = undefined;
-            owner.x = pos ? pos.x : wearer.x;
-            owner.y = pos ? pos.y : wearer.y;
-            Engine.instance.actorManager.addItem(owner);
+            owner.pos.x = pos ? pos.x : wearer.pos.x;
+            owner.pos.y = pos ? pos.y : wearer.pos.y;
+            Engine.instance.actorManager.addActor(owner);
             if (owner.equipment) {
                 owner.equipment.unequip(owner, wearer, true);
             }
@@ -518,6 +515,10 @@ module Game {
             }
             return true;
         }
+        
+        useOnActor(owner: Actor, wearer: Actor, target: Actor) {
+            this.onUseEffector.applyOnActor(owner, wearer, target);
+        }
 
         useOnPos(owner: Actor, wearer: Actor, pos: Core.Position) {
             this.onUseEffector.applyOnPos(owner, wearer, pos);
@@ -525,11 +526,12 @@ module Game {
 
 		/**
 			Function: throw
-			Throw this item. If it has a onUseEffector, apply the effect.
+			Throw this item. If it has a onThrowEffector, apply the effect.
 
 			Parameters:
 			owner - the actor owning this Pickable (the item)
 			wearer - the actor throwing the item
+            maxRange - maximum distance where the item can be thrown. If not defined, max range is computed from the item's weight
 		*/
         throw(owner: Actor, wearer: Actor, maxRange?: number) {
             log("Left-click where to throw the " + owner.name
@@ -538,7 +540,7 @@ module Game {
                 maxRange = owner.computeThrowRange(wearer);
             }
             // create a Core.Position instead of using directly wearer to avoid TilePicker -> actor dependency which would break json serialization
-            let data: TilePickerEventData = { range: maxRange, origin: new Core.Position(wearer.x, wearer.y) };
+            let data: TilePickerEventData = { range: maxRange, origin: new Core.Position(wearer.pos.x, wearer.pos.y) };
             Umbra.EventManager.publishEvent(EventType[EventType.PICK_TILE], data);
         }
 
@@ -564,7 +566,7 @@ module Game {
         private defenseBonus: number = 0;
 
         constructor(def: EquipmentDef) {
-            this.className = "Equipment";
+            this.className = "Game.Equipment";
             if (def) {
                 this.slot = def.slot;
                 if (def.defense) {
@@ -680,7 +682,7 @@ module Game {
         get range() { return this._range; }
 
         constructor(def: RangedDef) {
-            this.className = "Ranged";
+            this.className = "Game.Ranged";
             if (def) {
                 this._damageCoef = def.damageCoef;
                 this._projectileType = def.projectileType;
@@ -738,7 +740,7 @@ module Game {
         get charges() { return this._charges; }
 
         constructor(def: MagicDef) {
-            this.className = "Magic";
+            this.className = "Game.Magic";
             if (def) {
                 this.maxCharges = def.charges;
                 this._charges = def.charges;
@@ -784,86 +786,118 @@ module Game {
     }
 
 	/**
-		Class: Lever
-		Can be activated with E key when standing on an adjacent cell.
-		This can be used to open/close doors, turn wall torchs on/off, or implement actual levers...
-	*/
-    export class Lever implements ActorFeature {
-        className: string;
-        private _action: LeverAction;
-        private _actorId: ActorId;
-
-        get actorId() { return this._actorId; }
-        get action() { return this._action; }
-
-        constructor(def: LeverDef, actorId?: ActorId) {
-            this.className = "Lever";
-            if (def) {
-                this._action = def.action;
-            }
-            this._actorId = actorId;
-        }
-
-        activate(activator: Actor) {
-            let mechanism = this._actorId !== undefined ? Engine.instance.actorManager.getActor(this._actorId) : undefined;
-            switch (this._action) {
-                case LeverAction.OPEN_CLOSE_DOOR:
-                    if (mechanism && mechanism.door) {
-                        if (mechanism.lock && mechanism.lock.isLocked()) {
-                            // unlock if the activator has the key
-                            let keyId = mechanism.lock.keyId;
-                            if (activator.container && activator.container.contains(keyId)) {
-                                mechanism.lock.unlock(keyId);
-                                activator.container.remove(keyId, activator);
-                                // actually remove actor from actorManager
-                                Engine.instance.actorManager.destroyActor(keyId);
-                                log(transformMessage("[The actor1] unlock[s] [the actor2].", activator, mechanism));
-                            }
-                        }
-                        mechanism.door.switch(mechanism);
-                    }
-                    break;
-            }
-        }
-    }
-
-	/**
 		Class: Activable
 		Something that can be turned on/off
 	*/
     export class Activable implements ActorFeature {
         className: string;
         private active: boolean = false;
+        private activateMessage: string;
+        private deactivateMessage: string;
 
         constructor(def: ActivableDef) {
-            this.className = "Activable";
+            this.className = "Game.Activable";
+            if ( def ) {
+                this.init(def);
+            }
+        }
+        init(def: ActivableDef) {
+            if ( def.activateMessage ) {
+                this.activateMessage = def.activateMessage;
+            }
+            if ( def.deactivateMessage ) {
+                this.deactivateMessage = def.deactivateMessage;
+            }
+            if ( def.activeByDefault ) {
+                this.active = true;
+            }
         }
 
         isActive(): boolean { return this.active; }
 
-        activate(owner: Actor) {
+        private displayState(owner: Actor) {
+            if (this.isActive()) {
+                if ( this.activateMessage ) {
+                    log(transformMessage(this.activateMessage, owner));
+                }                
+            } else if ( this.deactivateMessage ) {
+                log(transformMessage(this.deactivateMessage, owner));                
+            }
+        }
+        
+        activate(owner: Actor, activator?: Actor): boolean {
+            if (owner.lock && owner.lock.isLocked()) {
+                // unlock if the activator has the key
+                let keyId = owner.lock.keyId;
+                if (activator && activator.container && activator.container.contains(keyId)) {
+                    owner.lock.unlock(keyId);
+                    activator.container.remove(keyId, activator);
+                    // actually remove actor from actorManager
+                    Engine.instance.actorManager.destroyActor(keyId);
+                    log(transformMessage("[The actor1] unlock[s] [the actor2].", activator, owner));
+                } else {
+                    log(transformMessage("[The actor1] is locked.", owner));
+                    return false;
+                }
+            }
+            if ( owner.destructible && owner.destructible.isDead()) {
+                return false;
+            }
             this.active = true;
+            this.displayState(owner);
             if (owner.light) {
                 Umbra.EventManager.publishEvent(EventType[EventType.LIGHT_ONOFF], owner);            
             }
+            return true;
         }
 
-        deactivate(owner: Actor) {
+        deactivate(owner: Actor): boolean {
             this.active = false;
+            this.displayState(owner);
             if (owner.light) {
                 Umbra.EventManager.publishEvent(EventType[EventType.LIGHT_ONOFF], owner);            
             }
+            return true;
         }
 
-        switch(owner: Actor) {
+        switch(owner: Actor, activator?: Actor): boolean {
             if (this.active) {
-                this.deactivate(owner);
+                return this.deactivate(owner);
             } else {
-                this.activate(owner);
+                return this.activate(owner, activator);
             }
         }
     }
 
+	/**
+		Class: Lever
+		An Activable that controls a remote Activable
+	*/
+    export class Lever extends Activable {
+        className: string;
+        actorId: ActorId;
+
+        constructor(def: ActivableDef) {
+            super(def);
+            this.className = "Game.Lever";
+        }
+
+        activate(owner: Actor, activator?: Actor): boolean {
+            let mechanism = this.actorId !== undefined ? Engine.instance.actorManager.getActor(this.actorId) : undefined;
+            return mechanism && mechanism.activable ? mechanism.activable.activate(mechanism, activator) : false;
+        }
+        
+        deactivate(owner: Actor, activator?: Actor): boolean {
+            let mechanism = this.actorId !== undefined ? Engine.instance.actorManager.getActor(this.actorId) : undefined;
+            return mechanism && mechanism.activable ? mechanism.activable.deactivate(mechanism) : false;
+        }        
+        
+        switch(owner: Actor, activator?: Actor): boolean {
+            let mechanism = this.actorId !== undefined ? Engine.instance.actorManager.getActor(this.actorId) : undefined;
+            return mechanism && mechanism.activable ? mechanism.activable.switch(mechanism, activator) : false;
+        }
+    }
+    
 	/**
 		Class: Lockable
 		Something that can be locked/unlocked
@@ -873,7 +907,7 @@ module Game {
         private locked: boolean = true;
         private _keyId: ActorId;
         constructor(keyId: ActorId) {
-            this.className = "Lockable";
+            this.className = "Game.Lockable";
             this._keyId = keyId;
         }
 
@@ -900,55 +934,37 @@ module Game {
         private seeThrough: boolean;
         constructor(def: DoorDef) {
             super(def);
-            this.className = "Door";
+            this.className = "Game.Door";
             if (def) {
                 this.seeThrough = def.seeThrough;
             }
         }
 
-        private displayState(owner: Actor) {
-            if (this.isActive()) {
-                log(transformMessage("[The actor1] is open.", owner));                
-            } else {
-                log(transformMessage("[The actor1] is closed.", owner));                
+        activate(owner: Actor, activator?: Actor): boolean {
+            if (super.activate(owner, activator)) {
+                owner.ch = "/";
+                owner.blocks = false;
+                owner.transparent = true;
+                Engine.instance.map.setWalkable(owner.pos.x, owner.pos.y, true);
+                Engine.instance.map.setTransparent(owner.pos.x, owner.pos.y, true);
+                return true;
             }
+            return false;
         }
 
-        open(owner: Actor) {
-            if (owner.lock && owner.lock.isLocked()) {
-                log(transformMessage("[The actor1] is locked.", owner));
-                return;
-            }
-            super.activate(owner);
-            this.displayState(owner);
-            owner.ch = "/";
-            owner.blocks = false;
-            owner.transparent = true;
-            Engine.instance.map.setWalkable(owner.x, owner.y, true);
-            Engine.instance.map.setTransparent(owner.x, owner.y, true);
-        }
-
-        close(owner: Actor) {
+        deactivate(owner: Actor): boolean {
             // don't close if there's a living actor on the cell
-            if (!Engine.instance.map.canWalk(owner.x, owner.y)) {
+            if (!Engine.instance.map.canWalk(owner.pos.x, owner.pos.y)) {
                 log(transformMessage("Cannot close [the actor1]", owner));
                 return;
             }
             super.deactivate(owner);
-            this.displayState(owner);
             owner.ch = "+";
             owner.blocks = true;
             owner.transparent = this.seeThrough;
-            Engine.instance.map.setWalkable(owner.x, owner.y, false);
-            Engine.instance.map.setTransparent(owner.x, owner.y, this.seeThrough);
-        }
-        
-        switch(owner: Actor) {
-            if (this.isActive()) {
-                this.close(owner);
-            } else {
-                this.open(owner);
-            }
+            Engine.instance.map.setWalkable(owner.pos.x, owner.pos.y, false);
+            Engine.instance.map.setTransparent(owner.pos.x, owner.pos.y, this.seeThrough);
+            return true;
         }
     }
 }
