@@ -1,5 +1,7 @@
 game/main.js
+game/main.dev.js
 game/main.js.map
+game/main.dev.js.map
 doc/
 node_modules/
 npm-debug.log

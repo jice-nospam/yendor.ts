@@ -133,6 +133,9 @@ module Gizmo {
         items - array of <ButtonOption>
         title - optional title displayed on the top of the frame
         footer - optional footer displayed on the bottom of the frame
+        
+        Returns :
+        the menu bounding box
     */
     export function popupMenu(widget: Widget, con: Yendor.Console, items: ButtonOption[], title?: string, footer?: string): Core.Rect {
         if (!title && (!items || items.length === 0)) {
@@ -149,8 +152,15 @@ module Gizmo {
         }
         let h = items ? 2 + items.length : 2;
         // compute popup position
-        let x = Math.floor((Umbra.application.getConsole().width - w) / 2);
-        let y = Math.floor((Umbra.application.getConsole().height - h) / 2);
+        let x: number = 0;
+        let y: number = 0;
+        if ( widget && widget.getBoundingBox() ) {
+            x = widget.getBoundingBox().w ? Math.floor((widget.getBoundingBox().w - w) / 2) : widget.getBoundingBox().x;
+            y = widget.getBoundingBox().h ? Math.floor((widget.getBoundingBox().h - h) / 2) : widget.getBoundingBox().y;
+        }  else {
+            x = Math.floor((Umbra.application.getConsole().width - w) / 2);
+            y = Math.floor((Umbra.application.getConsole().height - h) / 2);
+        }
         let boundingBox: Core.Rect = new Core.Rect(x, y, w, h); 
         // render popup
         frame(con, x, y, w, h, title);

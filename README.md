@@ -63,11 +63,17 @@ GeneRogue is a generic roguelike loosely based on the famous [python roguelike t
 
 `npm install -g jake`
 
+* install [uglify-js](https://github.com/mishoo/UglifyJS)
+
+`npm install -g uglify-js`
+
 ## compile and run the demo game
 
-`jake`
+`jake prod`
 
 Then open game/index.html in your favorite browser.
+For a developer version (does not compress generated javascript), use :
+`jake dev`
 
 ## compile and run the unit tests
 

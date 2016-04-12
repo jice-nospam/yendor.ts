@@ -83,10 +83,10 @@ module Game {
         
         protected computeNoiseIntensityVariation(delay: number): number {
             if (! this.__noise) {
-                this.__noise = new Yendor.SimplexNoise(Engine.instance.rng, 1);
+                this.__noise = new Yendor.SimplexNoise(Engine.instance.rng);
             }
             this.patternTime += delay / this._options.intensityVariationLength;
-            return (this.__noise.get1D(this.patternTime) + 1) * 0.5;
+            return (this.__noise.get1D(this.patternTime, 1) + 1) * 0.5;
         }
                 
         protected computePatternIntensityVariation(delay: number): number {

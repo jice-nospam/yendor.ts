@@ -49,11 +49,11 @@ module Game {
         }
 
         onRender(destination: Yendor.Console) {
-            this.boundingBox = Gizmo.popupMenu(this, destination, this.buttons, this.title, this.capacityMessage);
+            let bbox: Core.Rect = Gizmo.popupMenu(this, destination, this.buttons, this.title, this.capacityMessage);
             for (let i: number = 0, len: number = this.inventory.length; i < len; ++i) {
                 let list: Actor[] = this.inventory[i];
                 let item: Actor = list[0];
-                this.renderItemColors(destination, item, i, this.boundingBox.y + 1 + i);
+                this.renderItemColors(destination, item, i, bbox.x, bbox.y + 1 + i);
             }
         }
 
@@ -69,15 +69,15 @@ module Game {
             return itemDescription;
         }
 
-        private renderItemColors(con: Yendor.Console, item: Actor, entryNum: number, y: number) {
+        private renderItemColors(con: Yendor.Console, item: Actor, entryNum: number, x: number, y: number) {
             if (entryNum === this.selectedItem) {
-                con.clearBack(Constants.INVENTORY_BACKGROUND_ACTIVE, this.boundingBox.x, y, -1, 1);
-                con.clearFore(Constants.INVENTORY_FOREGROUND_ACTIVE, this.boundingBox.x, y, -1, 1);
+                con.clearBack(Constants.INVENTORY_BACKGROUND_ACTIVE, x, y, -1, 1);
+                con.clearFore(Constants.INVENTORY_FOREGROUND_ACTIVE, x, y, -1, 1);
             }
             if (item.equipment && item.equipment.isEquipped()) {
-                con.clearBack(Constants.INVENTORY_BACKGROUND_EQUIPPED, this.boundingBox.x + 2, y, 3, 1);
+                con.clearBack(Constants.INVENTORY_BACKGROUND_EQUIPPED, x + 2, y, 3, 1);
             }
-            con.fore[this.boundingBox.x + 6][y] = item.col;
+            con.fore[x + 6][y] = item.col;
         }
 
         private isShortcutAvailable(shortcut: number): boolean {

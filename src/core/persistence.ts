@@ -11,7 +11,7 @@ module Core {
 		The constructor must initialize the className field.
 		Fields starting with two underscores are not persisted.
 		Watch out for cycling dependencies!
-        During game loading phase, the constructor is called without parameters.
+        During loading phase, the constructor is called without parameters.
         Then field values are restored from the saved json.
 	*/
     export interface Persistent {
@@ -19,7 +19,7 @@ module Core {
 			Property: className
 			The name of the class must be saved along with the object properties
 			to be able to restore the right type of object when loading from
-			the database
+			the database. If class MyClass is inside module MyModule, use "MyModule.MyClass" syntax.
 		*/
         className: string;
 		/**
@@ -48,7 +48,7 @@ module Core {
 
 			Parameters :
 			key - the database key
-			object - if not provided, the persister must create the object
+			object - if not provided, the persister will create the object
 		*/
         loadFromKey(key: string, object?: any): any;
 		/**
@@ -126,7 +126,7 @@ module Core {
 
         private loadFromData(jsonData: any, object?: any): any {
             if (jsonData instanceof Array) {
-                return this.loadArrayFromData(jsonData);
+                return this.loadArrayFromData(jsonData, object);
             } else if (typeof jsonData === "object") {
                 let obj: any = this.loadObjectFromData(jsonData, object);
                 if (obj.postLoad) {
@@ -138,8 +138,8 @@ module Core {
             return jsonData;
         }
 
-        private loadArrayFromData(jsonData: any): Array<any> {
-            let array = [];
+        private loadArrayFromData(jsonData: any, object?: any): Array<any> {
+            let array = (object && typeof(object) === "array") ? object : [];
             for (let i: number = 0, len: number = jsonData.length; i < len; ++i) {
                 array[i] = this.loadFromData(jsonData[i]);
             }
@@ -152,7 +152,11 @@ module Core {
                     object = {};
                 } else {
                     let classNames = (<string>jsonData.className).split(".");
-                    object = Object.create(window[classNames[0]][classNames[1]].prototype);
+                    let clas: any = window[classNames[0]];
+                    for (let i: number = 1, len: number=classNames.length; i < len ; ++i) {
+                        clas = clas[classNames[i]];
+                    }
+                    object = Object.create(clas.prototype);
                     object.constructor.apply(object, []);
                 }
             }

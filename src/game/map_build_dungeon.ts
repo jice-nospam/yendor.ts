@@ -91,7 +91,7 @@ module Game {
             return doors.length === 0 ? undefined : doors[0];
         }
 
-        protected findVDoorPosition(map: Map, x: number, y1: number, y2: number) {
+        protected findVDoorPosition(map: Map, x: number, y1: number, y2: number): Core.Position {
             let y = y1 < y2 ? y1 : y2;
             let endy = y1 < y2 ? y2 : y1;
             do {
@@ -103,7 +103,7 @@ module Game {
             return undefined;
         }
 
-        protected findHDoorPosition(map: Map, x1: number, x2: number, y: number) {
+        protected findHDoorPosition(map: Map, x1: number, x2: number, y: number): Core.Position {
             let x = x1 < x2 ? x1 : x2;
             let endx = x1 < x2 ? x2 : x1;
             do {
@@ -135,7 +135,7 @@ module Game {
                 && this.isEmptyCell(map, x, y + 1) && this.isEmptyCell(map, x, y - 1);
         }
 
-        protected isADoorPosition(map: Map, x: number, y: number) {
+        protected isADoorPosition(map: Map, x: number, y: number): boolean {
             return this.isAHDoorPosition(map, x, y) || this.isAVDoorPosition(map, x, y);
         }
 
@@ -174,8 +174,8 @@ module Game {
             let probabilities: { [index: string]: number; } = {};
             probabilities[ActorType.GOBLIN] = 60;
             probabilities[ActorType.ORC] = 30;
-            // no trolls before level 3. then probability 10/(60+30+10)=0.1 until level 5, 
-            // 20/(60+30+20)=0.18 until level 7 and 30/(60+30+30)=0.23 beyond
+            // no trolls before level 3. then probability 10/(30+20+10)=0.16 until level 5, 
+            // 20/(30+20+10)=0.33 until level 7 and 30/(30+20+10)=0.5 beyond
             probabilities[ActorType.TROLL] = this.getValueForDungeon([[3, 10], [5, 20], [7, 30]]);
             let monsterType: ActorType = <ActorType>this.rng.getRandomChance(probabilities);
             let monster: Actor = ActorFactory.create(monsterType);
@@ -183,7 +183,7 @@ module Game {
             return monster;
         }
 
-        private createItem() {
+        private createItem(): Actor {
             let probabilities: { [index: string]: number; } = {};
             probabilities[ActorType.HEALTH_POTION] = this.getValueForDungeon([[0, 20], [5, 15]]);
             probabilities[ActorType.REGENERATION_POTION] = this.getValueForDungeon([[0, 20], [5, 15]]);
@@ -231,8 +231,8 @@ module Game {
             while ( count > 0 ) {
                 let wallTorch : Actor = ActorFactory.create(ActorType.WALL_TORCH);
                 // the position is not important. it will be fixed after dungeon building. see <fixWallItems()>
-                let x = this.rng.getNumber(0, map.w);
-                let y = this.rng.getNumber(0, map.h);
+                let x = this.rng.getNumber(0, map.w - 1);
+                let y = this.rng.getNumber(0, map.h - 1);
                 wallTorch.moveTo(x,y);
                 Engine.instance.actorManager.addActor(wallTorch);
                 count --;
@@ -253,14 +253,18 @@ module Game {
                     let y: number = actor.pos.y;
                     while (! foundWall) {
                         if ( x === map.w - 1 ) {
+                            x = 0;
                             if ( y === map.h - 1 ) {
-                                x = 0;
                                 y = 0;
                             } else {
                                 y = y + 1;
                             }
                         } else {
                             x = x + 1;
+                        }
+                        if (x === actor.pos.x && y === actor.pos.y ) {
+                            // scanned the whole map without finding a cell
+                            return false;
                         }
                         if ( map.isWallWithAdjacentFloor(x, y) ) {
                             let actorsOnCell: Actor[] = Engine.instance.actorManager.filter(function(actor:Actor): boolean {

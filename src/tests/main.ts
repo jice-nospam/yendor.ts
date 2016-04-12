@@ -25,11 +25,12 @@
 /// <reference path="../game/gui_status.ts" />
 /// <reference path="../game/gui_tilepicker.ts" />
 /// <reference path="../game/engine.ts" />
-/// <reference path="rng.ts" />
-/// <reference path="bsp.ts" />
-/// <reference path="fov.ts" />
-/// <reference path="console.ts" />
-/// <reference path="path.ts" />
+/// <reference path="yendor/bsp.ts" />
+/// <reference path="yendor/console.ts" />
+/// <reference path="yendor/fov.ts" />
+/// <reference path="yendor/noise.ts" />
+/// <reference path="yendor/path.ts" />
+/// <reference path="yendor/rng.ts" />
 /// <reference path="gameplay.ts" />
 
 module Tests {
@@ -49,6 +50,7 @@ $(function() {
 	test.addTestClass(new Tests.RngTests(), "rng");
 	test.addTestClass(new Tests.BspTests(), "bsp");
 	test.addTestClass(new Tests.FovTests(), "fov");
+    test.addTestClass(new Tests.NoiseTests(), "noise");
 	test.addTestClass(new Tests.ConsoleTests(), "console");
 	test.addTestClass(new Tests.PathTests(), "path");
 	test.addTestClass(new Tests.GameplayTests(), "gameplay");

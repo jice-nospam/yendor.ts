@@ -198,7 +198,7 @@ module Yendor {
             let result = this.grad1d(val, ix);
             result += this.grad1d(val, ix + 1);
             // range [-1,1]
-            return result * 2 - 1;
+            return result  * SimplexNoise.INVERSE_MAX_FALLOF_1D;
         }
 
         private grad1d(val: number, ix: number): number {
@@ -208,7 +208,7 @@ module Yendor {
             f = f * f * f;
             let h: number = this.hash[ix & SimplexNoise.HASH_MASK];
             let v: number = SimplexNoise.GRADIENTS_1D[h & SimplexNoise.GRADIENTS_1D_MASK] * x;
-            return f * v * SimplexNoise.INVERSE_MAX_FALLOF_1D;
+            return f * v;
         }
 
         public get2D(valx: number, valy: number, frequency: number): number {

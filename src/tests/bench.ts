@@ -14,7 +14,14 @@ module Benchmark {
     let rng: Yendor.Random = new Yendor.ComplementaryMultiplyWithCarryRandom();
     let framesPerSecond: number = 0;
     let currentFrameCount: number = 0;
+    let consoleRenderCount: number = 0;
+    let consoleRenderCount10s: number = 0;
+    let console10sTimer: number = 0;
+    let consoleRenderPerSecond: number = 0;
+    let consoleRenderPerSecond10s: number = 0;
     let fpsTimer: number = 0;
+    /** how many time we render the console per frame. */
+    let renderPerFrame: number = 1;
 
     interface Sample {
         name: string;
@@ -161,10 +168,11 @@ module Benchmark {
             let y: number = 2;
             root.clearText();
             root.print(SAMPLE_SCREEN_X, SAMPLE_SCREEN_Y + 15, "Press any key to move");
-            this.entities.forEach((entity: ScheduledEntity) => {
+            for ( let i: number = 0, len: number = this.entities.length; i < len; ++i) {
+                let entity = this.entities[i];
                 root.text[SAMPLE_SCREEN_X + entity.position][SAMPLE_SCREEN_Y + y] = entity.char;
                 y += 2;
-            });
+            }
             this.scheduler.run();
         }
         onKeyDown(event: KeyboardEvent) { }
@@ -279,20 +287,44 @@ module Benchmark {
                 root.clearFore(0xD0D0D0, 0, 40 + i, 26, 1);
             }
         }
-        root.print(1, 46, "fps : " + framesPerSecond);
+        root.print(1, 46, "frame/s : " + framesPerSecond + " render/s : " + consoleRenderPerSecond + " render/s (10s mean) : " + consoleRenderPerSecond10s + "     ");
+    }
+    
+    function computeFps(time: number) {
+        if (fpsTimer === 0) {
+            fpsTimer = time;
+            console10sTimer = time;
+        }
+        if (time - fpsTimer > 1000) {
+            framesPerSecond = currentFrameCount;
+            consoleRenderPerSecond = consoleRenderCount;
+            fpsTimer = time;
+            currentFrameCount = 0;
+            consoleRenderCount = 0;
+            if ( framesPerSecond > 45 ) {
+                renderPerFrame++;
+            } else if ( framesPerSecond < 10 && renderPerFrame > 1 ) {
+                renderPerFrame --;
+            }
+        }
+        if ( time - console10sTimer > 10000 ) {
+            console10sTimer = time;
+            consoleRenderPerSecond10s = Math.floor(consoleRenderCount10s / 10);
+            consoleRenderCount10s = 0;
+        }
     }
 
     function handleNewFrame(time: number) {
+        computeFps(time);
         currentFrameCount++;
-        if (fpsTimer === 0) {
-            fpsTimer = time;
-        } else if (time - fpsTimer > 1000) {
-            framesPerSecond = currentFrameCount;
-            fpsTimer = time;
-            currentFrameCount = 0;
+        let frameNum = renderPerFrame;
+        while ( frameNum > 0) {
+            consoleRenderCount++;
+            consoleRenderCount10s++;
+            render();
+            root.render();
+            frameNum--;
         }
-        render();
-        root.render();
     }
 
     $(function() {

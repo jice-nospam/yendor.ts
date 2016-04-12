@@ -50,7 +50,7 @@ module Core {
 
 	/**
 		Function: toCamelCase
-		Convert a string like EVENT_TYPE to camel case like EventType
+		Convert a string like EVENT_TYPE to camel case EventType
 	*/
     export function toCamelCase(input: string): string {
         return input.toLowerCase().replace(/(\b|_)\w/g, function(m) {

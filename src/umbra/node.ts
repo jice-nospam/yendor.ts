@@ -29,15 +29,23 @@ module Umbra {
         moveTo(x: number, y: number);
         moveTo(x: number | Core.Position, y?: number) {
             if (typeof x === "number") {
-                this.boundingBox.moveTo(x, y);
+                if (!this.boundingBox) {
+                    this.boundingBox = new Core.Rect(x, y, 0, 0);
+                } else {
+                    this.boundingBox.moveTo(x, y);
+                }
             } else {
                 let pos: Core.Position = <Core.Position>x;
-                this.boundingBox.moveTo(pos.x, pos.y);
+                if (! this.boundingBox ) {
+                    this.boundingBox = new Core.Rect(pos.x, pos.y, 0, 0);   
+                } else {
+                    this.boundingBox.moveTo(pos.x, pos.y);
+                }
             }
         }
 
         resize(w: number, h: number) {
-            if ( this.boundingBox ) {
+            if (this.boundingBox) {
                 this.boundingBox.resize(w, h);
             } else {
                 this.boundingBox = new Core.Rect(0, 0, w, h);
@@ -67,8 +75,8 @@ module Umbra {
             }
         }
 
-        onInit(): void {}
-        onTerm(): void {}
+        onInit(): void { }
+        onTerm(): void { }
         abstract onRender(con: Yendor.Console): void;
         abstract onUpdate(time: number): void;
 
@@ -135,7 +143,7 @@ module Umbra {
 		*/
         updateHierarchy(time: number): void {
             if (this.visible) {
-                for (let i: number = this.children.length-1; i >= 0; --i) {
+                for (let i: number = this.children.length - 1; i >= 0; --i) {
                     let node: Node = <Node>this.children[i];
                     node.updateHierarchy(time);
                 }
@@ -148,13 +156,13 @@ module Umbra {
 			Terminate this node children in descending zOrder, then this node.
 		*/
         termHierarchy(): void {
-            for (let i: number = this.children.length-1; i >= 0; --i) {
+            for (let i: number = this.children.length - 1; i >= 0; --i) {
                 let node: Node = <Node>this.children[i];
                 node.termHierarchy();
             }
             this.onTerm();
         }
-        
+
 		/**
 			Function: addChild
 			Add a child keeping children sorted in zOrder.
@@ -167,12 +175,12 @@ module Umbra {
 		*/
         addChild(node: Node): number {
             let i: number = 0, len: number = this.children.length;
-            if ( node.zOrder !== undefined ) {
+            if (node.zOrder !== undefined) {
                 while (i < len && ((<Node>this.children[i]).zOrder === undefined || (<Node>this.children[i]).zOrder < node.zOrder)) {
                     ++i;
                 }
             } else {
-                while (i < len && (<Node>this.children[i]).zOrder === undefined ) {
+                while (i < len && (<Node>this.children[i]).zOrder === undefined) {
                     ++i;
                 }
             }
@@ -183,7 +191,7 @@ module Umbra {
             }
             return i;
         }
-        
+
         computeBoundingBox() {
             if (this.children.length === 0) {
                 return;
@@ -192,8 +200,8 @@ module Umbra {
             for (let i: number = 0, len: number = this.children.length; i < len; ++i) {
                 let node: Node = <Node>this.children[i];
                 if (node.boundingBox) {
-                    if ( first ) {
-                        if (! this.boundingBox ) {
+                    if (first) {
+                        if (!this.boundingBox) {
                             this.boundingBox = new Core.Rect();
                         }
                         this.boundingBox.set(node.boundingBox);

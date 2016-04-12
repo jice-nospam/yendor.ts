@@ -6,6 +6,7 @@ module Game {
 	/********************************************************************************
 	 * Group: actor definitions
 	 ********************************************************************************/
+    
     export interface ActorDef {
         ch?: string;
         color?: Core.Color;
@@ -268,7 +269,7 @@ module Game {
     }
     
     export let actorDefs: { [index: string]: ActorDef } = {
-        "creature": {
+        "creature" : {
             blockWalk: true,                        
         },
         "beast": {
@@ -485,7 +486,7 @@ module Game {
             classes:["pickableLight"],
             pickable: { weight: 0.5 },
             light: {
-                renderMode: LightRenderMode.ADDITIVE,
+                renderMode: LightRenderMode.MAX,
                 color: Constants.CANDLE_LIGHT_COLOR, falloffType: LightFalloffType.NORMAL, range: 8,
                 intensityVariationLength: 200, intensityVariationRange: 0.25, intensityVariationPattern:"noise" 
             },
@@ -510,7 +511,7 @@ module Game {
             classes:["pickableLight"],
             pickable: { weight: 0.5 },
             light: {
-                renderMode: LightRenderMode.ADDITIVE,
+                renderMode: LightRenderMode.MAX,
                 color: Constants.TORCH_LIGHT_COLOR, falloffType: LightFalloffType.LINEAR, range: 9,
                 intensityVariationLength: 300, intensityVariationRange: 0.15, intensityVariationPattern:"noise"
             },
@@ -533,9 +534,9 @@ module Game {
         "lantern": {
             color: Constants.WOOD_COLOR,
             classes:["pickableLight"],
-            pickable: { weight: 0.5 },
+            pickable: { weight: 1 },
             light: {
-                renderMode: LightRenderMode.ADDITIVE,
+                renderMode: LightRenderMode.MAX,
                 color: Constants.TORCH_LIGHT_COLOR, falloffType: LightFalloffType.LINEAR, range: 12,
                 intensityVariationLength: 500, intensityVariationRange: 0.1, intensityVariationPattern:"noise"
             },
@@ -563,7 +564,7 @@ module Game {
             wallActor: true,
             displayOutOfFov: true,
             light: {
-                renderMode: LightRenderMode.ADDITIVE,
+                renderMode: LightRenderMode.MAX,
                 color: Constants.TORCH_LIGHT_COLOR, falloffType: LightFalloffType.LINEAR, range: 18,
                 intensityVariationLength: 300, intensityVariationRange: 0.15, intensityVariationPattern:"noise"
             },
@@ -745,26 +746,15 @@ module Game {
             equipment: { slot:"right hand" },
             ranged: { damageCoef: 8, projectileType: "bolt", loadTime: 5, range: 10 }
         },        
-        "staff": {
+        "wand": {
             ch:"/",
             color: Constants.WOOD_COLOR,
-            classes:["weapon"],
-        },
-        "sunrod": {
-            classes:["staff"],
-            pickable: { weight: 3 },
-            equipment: { slot:"hands" },
-            light: {
-                renderMode: LightRenderMode.ADDITIVE,
-                color: Constants.SUNROD_LIGHT_COLOR, falloffType: LightFalloffType.LINEAR, range: 15,
-                intensityVariationLength: 1300, intensityVariationRange: 0.15, intensityVariationPattern:"0000000111112222333445566677778888899999998888877776665544333222211111"
-            },
-            activable: { type: ActivableType.NORMAL }              
+            classes:["weapon"],            
+            pickable: { weight: 0.5 },
+            equipment: { slot:"right hand" }
         },
         "wand of frost": {
-            classes:["staff"],
-            pickable: { weight: 0.5 },
-            equipment: { slot:"right hand" },
+            classes:["wand"],
             magic: {
                 charges: 5,
                 onFireEffect: {
@@ -784,10 +774,24 @@ module Game {
                 }
             }
         },            
+        "staff": {
+            ch:"/",
+            color: Constants.WOOD_COLOR,
+            classes:["weapon"],
+            pickable: { weight: 3 },
+            equipment: { slot:"hands" }
+        },
+        "sunrod": {
+            classes:["staff"],
+            light: {
+                renderMode: LightRenderMode.ADDITIVE,
+                color: Constants.SUNROD_LIGHT_COLOR, falloffType: LightFalloffType.LINEAR, range: 15,
+                intensityVariationLength: 1300, intensityVariationRange: 0.15, intensityVariationPattern:"0000000111112222333445566677778888899999998888877776665544333222211111"
+            },
+            activable: { type: ActivableType.NORMAL }              
+        },
         "staff of teleportation": {
             classes:["staff"],
-            pickable: { weight: 3 },
-            equipment: { slot:"hands" },
             magic: {
                 charges: 5,
                 onFireEffect: {
@@ -803,8 +807,6 @@ module Game {
         },            
         "staff of life detection": {
             classes:["staff"],
-            pickable: { weight: 3 },
-            equipment: { slot:"hands" },
             magic: {
                 charges: 5,
                 onFireEffect: {
@@ -827,8 +829,6 @@ module Game {
         },            
         "staff of mapping": {
             classes:["staff"],
-            pickable: { weight: 3 },
-            equipment: { slot:"hands" },
             magic: {
                 charges: 5,
                 onFireEffect: {

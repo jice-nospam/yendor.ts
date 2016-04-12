@@ -57,7 +57,7 @@ module Game {
             if (! this.isWall(x,y)) {
                 return false;
             }
-            let cells:Core.Position[] = new Core.Position(x,y).getAdjacentCells(this.w, this.h);
+            let cells:Core.Position[] = new Core.Position(x,y).getAdjacentCells(this.w, this.h, false);
             for (let i: number = 0, len: number = cells.length; i < len; ++i ) {
                 if (!this.isWall(cells[i].x, cells[i].y)) {
                     return true;

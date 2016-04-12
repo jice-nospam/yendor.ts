@@ -39,7 +39,7 @@ module Core {
 			_y : the row
 		*/
         constructor(_x: number = 0, _y: number = 0) {
-            this.className="Core.Position";
+            this.className = "Core.Position";
             this.x = _x;
             this.y = _y;
         }
@@ -73,8 +73,8 @@ module Core {
         }
 
         // static arrays to help scan adjacent cells
-        private static TDX: number[] = [-1, 0, 1, -1, 1, -1, 0, 1];
-        private static TDY: number[] = [-1, -1, -1, 0, 0, 1, 1, 1];
+        private static TDX: number[] = [-1, 1, 0, 0, -1, 1, -1, 1];
+        private static TDY: number[] = [0, 0, -1, 1, -1, -1, 1, 1];
 		/**
 			Function: getAdjacentCells
 			Returns all cells adjacent to this position. The map width/height are used to handle border cases.
@@ -82,13 +82,14 @@ module Core {
 			Parameters:
 			mapWidth - the width of the map
 			mapHeight - the height of the map
+            diagonals - whether we consider diagonals or not (default : true)
 
 			Returns:
 			an array of Position containing all adjacent cells
 		*/
-        getAdjacentCells(mapWidth: number, mapHeight: number): Position[] {
+        getAdjacentCells(mapWidth: number, mapHeight: number, diagonals: boolean = true): Position[] {
             let adjacents: Position[] = [];
-            for (let i: number = 0; i < 8; ++i) {
+            for (let i: number = 0, len: number = diagonals ? 8: 4; i < len; ++i) {
                 let x = this.x + Position.TDX[i];
                 if (x >= 0 && x < mapWidth) {
                     let y = this.y + Position.TDY[i];

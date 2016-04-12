@@ -34,7 +34,7 @@ module Game {
             Umbra.init();
             let engine = new Engine();
             let app: Umbra.Application = new Umbra.Application();
-            app.run(engine, {consoleWidth: Constants.CONSOLE_WIDTH, consoleHeight: Constants.CONSOLE_HEIGHT});
+            app.run(engine, {consoleWidth: Constants.CONSOLE_WIDTH, consoleHeight: Constants.CONSOLE_HEIGHT, backgroundAnimation: true});
         } catch (e) {
             console.log("ERROR in " + e.fileName + ":" + e.lineNumber + " : " + e.message);
             console.log(e.stack);

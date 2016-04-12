@@ -18,4 +18,4 @@ Reminder for stuff that might be added to the framework. Or not.
 * Scheduler
 
 * Noise
-    - add fbm & turbulence functions
+    - add turbulence functions
