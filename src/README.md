@@ -1,13 +1,15 @@
-This directory contains the typescript source code of yendor.ts, umbra.ts, gizmo.ts and GeneRogue.
-This code can be compiled into ../game/main.js using jake.
+This directory contains the typescript source code of yendor.ts, umbra.ts and GeneRogue.
 
 # Directories
 * decl : typescript declaration files for jquery and pixi.js
-* core : base utilities
-* yendor : the yendor.ts toolkit
-* umbra : the umbra.ts framework
-* gizmo : the gizmo.ts widget library
-* game : GeneRogue source code
+* fwk : various libraries and frameworks
+    * core : base utilities
+    * yendor : the yendor.ts toolkit
+    * umbra : the umbra.ts framework
+    * gui : an immediate widget library
+    * actors : creatures and items classes
+    * map : map building and rendering
+* generogue : GeneRogue source code
 * tests : benchmark and unit tests
 
 # Coding rules (to be completed)
@@ -21,19 +23,19 @@ name type;
 
 * read-only field :
 ```
-private _name type;
+private _name: type;
 get name() { return this._name; }
 ```
 
 * private field :
 ```
-private name type;
+private name: type;
 ```
 
-* volatile fields (should not be serialized by the persister) : begin the name with two underscores 
+* volatile fields (should not be serialized by the persister) : begin the name with two underscores
 ```
 __name1 type;
-private __name2 type;
+private __name2: type;
 ```
 
 ## comments

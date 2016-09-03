@@ -1,12 +1,23 @@
 {
-  "name": "tcod",
-  "version": "0.1.0",
+  "name": "yendor.ts",
+  "version": "0.6.0",
   "private": true,
   "scripts": {
-    "start": "jake && node ./app.js"
+    "start": "node ./app.js",
+    "build:generogue": "npm run build:ts && npm run build:webpack:generogue",
+    "build:tests": "npm run build:ts && npm run build:webpack:tests && node --harmony build/main.min.js",
+    "build:benchmark": "npm run build:ts && npm run build:webpack:benchmark",
+    "build:ts": "node node_modules/typescript/bin/tsc",
+    "build:webpack:generogue": "node node_modules/webpack/bin/webpack -d build/generogue/main.js build/main.min.js",
+    "build:webpack:tests": "node node_modules/webpack/bin/webpack -d build/tests/main.js build/main.min.js",
+    "build:webpack:benchmark": "node node_modules/webpack/bin/webpack -d build/tests/bench.js build/main.min.js"
+  },
+  "devDependencies": {
+    "typescript": "^1.8.10",
+    "webpack": "^1.13.2"
   },
   "dependencies": {
-    "debug": "~2.2.0",
-    "express": "~4.13.1"
+    "express": "~4.13.1",
+    "dexie": "~1.4.1"
   }
 }

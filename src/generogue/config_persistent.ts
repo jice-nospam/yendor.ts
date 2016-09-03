@@ -1,0 +1,46 @@
+import * as Core from "../fwk/core/main";
+import * as Actors from "../fwk/actors/main";
+import * as Map from "../fwk/map/main";
+import {Message, StatusPanel} from "./gui_status";
+
+export function registerPersistentClasses() {
+    Core.Persistence.registerClass("Position", Core.Position);
+    Core.Persistence.registerClass("Rect", Core.Rect);
+    Core.Persistence.registerClass("Condition", Actors.Condition);
+    Core.Persistence.registerClass("HealthVariationCondition", Actors.HealthVariationCondition);
+    Core.Persistence.registerClass("DetectLifeCondition", Actors.DetectLifeCondition);
+    Core.Persistence.registerClass("FrozenCondition", Actors.FrozenCondition);
+    Core.Persistence.registerClass("StunnedCondition", Actors.StunnedCondition);
+    Core.Persistence.registerClass("TargetSelector", Actors.TargetSelector);
+    Core.Persistence.registerClass("Effector", Actors.Effector);
+    Core.Persistence.registerClass("Actor", Actors.Actor);
+    Core.Persistence.registerClass("Message", Message);
+    Core.Persistence.registerClass("StatusPanel", StatusPanel);
+    Core.Persistence.registerClass("TopologyMap", Map.TopologyMap);
+    Core.Persistence.registerClass("Sector", Map.Sector);
+    Core.Persistence.registerClass("Connector", Map.Connector);
+    Core.Persistence.registerClass("EventEffect", Actors.EventEffect);
+    Core.Persistence.registerClass("Connector", Map.Connector);
+    Core.Persistence.registerClass("ConditionEffect", Actors.ConditionEffect);
+    Core.Persistence.registerClass("InstantHealthEffect", Actors.InstantHealthEffect);
+    Core.Persistence.registerClass("MapRevealEffect", Actors.MapRevealEffect);
+    Core.Persistence.registerClass("TeleportEffect", Actors.TeleportEffect);
+    Core.Persistence.registerClass("Destructible", Actors.Destructible);
+    Core.Persistence.registerClass("Attacker", Actors.Attacker);
+    Core.Persistence.registerClass("Activable", Actors.Activable);
+    Core.Persistence.registerClass("Container", Actors.Container);
+    Core.Persistence.registerClass("Pickable", Actors.Pickable);
+    Core.Persistence.registerClass("Equipment", Actors.Equipment);
+    Core.Persistence.registerClass("Ranged", Actors.Ranged);
+    Core.Persistence.registerClass("Magic", Actors.Magic);
+    Core.Persistence.registerClass("Lockable", Actors.Lockable);
+    Core.Persistence.registerClass("Door", Actors.Door);
+    Core.Persistence.registerClass("Lever", Actors.Lever);
+    Core.Persistence.registerClass("Ai", Actors.Ai);
+    Core.Persistence.registerClass("XpHolder", Actors.XpHolder);
+    Core.Persistence.registerClass("ItemAi", Actors.ItemAi);
+    Core.Persistence.registerClass("MonsterAi", Actors.MonsterAi);
+    Core.Persistence.registerClass("PlayerAi", Actors.PlayerAi);
+    Core.Persistence.registerClass("Light", Actors.Light);
+    Core.Persistence.registerClass("Player", Actors.Player);
+}

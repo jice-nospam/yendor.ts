@@ -1,8 +1,10 @@
-game/main.js
-game/main.dev.js
-game/main.js.map
-game/main.dev.js.map
+build/fwk/
+build/generogue/
+build/tests/
+build/tcod/
+build/main.*
 doc/
 node_modules/
 npm-debug.log
 .vscode/
+data/

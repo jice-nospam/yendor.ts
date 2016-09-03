@@ -1,4 +1,4 @@
-﻿// Type definitions for Pixi.js v3.0.10-dev
+﻿// Type definitions for Pixi.js v3.0.10
 // Project: https://github.com/GoodBoyDigital/pixi.js/
 // Definitions by: clark-stevenson <https://github.com/pixijs/pixi-typescript>
 // Definitions: https://github.com/borisyankov/DefinitelyTyped
@@ -49,7 +49,7 @@ declare module PIXI {
         LINEAR: number;
         NEAREST: number;
     };
-    export var RETINA_PREFIX: string;
+    export var RETINA_PREFIX: RegExp;
     export var RESOLUTION: number;
     export var FILTER_RESOLUTION: number;
     export var DEFAULT_RENDER_OPTIONS: {
@@ -107,8 +107,10 @@ declare module PIXI {
 
     export interface AccessibleTarget {
 
-        //TODO Not 100% here. 
-        //src/accessibility/accessibleTarget.js
+        accessible: boolean;
+        accessibleTitle: string;
+        accessibleHint: string;
+        tabIndex: number;
 
     }
 
@@ -164,7 +166,7 @@ declare module PIXI {
         filters: AbstractFilter[];
         name: string;
 
-        getBounds(matrix?: Matrix): Rectangle;
+        getBounds(): Rectangle;
         getLocalBounds(): Rectangle;
         toGlobal(position: Point): Point;
         toLocal(position: Point, from?: DisplayObject, to?: Point): Point;
@@ -172,7 +174,6 @@ declare module PIXI {
         setParent(container: Container): Container;
         setTransform(x?: number, y?: number, scaleX?: number, scaleY?: number, rotation?: number, skewX?: number, skewY?: number, pivotX?: number, pivotY?: number): DisplayObject;
         destroy(): void;
-        getChildByName(name: string): DisplayObject;
         getGlobalPosition(point: Point): Point;
 
         interactive: boolean;
@@ -180,9 +181,9 @@ declare module PIXI {
         interactiveChildren: boolean;
         defaultCursor: string;
         hitArea: HitArea;
-        accessible:boolean;
-        accessibleTitle:string;
-        tabIndex:number;
+        accessible: boolean;
+        accessibleTitle: string;
+        tabIndex: number;
 
         on(event: 'click', fn: (event: interaction.InteractionEvent) => void, context?: any): utils.EventEmitter;
         on(event: 'mousedown', fn: (event: interaction.InteractionEvent) => void, context?: any): utils.EventEmitter;
@@ -234,12 +235,13 @@ declare module PIXI {
         width: number;
         height: number;
 
-        addChild(child: DisplayObject): DisplayObject;
+        addChild(...child: DisplayObject[]): DisplayObject;
         addChildAt(child: DisplayObject, index: number): DisplayObject;
         swapChildren(child: DisplayObject, child2: DisplayObject): void;
         getChildIndex(child: DisplayObject): number;
         setChildIndex(child: DisplayObject, index: number): void;
         getChildAt(index: number): DisplayObject;
+        getChildByName(name: string): DisplayObject;
         removeChild(child: DisplayObject): DisplayObject;
         removeChildAt(index: number): DisplayObject;
         removeChildren(beginIndex?: number, endIndex?: number): DisplayObject[];
@@ -320,7 +322,7 @@ declare module PIXI {
 
     }
     export class GraphicsRenderer extends ObjectRenderer {
-        new(renderer: PIXI.WebGLRenderer);
+        constructor(renderer: PIXI.WebGLRenderer);
 
         buildCircle: (graphicsData: PIXI.Graphics, webGLData: Object) => void;
         buildPoly: (graphicsData: PIXI.Graphics, webGLData: Object) => boolean;
@@ -333,7 +335,7 @@ declare module PIXI {
         switchMode: (webGL: WebGLRenderingContext, type: number) => WebGLGraphicsData;
     }
     export class WebGLGraphicsData {
-        new(gl: WebGLRenderingContext);
+        constructor(gl: WebGLRenderingContext);
 
         upload: () => void;
         reset: () => void;
@@ -341,6 +343,31 @@ declare module PIXI {
     }
 
     //math
+
+    export module GroupD8 {
+        export function add(rotationSecond: number, rotationFirst: number): number;
+        export function byDirection(dx: number, dy: number): number;
+        export function inv(rotation: number): number;
+        export function isSwapWidthHeight(rotation: number): boolean;
+        export function matrixAppendRotationInv(matrix: Matrix, rotation: number, tx: number, ty: number): void;
+        export function rotate180(rotation: number): number;
+        export function sub(rotationSecond: number, rotationFirst: number): number;
+        export function uX(ind: number): number;
+        export function uY(ind: number): number;
+        export function vX(ind: number): number;
+        export function vY(ind: number): number;
+
+        export var E: number;
+        export var MIRROR_HORIZONTAL: number;
+        export var MIRROR_VERTICAL: number;
+        export var N: number;
+        export var NE: number;
+        export var NW: number;
+        export var S: number;
+        export var SE: number;
+        export var SW: number;
+        export var W: number;
+    }
 
     export class Point {
 
@@ -462,10 +489,8 @@ declare module PIXI {
         height: number;
         radius: number;
         type: number;
-
-        static EMPTY: Rectangle;
-
-        clone(): Rectangle;
+        
+        clone(): RoundedRectangle;
         contains(x: number, y: number): boolean;
 
     }
@@ -521,18 +546,28 @@ declare module PIXI {
         destroy(): void;
 
     }
-    export class ParticleRenderer extends ObjectRenderer {
-        new(renderer: PIXI.WebGLRenderer);
 
-        buildCircle: (graphicsData: PIXI.Graphics, webGLData: WebGLGraphicsData) => void;
-        buildPoly: (graphicsData: PIXI.Graphics, webGLData: WebGLGraphicsData) => boolean;
-        buildRectangle: (graphicsData: PIXI.Graphics, webGLData: WebGLGraphicsData) => void;
-        buildComplexPoly: (graphicsData: PIXI.Graphics, webGLData: WebGLGraphicsData) => void;
-        buildLine: (graphicsData: PIXI.Graphics, webGLData: WebGLGraphicsData) => void;
-        updateGraphics: (graphics: PIXI.Graphics) => void;
-        buildRoundedRectangle: (graphicsData: PIXI.Graphics, webGLData: WebGLGraphicsData) => void;
-        quadraticBezierCurve: (fromX: number, fromY: number, cpX: number, cpY: number, toX: number, toY: number, out: number[]) => number[];
-        switchMode: (webGL: WebGLRenderingContext, type: number) => WebGLGraphicsData;
+    export interface IParticleRendererProperty {
+        attribute: number;
+        size: number;
+        uploadFunction: (children: PIXI.DisplayObject[], startIndex: number, amount: number, array: number[], stride: number, offset: number) => void;
+        offset: number;
+    }
+
+    export class ParticleRenderer extends ObjectRenderer {
+        constructor(renderer: PIXI.WebGLRenderer);
+
+        generateBuffers: (container: PIXI.ParticleContainer) => PIXI.ParticleBuffer[];
+        indexBuffer: WebGLBuffer;
+        indices: Uint16Array;
+        properties: PIXI.IParticleRendererProperty[];
+        shader: PIXI.Shader;
+        tempMatrix: Matrix;
+        uploadAlpha: (children: PIXI.DisplayObject[], startIndex: number, amount: number, array: number[], stride: number, offset: number) => void;
+        uploadPosition: (children: PIXI.DisplayObject[], startIndex: number, amount: number, array: number[], stride: number, offset: number) => void;
+        uploadRotation: (children: PIXI.DisplayObject[], startIndex: number, amount: number, array: number[], stride: number, offset: number) => void;
+        uploadUvs: (children: PIXI.DisplayObject[], startIndex: number, amount: number, array: number[], stride: number, offset: number) => void;
+        uploadVertices: (children: PIXI.DisplayObject[], startIndex: number, amount: number, array: number[], stride: number, offset: number) => void;
     }
     export interface ParticleShader {
 
@@ -614,12 +649,12 @@ declare module PIXI {
         destroy(): void;
 
     }
-    export class CanvasGraphics {
+    export module CanvasGraphics {
 
-        static renderGraphicsMask(graphics: Graphics, context: CanvasRenderingContext2D): void;
-        static updateGraphicsTint(graphics: Graphics): void;
+        export function renderGraphicsMask(graphics: Graphics, context: CanvasRenderingContext2D): void;
+        export function updateGraphicsTint(graphics: Graphics): void;
 
-        static renderGraphics(graphics: Graphics, context: CanvasRenderingContext2D): void;
+        export function renderGraphics(graphics: Graphics, context: CanvasRenderingContext2D): void;
 
     }
     export class CanvasMaskManager {
@@ -629,17 +664,17 @@ declare module PIXI {
         destroy(): void;
 
     }
-    export class CanvasTinter {
+    export module CanvasTinter {
 
-        static getTintedTexture(sprite: DisplayObject, color: number): HTMLCanvasElement;
-        static tintWithMultiply(texture: Texture, color: number, canvas: HTMLDivElement): void;
-        static tintWithOverlay(texture: Texture, color: number, canvas: HTMLCanvasElement): void;
-        static tintWithPerPixel(texture: Texture, color: number, canvas: HTMLCanvasElement): void;
-        static roundColor(color: number): number;
-        static cacheStepsPerColorChannel: number;
-        static convertTintToImage: boolean;
-        static vanUseMultiply: boolean;
-        static tintMethod: Function;
+        export function getTintedTexture(sprite: DisplayObject, color: number): HTMLCanvasElement;
+        export function tintWithMultiply(texture: Texture, color: number, canvas: HTMLDivElement): void;
+        export function tintWithOverlay(texture: Texture, color: number, canvas: HTMLCanvasElement): void;
+        export function tintWithPerPixel(texture: Texture, color: number, canvas: HTMLCanvasElement): void;
+        export function roundColor(color: number): number;
+        export var cacheStepsPerColorChannel: number;
+        export var convertTintToImage: boolean;
+        export var vanUseMultiply: boolean;
+        export var tintMethod: Function;
 
     }
     export class WebGLRenderer extends SystemRenderer {
@@ -809,7 +844,7 @@ declare module PIXI {
 
         constructor(shaderManager: ShaderManager, vertexSrc: string, fragmentSrc: string, uniforms: any, attributes: any);
 
-        uuid: number;
+        uid: number;
         gl: WebGLRenderingContext;
         shaderManager: ShaderManager;
         program: WebGLProgram;
@@ -956,12 +991,14 @@ declare module PIXI {
     export interface TextStyle {
 
         font?: string;
-        fill?: string | number;
+        fill?: string | number | CanvasGradient | CanvasPattern;
         align?: string;
         stroke?: string | number;
         strokeThickness?: number;
         wordWrap?: boolean;
         wordWrapWidth?: number;
+        letterSpacing?: number;
+        breakWords?: boolean;
         lineHeight?: number;
         dropShadow?: boolean;
         dropShadowColor?: string | number;
@@ -985,6 +1022,7 @@ declare module PIXI {
 
         protected updateText(): void;
         protected updateTexture(): void;
+        protected drawLetterSpacing(text: string, x: number, y: number, isStroke: boolean): void;
         protected determineFontProperties(fontStyle: TextStyle): TextStyle;
         protected wordWrap(text: string): boolean;
 
@@ -1073,7 +1111,7 @@ declare module PIXI {
         getCanvas(): HTMLCanvasElement;
 
     }
-    export class Texture extends BaseTexture {
+    export class Texture extends utils.EventEmitter {
 
         static fromImage(imageUrl: string, crossOrigin?: boolean, scaleMode?: number): Texture;
         static fromFrame(frameId: string): Texture;
@@ -1091,7 +1129,7 @@ declare module PIXI {
         protected onBaseTextureLoaded(baseTexture: BaseTexture): void;
         protected _updateUvs(): void;
 
-        constructor(baseTexture: BaseTexture, frame?: Rectangle, crop?: Rectangle, trim?: Rectangle, rotate?: boolean);
+        constructor(baseTexture: BaseTexture, frame?: Rectangle, crop?: Rectangle, trim?: Rectangle, rotate?: number);
 
         noFrame: boolean;
         baseTexture: BaseTexture;
@@ -1121,7 +1159,7 @@ declare module PIXI {
         x3: number;
         y3: number;
 
-        set(frame: Rectangle, baseFrame: Rectangle, rotate: number): void;
+        protected set(frame: Rectangle, baseFrame: Rectangle, rotate: number): void;
 
     }
     export class VideoBaseTexture extends BaseTexture {
@@ -1149,9 +1187,9 @@ declare module PIXI {
 
         export function uuid(): number;
         export function hex2rgb(hex: number, out?: number[]): number[];
-        export function hex2String(hex: number): string;
+        export function hex2string(hex: number): string;
         export function rgb2hex(rgb: Number[]): number;
-        export function canUseNewCanvasBlendModel(): boolean;
+        export function canUseNewCanvasBlendModes(): boolean;
         export function getNextPowerOfTwo(number: number): number;
         export function isPowerOfTwo(width: number, height: number): boolean;
         export function getResolutionOfUrl(url: string): number;
@@ -1242,7 +1280,7 @@ declare module PIXI {
 
             protected update(deltaTime: number): void;
 
-            constructor(textures: Texture[]);
+            constructor(textures: Texture[] | { texture: Texture, time?: number }[]);
 
             animationSpeed: number;
             loop: boolean;
@@ -1251,7 +1289,7 @@ declare module PIXI {
             playing: boolean;
 
             totalFrames: number;
-            textures: Texture[];
+            textures: Texture[] | { texture: Texture, time?: number }[];
 
             stop(): void;
             play(): void;
@@ -1438,9 +1476,9 @@ declare module PIXI {
         }
         export class RGBSplitFilter extends AbstractFilter {
 
-            red: number;
-            green: number;
-            blue: number;
+            red: Point;
+            green: Point;
+            blue: Point;
 
         }
         export class SepiaFilter extends AbstractFilter {
@@ -1522,6 +1560,7 @@ declare module PIXI {
 
             protected interactionDOMElement: HTMLElement;
             protected eventsAdded: boolean;
+            protected moveWhenInside: boolean;
             protected _tempPoint: Point;
 
             protected setTargetElement(element: HTMLElement, resolution: number): void;
@@ -1584,10 +1623,12 @@ declare module PIXI {
     //////////////////////////////////////////////////////////////////////////////
     ///////////////////////////////LOADER/////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////
-    //https://github.com/englercj/resource-loader/blob/master/src/Loader.js
+    //extends
+    //https://github.com/englercj/resource-loader/
     //1.6.4
 
     export module loaders {
+
         export interface LoaderOptions {
 
             crossOrigin?: boolean | string;
@@ -1596,11 +1637,17 @@ declare module PIXI {
             metaData?: any;
 
         }
+
         export interface ResourceDictionary {
 
             [index: string]: PIXI.loaders.Resource;
+
         }
-        export class Loader extends utils.EventEmitter {
+
+        export class Loader extends utils.EventEmitter{
+
+            protected static _pixiMiddleware: Function[];
+            static addPixiMiddleware(fn: Function): void;
 
             constructor(baseUrl?: string, concurrency?: number);
 
@@ -1639,6 +1686,11 @@ declare module PIXI {
             load(cb?: (loader: loaders.Loader, object: any) => void): Loader;
 
         }
+
+        export interface TextureDictionary {
+            [index: string]: PIXI.Texture;
+        }
+
         export class Resource extends utils.EventEmitter {
 
             static LOAD_TYPE: {
@@ -1669,7 +1721,7 @@ declare module PIXI {
 
             name: string;
             texture: Texture;
-            textures: Texture[];
+            textures: TextureDictionary;
             url: string;
             data: any;
             crossOrigin: boolean | string;

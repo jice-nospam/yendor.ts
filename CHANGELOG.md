@@ -1,23 +1,32 @@
 # 0.6.0 / TBD
+* upgraded to typescript 1.8.10, pixi 3.0.11
+* switched to ES6 and ES6 modules
+* replaced jake by node scripts
+* unit tests can now be run with node
+
 * Yendor toolkit
     - added noise module with simplex noise implementation + noise sample in benchmark
     - fov module no longer stores inFov information. You have to provide your own boolean[][].
       This makes it possible to use the same Yendor.Fov to compute fov from differents places.
     - more robust scheduler. Won't loop infinitely if an entity doesn't increase its wait time.
 
+* Umbra framework
+	- added basic log support
+
 * GeneRogue
+    - major refactoring for a simpler and more decoupled code. Use of promises instead of Umbra events for asynchronous tasks
     - lighting
-    - a lot of code refactoring, including actor factory and actor manager. Things should be simpler and more robust.
     - new items : candle, torch, sunrod, lantern, oil flask, wall torches
+	- added support for IndexedDb persistence (just replace LocalStoragePersister by IndexedDbPersister)
 
 # 0.5.0 / 08-mar-2016
 * upgraded typescript to 1.8.2, pixi to 3.0.9
-* Added Umbra framework for scene management, user input and events
-* Added Gizmo widget toolkit
+* added Umbra framework for scene management, user input and events
+* added widget toolkit
 
 * Yendor toolkit
 	- the Fov class does not handle the 'isWalkable' property anymore
-	- added CRC32 hashing function Yendor.crc32(s: string): number 
+	- added CRC32 hashing function Yendor.crc32(s: string): number
 
 * GeneRogue
 	- added doors, locks and keys

@@ -4,8 +4,6 @@ yendor.ts is a [TypeScript](http://www.typescriptlang.org) toolkit for roguelike
 
 umbra.ts is a [TypeScript](http://www.typescriptlang.org) lightweight game framework built on top of yendor.ts. It handles player input and the game scene graph.
 
-gizmo.ts provides user interface widgets for umbra.ts
-
 GeneRogue is a generic roguelike loosely based on the famous [python roguelike tutorial](http://www.roguebasin.com/index.php?title=Complete_Roguelike_Tutorial,_using_python%2Blibtcod).
 
 # Features
@@ -23,9 +21,6 @@ GeneRogue is a generic roguelike loosely based on the famous [python roguelike t
 * scene graph management
 * user input management
 * event bus
-
-## gizmo.ts
-* basic widget & button support
 
 ## GeneRogue
 * multi-level procedurally generated dungeon
@@ -46,49 +41,39 @@ GeneRogue is a generic roguelike loosely based on the famous [python roguelike t
 # Links
 * [yendor.ts documentation](http://roguecentral.org/doryen/yendor.ts/doc/yendor/index.html)
 * [umbra.ts documentation](http://roguecentral.org/doryen/yendor.ts/doc/umbra/index.html)
-* [gizmo.ts documentation](http://roguecentral.org/doryen/yendor.ts/doc/gizmo/index.html)
 * [GeneRogue documentation](http://roguecentral.org/doryen/yendor.ts/doc/game/index.html)
 * [Play GeneRogue online](http://roguecentral.org/doryen/yendor.ts/game/index.html)
-* [Run the benchmark online](http://roguecentral.org/doryen/yendor.ts/bench/index.html)
+* [Run the benchmark online](http://roguecentral.org/doryen/yendor.ts/game/bench.html)
 
 # Quick Start
 
 ## pre-requisites
-* install [node.js](http://nodejs.org/)
-* install [TypeScript](http://www.typescriptlang.org/) (version 1.8.2+ required)
+* install [node.js](http://nodejs.org/), at least version 6.5.0.
+* install the dependencies
 
-`npm install -g typescript`
-
-* install [jake](https://github.com/mde/jake)
-
-`npm install -g jake`
-
-* install [uglify-js](https://github.com/mishoo/UglifyJS)
-
-`npm install -g uglify-js`
+`npm install`
 
 ## compile and run the demo game
 
-`jake prod`
+`npm run build:generogue`
 
-Then open game/index.html in your favorite browser.
-For a developer version (does not compress generated javascript), use :
-`jake dev`
+Then open build/index.html in your browser.
 
 ## compile and run the unit tests
 
-`jake tests`
+`npm run build:tests`
 
-Then open game/index.html in your favorite browser.
+Then open build/index.html in your browser.
 
 ## compile and run the benchmark
 
-`jake benchmark`
+`npm run build:benchmark`
 
-Then open game/index.html in your favorite browser.
+Then open build/index.html in your browser.
 
 # Troubleshooting
 
+## Rendering issue / low framerate
 By default, Yendor will render the screen using PIXI. PIXI will try to use a webGL renderer and fall back to a canvas based renderer if that doesn't work. Yet, if you have rendering issues, you can force the use of a specific renderer by adding the `renderer` parameter to the URL.
 
 `http://mysite/index.html?renderer=<rendererName>`
@@ -96,7 +81,13 @@ By default, Yendor will render the screen using PIXI. PIXI will try to use a web
 Following renderer names are supported :
 * pixi/webgl : should be the fastest except if you have broken OpenGL drivers or an old browser
 * pixi/canvas : should work on not so recent browser, but not on very old browsers
-* yendor/div : failsafe but slow classic HTML renderer
+* yendor/div : failsafe but slow (and ugly) classic HTML renderer
+
+## Staled game
+If the savegame gets corrupted, you might be stuck, not being able to start a new game.
+You can force the start of a new game and ignore the current savegame by adding the clearsavegame parameter to the URL.
+
+`http://mysite/index.html?clearsavegame=1`
 
 # License
 

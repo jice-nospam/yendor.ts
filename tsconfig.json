@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "module": "amd",
+    "target": "ES6",
+    "sourceMap": true,
+    "outDir": "build",
+    "noImplicitAny": true,
+    "moduleResolution": "node"
+  },
+  "files": [
+    "src/generogue/main.ts",
+    "src/tests/main.ts",
+    "src/tests/bench.ts"
+  ]
+}

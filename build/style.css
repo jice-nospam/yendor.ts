@@ -1,0 +1,26 @@
+#console {
+	margin: auto;
+	cursor: pointer;
+	text-align: center;
+}
+
+/* for unit tests */
+#tsOkay > ul {
+	background-color: #9F9;
+	list-style-type: none;
+}
+
+#tsOkay > ul > li > ul {
+	background-color: #DFD;
+	list-style-type: none;
+}
+
+#tsFail > ul {
+	background-color: #F99;
+	list-style-type: none;
+}
+
+#tsFail > ul > li > ul {
+	background-color: #FDD;
+	list-style-type: none;
+}
