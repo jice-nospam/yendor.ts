@@ -40,7 +40,7 @@ GeneRogue is a generic roguelike loosely based on the famous [python roguelike t
 
 # Links
 * [Play GeneRogue online](http://roguecentral.org/doryen/yendor.ts/game/index.html)
-* [Run the benchmark online](http://roguecentral.org/doryen/yendor.ts/game/bench.html)
+* [Run the benchmark online](http://roguecentral.org/doryen/yendor.ts/bench/index.html)
 
 # Quick Start
 
