@@ -30,12 +30,12 @@ GeneRogue is a generic roguelike loosely based on the famous [python roguelike t
 
 # Supported browsers
 
- * ECMAScript 5 compliant browsers (yendor/div renderer) :
- 	- Internet Explorer 9+
- 	- Firefox 4+
- 	- Safari 6+
- 	- Chrome 23+
- 	- Opera 15+
+ * ECMAScript 6 compliant browsers (yendor/div renderer) :
+ 	- Edge 13+
+ 	- Firefox 47+
+ 	- Safari 9.1+
+ 	- Chrome 49+
+ 	- Opera 39+
  * For pixi renderers, check [pixi.js](http://www.pixijs.com/) documentation
 
 # Links
