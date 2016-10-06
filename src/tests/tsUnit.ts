@@ -9,11 +9,11 @@
         private tests: TestDefintion[] = [];
         private testClass: TestClass = new TestClass();
 
-        addTestClass(testClass: ITestClass, name: string = "Tests", clazz: any): void {
+        public addTestClass(testClass: ITestClass, name: string = "Tests", clazz: any): void {
             this.tests.push(new TestDefintion(testClass, name, clazz));
         }
 
-        isReservedFunctionName(functionName: string): boolean {
+        public isReservedFunctionName(functionName: string): boolean {
             if (functionName.indexOf("_") === 0) {
                 return true;
             }
@@ -28,40 +28,40 @@
             return false;
         }
 
-        run() {
+        public run() {
             let testContext = new TestContext();
             let testResult = new TestResult();
 
-            for (let i: number = 0, len: number = this.tests.length; i < len; ++i) {
-                let testClass = this.tests[i].testClass;
-                let testName = this.tests[i].name;
-                console.log("running "+testName);
-                Object.getOwnPropertyNames(this.tests[i].clazz.prototype).forEach((prop) => {
-                        if (!this.isReservedFunctionName(prop) && prop.indexOf("__") !== 0) {
-                            if (typeof (<any>testClass)[prop] === "function") {
-                                console.log("=> "+prop);
-                                if (typeof (<any>testClass)[Test.PROP_SETUP] === "function") {
-                                    (<any>testClass)[Test.PROP_SETUP]();
-                                }
-                                try {
-                                    (<any>testClass)[prop](testContext);
-                                    testResult.passes.push(new TestDescription(testName, prop, "OK"));
-                                } catch (err) {
-                                    console.log(err);
-                                    testResult.errors.push(new TestDescription(testName, prop, err));
-                                }
-                                if (typeof (<any>testClass)[Test.PROP_TEARDOWN] === "function") {
-                                    (<any>testClass)[Test.PROP_TEARDOWN]();
-                                }
+            for (let test of this.tests) {
+                let testClass = test.testClass;
+                let testName = test.name;
+                console.log("running " + testName);
+                for (let prop of Object.getOwnPropertyNames(test.clazz.prototype)) {
+                    if (!this.isReservedFunctionName(prop) && prop.indexOf("__") !== 0) {
+                        if (typeof (<any> testClass)[prop] === "function") {
+                            console.log("=> " + prop);
+                            if (typeof (<any> testClass)[Test.PROP_SETUP] === "function") {
+                                (<any> testClass)[Test.PROP_SETUP]();
+                            }
+                            try {
+                                (<any> testClass)[prop](testContext);
+                                testResult.passes.push(new TestDescription(testName, prop, "OK"));
+                            } catch (err) {
+                                console.log(err);
+                                testResult.errors.push(new TestDescription(testName, prop, err));
+                            }
+                            if (typeof (<any> testClass)[Test.PROP_TEARDOWN] === "function") {
+                                (<any> testClass)[Test.PROP_TEARDOWN]();
                             }
                         }
-                });
+                    }
+                }
             }
 
             return testResult;
         }
 
-        showResultsBrowser(target: HTMLElement, result: TestResult) {
+        public showResultsBrowser(target: HTMLElement, result: TestResult) {
             let template = "<article>" +
                 "<h1>" + this.getTestResult(result) + "</h1>" +
                 "<p>" + this.getTestSummary(result) + "</p>" +
@@ -78,7 +78,7 @@
             target.innerHTML = template;
         }
 
-        showResultsNode(result: TestResult) {
+        public showResultsNode(result: TestResult) {
             console.log(this.getTestResultListNode(result.passes));
             console.log(this.getTestResultListNode(result.errors));
             console.log("Total tests : " + (result.passes.length + result.errors.length));
@@ -92,7 +92,8 @@
         }
 
         private getTestSummary(result: TestResult) {
-            return "Total tests: <span id='tsUnitTotalCout'>" + (result.passes.length + result.errors.length).toString() + "</span>. " +
+            return "Total tests: <span id='tsUnitTotalCout'>" + (result.passes.length
+                + result.errors.length).toString() + "</span>. " +
                 "Passed tests: <span id='tsUnitPassCount' class='good'>" + result.passes.length + "</span>. " +
                 "Failed tests: <span id='tsUnitFailCount' class='bad'>" + result.errors.length + "</span>.";
         }
@@ -100,8 +101,7 @@
             let list = "";
             let group = "";
             let isFirst = true;
-            for (let i: number = 0, len: number = testResults.length; i < len; ++i) {
-                let result = testResults[i];
+            for (let result of testResults) {
                 if (result.testName !== group) {
                     group = result.testName;
                     if (isFirst) {
@@ -117,8 +117,7 @@
             let list = "";
             let group = "";
             let isFirst = true;
-            for (let i: number = 0, len: number = testResults.length; i < len; ++i) {
-                let result = testResults[i];
+            for (let result of testResults) {
                 if (result.testName !== group) {
                     group = result.testName;
                     if (isFirst) {
@@ -136,13 +135,13 @@
     }
 
     export class TestContext {
-        setUp() {
+        public setUp() {
         }
 
-        tearDown() {
+        public tearDown() {
         }
 
-        areIdentical(a: any, b: any, msg?: string): void {
+        public areIdentical(a: any, b: any, msg?: string): void {
             if (a !== b) {
                 throw (msg ? msg : "") +
                 " {" + (typeof a) + "} '" + a + "' instead of " +
@@ -150,7 +149,7 @@
             }
         }
 
-        areNotIdentical(a: any, b: any): void {
+        public areNotIdentical(a: any, b: any): void {
             if (a === b) {
                 throw "areNotIdentical failed when passed " +
                 "{" + (typeof a) + "} '" + a + "' and " +
@@ -158,33 +157,33 @@
             }
         }
 
-        isTrue(a: boolean, msg?: string) {
+        public isTrue(a: boolean, msg?: string) {
             if (!a) {
                 throw msg ? msg : "failed assertion";
             }
         }
 
-        isFalse(a: boolean, msg?: string) {
+        public isFalse(a: boolean, msg?: string) {
             if (a) {
                 throw msg ? msg : "failed assertion";
             }
         }
 
-        isTruthy(a: any) {
+        public isTruthy(a: any) {
             if (!a) {
                 throw "isTrue failed when passed " +
                 "{" + (typeof a) + "} '" + a + "'";
             }
         }
 
-        isFalsey(a: any) {
+        public isFalsey(a: any) {
             if (a) {
                 throw "isFalse failed when passed " +
                 "{" + (typeof a) + "} '" + a + "'";
             }
         }
 
-        throws(a: { (): void; }) {
+        public throws(a: { (): void; }) {
             let isThrown = false;
             try {
                 a();
@@ -196,7 +195,7 @@
             }
         }
 
-        fail() {
+        public fail() {
             throw "fail";
         }
     }
@@ -214,33 +213,28 @@
         constructor(obj: any) {
             for (let prop in obj) {
                 if (typeof obj[prop] === "function") {
-                    (<any>this)[prop] = function() { };
+                    (<any> this)[prop] = function() { };
                 } else {
-                    (<any>this)[prop] = null;
+                    (<any> this)[prop] = null;
                 }
             }
         }
 
-        create(): any {
+        public create(): any {
             return this;
         }
 
-        addFunction(name: string, delegate: { (...args: any[]): any; }) {
-            (<any>this)[name] = delegate;
+        public addFunction(name: string, delegate: { (...args: any[]): any; }) {
+            (<any> this)[name] = delegate;
         }
 
-        addProperty(name: string, value: any) {
-            (<any>this)[name] = value;
+        public addProperty(name: string, value: any) {
+            (<any> this)[name] = value;
         }
     }
 
     class TestDefintion {
         constructor(public testClass: ITestClass, public name: string, public clazz: any) {
-        }
-    }
-
-    class TestError implements Error {
-        constructor(public name: string, public message: string) {
         }
     }
 

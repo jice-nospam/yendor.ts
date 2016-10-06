@@ -5,7 +5,10 @@
     "sourceMap": true,
     "outDir": "build",
     "noImplicitAny": true,
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "strictNullChecks": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
   },
   "files": [
     "src/generogue/main.ts",

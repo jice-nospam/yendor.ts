@@ -1,37 +1,54 @@
-	/********************************************************************************
-	 * Group: map building
-	 ********************************************************************************/
+/**
+ * ==============================================================================
+ * Group: map building
+ * ==============================================================================
+ */
 import * as Core from "../core/main";
 import * as Yendor from "../yendor/main";
-import {AbstractDungeonBuilder, DungeonConfig} from "./map_build_dungeon";
+import {AbstractDungeonBuilder, IDungeonConfig} from "./map_build_dungeon";
 import {Map} from "./map";
 
-export interface BspDungeonConfig extends DungeonConfig {
+export interface IBspDungeonConfig extends IDungeonConfig {
     roomMinSize: number;
-    maxMonstersPerRoom: number;
-    maxItemsPerRoom: number;
 }
 
 /**
-    Class: BspDungeonBuilder
-    A dungeon builder using a BSP tree to split the map.
-    see https://roguecentral.org/doryen/articles/bsp-dungeon-generation/
-    */
+ * Class: BspDungeonBuilder
+ * A dungeon builder using a BSP tree to split the map.
+ * see https://roguecentral.org/doryen/articles/bsp-dungeon-generation/
+ */
 export class BspDungeonBuilder extends AbstractDungeonBuilder {
     private firstRoom: boolean = true;
     private potentialDoorPos: Core.Position[] = [];
-    constructor(dungeonLevel: number, config: BspDungeonConfig) {
+    constructor(dungeonLevel: number, config: IBspDungeonConfig) {
         super(dungeonLevel, config);
     }
 
     /**
-        function: createRandomRoom
-        Dig a rectangular room in a node of the BSP tree
-        */
-    private createRandomRoom(node: Yendor.BSPNode, map: Map, maxMonsters: number, maxItems: number) {
-        let x: number, y: number, w: number, h: number;
+     * function: digMap
+     * Dig rooms and corridors in the map using a BSP tree traversal.
+     */
+    protected digMap(map: Map) {
+        let bsp: Yendor.BSPNode = new Yendor.BSPNode(0, 0, map.w, map.h);
+        bsp.splitRecursive(undefined, 8,  (<IBspDungeonConfig> this.config).roomMinSize, 1.5);
+        bsp.traverseInvertedLevelOrder(this.visitNode.bind(this), map);
+        this.createDoors(map);
+    }
+
+    /**
+     * function: createRandomRoom
+     * Dig a rectangular room in a node of the BSP tree
+     */
+    private createRandomRoom(node: Yendor.BSPNode, map: Map) {
+        if (! node.parent) {
+            return;
+        }
+        let x: number;
+        let y: number;
+        let w: number;
+        let h: number;
         let horiz: boolean = node.parent.horiz;
-        let roomMinSize: number = (<BspDungeonConfig>this.config).roomMinSize;
+        let roomMinSize: number = (<IBspDungeonConfig> this.config).roomMinSize;
         if (horiz) {
             w = this.rng.getNumber(roomMinSize, node.w - 1);
             h = this.rng.getNumber(roomMinSize, node.h - 2);
@@ -51,15 +68,18 @@ export class BspDungeonBuilder extends AbstractDungeonBuilder {
             }
             x = this.rng.getNumber(node.x + 1, node.x + node.w - w);
         }
-        this.createRoom(map, this.firstRoom, x, y, x + w - 1, y + h - 1, maxMonsters, maxItems);
+        this.createRoom(map, this.firstRoom, x, y, x + w - 1, y + h - 1);
         this.firstRoom = false;
     }
 
     /**
-        function: connectChildren
-        Connect two rooms with a corridor. Detect potential door positions
-        */
+     * function: connectChildren
+     * Connect two rooms with a corridor. Detect potential door positions
+     */
     private connectChildren(node: Yendor.BSPNode, map: Map) {
+        if (! node.leftChild || ! node.rightChild) {
+            return;
+        }
         let left: Yendor.BSPNode = node.leftChild;
         let right: Yendor.BSPNode = node.rightChild;
         let leftPos: Core.Position = this.findFloorTile(left.x, left.y, left.w, left.h, map);
@@ -67,7 +87,7 @@ export class BspDungeonBuilder extends AbstractDungeonBuilder {
         this.dig(map, leftPos.x, leftPos.y, leftPos.x, rightPos.y);
         this.dig(map, leftPos.x, rightPos.y, rightPos.x, rightPos.y);
         // try to find a potential door position
-        let doorPos: Core.Position = this.findVDoorPosition(map, leftPos.x, leftPos.y, rightPos.y);
+        let doorPos: Core.Position|undefined = this.findVDoorPosition(map, leftPos.x, leftPos.y, rightPos.y);
         if (!doorPos) {
             doorPos = this.findHDoorPosition(map, leftPos.x, rightPos.x, rightPos.y);
         }
@@ -79,12 +99,11 @@ export class BspDungeonBuilder extends AbstractDungeonBuilder {
     }
 
     /**
-        function: createDoors
-        Place door where it make sense (at potential positions that are still valid after the end of the digging)
-        */
+     * function: createDoors
+     * Place door where it make sense (at potential positions that are still valid after the end of the digging)
+     */
     private createDoors(map: Map) {
-        for (let i: number = 0, len: number = this.potentialDoorPos.length; i < len; ++i) {
-            let pos: Core.Position = this.potentialDoorPos[i];
+        for (let pos of this.potentialDoorPos) {
             if (this.isADoorPosition(map, pos.x, pos.y)) {
                 this.createDoor(pos);
             }
@@ -92,27 +111,16 @@ export class BspDungeonBuilder extends AbstractDungeonBuilder {
     }
 
     /**
-        function: visitNode
-        BSP tree node visiting function. Create rooms for leafs and corridors for other nodes.
-        */
+     * function: visitNode
+     * BSP tree node visiting function. Create rooms for leafs and corridors for other nodes.
+     */
     private visitNode(node: Yendor.BSPNode, userData: any): Yendor.BSPTraversalAction {
-        let map: Map = <Map>userData;
+        let map: Map = <Map> userData;
         if (node.isLeaf()) {
-            this.createRandomRoom(node, map, (<BspDungeonConfig>this.config).maxMonstersPerRoom, (<BspDungeonConfig>this.config).maxItemsPerRoom);
+            this.createRandomRoom(node, map);
         } else {
             this.connectChildren(node, map);
         }
         return Yendor.BSPTraversalAction.CONTINUE;
-    }
-
-    /**
-        function: digMap
-        Dig rooms and corridors in the map using a BSP tree traversal.
-        */
-    protected digMap(map: Map) {
-        let bsp: Yendor.BSPNode = new Yendor.BSPNode(0, 0, map.w, map.h);
-        bsp.splitRecursive(undefined, 8,  (<BspDungeonConfig>this.config).roomMinSize, 1.5);
-        bsp.traverseInvertedLevelOrder(this.visitNode.bind(this), map);
-        this.createDoors(map);
     }
 }

@@ -1,13 +1,12 @@
 import * as tsUnit from "../tsUnit";
-import * as Core from "../../fwk/core/main";
 import * as Yendor from "../../fwk/yendor/main";
 
 export class NoiseTests extends tsUnit.TestClass {
+    private static RANGE_TEST: number = 0.7;
     private rng: Yendor.Random = new Yendor.CMWCRandom();
     private noise: Yendor.Noise = new Yendor.SimplexNoise(this.rng);
-    private static RANGE_TEST: number = 0.7;
 
-    isInRange1D() {
+    public isInRange1D() {
         let a: number = 0;
         let min: number = 0;
         let max: number = 0;
@@ -26,7 +25,7 @@ export class NoiseTests extends tsUnit.TestClass {
         this.isTrue(max > NoiseTests.RANGE_TEST, "bad max : " + max + "> " + NoiseTests.RANGE_TEST);
     }
 
-    isInRange2D() {
+    public isInRange2D() {
         let a: number = 0;
         let min: number = 0;
         let max: number = 0;
@@ -45,7 +44,7 @@ export class NoiseTests extends tsUnit.TestClass {
         this.isTrue(max > NoiseTests.RANGE_TEST, "bad max : " + max + "> " + NoiseTests.RANGE_TEST);
     }
 
-    isInRange3D() {
+    public isInRange3D() {
         let a: number = 0;
         let min: number = 0;
         let max: number = 0;

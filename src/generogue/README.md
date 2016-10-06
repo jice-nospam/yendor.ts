@@ -21,28 +21,36 @@ The name `GeneRogue` is a reference to Kornel Kisielewicz's mammoth [GenRogue pr
 * t : throw an item
 * f : fire a projectile using an equipped ranged weapon
 * z : zap an equipped magic wand or staff
-* e : activate an adjacent mechanism (lever, torch, door, or use a stair...). You can also unlock/open a door by bumping on it.
+* e : activate an adjacent mechanism (lever, torch, door, loot a corpse or a chest, use a stair...). You can also unlock/open a door by bumping on it.
 * ESC : open game menu
 * look with mouse. UI also works with mouse
 
 # WORK IN PROGRESS
+    - loot : add a 'take all' button
+    - loot : pick an item by dragging it in the empty area of the container inventory
 
 # TODO
 
 Reminder for stuff that might be added to the game. Or not.
 * Bugs
-    - player can move while inventory is open
     - monster AI does not wake up in darkness
     - monsters don't see the player's light
-    - cannot take a candle with right hand
+
+* Build
+    - fix Webpack --optimize-minimize not working with ES6
 
 * Engine
+    - clean Actor.register mess
+    - factorize static properties in a common ActorDef instance
     - reduce garbage collector usage
     - clean usage of constructors/onInit
     - rewrite Core.Color using faster tuple [r,g,b] format
     - rewrite Core.Position using faster tuple [x,y] format
 
 * Gameplay
+    - UI
+        - inventory : when dragging an item, highlight valid drop targets
+        - container qualified name : being able to configure pouch + gold pieces => gold pouch ?
     - item durability
         - grinding stone
         - being able to break certain doors
@@ -51,9 +59,15 @@ Reminder for stuff that might be added to the game. Or not.
         - fire 'item' : fireball should leave fire on ground for some time
         - burning condition : caused by walking in fire / fireballs / hitting with a torch (melee or throw)
     - map building
+        - put keys in chests
+        - put keys in minibosses
         - multi-keys locks
         - remove monsters from dungeon's first room
+        - more monsters near loots
+        - cell description : being able to display "There are 2 dead orcs here".
     - A.I.
+        - behavior tree toolkit
+        - guard loot AI
         - beast A.I. should move randomly when no scent is detected
         - orcs should have humanoid A.I. (can open door, use equipment)
         - humanoid A.I. (can use weapons and wear armors)
@@ -64,11 +78,9 @@ Reminder for stuff that might be added to the game. Or not.
         - radius should decrease and intensity variation increase before a candle/torch is consumed
     - items
         - armors
-        - 'any hand' slot
         - spells and spellbooks
         - gems and weapons/armors slots
-        - static containers (chests, corpses) + loot GUI
-        - pickable containers to organize inventory (bags, quiver, scroll book, key ring, ...)
+        - static containers (chests, corpses)
         - jewelry (necklace, rings)
     - player character
         - new XP level : being able to increase some stat (health, inventory, ...)

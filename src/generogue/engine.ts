@@ -1,77 +1,81 @@
-import * as Core from "../fwk/core/main";
 import * as Yendor from "../fwk/yendor/main";
 import * as Umbra from "../fwk/umbra/main";
 import * as Gui from "../fwk/gui/main";
 import * as Actors from "../fwk/actors/main";
 import * as Map from "../fwk/map/main";
-import { Constants, GameStatus } from "./base";
+import {
+    EVENT_CHANGE_STATUS,
+    EVENT_NEW_GAME,
+    EVENT_OPEN_MAIN_MENU,
+    GameStatus,
+    MENU_BACKGROUND,
+    MENU_BACKGROUND_ACTIVE,
+    MENU_FOREGROUND,
+    MENU_FOREGROUND_ACTIVE,
+    MENU_FOREGROUND_DISABLED,
+    TITLE_FOREGROUND,
+    PERSISTENCE_VERSION_KEY,
+    PERSISTENCE_DUNGEON_LEVEL,
+    PERSISTENCE_MAP_KEY,
+    PERSISTENCE_TOPOLOGY_MAP,
+    PERSISTENCE_STATUS_PANEL,
+    STATUS_PANEL_HEIGHT,
+    URL_PARAM_CLEAR_SAVEGAME,
+    URL_PARAM_NO_ITEM,
+    URL_PARAM_NO_MONSTER,
+} from "./base";
 import {StatusPanel} from "./gui_status";
 import {InventoryPanel} from "./gui_inventory";
+import {LootPanel} from "./gui_loot";
 import {TilePicker} from "./gui_tilepicker";
+import {NumberSelector} from "./gui_input_number";
 import {MainMenu} from "./gui_menu";
-import {EventType} from "./custom_events"; // TODO
-import {ActorType} from "./config_actors";
-import * as conf from "./config_dungeons";
+import {DebugMenu} from "./gui_debug";
+import {ACTOR_TYPES} from "./config_actors";
+import {dungeonConfig} from "./config_dungeons";
 import {registerPersistentClasses} from "./config_persistent";
 
 /**
-    Property: SAVEFILE_VERSION
-    This is the savegame format version. To be incremented when the format changes
-    to keep the game from trying to load data with an old format.
-    This should be an integer.
-*/
-const SAVEFILE_VERSION: string = "16";
+ * Property: SAVEFILE_VERSION
+ * This is the savegame format version. To be incremented when the format changes
+ * to keep the game from trying to load data with an old format.
+ * This should be an integer.
+ */
+const SAVEFILE_VERSION: string = "18";
 
-export abstract class DungeonScene extends Map.MapScene implements Umbra.EventListener {
+export abstract class DungeonScene extends Map.MapScene implements Umbra.IEventListener {
     protected _topotologyMap: Map.TopologyMap;
     protected dungeonLevel: number = 1;
 
     constructor() {
-        super(new Map.DungeonRendererNode(new Map.LightDungeonShader(new Map.BasicMapShader())), new Core.LocalStoragePersister());
+        super(new Map.DungeonRendererNode(new Map.LightDungeonShader(new Map.BasicMapShader())),
+            new Yendor.IndexedDbPersister());
+        dungeonConfig.noItem = Yendor.urlParams[URL_PARAM_NO_ITEM] !== undefined;
+        dungeonConfig.noMonster = Yendor.urlParams[URL_PARAM_NO_MONSTER] !== undefined;
     }
-
 
     // singleton getters
     get topologyMap() { return this._topotologyMap; }
-    onInit(): void {
+    public onInit(): void {
         super.onInit();
     }
 
-    protected buildMap(dungeonLevel: number, map: Map.Map): Map.TopologyMap {
-        map.init(Constants.CONSOLE_WIDTH, Constants.CONSOLE_HEIGHT - Constants.STATUS_PANEL_HEIGHT);
-        this.renderer.initForNewMap();
-        let dungeonBuilder: Map.BspDungeonBuilder = new Map.BspDungeonBuilder(dungeonLevel, {
-            creatureProbabilities: conf.creatureProbabilities,
-            itemProbabilities: conf.itemProbabilities,
-            wallLightProbabilities: conf.wallLightProbabilities,
-            doorProbabilities: conf.doorProbabilities,
-            keyProbabilities: conf.keyProbabilities,
-            roomMinSize: Constants.ROOM_MIN_SIZE,
-            maxMonstersPerRoom: Constants.MAX_MONSTERS_PER_ROOM,
-            maxItemsPerRoom: Constants.MAX_ITEMS_PER_ROOM,
-            noMonster: Yendor.urlParams[Constants.URL_PARAM_NO_MONSTER] !== undefined,
-            noItem: Yendor.urlParams[Constants.URL_PARAM_NO_ITEM] !== undefined,
-            minTorches: Constants.DUNGEON_MIN_TORCHES,
-            maxTorches: Constants.DUNGEON_MAX_TORCHES
-        });
-        dungeonBuilder.build(map);
-        return dungeonBuilder.topologyMap;
-    }
-
-    newLevel() {
+    public newLevel() {
         // remove all actors but the player and its inventory (except unused keys)
-        let player: Actors.Player = Actors.Actor.specialActors[Actors.SpecialActors.PLAYER];
+        let player: Actors.Actor = Actors.Actor.specialActors[Actors.SpecialActorsEnum.PLAYER];
         let toRemove: Actors.Actor[] = [];
-        Actors.Actor.list.map((actor: Actors.Actor) => {
-            if ( actor !== player && (actor.isA("key") || !player.contains(actor.id))) {
+        for (let actor of Actors.Actor.list) {
+            if ( actor !== player && (actor.isA("key[s]") || !player.contains(actor.id, true))) {
                 toRemove.push(actor);
             }
-        });
-        toRemove.map((actor: Actors.Actor) => { actor.destroy(); });
+        }
+        for (let actor of toRemove) {
+            actor.destroy();
+        }
         this.createStairs();
     }
 
-    newGame() {
+    public newGame() {
         while (Actors.Actor.list.length > 0) {
             Actors.Actor.list[Actors.Actor.list.length - 1].destroy();
         }
@@ -80,52 +84,76 @@ export abstract class DungeonScene extends Map.MapScene implements Umbra.EventLi
     }
 
     /**
-        Function: createStairs
-        Create the actors for up and down stairs. The position is not important, actors will be placed by the dungeon builder.
-    */
-    createStairs() {
-        Actors.Actor.specialActors[Actors.SpecialActors.STAIR_UP] = Actors.ActorFactory.create(ActorType[ActorType.STAIRS_UP]);
-        Actors.Actor.specialActors[Actors.SpecialActors.STAIR_DOWN] = Actors.ActorFactory.create(ActorType[ActorType.STAIRS_DOWN]);
+     * Function: createStairs
+     * Create the actors for up and down stairs. The position is not important,
+     * actors will be placed by the dungeon builder.
+     */
+    public createStairs() {
+        let stairUp: Actors.Actor|undefined = Actors.ActorFactory.create(ACTOR_TYPES.STAIRS_UP);
+        if (!stairUp) {
+            Umbra.logger.critical("Missing actor type " + ACTOR_TYPES.STAIRS_UP);
+            return;
+        }
+        Actors.Actor.specialActors[Actors.SpecialActorsEnum.STAIR_UP] = stairUp;
+        let stairDown: Actors.Actor|undefined = Actors.ActorFactory.create(ACTOR_TYPES.STAIRS_DOWN);
+        if (!stairDown) {
+            Umbra.logger.critical("Missing actor type " + ACTOR_TYPES.STAIRS_DOWN);
+            return;
+        }
+        Actors.Actor.specialActors[Actors.SpecialActorsEnum.STAIR_DOWN] = stairDown;
+
     }
 
-    createPlayer() {
-        let player: Actors.Actor = Actors.ActorFactory.create(ActorType[ActorType.PLAYER], this.playerTilePicker, this.playerInventoryPicker);
-        Actors.Actor.specialActors[Actors.SpecialActors.PLAYER] = player;
+    public createPlayer() {
+        let player: Actors.Actor|undefined = Actors.ActorFactory.create(ACTOR_TYPES.PLAYER,
+            this.playerTilePicker, this.playerInventoryPicker, this.playerLootHandler);
+        if ( !player) {
+            Umbra.logger.critical("Missing actor type " + ACTOR_TYPES.PLAYER);
+            return;
+        }
+        Actors.Actor.specialActors[Actors.SpecialActorsEnum.PLAYER] = player;
         player.register();
+    }
+
+    protected buildMap(dungeonLevel: number, map: Map.Map): Map.TopologyMap {
+        map.init(Umbra.application.getConsole().width,
+            Umbra.application.getConsole().height - STATUS_PANEL_HEIGHT);
+        this.renderer.initForNewMap();
+        let dungeonBuilder: Map.BspDungeonBuilder = new Map.BspDungeonBuilder(dungeonLevel, dungeonConfig);
+        dungeonBuilder.build(map);
+        return dungeonBuilder.topologyMap;
     }
 }
 
 /**
-    Class: Engine
-    Handles frame rendering and world updating.
-*/
-export class Engine extends DungeonScene implements Umbra.EventListener {
-    static instance: Engine;
-
+ * Class: Engine
+ * Handles frame rendering and world updating.
+ */
+export class Engine extends DungeonScene implements Umbra.IEventListener {
     private status: GameStatus;
-    private gameTime: number = 0;
     private gui: {
         status: StatusPanel,
         inventory: InventoryPanel,
         tilePicker: TilePicker,
-        mainMenu: MainMenu
+        loot: LootPanel,
+        mainMenu: MainMenu,
+        debugMenu?: DebugMenu,
     };
 
-    onInit(): void {
+    public onInit(): void {
         this.status = GameStatus.INITIALIZING;
         registerPersistentClasses();
 
         super.onInit();
         this.createGui();
-        Engine.instance = this;
 
-        Umbra.EventManager.registerEventListener(this, EventType[EventType.CHANGE_STATUS]);
-        Umbra.EventManager.registerEventListener(this, EventType[EventType.NEW_GAME]);
+        Umbra.EventManager.registerEventListener(this, EVENT_CHANGE_STATUS);
+        Umbra.EventManager.registerEventListener(this, EVENT_NEW_GAME);
 
-        if ( Yendor.urlParams[Constants.URL_PARAM_CLEAR_SAVEGAME] ) {
+        if ( Yendor.urlParams[URL_PARAM_CLEAR_SAVEGAME] ) {
             this.onNewGame();
         } else {
-            this.persister.loadFromKey(Constants.PERSISTENCE_VERSION_KEY).then((savedVersion) => {
+            this.persister.loadFromKey(PERSISTENCE_VERSION_KEY).then((savedVersion) => {
                 if (savedVersion && savedVersion.toString() === SAVEFILE_VERSION) {
                     this.loadGame();
                 } else {
@@ -135,50 +163,20 @@ export class Engine extends DungeonScene implements Umbra.EventListener {
         }
     }
 
-    createGui() {
-        this.gui = {
-            status: new StatusPanel(),
-            inventory: new InventoryPanel(),
-            mainMenu : new MainMenu(),
-            tilePicker: new TilePicker()
-        }
-        this.gui.status.init(Constants.CONSOLE_WIDTH, Constants.STATUS_PANEL_HEIGHT);
-        this.playerInventoryPicker = this.gui.inventory;
-        this.playerTilePicker = this.gui.tilePicker;
-        this.addChild(this.gui.status);
-        this.addChild(this.gui.inventory);
-        this.addChild(this.gui.mainMenu);
-        this.addChild(this.gui.tilePicker);
-        // Gui configuration
-        Gui.setConfiguration(
-            {
-                input: {
-                    focusNextWidgetAxisName: Actors.PlayerAction[Actors.PlayerAction.MOVE_SOUTH],
-                    focusPreviousWidgetAxisName: Actors.PlayerAction[Actors.PlayerAction.MOVE_NORTH],
-                    cancelAxisName: Actors.PlayerAction[Actors.PlayerAction.CANCEL],
-                    validateAxisName: Actors.PlayerAction[Actors.PlayerAction.VALIDATE]
-                },
-                color: {
-                    background: Constants.MENU_BACKGROUND,
-                    backgroundActive: Constants.MENU_BACKGROUND_ACTIVE,
-                    backgroundDisabled: Constants.MENU_BACKGROUND,
-                    foreground: Constants.MENU_FOREGROUND,
-                    foregroundActive: Constants.MENU_FOREGROUND_ACTIVE,
-                    foregroundDisabled: Constants.MENU_FOREGROUND_DISABLED,
-                    titleForeground: Constants.TITLE_FOREGROUND
-                }
-            }
-        );
+    public onTerm() {
+        super.onTerm();
+        Umbra.EventManager.unregisterEventListener(this, EVENT_CHANGE_STATUS);
+        Umbra.EventManager.unregisterEventListener(this, EVENT_NEW_GAME);
     }
 
-    onChangeStatus(status: GameStatus) {
+    public onChangeStatus(status: GameStatus) {
         this.status = status;
         if (status === GameStatus.DEFEAT) {
             Umbra.logger.critical("You died!");
         }
     }
 
-    onNewGame() {
+    public onNewGame() {
         this.dungeonLevel = 1;
         this.deleteSavedGame();
         this.newGame();
@@ -187,40 +185,163 @@ export class Engine extends DungeonScene implements Umbra.EventListener {
         this.gui.status.clear();
 
         // starting inventory
-        let player: Actors.Actor = Actors.Actor.specialActors[Actors.SpecialActors.PLAYER];
-        let torch = Actors.ActorFactory.create(ActorType[ActorType.TORCH]);
-        torch.moveTo(player.pos.x, player.pos.y);
-        torch.register();
-        torch.pickable.pick(torch, player);
+        let player: Actors.Actor = Actors.Actor.specialActors[Actors.SpecialActorsEnum.PLAYER];
+        let torch = Actors.ActorFactory.create(ACTOR_TYPES.TORCH);
+        if ( torch ) {
+            torch.moveTo(player.pos.x, player.pos.y);
+            torch.register();
+            torch.pickable.pick(torch, player, false);
+        }
 
         // this helps debugging items
         if (Umbra.logger.isDebugEnabled()) {
-            [ActorType.LANTERN, ActorType.LANTERN, ActorType.OIL_FLASK
-            ].forEach((type: ActorType) => {
-                let actor: Actors.Actor =  Actors.ActorFactory.create(ActorType[type]);
-                actor.register();
-                actor.moveTo(player.pos.x, player.pos.y);
-            });
+            // a pouch with 5 gold pieces
+            let pouch: Actors.Actor|undefined = Actors.ActorFactory.create(ACTOR_TYPES.POUCH);
+            if ( pouch ) {
+                Actors.ActorFactory.createInContainer(pouch, [
+                    ACTOR_TYPES.GOLD_PIECE,
+                    ACTOR_TYPES.GOLD_PIECE,
+                    ACTOR_TYPES.GOLD_PIECE,
+                    ACTOR_TYPES.GOLD_PIECE,
+                    ACTOR_TYPES.GOLD_PIECE]);
+            }
+            let bag: Actors.Actor|undefined = Actors.ActorFactory.create(ACTOR_TYPES.BAG);
+            if ( bag ) {
+                if ( pouch ) {
+                    pouch.pickable.pick(pouch, bag, false);
+                }
+                Actors.ActorFactory.createInContainer(bag,
+                    [ACTOR_TYPES.LANTERN, ACTOR_TYPES.OIL_FLASK, ACTOR_TYPES.KNIFE]);
+                bag.moveTo(player.pos.x, player.pos.y);
+            }
+            Actors.ActorFactory.createInContainer(player,
+                [ACTOR_TYPES.WOODEN_SHIELD, ACTOR_TYPES.MAP_CASE,
+                ACTOR_TYPES.KEY_RING, ACTOR_TYPES.SCROLL_OF_FIREBALL, ACTOR_TYPES.SCROLL_OF_FIREBALL]);
         }
+        Actors.Actor.describeCell(player.pos);
+    }
+
+    public onSaveGame(persister: Yendor.IPersister) {
+        if (Actors.Actor.specialActors[Actors.SpecialActorsEnum.PLAYER].destructible.isDead()) {
+            this.deleteSavedGame();
+        } else {
+            persister.saveToKey(PERSISTENCE_DUNGEON_LEVEL, this.dungeonLevel);
+            persister.saveToKey(PERSISTENCE_VERSION_KEY, SAVEFILE_VERSION);
+            persister.saveToKey(PERSISTENCE_MAP_KEY, this._map);
+            persister.saveToKey(PERSISTENCE_TOPOLOGY_MAP, this._topotologyMap);
+            persister.saveToKey(PERSISTENCE_STATUS_PANEL, this.gui.status);
+            Actors.ActorFactory.save(persister);
+        }
+    }
+
+    /**
+     * Function: onUpdate
+     * Update the game world
+     * Parameters:
+     * time - elapsed time since the last update in milliseconds
+     */
+    public onUpdate(time: number): void {
+        if ( this.status === GameStatus.INITIALIZING ) {
+                    return;
+        }
+        let player: Actors.Actor = Actors.Actor.specialActors[Actors.SpecialActorsEnum.PLAYER];
+        if (player && !player.destructible.isDead()) {
+            let schedulerPaused = Actors.Actor.scheduler.isPaused();
+            if ( this.status === GameStatus.NEXT_TURN) {
+                this.forceNextTurn = true;
+                this.status = GameStatus.RUNNING;
+            }
+            super.onUpdate(time);
+            if ( ! schedulerPaused && Actors.Actor.scheduler.isPaused()) {
+                // save every time the scheduler pauses
+                this.persister.saveToKey(Actors.PERSISTENCE_ACTORS_KEY, Actors.Actor.list);
+                this.onSaveGame(this.persister);
+            }
+        }
+        this.handleKeyboardInput();
+        if (this.status === GameStatus.NEXT_LEVEL) {
+            this.gotoNextLevel();
+            this.status = GameStatus.RUNNING;
+        }
+        if (player.destructible.isDead() && this.status !== GameStatus.DEFEAT) {
+            Umbra.EventManager.publishEvent(EVENT_CHANGE_STATUS, GameStatus.DEFEAT);
+        }
+
+    }
+
+    public onRender(_con: Yendor.Console): void {
+        // rendering done by a MapRendererNode
+    }
+
+    private createGui() {
+        let numberSelector: NumberSelector = new NumberSelector();
+        this.gui = {
+            inventory: new InventoryPanel(numberSelector),
+            loot: new LootPanel(numberSelector),
+            mainMenu : new MainMenu(),
+            status: new StatusPanel(),
+            tilePicker: new TilePicker(),
+        };
+        if (Yendor.urlParams[Umbra.URL_PARAM_DEBUG]) {
+            this.gui.debugMenu = new DebugMenu();
+            this.addChild(this.gui.debugMenu);
+        }
+        this.gui.status.init(Umbra.application.getConsole().width, STATUS_PANEL_HEIGHT);
+        this.playerInventoryPicker = this.gui.inventory;
+        this.playerTilePicker = this.gui.tilePicker;
+        this.playerLootHandler = this.gui.loot;
+        this.gui.inventory.resize(Umbra.application.getConsole().width,
+            Umbra.application.getConsole().height - STATUS_PANEL_HEIGHT);
+        this.addChild(this.gui.status);
+        this.addChild(this.gui.inventory);
+        this.addChild(this.gui.mainMenu);
+        this.addChild(this.gui.tilePicker);
+        this.addChild(this.gui.loot);
+        this.addChild(numberSelector);
+
+        // Gui configuration
+        Gui.setConfiguration(
+            {
+                color: {
+                    background: MENU_BACKGROUND,
+                    backgroundActive: MENU_BACKGROUND_ACTIVE,
+                    backgroundDisabled: MENU_BACKGROUND,
+                    foreground: MENU_FOREGROUND,
+                    foregroundActive: MENU_FOREGROUND_ACTIVE,
+                    foregroundDisabled: MENU_FOREGROUND_DISABLED,
+                    titleForeground: TITLE_FOREGROUND,
+                },
+                input: {
+                    cancelAxisName: Actors.PlayerActionEnum[Actors.PlayerActionEnum.CANCEL],
+                    focusNextWidgetAxisName: Actors.PlayerActionEnum[Actors.PlayerActionEnum.MOVE_SOUTH],
+                    focusPreviousWidgetAxisName: Actors.PlayerActionEnum[Actors.PlayerActionEnum.MOVE_NORTH],
+                    validateAxisName: Actors.PlayerActionEnum[Actors.PlayerActionEnum.VALIDATE],
+                },
+            }
+        );
     }
 
     private loadGame() {
         try {
-            this.persister.loadFromKey(Constants.PERSISTENCE_DUNGEON_LEVEL).then((dungeonLevel) => {
+            this.persister.loadFromKey(PERSISTENCE_DUNGEON_LEVEL).then((dungeonLevel) => {
                 this.dungeonLevel = dungeonLevel;
-                return this.persister.loadFromKey(Constants.PERSISTENCE_MAP_KEY, this._map);
-            }).then((x) => {
+                return this.persister.loadFromKey(PERSISTENCE_MAP_KEY, this._map);
+            }).then((_x) => {
                 return Actors.ActorFactory.load(this.persister);
             }).then(() => {
                 return Actors.Actor.load(this.persister);
             }).then(() => {
-                Actors.Actor.specialActors[Actors.SpecialActors.PLAYER].ai.setPickers(this.playerTilePicker, this.playerInventoryPicker);
-                return this.persister.loadFromKey(Constants.PERSISTENCE_TOPOLOGY_MAP);
+                Actors.Actor.specialActors[Actors.SpecialActorsEnum.PLAYER].ai.setPickers(
+                    this.playerTilePicker, this.playerInventoryPicker, this.playerLootHandler);
+                return this.persister.loadFromKey(PERSISTENCE_TOPOLOGY_MAP);
             }).then((topologyMap) => {
                 this._topotologyMap = topologyMap;
-                this.persister.loadFromKey(Constants.PERSISTENCE_STATUS_PANEL, this.gui.status).then((x) => {
-                    this.status = GameStatus.RUNNING;
-                });
+                return this.persister.loadFromKey(PERSISTENCE_STATUS_PANEL, this.gui.status);
+            }).then((_x) => {
+                this.status = GameStatus.RUNNING;
+            }).catch((err) => {
+                Umbra.logger.critical("Error while loading game :" + err);
+                this.onNewGame();
             });
         } catch (e) {
             Umbra.logger.critical("Error while loading game :" + e);
@@ -228,36 +349,23 @@ export class Engine extends DungeonScene implements Umbra.EventListener {
         }
     }
 
-    onSaveGame(persister: Core.Persister) {
-        if (Actors.Actor.specialActors[Actors.SpecialActors.PLAYER].destructible.isDead()) {
-            this.deleteSavedGame();
-        } else {
-            persister.saveToKey(Constants.PERSISTENCE_DUNGEON_LEVEL, this.dungeonLevel);
-            persister.saveToKey(Constants.PERSISTENCE_VERSION_KEY, SAVEFILE_VERSION);
-            persister.saveToKey(Constants.PERSISTENCE_MAP_KEY, this._map);
-            persister.saveToKey(Constants.PERSISTENCE_TOPOLOGY_MAP, this._topotologyMap);
-            persister.saveToKey(Constants.PERSISTENCE_STATUS_PANEL, this.gui.status);
-            Actors.ActorFactory.save(persister);
-        }
-    }
-
     private deleteSavedGame() {
-        this.persister.deleteKey(Constants.PERSISTENCE_DUNGEON_LEVEL);
-        this.persister.deleteKey(Constants.PERSISTENCE_VERSION_KEY);
-        this.persister.deleteKey(Constants.PERSISTENCE_MAP_KEY);
+        this.persister.deleteKey(PERSISTENCE_DUNGEON_LEVEL);
+        this.persister.deleteKey(PERSISTENCE_VERSION_KEY);
+        this.persister.deleteKey(PERSISTENCE_MAP_KEY);
         Actors.ActorFactory.deleteSavedGame(this.persister);
         Actors.Actor.deleteSavedGame(this.persister);
-        this.persister.deleteKey(Constants.PERSISTENCE_STATUS_PANEL);
+        this.persister.deleteKey(PERSISTENCE_STATUS_PANEL);
     }
 
     /**
-        Function: gotoNextLevel
-        Go down one level in the dungeon
-    */
+     * Function: gotoNextLevel
+     * Go down one level in the dungeon
+     */
     private gotoNextLevel() {
         this.dungeonLevel++;
         this.newLevel();
-        let player: Actors.Actor = Actors.Actor.specialActors[Actors.SpecialActors.PLAYER];
+        let player: Actors.Actor = Actors.Actor.specialActors[Actors.SpecialActorsEnum.PLAYER];
         player.destructible.heal(player, player.destructible.maxHp / 2);
         Umbra.logger.warn("You take a moment to rest, and recover your strength.");
         Umbra.logger.warn("After a rare moment of peace, you descend deeper\ninto the heart of the dungeon...");
@@ -266,51 +374,14 @@ export class Engine extends DungeonScene implements Umbra.EventListener {
     }
 
     /**
-        Function: handleKeyboardInput
-        Handle main menu shortcut
-    */
+     * Function: handleKeyboardInput
+     * Handle main menu shortcut
+     */
     private handleKeyboardInput(): void {
-        if (Gui.Widget.getActiveModal() === undefined && Actors.getLastPlayerAction() === Actors.PlayerAction.CANCEL) {
+        if (Gui.Widget.getActiveModal() === undefined
+            && Actors.getLastPlayerAction() === Actors.PlayerActionEnum.CANCEL) {
             Umbra.resetInput();
-            Umbra.EventManager.publishEvent(Constants.EVENT_OPEN_MAIN_MENU);
+            Umbra.EventManager.publishEvent(EVENT_OPEN_MAIN_MENU);
         }
-    }
-
-    /**
-        Function: onUpdate
-        Update the game world
-
-        Parameters:
-        time - elapsed time since the last update in milliseconds
-    */
-    onUpdate(time: number): void {
-        if ( this.status === GameStatus.INITIALIZING ) {
-            return;
-        }
-        let player: Actors.Actor = Actors.Actor.specialActors[Actors.SpecialActors.PLAYER];
-        if (! player) {
-            return;
-        }
-        let schedulerPaused = Actors.Actor.scheduler.isPaused();
-        super.onUpdate(time);
-        if ( ! schedulerPaused && Actors.Actor.scheduler.isPaused()) {
-            // save every time the scheduler pauses
-            this.persister.saveToKey(Actors.PERSISTENCE_ACTORS_KEY, Actors.Actor.list);
-            this.onSaveGame(this.persister);
-        }
-        this.handleKeyboardInput();
-        if (this.status === GameStatus.NEXT_LEVEL) {
-            this.gotoNextLevel();
-            this.status = GameStatus.RUNNING;
-        }
-        if (player.destructible.isDead()) {
-            Umbra.EventManager.publishEvent(EventType[EventType.CHANGE_STATUS], GameStatus.DEFEAT);
-        }
-
-    }
-
-
-    onRender(con: Yendor.Console): void {
-        // rendering done by a MapRendererNode
     }
 }

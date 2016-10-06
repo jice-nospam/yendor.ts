@@ -1,12 +1,12 @@
 import * as tsUnit from "../tsUnit";
-import * as Core from "../../fwk/core/main";
 import * as Yendor from "../../fwk/yendor/main";
 
 export class PathTests extends tsUnit.TestClass {
-    binaryHeap() {
+    public binaryHeap() {
         let heap = new Yendor.BinaryHeap<number>((x: number) => { return x; });
-        [10, 3, 4, 8, 2, 9, 7, 1, 2, 6, 5].forEach((n: number) => { heap.push(n); });
-
+        for (let n of [10, 3, 4, 8, 2, 9, 7, 1, 2, 6, 5]) {
+            heap.push(n);
+        }
         heap.remove(2);
         let result = "";
         while (heap.size() > 0) {

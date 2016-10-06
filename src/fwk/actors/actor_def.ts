@@ -2,14 +2,22 @@
 	Section: actors
 */
 import * as Core from "../core/main";
+import {IProbabilityMap} from "./actor";
 
-/********************************************************************************
+/**
+ * =============================================================================
  * Group: actor definitions
- ********************************************************************************/
+ * =============================================================================
+ */
 
-export interface ActorDef {
+export interface IActorDef {
     ch?: string;
     color?: Core.Color;
+    name: string;
+    pluralName?: string;
+    abstract?: boolean;
+    /** can we say "a bag of <thisActorType>" ? */
+    containerQualifier?: boolean;
     /** other ActorDefs this one inherits properties from */
     prototypes?: string[];
     /** whether the actor's name is singular or plural */
@@ -22,56 +30,56 @@ export interface ActorDef {
     blockSight?: boolean;
     /** once discovered, should the actor be displayed on map even if out of sight ? */
     displayOutOfFov?: boolean;
-    pickable?: PickableDef;
-    destructible?: DestructibleDef;
-    attacker?: AttackerDef;
-    ai?: AiDef;
-    light?: LightDef;
-    equipment?: EquipmentDef;
-    ranged?: RangedDef;
-    magic?: MagicDef;
-    activable?: ActivableDef | DoorDef;
-    xpHolder?: XpHolderDef;
-    container?: ContainerDef;
+    pickable?: IPickableDef;
+    destructible?: IDestructibleDef;
+    attacker?: IAttackerDef;
+    ai?: IAiDef;
+    light?: ILightDef;
+    equipment?: IEquipmentDef;
+    ranged?: IRangedDef;
+    magic?: IMagicDef;
+    activable?: IActivableDef | IDoorDef;
+    xpHolder?: IXpHolderDef;
+    container?: IContainerDef;
 }
 
 /**
-    Interface: PickableDef
-    Somethind that can be picked/dropped/thrown by the player
-*/
-export interface PickableDef {
+ * Interface: PickableDef
+ * Somethind that can be picked/dropped/thrown by the player
+ */
+export interface IPickableDef {
     weight: number;
     destroyedWhenThrown?: boolean;
-    onUseEffector?: EffectorDef;
-    onThrowEffector?: EffectorDef;
+    onUseEffector?: IEffectorDef;
+    onThrowEffector?: IEffectorDef;
 }
 
-export interface EffectorDef {
-    effect: EffectDef;
-    targetSelector: TargetSelectorDef;
+export interface IEffectorDef {
+    effect: IEffectDef;
+    targetSelector: ITargetSelectorDef;
     message?: string;
     destroyOnEffect: boolean;
 }
 
-export enum EffectType {
-    INSTANT_HEALTH, // => InstantHealthEffectDef
+export enum EffectTypeEnum {
+    INSTANT_HEALTH = 1, // => InstantHealthEffectDef
     TELEPORT, // => TeleportEffectDef
     CONDITION, // => ConditionEffectDef
     MAP_REVEAL, // => no data
     EVENT, // => EventEffectDef
 }
 
-export interface EffectDef {
-    type: EffectType;
-    data?: InstantHealthEffectDef | TeleportEffectDef | ConditionEffectDef | EventEffectDef;
+export interface IEffectDef {
+    type: EffectTypeEnum;
+    data?: IInstantHealthEffectDef | ITeleportEffectDef | IConditionEffectDef | IEventEffectDef;
 }
 
-export interface EventEffectDef {
+export interface IEventEffectDef {
     eventType: string;
     eventData: any;
 }
 
-export interface InstantHealthEffectDef {
+export interface IInstantHealthEffectDef {
     amount: number;
     /** does this effect also work on deads (defult : false) */
     canResurrect?: boolean;
@@ -81,20 +89,20 @@ export interface InstantHealthEffectDef {
     failureMessage?: string;
 }
 
-export interface TeleportEffectDef {
+export interface ITeleportEffectDef {
     successMessage: string;
 }
 
 /**
-    enum: ActivableType
-    What type of feature to create
-    SINGLE - Activable
-    DOOR - Door
-    TOGGLE - Lever
-    */
-export enum ActivableType {
+ * enum: ActivableTypeEnum
+ * What type of feature to create
+ * SINGLE - Activable
+ * DOOR - Door
+ * TOGGLE - levers
+ */
+export const enum ActivableTypeEnum {
     /** activates every time you use it (for example press button) */
-    SINGLE,
+    SINGLE = 1,
     DOOR,
     /** two positions (for example toggle button) */
     TOGGLE,
@@ -102,23 +110,23 @@ export enum ActivableType {
 }
 
 /**
- * enum: ActivableDef
+ * interface: IActivableDef
  * Something that can be turned on and off.
  */
-export interface ActivableDef {
-    type: ActivableType;
+export interface IActivableDef {
+    type: ActivableTypeEnum;
     activateMessage?: string;
     deactivateMessage?: string;
     activeByDefault?: boolean;
-    onActivateEffector?: EffectorDef;
+    onActivateEffector?: IEffectorDef;
 }
 
-export interface DoorDef extends ActivableDef {
+export interface IDoorDef extends IActivableDef {
     seeThrough: boolean;
 }
 
 /*
-    Enum: ConditionType
+    Enum: ConditionTypeEnum
 
     CONFUSED - moves randomly and attacks anything on path
     STUNNED - don't move or attack, then get confused
@@ -127,8 +135,8 @@ export interface DoorDef extends ActivableDef {
     DETECT_LIFE - detect living creatures at {range} distance
 */
 
-export const enum ConditionType {
-    CONFUSED,
+export const enum ConditionTypeEnum {
+    CONFUSED = 1,
     STUNNED,
     FROZEN,
     HEALTH_VARIATION,
@@ -136,8 +144,8 @@ export const enum ConditionType {
     DETECT_LIFE,
 }
 
-export interface ConditionDef {
-    type: ConditionType;
+export interface IConditionDef {
+    type: ConditionTypeEnum;
     /** use 0 for infinite condition */
     nbTurns: number;
     amount?: number;
@@ -150,25 +158,24 @@ export interface ConditionDef {
     name?: string;
 }
 
-export interface ConditionEffectDef {
-    condition: ConditionDef;
+export interface IConditionEffectDef {
+    condition: IConditionDef;
     successMessage: string;
 }
 
 /**
-    Enum: TargetSelectionMethod
-    Define how we select the actors that are impacted by an effect.
-
-    WEARER - the actor containing this actor
-    WEARER_INVENTORY - an actor from the wearer's inventory. Can be filtered with actorType
-    ACTOR_ON_CELL - whatever actor is on the selected cell
-    CLOSEST_ENEMY - the closest non player creature
-    SELECTED_ACTOR - an actor manually selected
-    ACTORS_RANGE - all actors close to the cell
-    SELECTED_RANGE - all actors close to a manually selected position
-*/
-export const enum TargetSelectionMethod {
-    WEARER,
+ * Enum: TargetSelectionMethodEnum
+ * Define how we select the actors that are impacted by an effect.
+ * WEARER - the actor containing this actor
+ * WEARER_INVENTORY - an actor from the wearer's inventory. Can be filtered with actorType
+ * ACTOR_ON_CELL - whatever actor is on the selected cell
+ * CLOSEST_ENEMY - the closest non player creature
+ * SELECTED_ACTOR - an actor manually selected
+ * ACTORS_RANGE - all actors close to the cell
+ * SELECTED_RANGE - all actors close to a manually selected position
+ */
+export const enum TargetSelectionMethodEnum {
+    WEARER = 1,
     WEARER_INVENTORY,
     ACTOR_ON_CELL,
     CLOSEST_ENEMY,
@@ -177,108 +184,114 @@ export const enum TargetSelectionMethod {
     SELECTED_RANGE
 }
 
-export interface TargetSelectorDef {
-    method: TargetSelectionMethod;
+export interface ITargetSelectorDef {
+    method: TargetSelectionMethodEnum;
     actorType?: string;
     range?: number;
     radius?: number;
 }
 
-export interface DestructibleDef {
-    healthPoints: number;
+export interface IDestructibleDef {
+    healthPoints?: number;
     /** can use actor1 = the actor owning this destructible and actor2 = the actor wearing actor1 */
     deathMessage?: string;
     defense?: number;
+    qualifiers?: string[];
     /** if no corpse name, actor is destroyed when healthPoints reach 0 */
     corpseName?: string;
     corpseChar?: string;
+    /** probability for this item to drop loot */
+    loot?: IProbabilityMap;
     xp?: number;
 }
 
-export interface AttackerDef {
+export interface IAttackerDef {
     hitPoints: number;
     attackTime: number;
 }
 
-
-export enum AiType {
-    ITEM,
+export enum AiTypeEnum {
+    ITEM = 1,
     MONSTER,
     PLAYER,
 }
 
-export interface AiDef {
-    type: AiType;
+export interface IAiDef {
+    type: AiTypeEnum;
     walkTime: number;
-    conditions?: ConditionDef[];
+    conditions?: IConditionDef[];
 }
 
-export interface XpHolderDef {
+export interface IXpHolderDef {
     baseLevel: number;
     newLevel: number;
 }
 
-/*
-    Enum: LightFalloffType
-    How does the light intensity decrease along distance.
-    See http://roguecentral.org/doryen/articles/lights-in-full-color-roguelikes
-
-    LINEAR - faster. Decreases linearly. Small penumbra zone
-    NORMAL - improved inverse square. medium penumbra zone
-    INVERSE_SQUARE - raw inverse square. big penumbra zone
-*/
-export enum LightFalloffType {
-    LINEAR,
+/**
+ * Enum: LightFalloffTypeEnum
+ * How does the light intensity decrease along distance.
+ * See http://roguecentral.org/doryen/articles/lights-in-full-color-roguelikes
+ * LINEAR - faster. Decreases linearly. Small penumbra zone
+ * NORMAL - improved inverse square. medium penumbra zone
+ * INVERSE_SQUARE - raw inverse square. big penumbra zone
+ */
+export enum LightFalloffTypeEnum {
+    LINEAR = 1,
     NORMAL,
     INVERSE_SQUARE
 }
 
-export enum LightRenderMode {
-    ADDITIVE,
+export enum LightRenderModeEnum {
+    ADDITIVE = 1,
     MAX
 }
 
-export interface LightDef {
-    renderMode: LightRenderMode;
+export interface ILightDef {
+    renderMode: LightRenderModeEnum;
     color: Core.Color;
     range: number;
-    falloffType: LightFalloffType;
+    falloffType: LightFalloffTypeEnum;
     /**
-        Field: intensityVariationPattern
-        A string containing numbers 0 to 9 giving the intensity variation curve, or "noise" for a curve computed from a 1D noise
-    */
+     * Field: intensityVariationPattern
+     * A string containing numbers 0 to 9 giving the intensity variation curve,
+     * or "noise" for a curve computed from a 1D noise
+     */
     intensityVariationPattern?: string;
     /**
-        Field: intensityVariationRange
-        Percentage of intensity removed when intensityVariationPattern === "0".
-    */
+     * Field: intensityVariationRange
+     * Percentage of intensity removed when intensityVariationPattern === "0".
+     */
     intensityVariationRange?: number;
     /**
-        Field: intensityVariationLength
-        delay corresponding to the intensityVariationPattern in milliseconds.
-    */
+     * Field: intensityVariationLength
+     * delay corresponding to the intensityVariationPattern in milliseconds.
+     */
     intensityVariationLength?: number;
 }
 
-export type EquipmentSlot = "right hand"|"left hand"|"hands"|"quiver";
-
-export interface EquipmentDef {
-    slot: EquipmentSlot;
+export interface IEquipmentDef {
+    /** list of slots this item can be equipped on */
+    slots: string[];
     defense?: number;
 }
 
-export interface RangedDef {
+export interface IRangedDef {
     damageCoef: number;
     projectileType: string;
     loadTime: number;
     range: number;
 }
 
-export interface MagicDef {
+export interface IMagicDef {
     charges: number;
-    onFireEffect: EffectorDef;
+    onFireEffect: IEffectorDef;
 }
 
-export interface ContainerDef {
+export interface IContainerDef {
+    /** total weight this container can contain */
     capacity: number;
+    /** if this container can only contain certain types of items */
+    filter?: string[];
+    /** list of existing slots in this container */
+    slots?: string[];
 }

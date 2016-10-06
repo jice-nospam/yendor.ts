@@ -1,6 +1,6 @@
 /**
-	Section: Constants
-*/
+ * Section: Constants
+ */
 import * as Core from "../core/main";
 
 export const VERSION = "0.1.0";
@@ -11,14 +11,22 @@ export const DEFAULT_CONSOLE_HEIGHT: number = 34;
 export const DEFAULT_BACKGROUND_COLOR: Core.Color = "#000000";
 export const DEFAULT_FOREGROUND_COLOR: Core.Color = "#FFFFFF";
 export const DEFAULT_DIV_SELECTOR: string = "#console";
-export const DEFAULT_FONT_FILE_NAME: string = "terminal.png";
+export const DEFAULT_FONT_FILE_NAME: string = "terminal12x12.png";
 export const DEFAULT_TICKS_PER_SECOND: number = 10;
 export const DEFAULT_BACKGROUND_ANIMATION: boolean = false;
 
+// built-in event types
+export const EVENT_LOG: string = "LOG";
+export const EVENT_START_DRAG: string = "START_DRAG";
+export const EVENT_CANCEL_DRAG: string = "CANCEL_DRAG";
+export const EVENT_END_DRAG: string = "END_DRAG";
+export const EVENT_DROP: string = "DROP";
+
 // URL parameters
 export const URL_PARAM_DEBUG: string = "debug";
+export const URL_PARAM_FONT_FILENAME: string = "font";
 
-export const enum MouseButton {
+export const enum MouseButtonEnum {
     LEFT = 1,
     MIDDLE = 2,
     RIGHT = 3
@@ -27,7 +35,7 @@ export const enum MouseButton {
     Enum : key codes
     TODO : symbol keys different on IE ? see http://unixpapa.com/js/key.html
 */
-export const enum KeyCode {
+export const enum KeyCodeEnum {
     DOM_VK_CANCEL = 3,
     DOM_VK_HELP = 6,
     DOM_VK_BACK_SPACE = 8,
@@ -146,10 +154,10 @@ export const enum KeyCode {
 };
 
 /**
-    Enum : AxisType
-*/
-export const enum AxisType {
-    KEY_OR_BUTTON,
+ * Enum : AxisType
+ */
+export const enum AxisTypeEnum {
+    KEY_OR_BUTTON = 1,
     MOUSE_MOVEMENT,
     JOYSTICK_AXIS
 }

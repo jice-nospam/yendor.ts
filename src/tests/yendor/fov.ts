@@ -1,11 +1,10 @@
 import * as tsUnit from "../tsUnit";
-import * as Core from "../../fwk/core/main";
 import * as Yendor from "../../fwk/yendor/main";
 
 export class FovTests extends tsUnit.TestClass {
     private fov: Yendor.Fov;
     private inFov: boolean[][];
-    setUp() {
+    public setUp() {
         this.fov = new Yendor.Fov(20, 20);
         this.inFov = [];
         for (let x = 0; x < 20; x++) {
@@ -16,7 +15,7 @@ export class FovTests extends tsUnit.TestClass {
         }
     }
 
-    noWall() {
+    public noWall() {
         this.fov.computeFov(this.inFov, 10, 10, 20);
 
         for (let x = 0; x < 20; x++) {
@@ -27,7 +26,7 @@ export class FovTests extends tsUnit.TestClass {
         }
     }
 
-    pillar() {
+    public pillar() {
         this.fov.setTransparent(10, 10, false);
         this.fov.computeFov(this.inFov, 10, 11, 20, true);
 
@@ -43,7 +42,7 @@ export class FovTests extends tsUnit.TestClass {
         }
     }
 
-    wall() {
+    public wall() {
         for (let x = 0; x < 20; x++) {
             this.fov.setTransparent(x, 10, false);
         }
@@ -60,7 +59,7 @@ export class FovTests extends tsUnit.TestClass {
         }
     }
 
-    dontLightWalls() {
+    public dontLightWalls() {
         for (let x = 0; x < 20; x++) {
             this.fov.setTransparent(x, 10, false);
         }

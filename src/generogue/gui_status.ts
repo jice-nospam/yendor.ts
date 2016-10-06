@@ -1,46 +1,58 @@
 /**
-	Section: GUI
-*/
+ * Section: GUI
+ */
 import * as Core from "../fwk/core/main";
 import * as Yendor from "../fwk/yendor/main";
 import * as Umbra from "../fwk/umbra/main";
 import * as Gui from "../fwk/gui/main";
 import * as Actors from "../fwk/actors/main";
 import * as Map from "../fwk/map/main";
-import {Constants} from "./base";
+import * as Constants from "./base";
 
-/********************************************************************************
+/**
+ * =============================================================================
  * Group: status panel
- ********************************************************************************/
-export class Message implements Core.Persistent {
+ * =============================================================================
+ */
+export class Message {
     private _color: Core.Color;
     private _text: string;
-    constructor(_color: Core.Color, _text: string) {
+    constructor( _color: Core.Color,
+                 _text: string
+    ) {
         this._color = _color;
         this._text = _text;
     }
 
     get text() { return this._text; }
     get color() { return this._color; }
-    darkenColor() {
+    public darkenColor() {
         this._color = Core.ColorUtils.multiply(this._color, Constants.LOG_DARKEN_COEF);
     }
 }
 
-export class StatusPanel extends Gui.ConsoleWidget implements Umbra.EventListener, Core.Persistent {
+export class StatusPanel extends Gui.ConsoleWidget implements Umbra.IEventListener {
     private static MESSAGE_X = Constants.STAT_BAR_WIDTH + 2;
     private messageHeight: number;
     private messages: Message[] = [];
     private mouseLookText: string = "";
 
-    init(width: number, height: number) {
+    public init( width: number,
+                 height: number
+    ) {
         super.init(width, height);
-        this.moveTo(0, Constants.CONSOLE_HEIGHT - height);
+        this.moveToBottomLeft();
         this.messageHeight = height - 1;
-        Umbra.EventManager.registerEventListener(this, Umbra.EventType[Umbra.EventType.LOG]);
+        Umbra.EventManager.registerEventListener(this, Umbra.EVENT_LOG);
     }
 
-    onLog(event: Umbra.LogEvent) {
+    public onTerm() {
+        super.onTerm();
+        Umbra.EventManager.registerEventListener(this, Umbra.EVENT_LOG);
+    }
+
+    public onLog( event: Umbra.ILogEvent
+    ) {
         if ( event.level === Umbra.LogLevel.DEBUG ) {
             return;
         }
@@ -48,35 +60,40 @@ export class StatusPanel extends Gui.ConsoleWidget implements Umbra.EventListene
         if (this.messages.length + lines.length > this.messageHeight) {
             this.messages.splice(0, this.messages.length + lines.length - this.messageHeight);
         }
-        for (let i: number = 0; i < this.messages.length; ++i) {
-            this.messages[i].darkenColor();
+        for (let msg of this.messages) {
+            msg.darkenColor();
         }
         let col: Core.Color;
         switch (event.level) {
+            default:
             case Umbra.LogLevel.INFO : col = Constants.LOG_INFO_COLOR; break;
             case Umbra.LogLevel.WARN : col = Constants.LOG_WARN_COLOR; break;
             case Umbra.LogLevel.ERROR : col = Constants.LOG_CRIT_COLOR; break;
             case Umbra.LogLevel.CRITICAL : col = Constants.LOG_CRIT_COLOR; break;
         }
-        for (let j: number = 0; j < lines.length; ++j) {
-            this.messages.push(new Message(col, lines[j]));
+        for (let line of lines) {
+            this.messages.push(new Message(col, line));
         }
     }
 
-    onUpdate(time: number) {
+    public onUpdate( _time: number
+    ) {
         if (!Map.Map.current) {
             // map not yet created (during newLevel phase)
             return;
         }
         let mousePos: Core.Position = Umbra.getMouseCellPosition();
         if (Map.Map.current.contains(mousePos.x, mousePos.y) && Map.Map.current.isExplored(mousePos.x, mousePos.y)) {
-            let actorsOnCell: Actors.Actor[] = Actors.Actor.list.filter((actor: Actors.Actor) => actor.pos.equals(mousePos));
+            let actorsOnCell: Actors.Actor[] = Actors.Actor.list.filter(
+                (actor: Actors.Actor) => actor.pos.equals(mousePos)
+            );
             this.handleMouseLook(actorsOnCell, mousePos);
         }
     }
 
-    onRender(destination: Yendor.Console) {
-        let player: Actors.Player = Actors.Actor.specialActors[Actors.SpecialActors.PLAYER];
+    public onRender( destination: Yendor.Console
+    ) {
+        let player: Actors.Actor = Actors.Actor.specialActors[Actors.SpecialActorsEnum.PLAYER];
         if ( player === undefined ) {
             return;
         }
@@ -92,12 +109,13 @@ export class StatusPanel extends Gui.ConsoleWidget implements Umbra.EventListene
         super.onRender(destination);
     }
 
-    clear() {
+    public clear() {
         this.messages = [];
         this.mouseLookText = "";
     }
 
-    private renderConditions(conditions: Actors.Condition[]) {
+    private renderConditions( conditions: Actors.Condition[]
+    ) {
         if (!conditions) {
             return;
         }
@@ -109,19 +127,27 @@ export class StatusPanel extends Gui.ConsoleWidget implements Umbra.EventListene
         }
     }
 
-    private handleMouseLook(actors: Actors.Actor[], pos: Core.Position) {
+    private handleMouseLook( actors: Actors.Actor[],
+                             _pos: Core.Position
+    ) {
         let len: number = actors.length;
         this.mouseLookText = "";
-        let player: Actors.Actor = Actors.Actor.specialActors[Actors.SpecialActors.PLAYER];
-        let detectLifeCond: Actors.DetectLifeCondition = <Actors.DetectLifeCondition>player.ai.getCondition(Actors.ConditionType.DETECT_LIFE);
-        let detectRange = detectLifeCond ? detectLifeCond.range : 0;
-        for (let i: number = 0; i < len; ++i) {
-            let actor: Actors.Actor = actors[i];
-            if (!actor.isInContainer() && Map.Map.current.renderer.getActorRenderMode(actor, detectRange) !== Map.ActorRenderMode.NONE) {
-                if (i > 0) {
-                    this.mouseLookText += ",";
+        let player: Actors.Actor = Actors.Actor.specialActors[Actors.SpecialActorsEnum.PLAYER];
+        if ( player ) {
+            let detectLifeCond: Actors.DetectLifeCondition =
+                <Actors.DetectLifeCondition> player.ai.getCondition(Actors.ConditionTypeEnum.DETECT_LIFE);
+            let detectRange = detectLifeCond ? detectLifeCond.range : 0;
+            for (let i: number = 0; i < len; ++i) {
+                let actor: Actors.Actor = actors[i];
+                if (!actor.isInContainer()
+                    && Map.Map.current.renderer.getActorRenderMode(actor, detectRange)
+                    !== Map.ActorRenderModeEnum.NONE) {
+                    if (i > 0) {
+                        this.mouseLookText += ",";
+                    }
+                    this.mouseLookText += Map.Map.current.renderer.canIdentifyActor(actor)
+                        ? actor.getDescription() : "?" ;
                 }
-                this.mouseLookText += Map.Map.current.renderer.canIdentifyActor(actor) ? actor.getDescription() : "?" ;
             }
         }
     }
@@ -133,16 +159,27 @@ export class StatusPanel extends Gui.ConsoleWidget implements Umbra.EventListene
         }
     }
 
-    private renderBar(x: number, y: number, width: number, name: string, value: number,
-        maxValue: number, foreColor: Core.Color, backColor: Core.Color, displayValues: boolean = true) {
+    private renderBar( x: number,
+                       y: number,
+                       width: number,
+                       name: string|undefined,
+                       value: number,
+                       maxValue: number,
+                       foreColor: Core.Color,
+                       backColor: Core.Color,
+                       displayValues: boolean = true
+    ) {
         this.console.clearBack(backColor, x, y, width, 1);
         let barWidth = Math.floor(value / maxValue * width);
         if (barWidth > 0) {
             this.console.clearBack(foreColor, x, y, barWidth, 1);
         }
-        let label: string = name;
+        let label: string = name || "";
         if (displayValues && maxValue !== -1) {
-            label += " : " + Math.floor(value) + "/" + Math.floor(maxValue);
+            if (name) {
+                label += " : ";
+            }
+            label += Math.floor(value) + "/" + Math.floor(maxValue);
         }
         this.console.print(x + Math.floor((width - label.length) / 2), y, label);
     }

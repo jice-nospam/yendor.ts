@@ -1,18 +1,19 @@
-/// <reference path="../decl/jquery.d.ts" />
-
+import * as $ from "jquery";
 import * as tsUnit from "./tsUnit";
+import * as Yendor from "../fwk/yendor/main";
 import {RngTests} from "./yendor/rng";
 import {BspTests} from "./yendor/bsp";
 import {FovTests} from "./yendor/fov";
 import {NoiseTests} from "./yendor/noise";
-import {ConsoleTests} from "./yendor/console";
+import {ColorTests} from "./core/color";
 import {PathTests} from "./yendor/path";
 import {GameplayTests} from "./generogue/gameplay";
+import {GuiTests} from "./generogue/gui";
 import {CoreTests} from "./core/main";
+import {NodeTests} from "./umbra/node";
 import {PersistenceTests} from "./core/persistence";
 
-let isBrowser = new Function("try {return this===window;}catch(e){ return false;}");
-if ( isBrowser() ) {
+if ( Yendor.isBrowser() ) {
     $(function() {
         runTests(true);
     });
@@ -20,13 +21,14 @@ if ( isBrowser() ) {
     runTests(false);
 }
 
-function runTests(isBrowser: boolean) {
+function runTests(browser: boolean) {
     // new instance of tsUnit
     let test = new tsUnit.Test();
 
     // core tests
     test.addTestClass(new CoreTests(), "core", CoreTests);
-    if (isBrowser) {
+    test.addTestClass(new ColorTests(), "core/color", ColorTests);
+    if (browser) {
         // local storage and indexed db not available in node.js
         test.addTestClass(new PersistenceTests(), "core/persistence", PersistenceTests);
     }
@@ -36,14 +38,17 @@ function runTests(isBrowser: boolean) {
     test.addTestClass(new BspTests(), "yendor/bsp", BspTests);
     test.addTestClass(new FovTests(), "yendor/fov", FovTests);
     test.addTestClass(new NoiseTests(), "yendor/noise", NoiseTests);
-    test.addTestClass(new ConsoleTests(), "yendor/console", ConsoleTests);
     test.addTestClass(new PathTests(), "yendor/path", PathTests);
+
+    // umbra tests
+    test.addTestClass(new NodeTests(), "umbra/node", NodeTests);
 
     // generogue tests
     test.addTestClass(new GameplayTests(), "generogue/gameplay", GameplayTests);
+    test.addTestClass(new GuiTests(), "generogue/gui", GuiTests);
 
     // Use the built in results display
-    if (isBrowser) {
+    if (browser) {
         test.showResultsBrowser($("#console")[0], test.run());
     } else {
         test.showResultsNode(test.run());

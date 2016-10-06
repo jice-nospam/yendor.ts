@@ -16,11 +16,13 @@ GeneRogue is a generic roguelike loosely based on the famous [python roguelike t
 * [A* pathfinding](http://en.wikipedia.org/wiki/A*_search_algorithm) toolkit
 * a scheduler to handle the order in which creatures with different speed are updated
 * a simplex noise toolkit
+* a persistence toolkit with support for both local storage and indexedDb.
 
 ## umbra.ts
 * scene graph management
 * user input management
 * event bus
+* basic log system
 
 ## GeneRogue
 * multi-level procedurally generated dungeon
@@ -32,10 +34,11 @@ GeneRogue is a generic roguelike loosely based on the famous [python roguelike t
 
  * ECMAScript 6 compliant browsers (yendor/div renderer) :
  	- Edge 13+
- 	- Firefox 47+
- 	- Safari 9.1+
- 	- Chrome 49+
- 	- Opera 39+
+    - Firefox 47+
+    - Safari 9.1+
+    - Chrome 49+
+    - Opera 39+
+
  * For pixi renderers, check [pixi.js](http://www.pixijs.com/) documentation
 
 # Links
@@ -85,6 +88,13 @@ If the savegame gets corrupted, you might be stuck, not being able to start a ne
 You can force the start of a new game and ignore the current savegame by adding the clearsavegame parameter to the URL.
 
 `http://mysite/index.html?clearsavegame=1`
+
+## Font size
+The default font is terminal12x12.png but you can force the use of another font with the font parameter :
+
+`http://mysite/index.html?font=terminal16x16.png`
+
+Generogue comes with 3 fonts : terminal8x8.png, terminal12x12.png and terminal16x16.png.
 
 # License
 

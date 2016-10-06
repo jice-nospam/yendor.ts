@@ -1,62 +1,63 @@
 /**
-	Section: Binary heap
-*/
+ * Section: Binary heap
+ */
 /**
-    Class: BinaryHeap
-    A min heap used for A* algorithm.
-    Adapted from http://www.openbookproject.net/books/mi2pwjs/app_b.html#binary-heaps-appendix
-*/
+ * Class: BinaryHeap
+ * A min heap used for A* algorithm.
+ * Adapted from http://www.openbookproject.net/books/mi2pwjs/app_b.html#binary-heaps-appendix
+ */
 export class BinaryHeap<T> {
     private content: T[] = [];
     private scoreFunction: (element: T) => number;
     constructor(scoreFunction: (element: T) => number) {
         this.scoreFunction = scoreFunction;
     }
-    push(element: T) {
+    public push(element: T) {
         this.content.push(element);
         this.bubbleUp(this.content.length - 1);
     }
-    pushAll(elements: T[]) {
-        let len: number = elements.length;
-        for (let i: number = 0; i < len; ++i) {
-            this.push(elements[i]);
+    public pushAll(elements: T[]) {
+        for (let element of elements) {
+            this.push(element);
         }
     }
-    peek(index: number = 0): T {
+    public peek(index: number = 0): T|undefined {
         return this.content.length > index ? this.content[index] : undefined;
     }
-    clear() {
+    public clear() {
         this.content = [];
     }
-    pop(): T {
-        let result: T = this.content[0];
-        let end: T = this.content.pop();
+    public pop(): T|undefined {
+        let result: T|undefined;
         if (this.content.length > 0) {
-            this.content[0] = end;
-            this.sinkDown(0);
+            result = this.content[0];
+            let end: T = this.content.pop()!;
+            if (this.content.length > 0) {
+                this.content[0] = end;
+                this.sinkDown(0);
+            }
         }
         return result;
     }
     /**
-        Function: contains
-        Check if the heap contains en element. Only works if the elements implements <Comparable>
-    */
-    contains(element: T): boolean {
-        let len: number = this.content.length;
-        for (let i: number = 0; i < len; ++i) {
-            if ((<any>element).equals(<any>(this.content[i]))) {
+     * Function: contains
+     * Check if the heap contains en element. Only works if the elements implements <Comparable>
+     */
+    public contains(elementToFind: T): boolean {
+        for (let element of this.content) {
+            if ((<any> elementToFind).equals(<any> element)) {
                 return true;
             }
         }
         return false;
     }
-    remove(element: T): boolean {
+    public remove(element: T): boolean {
         let index: number = this.content.indexOf(element);
         if ( index === -1 ) {
             return false;
         }
-        let end: T = this.content.pop();
-        if (index !== this.content.length ) {
+        let end: T = this.content.pop()!;
+        if (index !== this.content.length) {
             this.content[index] = end;
             if (this.scoreFunction(end) < this.scoreFunction(element)) {
                 this.bubbleUp(index);
@@ -66,10 +67,10 @@ export class BinaryHeap<T> {
         }
         return true;
     }
-    size(): number {
+    public size(): number {
         return this.content.length;
     }
-    isEmpty(): boolean {
+    public isEmpty(): boolean {
         return this.content.length === 0;
     }
     private bubbleUp(n: number) {
@@ -93,8 +94,8 @@ export class BinaryHeap<T> {
         while (true) {
             let child2N: number = (n + 1) * 2;
             let child1N: number = child2N - 1;
-            let swap: number = undefined;
-            let child1Score: number;
+            let swap: number|undefined = undefined;
+            let child1Score: number = 0;
             if (child1N < length) {
                 let child1 = this.content[child1N];
                 child1Score = this.scoreFunction(child1);

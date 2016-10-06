@@ -1,89 +1,143 @@
-	/********************************************************************************
-	 * Group: map renderer
-	 ********************************************************************************/
+/**
+ * ==============================================================================
+ * Group: map rendering
+ * ==============================================================================
+ */
 import * as Core from "../core/main";
 import * as Yendor from "../yendor/main";
 import * as Umbra from "../umbra/main";
 import * as Actors from "../actors/main";
-import {MapShader} from "./map_shading";
+import {IMapShader} from "./map_shading";
 import {Map} from "./map";
 
 /**
-    enum: ActorRenderMode
-    NONE - actor should not be rendered
-    NORMAL - actor rendered using normal shading path
-    DETECTED - actor detected through magic. special render mode (does not take lighting into account)
-    */
-export enum ActorRenderMode {
-    NONE,
+ * enum: ActorRenderModeEnum
+ * NONE - actor should not be rendered
+ * NORMAL - actor rendered using normal shading path
+ * DETECTED - actor detected through magic. special render mode (does not take lighting into account)
+ */
+export const enum ActorRenderModeEnum {
+    NONE = 1,
     NORMAL,
     DETECTED,
 }
 
 /**
-    enum: CellLightLevel
-    DARKNESS - cannot see the cell
-    PENUMBRA - sees actors but cannot identify them
-    LIGHT - sees and identify actors
-    */
-export enum CellLightLevel {
-    DARKNESS,
+ * enum: CellLightLevelEnum
+ * DARKNESS - cannot see the cell
+ * PENUMBRA - sees actors but cannot identify them
+ * LIGHT - sees and identify actors
+ */
+export const enum CellLightLevelEnum {
+    DARKNESS = 1,
     PENUMBRA,
     LIGHT
 }
 
-/**
-    class : MapRendererNode
-    An Umbra node that renders a map.
-    */
-export abstract class MapRendererNode extends Umbra.Node {
-    protected shader: MapShader;
-    protected actorPriorityMap: number[][];
-    protected basePriority: number = 0;
-    constructor(shader: MapShader) {
-        super();
-        this.shader = shader;
-    }
-    initForNewMap() {
-        this.shader.initForNewMap();
-    }
-    abstract getActorRenderMode(actor: Actors.Actor, detectRange: number): ActorRenderMode;
-    abstract canIdentifyActor(actor: Actors.Actor): boolean;
-    abstract renderActor(con: Yendor.Console, actor: Actors.Actor, detectRange: number): void;
-    abstract getCellLightLevel(x: number, y: number): CellLightLevel;
+export enum MapRenderModeEnum {
+    NORMAL = 1,
+    /** debug mode : display map transparency value */
+    TRANSPARENCY,
+    /** debug mode : display map lightmap */
+    LIGHTMAP,
+    /** debug mode : display the player field of view */
+    FOV,
 }
 
 /**
-    class: DungeonRendererNode
-    Standard dungeon renderer with floor/wall map and simple one-character actors.
-    */
-export class DungeonRendererNode extends MapRendererNode {
-    getActorRenderMode(actor: Actors.Actor, detectRange: number): ActorRenderMode {
-        if (!actor.fovOnly && Map.current.isExplored(actor.pos.x, actor.pos.y)) {
-            return ActorRenderMode.NORMAL;
-        }
-        let player: Actors.Actor = Actors.Actor.specialActors[Actors.SpecialActors.PLAYER];
-        if (detectRange > 0 && actor.ai && actor.destructible && !actor.destructible.isDead()
-            && Core.Position.distance(player.pos, actor.pos) < detectRange) {
-            return ActorRenderMode.DETECTED;
-        }
-        if (Map.current.isInFov(actor.pos.x, actor.pos.y)) {
-            return ActorRenderMode.NORMAL;
-        }
-        return ActorRenderMode.NONE;
+ * class : MapRendererNode
+ * An Umbra node that renders a map.
+ */
+export abstract class MapRendererNode extends Umbra.Node {
+    protected shader: IMapShader;
+    protected actorPriorityMap: number[][];
+    protected basePriority: number = 0;
+    protected __renderMode: MapRenderModeEnum = MapRenderModeEnum.NORMAL;
+
+    constructor(shader: IMapShader) {
+        super();
+        this.shader = shader;
     }
 
-    canIdentifyActor(actor: Actors.Actor): boolean {
+    public getRenderMode(): MapRenderModeEnum {
+        return this.__renderMode;
+    }
+
+    public setRenderMode(mode: MapRenderModeEnum) {
+        this.__renderMode = mode;
+    }
+
+    public initForNewMap() {
+        this.shader.initForNewMap();
+    }
+    public abstract getActorRenderMode(actor: Actors.Actor, detectRange: number): ActorRenderModeEnum;
+    public abstract canIdentifyActor(actor: Actors.Actor): boolean;
+    public abstract getCellLightLevel(x: number, y: number): CellLightLevelEnum;
+    protected abstract renderActor(con: Yendor.Console, actor: Actors.Actor, detectRange: number): void;
+}
+
+/**
+ * class: DungeonRendererNode
+ * Standard dungeon renderer with floor/wall map and simple one-character actors.
+ */
+export class DungeonRendererNode extends MapRendererNode {
+    /**
+     * Function: onRender
+     * The actual frame rendering. Render objects in this order:
+     * - the map
+     * - the corpses
+     * - the living actors
+     * - the GUI
+     */
+    public onRender(con: Yendor.Console) {
+        // compute the field of view if needed
+        let player = Actors.Actor.specialActors[Actors.SpecialActorsEnum.PLAYER];
+        if (! Map.current || ! player) {
+            return;
+        }
+        switch (this.__renderMode) {
+            case MapRenderModeEnum.NORMAL :
+                this.renderNormal(con);
+            break;
+            case MapRenderModeEnum.TRANSPARENCY :
+                this.renderTransparency(con);
+            break;
+            case MapRenderModeEnum.LIGHTMAP :
+                this.renderLightmap(con);
+            break;
+            case MapRenderModeEnum.FOV :
+                this.renderFov(con);
+            break;
+            default: break;
+        }
+    }
+
+    public getActorRenderMode(actor: Actors.Actor, detectRange: number): ActorRenderModeEnum {
+        if (!actor.fovOnly && Map.current.isExplored(actor.pos.x, actor.pos.y)) {
+            return ActorRenderModeEnum.NORMAL;
+        }
+        let player: Actors.Actor = Actors.Actor.specialActors[Actors.SpecialActorsEnum.PLAYER];
+        if (detectRange > 0 && actor.ai && actor.destructible && !actor.destructible.isDead()
+            && Core.Position.distance(player.pos, actor.pos) < detectRange) {
+            return ActorRenderModeEnum.DETECTED;
+        }
+        if (Map.current.isInFov(actor.pos.x, actor.pos.y)) {
+            return ActorRenderModeEnum.NORMAL;
+        }
+        return ActorRenderModeEnum.NONE;
+    }
+
+    public canIdentifyActor(actor: Actors.Actor): boolean {
         return this.shader.canIdentifyActor(actor);
     }
 
-    getCellLightLevel(x: number, y: number): CellLightLevel {
+    public getCellLightLevel(x: number, y: number): CellLightLevelEnum {
         return this.shader.getCellLightLevel(x, y);
     }
 
-    renderActor(con: Yendor.Console, actor: Actors.Actor, detectRange: number) {
-        let renderMode: ActorRenderMode = this.getActorRenderMode(actor, detectRange);
-        if (renderMode !== ActorRenderMode.NONE) {
+    protected renderActor(con: Yendor.Console, actor: Actors.Actor, detectRange: number) {
+        let renderMode: ActorRenderModeEnum = this.getActorRenderMode(actor, detectRange);
+        if (renderMode !== ActorRenderModeEnum.NONE) {
             let pos: Core.Position = actor.pos;
             con.text[pos.x][pos.y] = this.shader.getActorCharCode(actor, renderMode);
             con.fore[pos.x][pos.y] = this.shader.getActorColor(actor, renderMode);
@@ -91,22 +145,28 @@ export class DungeonRendererNode extends MapRendererNode {
     }
 
     private renderActors(con: Yendor.Console) {
-        let player: Actors.Actor = Actors.Actor.specialActors[Actors.SpecialActors.PLAYER];
-        let detectLifeCond: Actors.DetectLifeCondition = <Actors.DetectLifeCondition>player.ai.getCondition(Actors.ConditionType.DETECT_LIFE);
+        let player: Actors.Actor = Actors.Actor.specialActors[Actors.SpecialActorsEnum.PLAYER];
+        let detectLifeCond: Actors.DetectLifeCondition =
+            <Actors.DetectLifeCondition> player.ai.getCondition(Actors.ConditionTypeEnum.DETECT_LIFE);
         let detectRange = detectLifeCond ? detectLifeCond.range : 0;
-        Actors.Actor.list.map((actor: Actors.Actor) => {
+        for (let actor of Actors.Actor.list) {
+            if ( actor.pickable && actor.pickable.containerId ) {
+                continue;
+            }
             let actorPriority = this.basePriority;
-            if ( actor.isA("item")) {
-                actorPriority++;
-            } else if ( actor.isA("creature") && ! actor.destructible.isDead()) {
+            if ( actor.isA("key[s]")) {
                 actorPriority += 2;
+            } else if ( actor.isA("item[s]")) {
+                actorPriority++;
+            } else if ( actor.isA("creature[s]") && ! actor.destructible.isDead()) {
+                actorPriority += 3;
             }
             let mapPriority: number = this.actorPriorityMap[actor.pos.x][actor.pos.y];
             if (mapPriority === undefined || mapPriority < actorPriority) {
                 this.renderActor(con, actor, detectRange);
                 this.actorPriorityMap[actor.pos.x][actor.pos.y] = actorPriority;
             }
-        });
+        }
         this.basePriority += 3;
     }
 
@@ -122,20 +182,8 @@ export class DungeonRendererNode extends MapRendererNode {
         }
     }
 
-    /**
-        Function: onRender
-        The actual frame rendering. Render objects in this order:
-        - the map
-        - the corpses
-        - the living actors
-        - the GUI
-    */
-    onRender(con: Yendor.Console) {
-        // compute the field of view if needed
-        let player = Actors.Actor.specialActors[Actors.SpecialActors.PLAYER];
-        if (! Map.current || ! player) {
-            return;
-        }
+    private renderNormal(con: Yendor.Console) {
+        let player = Actors.Actor.specialActors[Actors.SpecialActorsEnum.PLAYER];
         con.clearText();
         Map.current.computeFov(player.pos.x, player.pos.y, Actors.FOV_RADIUS);
         this.shader.prepareFrame();
@@ -143,6 +191,38 @@ export class DungeonRendererNode extends MapRendererNode {
         this.renderActors(con);
     }
 
-    onUpdate(time: number) {
+    private renderTransparency(con: Yendor.Console) {
+        con.clearText();
+        con.clearBack(0);
+        con.clearFore(0);
+        let map: Map = Map.current;
+        for (let x = 0; x < map.w; x++) {
+            for (let y = 0; y < map.h; y++) {
+                con.back[x][y] = map.fov.isTransparent(x, y) ? "#BBBBBB" : "#888888";
+            }
+        }
+    }
+
+    private renderLightmap(con: Yendor.Console) {
+        let player = Actors.Actor.specialActors[Actors.SpecialActorsEnum.PLAYER];
+        con.clearText();
+        Map.current.resetFov(true);
+        this.shader.prepareFrame();
+        this.renderMap(con);
+        this.renderActors(con);
+        Map.current.setDirty();
+        Map.current.computeFov(player.pos.x, player.pos.y, Actors.FOV_RADIUS);
+    }
+
+    private renderFov(con: Yendor.Console) {
+        con.clearText();
+        con.clearBack(0);
+        con.clearFore(0);
+        let map: Map = Map.current;
+        for (let x = 0; x < map.w; x++) {
+            for (let y = 0; y < map.h; y++) {
+                con.back[x][y] = map.isInFov(x, y) ? "#BBBBBB" : "#888888";
+            }
+        }
     }
 }

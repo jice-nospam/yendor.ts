@@ -1,10 +1,9 @@
 import * as tsUnit from "../tsUnit";
 import * as Core from "../../fwk/core/main";
-import * as Yendor from "../../fwk/yendor/main";
 
-export class ConsoleTests extends tsUnit.TestClass {
+export class ColorTests extends tsUnit.TestClass {
 
-    hexColorMultiply() {
+    public hexColorMultiply() {
         let col: Core.Color = "#FFFFFF";
         let col2: Core.Color = Core.ColorUtils.multiply(col, 0.5);
         let col3: Core.Color = Core.ColorUtils.multiply(col, 0.1);
@@ -13,7 +12,7 @@ export class ConsoleTests extends tsUnit.TestClass {
         this.areIdentical( col3, 0x1A1A1A, "col3" );
     }
 
-    shortHexColorMultiply() {
+    public shortHexColorMultiply() {
         let col: Core.Color = "#FFF";
         let col2: Core.Color = Core.ColorUtils.multiply(col, 0.5);
         let col3: Core.Color = Core.ColorUtils.multiply(col, 0.1);
@@ -22,7 +21,7 @@ export class ConsoleTests extends tsUnit.TestClass {
         this.areIdentical( col3, 0x1A1A1A, "col3" );
     }
 
-    rgbColorMultiply() {
+    public rgbColorMultiply() {
         let col: Core.Color = "rgb(255,255,255)";
         let col2: Core.Color = Core.ColorUtils.multiply(col, 0.5);
         let col3: Core.Color = Core.ColorUtils.multiply(col, 0.1);
@@ -31,7 +30,7 @@ export class ConsoleTests extends tsUnit.TestClass {
         this.areIdentical( col3, 0x1A1A1A, "col3" );
     }
 
-    stdColorMultiply() {
+    public stdColorMultiply() {
         let col: Core.Color = "white";
         let col2: Core.Color = Core.ColorUtils.multiply(col, 0.5);
         let col3: Core.Color = Core.ColorUtils.multiply(col, 0.1);

@@ -3,17 +3,17 @@ This directory contains the source code of Umbra, a lightweight game framework t
 
 Right now, the framework is pretty empty as it contains only what is needed by GeneRogue. More features will be supported as the game gets more complex.
 
-# TODO
+# TODO list
 
 Reminder for stuff that might be added to the framework. Or not.
 
 * Core
 
+* Event bus
+
+* Log
+
 * Scene management
 
 * User input
     - is all AxisData stuff from Unity really needed ?
-    
-* Event bus
-
-* Log

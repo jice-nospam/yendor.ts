@@ -40,8 +40,13 @@ export const PERSISTENCE_ACTORS_SEQ_KEY: string = "actorsSeq";
 /** a light has been turned on or off. Associated data : the Actor containing the light */
 export const EVENT_LIGHT_ONOFF: string = "LIGHT_ONOFF";
 
-export enum PlayerAction {
-NO_ACTION,
+export interface INumberSelector {
+    selectNumber(message: string, minValue: number, maxValue: number, initialValue?: number): Promise<number>;
+}
+
+export enum PlayerActionEnum {
+/** empty action. still triggers a new turn */
+NOACTION = 1,
 MOVE_NORTH,
 MOVE_SOUTH,
 MOVE_EAST,
@@ -66,94 +71,91 @@ VALIDATE,
 CANCEL
 }
 
-export let getLastPlayerAction = function(): PlayerAction {
-    let lastActionName: string = Umbra.getLastAxisName();
-    return lastActionName ? (<any>PlayerAction)[lastActionName] : undefined;
+export let getLastPlayerAction = function(): PlayerActionEnum|undefined {
+    let lastActionName: string|undefined = Umbra.getLastAxisName();
+    if ( lastActionName ) {
+        return (<any> PlayerActionEnum)[lastActionName];
+    }
+    return undefined;
 };
 
 /**
-    Function: convertActionToPosition
-    convert a movement action into an actual dx, dy movement
-
-    Returns:
-    the Core.Position containing the movement, 0,0 if the action is not a movement action
-*/
-export let convertActionToPosition = function(action: PlayerAction): Core.Position {
+ * Function: convertActionToPosition
+ * convert a movement action into an actual dx, dy movement
+ * Returns:
+ * the Core.Position containing the movement, 0,0 if the action is not a movement action
+ */
+export let convertActionToPosition = function(action: PlayerActionEnum): Core.Position {
     let move: Core.Position = new Core.Position(0, 0);
     switch (action) {
-        case PlayerAction.MOVE_NORTH:
+        case PlayerActionEnum.MOVE_NORTH:
             move.y = -1;
             break;
-        case PlayerAction.MOVE_SOUTH:
+        case PlayerActionEnum.MOVE_SOUTH:
             move.y = 1;
             break;
-        case PlayerAction.MOVE_EAST:
+        case PlayerActionEnum.MOVE_EAST:
             move.x = 1;
             break;
-        case PlayerAction.MOVE_WEST:
+        case PlayerActionEnum.MOVE_WEST:
             move.x = -1;
             break;
-        case PlayerAction.MOVE_NW:
+        case PlayerActionEnum.MOVE_NW:
             move.x = -1;
             move.y = -1;
             break;
-        case PlayerAction.MOVE_NE:
+        case PlayerActionEnum.MOVE_NE:
             move.x = 1;
             move.y = -1;
             break;
-        case PlayerAction.MOVE_SW:
+        case PlayerActionEnum.MOVE_SW:
             move.x = -1;
             move.y = 1;
             break;
-        case PlayerAction.MOVE_SE:
+        case PlayerActionEnum.MOVE_SE:
             move.x = 1;
             move.y = 1;
             break;
+        default: break;
     }
     return move;
 };
 
 /**
-    Function: transformMessage
-    Convert variables inside a text into their actual value.
-    Available variables (example for actor1  = a sword or the player) :
-    - [The actor1's] - The sword's / Your
-    - [the actor1's] - the sword's  / your
-    - [The actor1] - The sword / You
-    - [the actor1] - the sword / you
-    - [A actor1] - A sword / You
-    - [a actor1] - a sword / you
-    - [s] - s / <empty>  (verb ending)
-    - [it] - it / you
-    - [its] - its / your
-    - [is] - is / are
-
-    The same variables are available for a second actor :
-    - [The actor2's]
-    - [the actor2's]
-    - [The actor2]
-    - [the actor2]
-    - [A actor2]
-    - [a actor2]
-    - [s2]
-    - [it2]
-    - [its2]
-    - [is2]
-
-    There are also two numerical values [value1] and [value2].
-    Example :
-
-    [The actor1] hit[s] with [a actor2] for [value1] points.
-
-    applied to actor1 = player, actor2 = sword, value1 = 5 :
-
-    You hit with a sword for 5 points.
-
-    applied to actor1 = orc, actor2 = axe, value1 = 5 :
-
-    The orc hits with an axe for 5 points.
-*/
-export let transformMessage = function(text: string, actor1: Actor, actor2?: Actor, value1?: number, value2?: number): string {
+ * Function: transformMessage
+ * Convert variables inside a text into their actual value.
+ * Available variables (example for actor1  = a sword or the player) :
+ * - [The actor1's] - The sword's / Your
+ * - [the actor1's] - the sword's  / your
+ * - [The actor1] - The sword / You
+ * - [the actor1] - the sword / you
+ * - [A actor1] - A sword / You
+ * - [a actor1] - a sword / you
+ * - [s] - s / <empty>  (verb ending)
+ * - [it] - it / you
+ * - [its] - its / your
+ * - [is] - is / are
+ * The same variables are available for a second actor :
+ * - [The actor2's]
+ * - [the actor2's]
+ * - [The actor2]
+ * - [the actor2]
+ * - [A actor2]
+ * - [a actor2]
+ * - [s2]
+ * - [it2]
+ * - [its2]
+ * - [is2]
+ * There are also two numerical values [value1] and [value2].
+ * Example :
+ * [The actor1] hit[s] with [a actor2] for [value1] points.
+ * applied to actor1 = player, actor2 = sword, value1 = 5 :
+ * You hit with a sword for 5 points.
+ * applied to actor1 = orc, actor2 = axe, value1 = 5 :
+ * The orc hits with an axe for 5 points.
+ */
+export let transformMessage = function(text: string, actor1: Actor, actor2?: Actor,
+                                       value1?: number, value2?: number): string {
     let newText = text;
     if ( actor1) {
         newText = newText.replace(/\[The actor1\'s\] /g, actor1.getThenames());
@@ -187,4 +189,3 @@ export let transformMessage = function(text: string, actor1: Actor, actor2?: Act
     }
     return newText;
 };
-

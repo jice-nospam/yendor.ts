@@ -1,7 +1,6 @@
 build/fwk/
 build/generogue/
 build/tests/
-build/tcod/
 build/main.*
 doc/
 node_modules/

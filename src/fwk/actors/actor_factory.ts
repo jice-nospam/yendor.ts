@@ -1,91 +1,276 @@
 /**
-	Section: actors
-*/
-import * as Core from "../core/main";
+ * Section: actors
+ */
+import * as Yendor from "../yendor/main";
 import * as Umbra from "../umbra/main";
-import {Actor} from "./actor";
-import {ActorDef, DestructibleDef, AttackerDef, ContainerDef, PickableDef, EquipmentDef,
-    RangedDef, MagicDef, ActivableDef, DoorDef, EffectorDef, EventEffectDef, EffectDef, ActivableType, TargetSelectorDef,
-    EffectType, ConditionEffectDef, InstantHealthEffectDef, TeleportEffectDef, ConditionDef, AiType, AiDef} from "./actor_def";
-import {Destructible, Attacker, Activable, Container, Pickable, Equipment, Ranged, Magic, Lockable, Door, Lever} from "./actor_item";
+import {Actor, IProbabilityMap} from "./actor";
+import {IActorDef, IDoorDef, IEffectorDef, IEventEffectDef, IEffectDef,
+    ActivableTypeEnum, ITargetSelectorDef, EffectTypeEnum, IConditionEffectDef, IInstantHealthEffectDef,
+    ITeleportEffectDef, IConditionDef, AiTypeEnum, IAiDef} from "./actor_def";
+import {Destructible, Attacker, Activable, Container, Pickable, Equipment, Ranged,
+    Magic, Lockable, Door, Lever} from "./actor_item";
 import {Ai, XpHolder, ItemAi, MonsterAi, PlayerAi} from "./actor_creature";
 import {Light} from "./actor_light";
-import {Player, InventoryItemPicker} from "./actor_creature";
-import {TilePicker, Effector, Effect, TargetSelector, ConditionEffect, InstantHealthEffect, MapRevealEffect, TeleportEffect, EventEffect} from "./actor_effect";
+import {IInventoryItemPicker, ILootHandler} from "./actor_creature";
+import {ITilePicker, Effector, TargetSelector, ConditionEffect, InstantHealthEffect, MapRevealEffect,
+    TeleportEffect, EventEffect} from "./actor_effect";
 import {Condition} from "./actor_condition";
 import {PERSISTENCE_ACTORS_SEQ_KEY} from "./base";
 
-/********************************************************************************
- * Group: classes, types and factory
- ********************************************************************************/
 /**
-    Class: ActorFactory
-    Built an actor.
-*/
+ * =============================================================================
+ * Group: classes, types and factory
+ * =============================================================================
+ */
+/**
+ * Class: ActorFactory
+ * Built an actor.
+ */
 export class ActorFactory {
-    private static seq: number = 0;
-    private static unknownClasses: { [index: string]: boolean } = {};
-    private static actorDefs: { [index: string]: ActorDef };
-    public static init(actorDefs: { [index: string]: ActorDef }) {
-        ActorFactory.actorDefs = actorDefs;
+    public static registerActorDef(actorDef: IActorDef ) {
+        ActorFactory.actorDefs[actorDef.name] = actorDef;
+        ActorFactory.actorTypes.push(actorDef.name);
     }
-    /**
-        Function: create
-        Create an actor of given type
 
-        Parameters:
-        type - the actor type name
-        tilePicker - way for the actor to chose a tile
-        inventoryPicker - way for the actor to chose an item in its inventory
-    */
-    static create(type: string, tilePicker?: TilePicker, inventoryPicker?: InventoryItemPicker): Actor {
-        let name: string = type.toLowerCase().replace(/_/g, " ");
-        if (ActorFactory.actorDefs[name]) {
-            return ActorFactory.createActor(type, name, ActorFactory.actorDefs[name], tilePicker, inventoryPicker);
+    public static getActorDef(actorType: string): IActorDef {
+        let def: IActorDef = ActorFactory.actorDefs[actorType];
+        if (def === undefined) {
+            Umbra.logger.warn("WARN: unknown actor type " + actorType);
         }
-        if (!ActorFactory.unknownClasses[name]) {
+        return def;
+    }
+
+    public static getActorTypes(): string[] {
+        return ActorFactory.actorTypes;
+    }
+
+    public static computeLevelProbabilities(probabilities: IProbabilityMap, level: number): {[index: string]: number} {
+        let ret: {[index: string]: number} = {};
+        for (let itemProb of probabilities.classProb) {
+            if (! itemProb.clazz) {
+                continue;
+            }
+            if (typeof(itemProb.prob) === "number") {
+                ret[itemProb.clazz] = <number> itemProb.prob;
+            } else {
+                ret[itemProb.clazz] = ActorFactory.getValueForLevel(<number[][]> itemProb.prob, level);
+            }
+        }
+        return ret;
+    }
+
+    public static createRandomActors(map: IProbabilityMap, level: number): Actor[] {
+        let count: number = ActorFactory.getRandomCountFromMap(map);
+        let result: Actor[] = [];
+        let probMap: {[index: string]: number} = ActorFactory.computeLevelProbabilities(map, level);
+        while ( count > 0) {
+            let clazz: string = <string> Actor.lootRng.getRandomChance(probMap);
+            if ( clazz && clazz !== "undefined") {
+                let actor: Actor|undefined = this.createRandomActor(clazz);
+                if ( actor ) {
+                    result.push(actor);
+                }
+            }
+            count --;
+        }
+        return result;
+    }
+
+    public static createRandomActor(clazz: string): Actor|undefined {
+        let def: IActorDef = ActorFactory.getActorDef(clazz);
+        if ( !def ) {
+            Umbra.logger.warn("WARN : unknown actor type " + clazz);
+            return undefined;
+        } else {
+            if ( def.abstract ) {
+                clazz = ActorFactory.getRandomActorClass(clazz);
+            }
+            let actor: Actor|undefined = ActorFactory.create(clazz);
+            if ( actor ) {
+                actor.register();
+            }
+            return actor;
+        }
+    }
+
+    /**
+     * Function: create
+     * Create an actor of given type
+     * Parameters:
+     * type - the actor type name
+     * tilePicker - way for the actor to chose a tile
+     * inventoryPicker - way for the actor to chose an item in its inventory
+     */
+    public static create(type: string, tilePicker?: ITilePicker, inventoryPicker?: IInventoryItemPicker,
+                         lootHandler?: ILootHandler): Actor|undefined {
+        if (ActorFactory.actorDefs[type]) {
+            return ActorFactory.createActor(ActorFactory.actorDefs[type], tilePicker,
+                inventoryPicker, lootHandler);
+        }
+        if (!ActorFactory.unknownClasses[type]) {
             Umbra.logger.warn("WARN : unknown actor type " + type);
-            ActorFactory.unknownClasses[name] = true;
+            ActorFactory.unknownClasses[type] = true;
         }
         return undefined;
     }
 
-    private static createActor(type: string, name: string, def: ActorDef, tilePicker: TilePicker, inventoryPicker: InventoryItemPicker) {
-        // TODO : Player should be just an Actor
-        let actor: Actor = type === "PLAYER" ? new Player(name + "|" + ActorFactory.seq) : new Actor(name + "|" + ActorFactory.seq);
+    public static createInContainer(container: Actor, types: string[]) {
+        for ( let type of types ) {
+            let actor: Actor|undefined = ActorFactory.create(type);
+            if ( actor ) {
+                actor.register();
+                if ( actor.pickable ) {
+                    actor.pickable.pick(actor, container, false);
+                }
+            }
+        }
+    }
+
+    public static createEffector(def: IEffectorDef) {
+        return new Effector(ActorFactory.createEffect(def.effect),
+            ActorFactory.createTargetSelector(def.targetSelector), def.message, def.destroyOnEffect);
+    }
+
+    public static load(persister: Yendor.IPersister): Promise<void> {
+        return new Promise<void>((resolve) => {
+            persister.loadFromKey(PERSISTENCE_ACTORS_SEQ_KEY).then((value) => { ActorFactory.seq = value; resolve(); });
+        });
+    }
+
+    public static save(persister: Yendor.IPersister) {
+        persister.saveToKey(PERSISTENCE_ACTORS_SEQ_KEY, ActorFactory.seq);
+    }
+
+    public static deleteSavedGame(persister: Yendor.IPersister) {
+        persister.deleteKey(PERSISTENCE_ACTORS_SEQ_KEY);
+    }
+
+    /**
+     * Function: setLock
+     * Associate a door with a key to create a locked door that can only be opened by this key
+     */
+    public static setLock(door: Actor, key: Actor) {
+        door.lock = new Lockable(key.id);
+    }
+
+    public static getActorTypeName(type: string, count: number): string {
+        let def: IActorDef = ActorFactory.getActorDef(type);
+        if (! def) {
+            Umbra.logger.error("Unknown actor type " + type);
+            return "";
+        }
+        if ( count === 1 ) {
+            if ( def.name.indexOf("[s]") !== -1 ) {
+                return def.name.replace("[s]", "");
+            } else if ( def.name.indexOf("[es]") !== -1 ) {
+                return def.name.replace("[es]", "");
+            }
+            return def.name;
+        } else {
+            if ( def.name.indexOf("[s]") !== -1 ) {
+                return def.name.replace("[s]", "s");
+            } else if ( def.name.indexOf("[es]") !== -1 ) {
+                return def.name.replace("[es]", "es");
+            }
+            return def.pluralName === undefined ? def.name : def.pluralName;
+        }
+    }
+
+    private static seq: number = 1;
+    private static unknownClasses: { [index: string]: boolean } = {};
+    private static actorDefs: { [index: string]: IActorDef } = {};
+    private static actorTypes: string[] = [];
+
+    /**
+     * Function: getValueForDungeon
+     * Get a value adapted to current dungeon level.
+     * Parameters:
+     * steps: array of (dungeon level, value) pairs
+     */
+    private static getValueForLevel(steps: number[][], level: number): number {
+        let stepCount = steps.length;
+        for (let step = stepCount - 1; step >= 0; --step) {
+            if (level >= steps[step][0]) {
+                return steps[step][1];
+            }
+        }
+        return 0;
+    }
+
+    private static getRandomCountFromMap(map: IProbabilityMap): number {
+        if (map.maxCount !== undefined) {
+            return Actor.lootRng.getNumber(map.minCount || 0, map.maxCount);
+        } else if ( map.countProb !== undefined ) {
+            return <number> Actor.lootRng.getRandomChance(map.countProb);
+        } else {
+            return 0;
+        }
+    }
+
+    /**
+     * Return all concrete actor classes implementing given class
+     */
+    private static getConcreteActorClass(clazz: string, candidates?: string[]) {
+        candidates = candidates || [];
+        for (let type in ActorFactory.actorDefs) {
+            if ( ActorFactory.actorDefs.hasOwnProperty(type)) {
+                let def: IActorDef = ActorFactory.actorDefs[type];
+                if ( def.prototypes && def.prototypes.indexOf(clazz) !== -1) {
+                    if ( def.abstract ) {
+                        ActorFactory.getConcreteActorClass(type, candidates);
+                    } else {
+                        candidates.push(type);
+                    }
+                }
+            }
+        }
+        return candidates;
+    }
+
+    private static getRandomActorClass(clazz: string): string {
+        let candidates: string[] = ActorFactory.getConcreteActorClass(clazz);
+        let idx: number = Actor.lootRng.getNumber(0, candidates.length - 1);
+        return candidates[idx];
+    }
+
+    private static createActor(def: IActorDef, tilePicker?: ITilePicker,
+                               inventoryPicker?: IInventoryItemPicker, lootHandler?: ILootHandler) {
+        let actor: Actor = new Actor(def.name + "|" + ActorFactory.seq);
         ActorFactory.seq++;
-        ActorFactory.populateActor(type, actor, def, tilePicker, inventoryPicker);
-        actor.name = name;
+        ActorFactory.populateActor(actor, def, tilePicker, inventoryPicker, lootHandler);
+        actor.name = ActorFactory.getActorTypeName(def.name, 1);
+        actor.pluralName = ActorFactory.getActorTypeName(def.name, 2);
         if (!actor.charCode) {
-            Umbra.logger.critical("ERROR : no character defined for actor type " + type);
+            Umbra.logger.critical("ERROR : no character defined for actor type " + def.name);
         }
         return actor;
     }
 
-    private static populateActor(type: string, actor: Actor, def: ActorDef, tilePicker: TilePicker, inventoryPicker: InventoryItemPicker) {
+    private static populateActor(actor: Actor, def: IActorDef, tilePicker?: ITilePicker,
+                                 inventoryPicker?: IInventoryItemPicker, lootHandler?: ILootHandler) {
         if (def.prototypes) {
-            for (let i: number = 0, len: number = def.prototypes.length; i < len; ++i) {
-                let className = def.prototypes[i];
+            for (let className of def.prototypes) {
                 if (ActorFactory.actorDefs[className]) {
-                    ActorFactory.populateActor(type, actor, ActorFactory.actorDefs[className], tilePicker, inventoryPicker);
+                    ActorFactory.populateActor(actor, ActorFactory.actorDefs[className], tilePicker,
+                        inventoryPicker, lootHandler);
                 } else if (!ActorFactory.unknownClasses[className]) {
                     Umbra.logger.warn("WARN : unknown actor class " + className);
                     ActorFactory.unknownClasses[className] = true;
                 }
             }
         }
-        actor.init(undefined, def);
+        actor.init(def);
         if (def.pickable) {
             actor.pickable = new Pickable(def.pickable);
         }
         if (def.ai) {
-            actor.ai = ActorFactory.createAi(actor, def.ai, tilePicker, inventoryPicker);
+            actor.ai = ActorFactory.createAi(actor, def.ai, tilePicker, inventoryPicker, lootHandler);
         }
         if (def.attacker) {
             actor.attacker = new Attacker(def.attacker);
         }
         if (def.destructible) {
-            actor.destructible = new Destructible(def.destructible);
+            actor.destructible = new Destructible(def.destructible, actor.destructible);
         }
         if (def.light) {
             actor.light = new Light(def.light);
@@ -110,97 +295,70 @@ export class ActorFactory {
                 actor.activable.init(def.activable);
             } else {
                 switch (def.activable.type) {
-                    case ActivableType.SINGLE :
-                    case ActivableType.TOGGLE :
+                    case ActivableTypeEnum.SINGLE :
+                    case ActivableTypeEnum.TOGGLE :
                         actor.activable = new Activable(def.activable);
                         break;
-                    case ActivableType.DOOR :
-                        actor.activable = new Door(<DoorDef>def.activable);
+                    case ActivableTypeEnum.DOOR :
+                        actor.activable = new Door(<IDoorDef> def.activable);
                         break;
-                    case ActivableType.LEVER :
+                    case ActivableTypeEnum.LEVER :
                         actor.activable = new Lever(def.activable);
                         break;
+                    default: break;
                 }
             }
         }
     }
 
-    public static createEffector(def: EffectorDef) {
-        return new Effector(ActorFactory.createEffect(def.effect), ActorFactory.createTargetSelector(def.targetSelector), def.message, def.destroyOnEffect);
-    }
-
-    private static createTargetSelector(def: TargetSelectorDef) {
+    private static createTargetSelector(def: ITargetSelectorDef) {
         return new TargetSelector(def);
     }
 
-    private static createEffect(def: EffectDef) {
+    private static createEffect(def: IEffectDef) {
         switch (def.type) {
-            case EffectType.CONDITION:
-                let conditionData: ConditionEffectDef = <ConditionEffectDef>def.data;
+            case EffectTypeEnum.CONDITION:
+                let conditionData: IConditionEffectDef = <IConditionEffectDef> def.data;
                 return new ConditionEffect(conditionData.condition, conditionData.successMessage);
-            case EffectType.INSTANT_HEALTH:
-                let instantHealthData: InstantHealthEffectDef = <InstantHealthEffectDef>def.data;
+            case EffectTypeEnum.INSTANT_HEALTH:
+                let instantHealthData: IInstantHealthEffectDef = <IInstantHealthEffectDef> def.data;
                 return new InstantHealthEffect(instantHealthData);
-            case EffectType.MAP_REVEAL:
+            case EffectTypeEnum.MAP_REVEAL:
                 return new MapRevealEffect();
-            case EffectType.TELEPORT:
-                let teleportData: TeleportEffectDef = <TeleportEffectDef>def.data;
+            case EffectTypeEnum.TELEPORT:
+                let teleportData: ITeleportEffectDef = <ITeleportEffectDef> def.data;
                 return new TeleportEffect(teleportData.successMessage);
-            case EffectType.EVENT :
-                let eventData: EventEffectDef = <EventEffectDef>def.data;
-                return new EventEffect(eventData);
+            case EffectTypeEnum.EVENT :
             default:
-                return undefined;
+                let eventData: IEventEffectDef = <IEventEffectDef> def.data;
+                return new EventEffect(eventData);
         }
     }
 
-    private static createCondition(def: ConditionDef): Condition {
+    private static createCondition(def: IConditionDef): Condition {
         return Condition.create(def);
     }
 
-    private static createAi(owner: Actor, def: AiDef, tilePicker: TilePicker, inventoryPicker: InventoryItemPicker): Ai {
+    private static createAi(owner: Actor, def: IAiDef, tilePicker?: ITilePicker, inventoryPicker?: IInventoryItemPicker,
+                            lootHandler?: ILootHandler): Ai {
         let ai: Ai;
         switch (def.type) {
-            case AiType.ITEM:
+            case AiTypeEnum.ITEM:
                 ai = new ItemAi(def.walkTime);
                 break;
-            case AiType.MONSTER:
+            case AiTypeEnum.MONSTER:
                 ai = new MonsterAi(def.walkTime);
                 break;
-            case AiType.PLAYER:
-                ai = new PlayerAi(def.walkTime, tilePicker, inventoryPicker);
-                break;
+            case AiTypeEnum.PLAYER:
             default:
-                return undefined;
+                ai = new PlayerAi(def.walkTime, tilePicker, inventoryPicker, lootHandler);
+                break;
         }
         if (def.conditions) {
-            for (let i: number = 0, len: number = def.conditions.length; i < len; ++i) {
-                let conditionDef: ConditionDef = def.conditions[i];
+            for (let conditionDef of def.conditions) {
                 ai.addCondition(ActorFactory.createCondition(conditionDef), owner);
             }
         }
         return ai;
-    }
-
-    static load(persister: Core.Persister): Promise<void> {
-        return new Promise<void>((resolve) => {
-            persister.loadFromKey(PERSISTENCE_ACTORS_SEQ_KEY).then((value) => { ActorFactory.seq = value; resolve(); });
-        });
-    }
-
-    static save(persister: Core.Persister) {
-        persister.saveToKey(PERSISTENCE_ACTORS_SEQ_KEY, ActorFactory.seq);
-    }
-
-    static deleteSavedGame(persister: Core.Persister) {
-        persister.deleteKey(PERSISTENCE_ACTORS_SEQ_KEY);
-    }
-
-    /**
-        Function: setLock
-        Associate a door with a key to create a locked door that can only be opened by this key
-    */
-    static setLock(door: Actor, key: Actor) {
-        door.lock = new Lockable(key.id);
     }
 }

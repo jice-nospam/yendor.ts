@@ -1,62 +1,59 @@
-import {crc32} from "./main";
 /**
-	Section: Persistence
-*/
+ * Section: Persistence
+ */
 
 /**
-    Interface: Persistent
-    Anything that can be saved and restored.
-    Fields starting with two underscores are not persisted.
-    Watch out for cyclic dependencies!
-    During loading phase, the constructor is called without parameters.
-    Then field values are restored from the saved json.
-*/
-export interface Persistent {
+ * Interface: Persistent
+ * Anything that can be saved and restored.
+ * Fields starting with two underscores are not persisted.
+ * Watch out for cyclic dependencies!
+ * During loading phase, the constructor is called without parameters.
+ * Then field values are restored from the saved json.
+ */
+export interface IPersistent {
     /**
-        Function: load
-        Optional custom loading function.
-
-        Parameters:
-        jsonData - parsed json data to load from
-    */
+     * Function: load
+     * Optional custom loading function.
+     * Parameters:
+     * jsonData - parsed json data to load from
+     */
     load?: (jsonData: any) => void;
+
     /**
-        Function: postLoad
-        Optional function called after the object is loaded.
-    */
+     * Function: postLoad
+     * Optional function called after the object is loaded.
+     */
     postLoad?: () => void;
 }
 
 /**
-    Interface: Persister
-    Can save/load objects from a repository
-*/
-export interface Persister {
+ * Interface: Persister
+ * Can save/load objects from a repository
+ */
+export interface IPersister {
     /**
-        Function: loadFromKey
-        Retrieve an object from a given database key.
-
-        Parameters :
-        key - the database key
-        object - if not provided, the persister will create the object
-    */
+     * Function: loadFromKey
+     * Retrieve an object from a given database key.
+     * Parameters :
+     * key - the database key
+     * object - if not provided, the persister will create the object
+     */
     loadFromKey(key: string, object?: any ): Promise<any>;
-    /**
-        Function: saveToKey
-        Save an object into a database and associate it with given key
 
-        Parameters :
-        key - the database key you can use to get the object back with loadFromKey
-        object - the object to save
-    */
+    /**
+     * Function: saveToKey
+     * Save an object into a database and associate it with given key
+     * Parameters :
+     * key - the database key you can use to get the object back with loadFromKey
+     * object - the object to save
+     */
     saveToKey(key: string, object: any): Promise<void>;
     /**
-        Function: deleteKey
-        Delete the object associated with a key in the database
-
-        Parameters:
-        key - the database key
-    */
+     * Function: deleteKey
+     * Delete the object associated with a key in the database
+     * Parameters:
+     * key - the database key
+     */
     deleteKey(key: string): Promise<void>;
 }
 
@@ -65,17 +62,19 @@ export interface Persister {
  * All persisted class must be registered as I didn't find a way to get the class from its name with ES6 modules
  */
 export class Persistence {
-    private static classes: {[index: string]: any} = {};
     public static registerClass(name: string, clas: any) {
         Persistence.classes[name] = clas;
     }
+
     public static getClass(name: string) {
         return Persistence.classes[name];
     }
+
+    private static classes: {[index: string]: any} = {};
 }
 
 export class JSONSerializer {
-    static json2Object(json: string, object?: any): any {
+    public static json2Object(json: string, object?: any): any {
         if (! json) {
             return undefined;
         }
@@ -87,18 +86,24 @@ export class JSONSerializer {
         return JSONSerializer.loadFromData(jsonData, object);
     }
 
-    private static needsClassName(object: any): boolean {
-        return object && typeof object === "object" && object.constructor.name !== "Array";
-    }
-
-    static object2Json(object: any): string {
+    public static object2Json(object: any): string|undefined {
         if (typeof object === "string") {
             return object;
         } else if ( JSONSerializer.needsClassName(object) ) {
             // store the object's class to be able to recreate it with the right prototype when loading
             object.className = object.constructor.name;
         }
-        return JSON.stringify(object, JSONSerializer.jsonReplacer);
+        try {
+            let json: string = JSON.stringify(object, JSONSerializer.jsonReplacer);
+            return json;
+        } catch (err) {
+            console.log("Error while serializing " + object.className + " to JSON:" + err);
+            return undefined;
+        }
+    }
+
+    private static needsClassName(object: any): boolean {
+        return object && typeof object === "object" && object.constructor.name !== "Array";
     }
 
     private static jsonReplacer(key: string, value: any) {
@@ -114,6 +119,9 @@ export class JSONSerializer {
     }
 
     private static loadFromData(jsonData: any, object?: any): any {
+        if ( jsonData === null || jsonData === undefined ) {
+            return undefined;
+        }
         if (jsonData instanceof Array) {
             return JSONSerializer.loadArrayFromData(jsonData, object);
         } else if (typeof jsonData === "object") {
@@ -136,11 +144,12 @@ export class JSONSerializer {
             if (!jsonData.className || jsonData.className === "Object") {
                 object = {};
             } else {
-                let clas: any = Persistence.getClass(<string>jsonData.className);
+                let clas: any = Persistence.getClass(<string> jsonData.className);
                 if ( clas ) {
                     object = new clas();
                 } else {
-                    console.log("Error reading from persistence : unknown class "+jsonData.className);
+                    console.log("Error reading from persistence : unknown class " + jsonData.className);
+                    return undefined;
                 }
             }
         }

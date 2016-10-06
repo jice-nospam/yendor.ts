@@ -1,23 +1,29 @@
 {
   "name": "yendor.ts",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "private": true,
   "scripts": {
     "start": "node ./app.js",
     "build:generogue": "npm run build:ts && npm run build:webpack:generogue",
-    "build:tests": "npm run build:ts && npm run build:webpack:tests && node --harmony build/main.min.js",
+    "build:generogue:release": "npm run build:ts && npm run build:webpack:generogue:release",
+    "build:tests": "npm run build:ts && npm run build:webpack:tests",
     "build:benchmark": "npm run build:ts && npm run build:webpack:benchmark",
     "build:ts": "node node_modules/typescript/bin/tsc",
     "build:webpack:generogue": "node node_modules/webpack/bin/webpack -d build/generogue/main.js build/main.min.js",
     "build:webpack:tests": "node node_modules/webpack/bin/webpack -d build/tests/main.js build/main.min.js",
-    "build:webpack:benchmark": "node node_modules/webpack/bin/webpack -d build/tests/bench.js build/main.min.js"
+    "build:webpack:benchmark": "node node_modules/webpack/bin/webpack -d build/tests/bench.js build/main.min.js",
+    "build:webpack:generogue:release": "node node_modules/webpack/bin/webpack --optimize-minimize -d build/generogue/main.js build/main.min.js && rm -rf build/generogue build/fwk build/tests"
   },
   "devDependencies": {
-    "typescript": "^1.8.10",
+    "typescript": "^2.0.3",
     "webpack": "^1.13.2"
   },
   "dependencies": {
     "express": "~4.13.1",
-    "dexie": "~1.4.1"
+    "dexie": "~1.4.1",
+    "jquery": "^2",
+    "@types/jquery": "^2.0.32",
+    "pixi.js": "^4.0.2",
+    "@types/pixi.js": "^3.0.30"
   }
 }

@@ -1,220 +1,323 @@
 /**
-	Section: Scene nodes
-*/
+ * Section: Scene nodes
+ */
 import * as Core from "../core/main";
 import * as Yendor from "../yendor/main";
+import {application} from "./main";
 
-export abstract class Node extends Core.TreeNode {
-    protected boundingBox: Core.Rect;
+export enum ExpandEnum {
+    NONE,
+    HORIZONTAL,
+    VERTICAL,
+    BOTH
+}
+
+export class Node extends Core.TreeNode {
+    /** bouding box. x,y coordinates relative to parent's top left corner */
+    protected boundingBox: Core.Rect = new Core.Rect();
+    protected _expand: ExpandEnum;
 
     private visible: boolean = true;
-    private zOrder: number;
-    private sortNeeded: boolean = false;
+    private zOrder: number = 0;
 
-    show() {
+    public setExpandFlag(flag: ExpandEnum) {
+        this._expand = flag;
+    }
+
+    public logSceneGraph(pad: string = "", withStats: boolean = true) {
+        if ( withStats ) {
+            console.log("##### Umbra node stats :" + this.computeNodeCount(true)
+                + " nodes (" + this.computeNodeCount(false) + " visibles) #####");
+        }
+        console.log(pad + (this.visible ? "" : "*") + this.toString());
+        for (let child of this.children) {
+            (<Node> child).logSceneGraph(pad + "  ", false);
+        }
+    }
+
+    public computeNodeCount(includingHidden: boolean = false): number {
+        if (! includingHidden && ! this.isVisible() ) {
+            return 0;
+        }
+        let count: number = 1;
+        for (let child of this.children) {
+            count += (<Node> child).computeNodeCount(includingHidden);
+        }
+        return count;
+    }
+
+    public toString() {
+        return this.constructor.name + ":" + this.boundingBox.toString();
+    }
+
+    public expand(w: number, h: number) {
+        if (! this.visible) {
+            return;
+        }
+        if ( w && w > this.boundingBox.w && (this._expand === ExpandEnum.HORIZONTAL
+            || this._expand === ExpandEnum.BOTH)) {
+            this.boundingBox.w = w;
+        } else {
+            w = this.boundingBox.w;
+        }
+        if ( h && h > this.boundingBox.h && (this._expand === ExpandEnum.VERTICAL
+            || this._expand === ExpandEnum.BOTH)) {
+            this.boundingBox.h = h;
+        } else {
+            h = this.boundingBox.h;
+        }
+        this.expandChildren(w, h);
+    }
+
+    public clearChildren() {
+        this.termHierarchy();
+        super.clearChildren();
+    }
+
+    public show() {
         this.visible = true;
     }
-    hide() {
+
+    public hide() {
         this.visible = false;
     }
-    isVisible(): boolean {
+
+    public getVisibleFlag(): boolean {
         return this.visible;
     }
 
-    getBoundingBox(): Core.Rect {
+    public isVisible(): boolean {
+        return this.visible && (this.__parent === undefined || (<Node> this.__parent).isVisible());
+    }
+
+    public getBoundingBox(): Core.Rect {
         return this.boundingBox;
     }
 
-    moveTo(pos: Core.Position): void;
-    moveTo(x: number, y: number): void;
-    moveTo(x: number | Core.Position, y?: number): void {
+    public getParentBoundingBox(): Core.Rect|undefined {
+        return this.__parent ? (<Node> this.__parent).getBoundingBox() : undefined;
+    }
+
+    public moveTo(pos: Core.Position): void;
+    public moveTo(x: number, y: number): void;
+    public moveTo(x: number | Core.Position, y?: number): void {
         if (typeof x === "number") {
-            if (!this.boundingBox) {
-                this.boundingBox = new Core.Rect(x, y, 0, 0);
-            } else {
-                this.boundingBox.moveTo(x, y);
-            }
+            this.boundingBox.moveTo(x, y ? y : this.boundingBox.y);
         } else {
-            let pos: Core.Position = <Core.Position>x;
-            if (! this.boundingBox ) {
-                this.boundingBox = new Core.Rect(pos.x, pos.y, 0, 0);
-            } else {
-                this.boundingBox.moveTo(pos.x, pos.y);
-            }
+            let pos: Core.Position = <Core.Position> x;
+            this.boundingBox.moveTo(pos.x, pos.y);
         }
     }
 
-    resize(w: number, h: number) {
-        if (this.boundingBox) {
-            this.boundingBox.resize(w, h);
-        } else {
-            this.boundingBox = new Core.Rect(0, 0, w, h);
-        }
+    public moveToBottomLeft() {
+        let parentBox: Core.Rect|undefined = this.getParentBoundingBox();
+        let h: number = parentBox ? parentBox.h : application.getConsole().height;
+        this.moveTo(0, h - this.boundingBox.h);
     }
 
-    getZOrder(): number {
+    public moveToTopLeft() {
+        this.moveTo(0, 0);
+    }
+
+    public moveToBottomRight() {
+        let parentBox: Core.Rect|undefined = this.getParentBoundingBox();
+        let w: number = parentBox ? parentBox.w : application.getConsole().width;
+        let h: number = parentBox ? parentBox.h : application.getConsole().height;
+        this.moveTo(w - this.boundingBox.w, h - this.boundingBox.h);
+    }
+
+    public moveToTopRight() {
+        let parentBox: Core.Rect|undefined = this.getParentBoundingBox();
+        let w: number = parentBox ? parentBox.w : application.getConsole().width;
+        this.moveTo(w - this.boundingBox.w, 0);
+    }
+
+    public resize(w: number, h: number) {
+        this.boundingBox.resize(w, h);
+    }
+
+    public getZOrder(): number {
         return this.zOrder;
     }
 
-    setZOrder(value: number) {
-        if (this.zOrder !== value) {
-            this.zOrder = value;
-            if (this.parent) {
-                (<Node>this.parent).sort(this);
-            }
-        }
-    }
-
-    computeAbsoluteCoordinates(pos: Core.Position): void {
-        if (this.parent) {
-            (<Node>this.parent).computeAbsoluteCoordinates(pos);
-        }
-        if (this.boundingBox) {
-            pos.x += this.boundingBox.x;
-            pos.y += this.boundingBox.y;
-        }
-    }
-
-    onInit(): void { }
-    onTerm(): void { }
-    abstract onRender(con: Yendor.Console): void;
-    abstract onUpdate(time: number): void;
-
-    /**
-        Function: sort
-        One child needs to be sorted because its zOrder value changed
-
-        Parameters:
-        child - the child to sort
-    */
-    protected sort(child: Node) {
-        let index: number = 0;
-        let len: number = this.children.length;
-        while (index !== len && this.children[index] !== child) {
-            ++index;
-        }
-        while (index > 0 && (<Node>this.children[index - 1]).zOrder > child.zOrder) {
-            this.children[index] = this.children[index - 1];
-            this.children[index - 1] = child;
-            --index;
-        }
-        while (index < len && (<Node>this.children[index + 1]).zOrder < child.zOrder) {
-            this.children[index] = this.children[index + 1];
-            this.children[index + 1] = child;
-            ++index;
+    public setZOrder(value: number) {
+        let delta: number = value - this.zOrder;
+        this.zOrder = value;
+        for (let child of this.children) {
+            let nchild: Node = <Node> child;
+            nchild.setZOrder(nchild.zOrder + delta);
         }
     }
 
     /**
-        Function: initHierarchy
-        Init this node, then this node children in ascending zOrder.
-    */
-    initHierarchy(): void {
+     * function: containsAbsolute
+     * Whether this node contains the absolute position.
+     */
+    public containsAbsolute(absolutePos: Core.Position): boolean {
+        let node: Node = (<Node> this.__parent);
+        let x: number = absolutePos.x;
+        let y: number = absolutePos.y;
+        while ( node ) {
+            x -= node.boundingBox.x;
+            y -= node.boundingBox.y;
+            node = (<Node> node.__parent);
+        }
+        return this.boundingBox.contains(x, y);
+    }
+
+    public abs2Local(pos: Core.Position) {
+        let node: Node = this;
+        while ( node ) {
+            pos.x -= node.boundingBox.x;
+            pos.y -= node.boundingBox.y;
+            node = (<Node> node.__parent);
+        }
+    }
+
+    public local2Abs(pos: Core.Position): void {
+        let node: Node = this;
+        while ( node ) {
+            pos.x += node.boundingBox.x;
+            pos.y += node.boundingBox.y;
+            node = (<Node> node.__parent);
+        }
+    }
+
+    public onInit(): void {}
+    public onTerm(): void {}
+    public onPreRender(): void {}
+    public onPostRender(): void {}
+    public onRender(_con: Yendor.Console): void {}
+    public onUpdate(_time: number): void {}
+
+    /**
+     * Function: initHierarchy
+     * Init this node, then this node children in ascending zOrder.
+     */
+    public initHierarchy(): void {
         this.onInit();
-        for (let i: number = 0, len: number = this.children.length; i < len; ++i) {
-            let node: Node = <Node>this.children[i];
-            node.initHierarchy();
+        for (let node of this.children) {
+            (<Node> node).initHierarchy();
         }
     }
 
     /**
-        Function: renderHierarchy
-        Render this node, then this node children in ascending zOrder.
-
-        Parameters:
-        con - the console to render on
-    */
-    renderHierarchy(con: Yendor.Console): void {
+     * Function: renderHierarchy
+     * Render this node, then this node children in ascending zOrder.
+     * Parameters:
+     * con - the console to render on
+     */
+    public renderHierarchy(con: Yendor.Console, nodeList?: Node[]): void {
         if (this.visible) {
-            this.onRender(con);
-            for (let i: number = 0, len: number = this.children.length; i < len; ++i) {
-                let node: Node = <Node>this.children[i];
-                node.renderHierarchy(con);
+            // build list of all visible nodes
+            let rootNode: boolean = (nodeList === undefined);
+            if (! nodeList ) {
+                nodeList = [];
+            }
+            nodeList.push(this);
+            for (let child of this.children) {
+                (<Node> child).renderHierarchy(con, nodeList);
+            }
+            if ( rootNode ) {
+                // sort by zOrder
+                nodeList.sort((a: Node, b: Node) => {
+                    return a.zOrder < b.zOrder ? -1 : a.zOrder > b.zOrder ? 1 : 0;
+                });
+                // render
+                for (let node of nodeList) {
+                    node.onPreRender();
+                }
+                for (let node of nodeList) {
+                    node.onRender(con);
+                }
+                for (let node of nodeList) {
+                    node.onPostRender();
+                }
             }
         }
     }
 
     /**
-        Function: updateHierarchy
-        Update this node children in descending zOrder, then this node.
-
-        Parameters:
-        time - current game time
-    */
-    updateHierarchy(time: number): void {
+     * Function: updateHierarchy
+     * Update this node children in descending zOrder, then this node.
+     * Parameters:
+     * time - current game time
+     */
+    public updateHierarchy(time: number): void {
         if (this.visible) {
-            for (let i: number = this.children.length - 1; i >= 0; --i) {
-                let node: Node = <Node>this.children[i];
-                node.updateHierarchy(time);
-            }
+            this.updateChildrenHierarchy(time);
             this.onUpdate(time);
         }
     }
 
     /**
-        Function: termHierarchy
-        Terminate this node children in descending zOrder, then this node.
-    */
-    termHierarchy(): void {
+     * Function: termHierarchy
+     * Terminate this node children in descending zOrder, then this node.
+     */
+    public termHierarchy(): void {
         for (let i: number = this.children.length - 1; i >= 0; --i) {
-            let node: Node = <Node>this.children[i];
+            let node: Node = <Node> this.children[i];
             node.termHierarchy();
         }
         this.onTerm();
     }
 
-    /**
-        Function: addChild
-        Add a child keeping children sorted in zOrder.
-
-        Parameters:
-        node - the child node
-
-        Returns:
-        the position of the node in the child list
-    */
-    addChild(node: Node): number {
-        let i: number = 0, len: number = this.children.length;
-        if (node.zOrder !== undefined) {
-            while (i < len && ((<Node>this.children[i]).zOrder === undefined || (<Node>this.children[i]).zOrder < node.zOrder)) {
-                ++i;
-            }
-        } else {
-            while (i < len && (<Node>this.children[i]).zOrder === undefined) {
-                ++i;
-            }
-        }
-        if (i === len) {
-            this.children.push(node);
-        } else {
-            this.children.splice(i, 0, node);
-        }
-        return i;
+    public addChild<T extends Node>(node: T): T {
+        super.addChild(node);
+        node.computeBoundingBox();
+        return node;
     }
 
-    computeBoundingBox() {
-        if (this.children.length === 0) {
+    public removeChild<T extends Node>(node: T): T {
+        super.removeChild(node);
+        this.computeBoundingBox();
+        return node;
+    }
+
+    public center() {
+        let parentBox: Core.Rect|undefined = this.getParentBoundingBox();
+        if (! parentBox ) {
             return;
         }
+        this.moveTo(Math.floor((parentBox.w - this.boundingBox.w) / 2),
+            Math.floor((parentBox.h - this.boundingBox.h) / 2));
+    }
+
+    public computeBoundingBox() {
+        if ( !this.visible) {
+            return;
+        }
+        if ( this.children.length > 0 ) {
+            this.boundingBox.w = 0;
+            this.boundingBox.h = 0;
+        }
         let first: boolean = true;
-        for (let i: number = 0, len: number = this.children.length; i < len; ++i) {
-            let node: Node = <Node>this.children[i];
-            if (node.boundingBox) {
+        for (let child of this.children) {
+            let node: Node = <Node> child;
+            node.computeBoundingBox();
+            if (node.visible) {
                 if (first) {
-                    if (!this.boundingBox) {
-                        this.boundingBox = new Core.Rect();
-                    }
-                    this.boundingBox.set(node.boundingBox);
+                    this.boundingBox.w = node.boundingBox.x + node.boundingBox.w;
+                    this.boundingBox.h = node.boundingBox.y + node.boundingBox.h;
                     first = false;
                 } else {
-                    // make sure our bounding box contains all the children.
-                    let p: Core.Position = new Core.Position(node.boundingBox.x, node.boundingBox.y);
-                    this.boundingBox.expand(p);
-                    p.x += node.boundingBox.w - 1;
-                    p.y += node.boundingBox.h - 1;
-                    this.boundingBox.expand(p);
+                    // make sure our bounding box contains all the visible children.
+                    this.boundingBox.w = Math.max(this.boundingBox.w, node.boundingBox.x + node.boundingBox.w);
+                    this.boundingBox.h = Math.max(this.boundingBox.h, node.boundingBox.y + node.boundingBox.h);
                 }
             }
+        }
+    }
+
+   protected expandChildren(w: number, h: number) {
+        for (let child of this.children) {
+            (<Node> child).expand(w, h);
+        }
+    }
+
+    protected updateChildrenHierarchy(time: number) {
+        for (let child of this.children) {
+            (<Node> child).updateHierarchy(time);
         }
     }
 }

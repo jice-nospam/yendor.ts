@@ -2,30 +2,25 @@
 // http://www.roguebasin.com/index.php?title=Restrictive_Precise_Angle_Shadowcasting
 
 /**
-	Section: Field of view
-*/
+ * Section: Field of view
+ */
 
 /**
-    Class: Fov
-    Stores the map properties and compute the field of view from a point.
-*/
+ * Class: Fov
+ * Stores the map properties and compute the field of view from a point.
+ */
 export class Fov {
     private _transparent: boolean[][];
     private startAngle: number[];
     private endAngle: number[];
-    private _width: number;
-    private _height: number;
 
     /**
-        Constructor: constructor
-
-        Parameters:
-        width - the map width
-        height - the map height
-    */
-    constructor(_width: number, _height: number) {
-        this._width = _width;
-        this._height = _height;
+     * Constructor: constructor
+     * Parameters:
+     * width - the map width
+     * height - the map height
+     */
+    constructor(private _width: number, private _height: number) {
         this._transparent = [];
         for (let x = 0; x < _width; x++) {
             this._transparent[x] = [];
@@ -35,57 +30,53 @@ export class Fov {
     }
 
     /**
-        Property: width
-        Return the map width (read-only)
-    */
+     * Property: width
+     * Return the map width (read-only)
+     */
     get width() { return this._width; }
 
     /**
-        Property: height
-        Return the map height (read-only)
-    */
+     * Property: height
+     * Return the map height (read-only)
+     */
     get height() { return this._height; }
 
     /**
-        Function: isTransparent
-
-        Parameters:
-        x - x coordinate in the map
-        y - y coordinate in the map
-
-        Returns:
-        true if the cell at coordinate x,y is transparent (doesn't block field of view)
-    */
-    isTransparent(x: number, y: number): boolean {
+     * Function: isTransparent
+     * Parameters:
+     * x - x coordinate in the map
+     * y - y coordinate in the map
+     * Returns:
+     * true if the cell at coordinate x,y is transparent (doesn't block field of view)
+     */
+    public isTransparent(x: number, y: number): boolean {
         return this._transparent[x] ? this._transparent[x][y] : false;
     }
 
     /**
-        Function: setTransparent
-
-        Parameters:
-        x - x coordinate in the map
-        y - y coordinate in the map
-        value - whether this cell is transparent or not
-    */
-    setTransparent(x: number, y: number, value: boolean) {
+     * Function: setTransparent
+     * Parameters:
+     * x - x coordinate in the map
+     * y - y coordinate in the map
+     * value - whether this cell is transparent or not
+     */
+    public setTransparent(x: number, y: number, value: boolean) {
         if (this._transparent[x]) {
             this._transparent[x][y] = value;
         }
     }
 
     /**
-        Function: computeFov
-        Compute the field of view using <restrictive precise angle shadowcasting
-        at http://www.roguebasin.com/index.php?title=Restrictive_Precise_Angle_Shadowcasting> by Dominik Marczuk
-
-        Parameters:
-        x - x coordinate of the point of view
-        y - y coordinate of the point of view
-        maxRadius - maximum distance for a cell to be visible
-        lightWalls - *optional* (default : true) whether walls are included in the field of view.
-    */
-    computeFov(inFov: boolean[][], x: number, y: number, maxRadius: number, lightWalls: boolean = true) {
+     * Function: computeFov
+     * Compute the field of view using <restrictive precise angle shadowcasting
+     * at http://www.roguebasin.com/index.php?title=Restrictive_Precise_Angle_Shadowcasting> by Dominik Marczuk
+     * Parameters:
+     * x - x coordinate of the point of view
+     * y - y coordinate of the point of view
+     * maxRadius - maximum distance for a cell to be visible
+     * lightWalls - *optional* (default : true) whether walls are included in the field of view.
+     */
+    public computeFov(inFov: boolean[][], x: number, y: number, maxRadius: number, lightWalls: boolean = true) {
         this.clearFov(inFov);
         inFov[x][y] = true;
         this.computeQuadrantVertical(inFov, x, y, maxRadius, lightWalls, 1, 1);
@@ -99,9 +90,9 @@ export class Fov {
     }
 
     /**
-        Function: clearFov
-        Reset the field of view information. After this, <isInFov> returns false for all the cells.
-    */
+     * Function: clearFov
+     * Reset the field of view information. After this, <isInFov> returns false for all the cells.
+     */
     private clearFov(inFov: boolean[][]) {
         for (let x: number = 0; x < this.width; x++) {
             for (let y: number = 0; y < this.height; y++) {
@@ -110,7 +101,8 @@ export class Fov {
         }
     }
 
-    private computeQuadrantVertical(inFov: boolean[][], xPov: number, yPov: number, maxRadius: number, lightWalls: boolean, dx: number, dy: number) {
+    private computeQuadrantVertical(inFov: boolean[][], xPov: number, yPov: number, maxRadius: number,
+                                    lightWalls: boolean, dx: number, dy: number) {
         let y: number = yPov + dy;
         let done: boolean = false;
         let iteration: number = 1;
@@ -194,7 +186,8 @@ export class Fov {
         }
     }
 
-    private computeQuadrantHorizontal(inFov: boolean[][], xPov: number, yPov: number, maxRadius: number, lightWalls: boolean, dx: number, dy: number) {
+    private computeQuadrantHorizontal(inFov: boolean[][], xPov: number, yPov: number, maxRadius: number,
+                                      lightWalls: boolean, dx: number, dy: number) {
         let x: number = xPov + dx;
         let done: boolean = false;
         let iteration: number = 1;

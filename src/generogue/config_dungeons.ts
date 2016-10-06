@@ -1,45 +1,96 @@
 
-import {ActorType} from "./config_actors";
-import * as Map from "../fwk/map/main";
+import {ACTOR_TYPES} from "./config_actors";
+import * as Actors from "../fwk/actors/main";
+import * as Constants from "./base";
+import {IBspDungeonConfig} from "../fwk/map/map_build_dungeon_bsp";
 
-export let itemProbabilities: Map.ActorProbabilityMap = {};
-itemProbabilities[ActorType[ActorType.HEALTH_POTION]] = [[0, 20], [5, 15]];
-itemProbabilities[ActorType[ActorType.REGENERATION_POTION]] = [[0, 20], [5, 15]];
-itemProbabilities[ActorType[ActorType.SCROLL_OF_LIGHTNING_BOLT]] = [[3, 10]];
-itemProbabilities[ActorType[ActorType.SCROLL_OF_FIREBALL]] = 7;
-itemProbabilities[ActorType[ActorType.SCROLL_OF_CONFUSION]] = 7;
-itemProbabilities[ActorType[ActorType.BONE_ARROW]] = 5;
-itemProbabilities[ActorType[ActorType.IRON_ARROW]] = 5;
-itemProbabilities[ActorType[ActorType.BOLT]] = 5;
-itemProbabilities[ActorType[ActorType.SHORT_BOW]] = 1;
-itemProbabilities[ActorType[ActorType.LONG_BOW]] = [[5, 1]];
-itemProbabilities[ActorType[ActorType.CROSSBOW]] = 1;
-itemProbabilities[ActorType[ActorType.SHORT_SWORD]] = [[4, 1], [12, 0]];
-itemProbabilities[ActorType[ActorType.WAND_OF_FROST]] = 1;
-itemProbabilities[ActorType[ActorType.STAFF_OF_TELEPORTATION]] = 1;
-itemProbabilities[ActorType[ActorType.STAFF_OF_LIFE_DETECTION]] = 1;
-itemProbabilities[ActorType[ActorType.STAFF_OF_MAPPING]] = 1;
-itemProbabilities[ActorType[ActorType.WOODEN_SHIELD]] = [[2, 1], [12, 0]];
-itemProbabilities[ActorType[ActorType.LONGSWORD]] = [[6, 1]];
-itemProbabilities[ActorType[ActorType.IRON_SHIELD]] = [[7, 1]];
-itemProbabilities[ActorType[ActorType.GREATSWORD]] = [[8, 1]];
-itemProbabilities[ActorType[ActorType.CANDLE]] = 10;
-itemProbabilities[ActorType[ActorType.OIL_FLASK]] = 5;
-itemProbabilities[ActorType[ActorType.TORCH]] = 5;
-itemProbabilities[ActorType[ActorType.LANTERN]] = 1;
-itemProbabilities[ActorType[ActorType.SUNROD]] = 1;
+let itemProbabilities: Actors.IProbabilityMap = {
+    classProb: [
+        { clazz: ACTOR_TYPES.BONE_ARROW, prob : 5},
+        { clazz: ACTOR_TYPES.IRON_ARROW, prob : 5},
+        { clazz: ACTOR_TYPES.BOLT, prob : 5},
+        { clazz: ACTOR_TYPES.SHORT_BOW, prob : 1},
+        { clazz: ACTOR_TYPES.LONG_BOW, prob : [[5, 1]] },
+        { clazz: ACTOR_TYPES.CROSSBOW, prob : 1},
+        { clazz: ACTOR_TYPES.SHORT_SWORD, prob : [[4, 1], [12, 0]] },
+        { clazz: ACTOR_TYPES.WOODEN_SHIELD, prob : [[2, 1], [12, 0]] },
+        { clazz: ACTOR_TYPES.LONGSWORD, prob : [[6, 1]] },
+        { clazz: ACTOR_TYPES.IRON_SHIELD, prob : [[7, 1]] },
+        { clazz: ACTOR_TYPES.GREATSWORD, prob : [[8, 1]] },
+        { clazz: ACTOR_TYPES.CANDLE, prob : 10 },
+        { clazz: ACTOR_TYPES.OIL_FLASK, prob : 5 },
+        { clazz: ACTOR_TYPES.TORCH, prob : 5 },
+    ],
+    countProb: {
+        0: 50,
+        1: 40,
+        2: 10,
+    },
+};
 
-export let creatureProbabilities: Map.ActorProbabilityMap = {};
-creatureProbabilities[ActorType[ActorType.GOBLIN]] = 60;
-creatureProbabilities[ActorType[ActorType.ORC]] = 30;
-creatureProbabilities[ActorType[ActorType.TROLL]] = [[3, 10], [5, 20], [7, 30]];
+let lootProbabilities: Actors.IProbabilityMap = {
+    classProb: [
+        { clazz: ACTOR_TYPES.HEALTH_POTION, prob : [[0, 20], [5, 15]] },
+        { clazz: ACTOR_TYPES.REGENERATION_POTION, prob : [[0, 20], [5, 15]] },
+        { clazz: ACTOR_TYPES.SCROLL_OF_LIGHTNING_BOLT, prob : [[3, 10]] },
+        { clazz: ACTOR_TYPES.SCROLL_OF_FIREBALL, prob : 7},
+        { clazz: ACTOR_TYPES.SCROLL_OF_CONFUSION, prob : 7},
+        { clazz: ACTOR_TYPES.SHORT_BOW, prob : 1},
+        { clazz: ACTOR_TYPES.LONG_BOW, prob : [[5, 1]] },
+        { clazz: ACTOR_TYPES.CROSSBOW, prob : 1},
+        { clazz: ACTOR_TYPES.SHORT_SWORD, prob : [[4, 1], [12, 0]] },
+        { clazz: ACTOR_TYPES.WAND_OF_FROST, prob : 1},
+        { clazz: ACTOR_TYPES.STAFF_OF_TELEPORTATION, prob : 1},
+        { clazz: ACTOR_TYPES.STAFF_OF_LIFE_DETECTION, prob : 1},
+        { clazz: ACTOR_TYPES.STAFF_OF_MAPPING, prob : 1},
+        { clazz: ACTOR_TYPES.WOODEN_SHIELD, prob : [[2, 1], [12, 0]] },
+        { clazz: ACTOR_TYPES.LONGSWORD, prob : [[6, 1]] },
+        { clazz: ACTOR_TYPES.IRON_SHIELD, prob : [[7, 1]] },
+        { clazz: ACTOR_TYPES.GREATSWORD, prob : [[8, 1]] },
+        { clazz: ACTOR_TYPES.LANTERN, prob : 1},
+        { clazz: ACTOR_TYPES.SUNROD, prob : 1},
+    ],
+    maxCount: 4,
+    minCount: 1,
+};
 
-export let doorProbabilities: Map.ActorProbabilityMap = {};
-doorProbabilities[ActorType[ActorType.WOODEN_DOOR]] = 80;
-doorProbabilities[ActorType[ActorType.IRON_PORTCULLIS]] = 20;
+let creatureProbabilities: Actors.IProbabilityMap = {
+    classProb: [
+        { clazz: ACTOR_TYPES.GOBLIN, prob: 60},
+        { clazz: ACTOR_TYPES.ORC, prob: 30},
+        { clazz: ACTOR_TYPES.TROLL, prob: [[3, 10], [5, 20], [7, 30]]},
+    ],
+    maxCount: 2,
+};
 
-export let wallLightProbabilities: Map.ActorProbabilityMap = {};
-wallLightProbabilities[ActorType[ActorType.WALL_TORCH]] = 1;
+let doorProbabilities: Actors.IProbabilityMap = {
+    classProb: [
+        { clazz: ACTOR_TYPES.WOODEN_DOOR, prob: 80},
+        { clazz: ACTOR_TYPES.IRON_PORTCULLIS, prob: 20},
+    ],
+};
 
-export let keyProbabilities: Map.ActorProbabilityMap = {};
-keyProbabilities[ActorType[ActorType.KEY]] = 1;
+let wallLightProbabilities: Actors.IProbabilityMap = {
+    classProb: [
+        { clazz: ACTOR_TYPES.WALL_TORCH, prob: 1},
+    ],
+};
+
+let keyProbabilities: Actors.IProbabilityMap = {
+    classProb: [
+        { clazz: ACTOR_TYPES.KEY, prob: 1},
+    ],
+};
+
+export let dungeonConfig: IBspDungeonConfig = {
+    creatureProbabilities: creatureProbabilities,
+    doorProbabilities: doorProbabilities,
+    itemProbabilities: itemProbabilities,
+    keyProbabilities: keyProbabilities,
+    lootContainerType: ACTOR_TYPES.STATIC_CONTAINER,
+    lootProbabilities: lootProbabilities,
+    maxTorches: Constants.DUNGEON_MAX_TORCHES,
+    minTorches: Constants.DUNGEON_MIN_TORCHES,
+    roomMinSize: Constants.ROOM_MIN_SIZE,
+    wallLightProbabilities: wallLightProbabilities,
+};

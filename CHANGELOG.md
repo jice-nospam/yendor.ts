@@ -1,4 +1,19 @@
-# 0.6.0 / TBD
+# 0.7.0 / 06-oct-2016
+* switched to typescript 2.0 (this breaks node support for unit tests)
+
+* Yendor toolkit
+    - separate console and console rendering features
+
+* Umbra framework
+    - nodes rendered in ascending z-order. scene hierarchy not taken into account anymore
+
+* GeneRogue
+    - new pickable and static containers : pouch, bag, satchel, map case, key ring, barrel, chests
+    - drag'n drop inventory management
+    - loot ui
+    - you can loot creatures corpses
+
+# 0.6.0 / 03-sep-2016
 * upgraded to typescript 1.8.10, pixi 3.0.11
 * switched to ES6 and ES6 modules
 * replaced jake by node scripts

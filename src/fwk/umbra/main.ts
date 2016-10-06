@@ -1,7 +1,6 @@
-/// <reference path="../../decl/jquery.d.ts" />
 /**
-	Section: umbra.ts
-*/
+ * Section: umbra.ts
+ */
 
 export * from "./constants";
 export * from "./node";
@@ -12,22 +11,25 @@ export * from "./input";
 export * from "./events";
 export * from "./log";
 
+import * as $ from "jquery";
 import * as Yendor from "../yendor/main";
-import * as app from "./application";
+import {Application} from "./application";
 import * as inp from "./input";
-import {EventType, EventManager} from "./events";
+import {EventManager} from "./events";
+import {EVENT_LOG} from "./constants";
 import {AbstractLogger, EventLogger, JSConsoleLogger} from "./log";
 
 /**
-    Field: application
-    The currently running application. Set by Application.run. Needed to compute mouse coordinate in console cells coordinates.
-*/
-export let application: app.Application;
+ * Field: application
+ * The currently running application. Set by Application.run.
+ * Needed to compute mouse coordinate in console cells coordinates.
+ */
+export let application: Application;
 export let logger: AbstractLogger = new EventLogger();
 
-export function init(appli: app.Application) {
+export function init(appli: Application): Application {
     Yendor.init();
-    EventManager.registerEventListener(new JSConsoleLogger(), EventType[EventType.LOG]);
+    EventManager.registerEventListener(new JSConsoleLogger(), EVENT_LOG);
     application = appli;
     if ( appli ) {
         $(document).keydown(inp.onKeydown);
@@ -37,4 +39,5 @@ export function init(appli: app.Application) {
         $(document).mousedown(inp.onMouseDown);
         $(document).mouseup(inp.onMouseUp);
     }
+    return application;
 }

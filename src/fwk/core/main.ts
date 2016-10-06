@@ -1,10 +1,7 @@
 /**
-	Section: core.ts
-*/
+ * Section: core.ts
+ */
 
-export * from "./persistence";
-export * from "./persistence_local_storage";
-export * from "./persistence_indexed_db";
 export * from "./color";
 export * from "./position";
 export * from "./rect";
@@ -33,10 +30,10 @@ export function buildMatrix<T>(w: number): T[][] {
 }
 
 /**
-    Function: crc32
-    Returns:
-    the CRC32 hash of a string
-*/
+ * Function: crc32
+ * Returns:
+ * the CRC32 hash of a string
+ */
 export function crc32(str: string): number {
     if (!crcTable) {
         makeCRCTable();
@@ -49,11 +46,15 @@ export function crc32(str: string): number {
 };
 
 /**
-    Function: toCamelCase
-    Convert a string like EVENT_TYPE to camel case EventType
-*/
+ * Function: toCamelCase
+ * Convert a string like EVENT_TYPE to camel case EventType
+ */
 export function toCamelCase(input: string): string {
     return input.toLowerCase().replace(/(\b|_)\w/g, function(m) {
         return m.toUpperCase().replace(/_/, "");
     });
+}
+
+export function clamp(value: number, min: number, max: number) {
+    return value < min ? min : value > max ? max : value;
 }

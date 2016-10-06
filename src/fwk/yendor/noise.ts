@@ -1,64 +1,58 @@
 /**
-	Section: Simplex noise generator
-*/
+ * Section: Simplex noise generator
+ */
 import * as rng from "./rng";
 /**
-    Class: Noise
-    Base for all noise generators implementations.
-
-    > let noise: Yendor.Noise = new SimplexNoise();
-    > let n: number = noise.get1D(0.5);
-*/
+ * Class: Noise
+ * Base for all noise generators implementations.
+ * > let noise: Yendor.Noise = new SimplexNoise();
+ * > let n: number = noise.get1D(0.5);
+ */
 export abstract class Noise {
     /**
-        Function: get1D
-        One dimension noise.
-
-        Parameters:
-        x - value
-
-        Returns:
-        A number between -1 and 1.
-    */
-    abstract get1D(x: number, frequency: number): number;
-    /**
-        Function: get2D
-        Two dimensions noise.
-
-        Parameters:
-        x - value
-        y - value
-
-        Returns:
-        A number between -1 and 1.
-    */
-    abstract get2D(x: number, y: number, frequency: number): number;
-    /**
-        Function: get3D
-        Three dimensions noise.
-
-        Parameters:
-        x - value
-        y - value
-        z - value
-
-        Returns:
-        A number between -1 and 1.
-    */
-    abstract get3D(x: number, y: number, z: number, frequency: number): number;
+     * Function: get1D
+     * One dimension noise.
+     * Parameters:
+     * x - value
+     * Returns:
+     * A number between -1 and 1.
+     */
+    public abstract get1D(x: number, frequency: number): number;
 
     /**
-        function: fbm1D
-        Compute a one dimension fractal brownian motion.
+     * Function: get2D
+     * Two dimensions noise.
+     * Parameters:
+     * x - value
+     * y - value
+     * Returns:
+     * A number between -1 and 1.
+     */
+    public abstract get2D(x: number, y: number, frequency: number): number;
 
-        Parameters :
-        x - value
-        frequency - noise scaling factor
-        octaves - how many noise we add (between 1 and 8)
-        lacunarity - frequency factor between each octave (between 1 and 4, default 2)
-        persistence - amplitude factor between each octave (between 0 and 1, default 0.5)
-        */
-    fbm1D(x: number, frequency: number, octaves: number, lacunarity: number = 2, persistence: number = 0.5) {
+    /**
+     * Function: get3D
+     * Three dimensions noise.
+     * Parameters:
+     * x - value
+     * y - value
+     * z - value
+     * Returns:
+     * A number between -1 and 1.
+     */
+    public abstract get3D(x: number, y: number, z: number, frequency: number): number;
+
+    /**
+     * function: fbm1D
+     * Compute a one dimension fractal brownian motion.
+     * Parameters :
+     * x - value
+     * frequency - noise scaling factor
+     * octaves - how many noise we add (between 1 and 8)
+     * lacunarity - frequency factor between each octave (between 1 and 4, default 2)
+     * persistence - amplitude factor between each octave (between 0 and 1, default 0.5)
+     */
+    public fbm1D(x: number, frequency: number, octaves: number, lacunarity: number = 2, persistence: number = 0.5) {
         let sum = this.get1D(x, frequency);
         let amplitude = 1;
         let range = 1;
@@ -72,18 +66,18 @@ export abstract class Noise {
     }
 
     /**
-        function: fbm2D
-        Compute a two dimension fractal brownian motion.
-
-        Parameters :
-        x - value
-        y - value
-        frequency - noise scaling factor
-        octaves - how many noise we add (between 1 and 8)
-        lacunarity - frequency factor between each octave (between 1 and 4, default 2)
-        persistence - amplitude factor between each octave (between 0 and 1, default 0.5)
-        */
-    fbm2D(x: number, y: number, frequency: number, octaves: number, lacunarity: number = 2, persistence: number = 0.5) {
+     * function: fbm2D
+     * Compute a two dimension fractal brownian motion.
+     * Parameters :
+     * x - value
+     * y - value
+     * frequency - noise scaling factor
+     * octaves - how many noise we add (between 1 and 8)
+     * lacunarity - frequency factor between each octave (between 1 and 4, default 2)
+     * persistence - amplitude factor between each octave (between 0 and 1, default 0.5)
+     */
+    public fbm2D(x: number, y: number, frequency: number, octaves: number,
+                 lacunarity: number = 2, persistence: number = 0.5) {
         let sum = this.get2D(x, y, frequency);
         let amplitude = 1;
         let range = 1;
@@ -97,19 +91,19 @@ export abstract class Noise {
     }
 
     /**
-        function: fbm3D
-        Compute a three dimension fractal brownian motion.
-
-        Parameters :
-        x - value
-        y - value
-        z - value
-        frequency - noise scaling factor
-        octaves - how many noise we add (between 1 and 8)
-        lacunarity - frequency factor between each octave (between 1 and 4, default 2)
-        persistence - amplitude factor between each octave (between 0 and 1, default 0.5)
-        */
-    fbm3D(x: number, y: number, z: number, frequency: number, octaves: number, lacunarity: number = 2, persistence: number = 0.5) {
+     * function: fbm3D
+     * Compute a three dimension fractal brownian motion.
+     * Parameters :
+     * x - value
+     * y - value
+     * z - value
+     * frequency - noise scaling factor
+     * octaves - how many noise we add (between 1 and 8)
+     * lacunarity - frequency factor between each octave (between 1 and 4, default 2)
+     * persistence - amplitude factor between each octave (between 0 and 1, default 0.5)
+     */
+    public fbm3D(x: number, y: number, z: number, frequency: number, octaves: number,
+                 lacunarity: number = 2, persistence: number = 0.5) {
         let sum = this.get3D(x, y, z, frequency);
         let amplitude = 1;
         let range = 1;
@@ -124,9 +118,9 @@ export abstract class Noise {
 }
 
 /**
-    Class: SimplexNoise
-    Simplex noise implementation adapted from http://catlikecoding.com/unity/tutorials/simplex-noise/
-*/
+ * Class: SimplexNoise
+ * Simplex noise implementation adapted from http://catlikecoding.com/unity/tutorials/simplex-noise/
+ */
 export class SimplexNoise extends Noise {
     protected static HASH_MASK: number = 255;
     protected static GRADIENTS_1D: number[] = [1, -1];
@@ -147,21 +141,11 @@ export class SimplexNoise extends Noise {
         [1, 0, 1], [-1, 0, 1], [1, 0, -1], [-1, 0, -1],
         [0, 1, 1], [0, -1, 1], [0, 1, -1], [0, -1, -1],
         [1, 1, 1], [-1, 1, 1], [1, -1, 1], [-1, -1, 1],
-        [1, 1, -1], [-1, 1, -1], [1, -1, -1], [-1, -1, -1]
+        [1, 1, -1], [-1, 1, -1], [1, -1, -1], [-1, -1, -1],
     ];
     protected static GRADIENTS_3D_MASK: number = 31;
     protected static normalizedGradient3d: boolean = false;
     protected static INVERSE_MAX_FALLOF_3D: number = 8192 * Math.sqrt(3) / 375;
-
-    private hash: number[];
-    constructor(generator: rng.Random) {
-        super();
-        if (!SimplexNoise.normalizedGradient3d) {
-            SimplexNoise.normalizeGradient3d();
-        }
-        this.hash = this.computeHash(generator);
-    }
-
     private static normalizeGradient3d() {
         SimplexNoise.normalizedGradient3d = true;
         for (let i: number = 0; i <= SimplexNoise.GRADIENTS_3D_MASK; ++i) {
@@ -175,19 +159,14 @@ export class SimplexNoise extends Noise {
         }
     }
 
-    private computeHash(generator: rng.Random): number[] {
-        let hash: number[] = [];
-        let i: number;
-        for (i = 0; i <= SimplexNoise.HASH_MASK; ++i) {
-            hash[i] = i;
+    private hash: number[];
+
+    constructor(generator: rng.Random) {
+        super();
+        if (!SimplexNoise.normalizedGradient3d) {
+            SimplexNoise.normalizeGradient3d();
         }
-        while (--i) {
-            let idx = Math.floor(generator.getNumber(0, SimplexNoise.HASH_MASK));
-            let tmp = hash[i];
-            hash[i] = hash[idx];
-            hash[idx] = tmp;
-        }
-        return hash;
+        this.hash = this.computeHash(generator);
     }
 
     public get1D(val: number, frequency: number): number {
@@ -197,16 +176,6 @@ export class SimplexNoise extends Noise {
         result += this.grad1d(val, ix + 1);
         // range [-1,1]
         return result  * SimplexNoise.INVERSE_MAX_FALLOF_1D;
-    }
-
-    private grad1d(val: number, ix: number): number {
-        let x: number = val - ix;
-        // falloff function : (1 - x2)3
-        let f: number = 1 - x * x;
-        f = f * f * f;
-        let h: number = this.hash[ix & SimplexNoise.HASH_MASK];
-        let v: number = SimplexNoise.GRADIENTS_1D[h & SimplexNoise.GRADIENTS_1D_MASK] * x;
-        return f * v;
     }
 
     public get2D(valx: number, valy: number, frequency: number): number {
@@ -226,23 +195,6 @@ export class SimplexNoise extends Noise {
         }
         // range [-1,1]
         return result * SimplexNoise.INVERSE_MAX_FALLOF_2D;
-    }
-
-    private grad2d(valx: number, valy: number, ix: number, iy: number): number {
-        let unskew = (ix + iy) * SimplexNoise.SQUARE_TO_TRIANGLE;
-        let x: number = valx - ix + unskew;
-        let y: number = valy - iy + unskew;
-        // falloff function : (0.5 - x2 - y2)3
-        let f: number = 0.5 - x * x - y * y;
-        if (f > 0) {
-            f = f * f * f;
-            let h: number = this.hash[(this.hash[ix & SimplexNoise.HASH_MASK] + iy) & SimplexNoise.HASH_MASK];
-            let g: number[] = SimplexNoise.GRADIENTS_2D[h & SimplexNoise.GRADIENTS_2D_MASK];
-            let v: number = g[0] * x + g[1] * y;
-            return f * v;
-        } else {
-            return 0;
-        }
     }
 
     public get3D(valx: number, valy: number, valz: number, frequency: number): number {
@@ -290,6 +242,48 @@ export class SimplexNoise extends Noise {
         return result * SimplexNoise.INVERSE_MAX_FALLOF_3D;
     }
 
+    private computeHash(generator: rng.Random): number[] {
+        let hash: number[] = [];
+        let i: number;
+        for (i = 0; i <= SimplexNoise.HASH_MASK; ++i) {
+            hash[i] = i;
+        }
+        while (--i) {
+            let idx = Math.floor(generator.getNumber(0, SimplexNoise.HASH_MASK));
+            let tmp = hash[i];
+            hash[i] = hash[idx];
+            hash[idx] = tmp;
+        }
+        return hash;
+    }
+
+    private grad1d(val: number, ix: number): number {
+        let x: number = val - ix;
+        // falloff function : (1 - x2)3
+        let f: number = 1 - x * x;
+        f = f * f * f;
+        let h: number = this.hash[ix & SimplexNoise.HASH_MASK];
+        let v: number = SimplexNoise.GRADIENTS_1D[h & SimplexNoise.GRADIENTS_1D_MASK] * x;
+        return f * v;
+    }
+
+    private grad2d(valx: number, valy: number, ix: number, iy: number): number {
+        let unskew = (ix + iy) * SimplexNoise.SQUARE_TO_TRIANGLE;
+        let x: number = valx - ix + unskew;
+        let y: number = valy - iy + unskew;
+        // falloff function : (0.5 - x2 - y2)3
+        let f: number = 0.5 - x * x - y * y;
+        if (f > 0) {
+            f = f * f * f;
+            let h: number = this.hash[(this.hash[ix & SimplexNoise.HASH_MASK] + iy) & SimplexNoise.HASH_MASK];
+            let g: number[] = SimplexNoise.GRADIENTS_2D[h & SimplexNoise.GRADIENTS_2D_MASK];
+            let v: number = g[0] * x + g[1] * y;
+            return f * v;
+        } else {
+            return 0;
+        }
+    }
+
     private grad3d(valx: number, valy: number, valz: number, ix: number, iy: number, iz: number): number {
         let unskew = (ix + iy + iz) * (1 / 6);
         let x: number = valx - ix + unskew;
@@ -299,7 +293,8 @@ export class SimplexNoise extends Noise {
         let f: number = 0.5 - x * x - y * y - z * z;
         if (f > 0) {
             f = f * f * f;
-            let h: number = this.hash[(this.hash[(this.hash[ix & SimplexNoise.HASH_MASK] + iy) & SimplexNoise.HASH_MASK] + iz) & SimplexNoise.HASH_MASK];
+            let h: number = this.hash[(this.hash[(this.hash[ix & SimplexNoise.HASH_MASK] + iy)
+                & SimplexNoise.HASH_MASK] + iz) & SimplexNoise.HASH_MASK];
             let g: number[] = SimplexNoise.GRADIENTS_3D[h & SimplexNoise.GRADIENTS_3D_MASK];
             let v: number = g[0] * x + g[1] * y + g[2] * z;
             return f * v;

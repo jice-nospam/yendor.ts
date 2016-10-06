@@ -1,13 +1,12 @@
-import * as Core from "../core/main";
 /*
     Type: ActorId
     The CRC32 hashed value of the actor's readable id.
 */
 export type ActorId = number;
 
-export enum ActorFeatureType {
+export enum ActorFeatureTypeEnum {
     /** can be destroyed/killed */
-    DESTRUCTIBLE,
+    DESTRUCTIBLE = 1,
     /** can deal damages */
     ATTACKER,
     /** updates itself */
@@ -34,5 +33,5 @@ export enum ActorFeatureType {
     AMMO,
 }
 
-export interface ActorFeature extends Core.Persistent {
+export interface IActorFeature {
 }
