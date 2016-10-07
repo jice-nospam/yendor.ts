@@ -29,8 +29,18 @@ export class LootPanel extends Gui.Widget implements Actors.ILootHandler {
 
         let popup: Gui.Popup = this.addChild(new Gui.Popup({cancelAction: this.onCancel.bind(this)}));
         let hpanel: Gui.HPanel = popup.addChild(new Gui.HPanel({}));
-        this.looterPanel = hpanel.addChild(new SlotContainerPanel(this.numberSelector));
-        this.lootedPanel = hpanel.addChild(new MultiSlotContainerPanel(this.numberSelector));
+        this.looterPanel = hpanel.addChild(new SlotContainerPanel(this.numberSelector, {
+            leftButton: {
+                label: "Close",
+                autoHideWidget: this,
+            },
+        }));
+        this.lootedPanel = hpanel.addChild(new MultiSlotContainerPanel(this.numberSelector, {
+            rightButton: {
+                label: "Take all",
+                callback: this.takeAll.bind(this),
+            },
+        }));
     }
 
     public lootContainer(looter: Actors.Actor, looted: Actors.Actor[]|Actors.Actor) {
@@ -43,6 +53,17 @@ export class LootPanel extends Gui.Widget implements Actors.ILootHandler {
 
     public onRender(_destination: Yendor.Console) {
         this.center();
+    }
+
+    private takeAll(_data: any): boolean {
+        let looted: Actors.Actor = this.lootedPanel.getCurrentContainer();
+        while (looted.container.size() > 0) {
+            let actor: Actors.Actor = looted.container.get(0)!;
+            if ( !actor.pickable.pick(actor, this.looter, true) ) {
+                return true;
+            }
+        }
+        return true;
     }
 
     private onSelectLooterItem(item: Actors.Actor) {

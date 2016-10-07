@@ -163,6 +163,8 @@ export interface IPanelOption extends IWidgetOption {
 export interface IFrameOption extends IPanelOption {
     title?: string;
     footer?: string;
+    leftButton?: IButtonOption;
+    rightButton?: IButtonOption;
 }
 
 export interface IPopupOption extends IPanelOption {
@@ -422,6 +424,15 @@ export class DragTarget extends OptionWidget<IDropOption> implements Umbra.IEven
             }
         }
     }
+
+    public onPostRender(con: Yendor.Console) {
+        if ( Draggable.isDragging() ) {
+            let pos: Core.Position = new Core.Position(this.boundingBox.x, this.boundingBox.y);
+            (<Widget> this.__parent).local2Abs(pos);
+            con.clearBack(getConfiguration().color.backgroundActive, pos.x, pos.y,
+                this.boundingBox.w, this.boundingBox.h);
+        }
+    }
 }
 
 export class Label<T extends ILabelOption> extends OptionWidget<T> {
@@ -618,6 +629,9 @@ export class PaddedPanel extends OptionWidget<IPanelOption> {
 }
 
 export class Frame extends PaddedPanel {
+    private leftButton: Button|undefined;
+    private rightButton: Button|undefined;
+
     constructor(options: IFrameOption) {
         super(options);
         if (this.options.hPadding < 1) {
@@ -628,6 +642,19 @@ export class Frame extends PaddedPanel {
         }
         if ( this.options.minHeight === undefined ) {
             this.options.minHeight = 1;
+        }
+    }
+
+    public onInit() {
+        super.onInit();
+        let options: IFrameOption = <IFrameOption> this.options;
+        if (options.leftButton) {
+            this.leftButton = this.addChild(new Button(options.leftButton));
+            this.leftButton.setExpandFlag(Umbra.ExpandEnum.NONE);
+        }
+        if (options.rightButton) {
+            this.rightButton = this.addChild(new Button(options.rightButton));
+            this.rightButton.setExpandFlag(Umbra.ExpandEnum.NONE);
         }
     }
 
@@ -643,12 +670,28 @@ export class Frame extends PaddedPanel {
     }
 
     public computeBoundingBox() {
+        if ( this.leftButton ) {
+            this.leftButton.hide();
+        }
+        if ( this.rightButton ) {
+            this.rightButton.hide();
+        }
         super.computeBoundingBox();
         let options: IFrameOption = <IFrameOption> this.options;
         let titlew = options.title ? options.title.length : 0;
         this.boundingBox.w = Math.max(titlew + 4, this.boundingBox.w);
         let footerw = options.footer ? options.footer.length : 0;
         this.boundingBox.w = Math.max(footerw + 2, this.boundingBox.w);
+        if ( this.leftButton ) {
+            this.leftButton.show();
+            this.leftButton.moveTo(Math.floor(this.boundingBox.w / 4 - this.leftButton.getBoundingBox().w / 2),
+                this.boundingBox.h - 1);
+        }
+        if ( this.rightButton ) {
+            this.rightButton.show();
+            this.rightButton.moveTo(Math.floor(3 * this.boundingBox.w / 4 - this.rightButton.getBoundingBox().w / 2),
+                this.boundingBox.h - 1);
+        }
     }
 }
 

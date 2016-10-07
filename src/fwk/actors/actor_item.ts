@@ -668,6 +668,7 @@ export class Pickable implements IActorFeature {
                 }
             }
             this._containerId = wearer.id;
+            owner.moveTo(wearer.pos.x, wearer.pos.y);
             if ( withMessage && (wearer.isA("creature[s]")
                 && (! wearer.destructible || !wearer.destructible.isDead()))) {
                 Umbra.logger.info(transformMessage("[The actor1] pick[s] [the actor2].", wearer, owner));

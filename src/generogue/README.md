@@ -26,8 +26,6 @@ The name `GeneRogue` is a reference to Kornel Kisielewicz's mammoth [GenRogue pr
 * look with mouse. UI also works with mouse
 
 # WORK IN PROGRESS
-    - loot : add a 'take all' button
-    - loot : pick an item by dragging it in the empty area of the container inventory
 
 # TODO
 
@@ -80,8 +78,8 @@ Reminder for stuff that might be added to the game. Or not.
         - armors
         - spells and spellbooks
         - gems and weapons/armors slots
-        - static containers (chests, corpses)
         - jewelry (necklace, rings)
+        - item randomization (every item is unique)
     - player character
         - new XP level : being able to increase some stat (health, inventory, ...)
         - implement classical DEX/INT/CON/CHA/WIS stats

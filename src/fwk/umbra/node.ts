@@ -185,8 +185,8 @@ export class Node extends Core.TreeNode {
 
     public onInit(): void {}
     public onTerm(): void {}
-    public onPreRender(): void {}
-    public onPostRender(): void {}
+    public onPreRender(_con: Yendor.Console): void {}
+    public onPostRender(_con: Yendor.Console): void {}
     public onRender(_con: Yendor.Console): void {}
     public onUpdate(_time: number): void {}
 
@@ -225,13 +225,13 @@ export class Node extends Core.TreeNode {
                 });
                 // render
                 for (let node of nodeList) {
-                    node.onPreRender();
+                    node.onPreRender(con);
                 }
                 for (let node of nodeList) {
                     node.onRender(con);
                 }
                 for (let node of nodeList) {
-                    node.onPostRender();
+                    node.onPostRender(con);
                 }
             }
         }
@@ -291,20 +291,13 @@ export class Node extends Core.TreeNode {
             this.boundingBox.w = 0;
             this.boundingBox.h = 0;
         }
-        let first: boolean = true;
         for (let child of this.children) {
             let node: Node = <Node> child;
             node.computeBoundingBox();
             if (node.visible) {
-                if (first) {
-                    this.boundingBox.w = node.boundingBox.x + node.boundingBox.w;
-                    this.boundingBox.h = node.boundingBox.y + node.boundingBox.h;
-                    first = false;
-                } else {
-                    // make sure our bounding box contains all the visible children.
-                    this.boundingBox.w = Math.max(this.boundingBox.w, node.boundingBox.x + node.boundingBox.w);
-                    this.boundingBox.h = Math.max(this.boundingBox.h, node.boundingBox.y + node.boundingBox.h);
-                }
+                // make sure our bounding box contains all the visible children.
+                this.boundingBox.w = Math.max(this.boundingBox.w, node.boundingBox.x + node.boundingBox.w);
+                this.boundingBox.h = Math.max(this.boundingBox.h, node.boundingBox.y + node.boundingBox.h);
             }
         }
     }

@@ -440,13 +440,13 @@ export class SlotContainerPanel extends Gui.Widget {
     private slotsPanel: SlotsPanel;
     private equipmentSeparator: Gui.HSeparator;
 
-    constructor(private numberSelector: NumberSelector) {
+    constructor(private numberSelector: NumberSelector, private frameOption: Gui.IFrameOption = {}) {
         super();
     }
 
     public onInit() {
         super.onInit();
-        this.frame = this.addChild(new Gui.Frame({}));
+        this.frame = this.addChild(new Gui.Frame(this.frameOption));
         let vpanel: Gui.VPanel = this.frame.addChild(new Gui.VPanel({}));
         this.containerPanel = vpanel.addChild(new ContainerPanel(this.numberSelector));
         this.equipmentSeparator = vpanel.addChild(new Gui.HSeparator("Equipment"));
@@ -472,7 +472,7 @@ export class SlotContainerPanel extends Gui.Widget {
 
     public onUpdate(time: number) {
         super.onUpdate(time);
-        this.setFrameFooter("capacity " + (Math.floor(10 * this.owner.container.computeTotalWeight()) / 10)
+        this.setFrameFooter((Math.floor(10 * this.owner.container.computeTotalWeight()) / 10)
             + "/" + this.owner.container.capacity);
     }
 
@@ -497,8 +497,8 @@ export class MultiSlotContainerPanel extends SlotContainerPanel {
     private nextItemButton: Gui.Button;
     private prevItemButton: Gui.Button;
 
-    constructor(numberSelector: NumberSelector) {
-        super(numberSelector);
+    constructor(numberSelector: NumberSelector, frameOption: Gui.IFrameOption = {}) {
+        super(numberSelector, frameOption);
     }
 
     public onInit() {
@@ -571,7 +571,12 @@ export class InventoryPanel extends Gui.Widget implements Actors.IInventoryItemP
     public onInit() {
         super.onInit();
         let popup: Gui.Popup = this.addChild(new Gui.Popup({cancelAction: this.onCancel.bind(this)}));
-        this.panel = popup.addChild(new SlotContainerPanel(this.numberSelector));
+        this.panel = popup.addChild(new SlotContainerPanel(this.numberSelector, {
+            leftButton: {
+                label: "Close",
+                autoHideWidget: this,
+            },
+        }));
         this.hide();
     }
 

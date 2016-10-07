@@ -1,9 +1,15 @@
-# lightweight immediate widget toolkit
-This directory contains the source code of a lightweight immediate widget toolkit.
-
-To understand the concept of immediate widgets, see http://www.johno.se/book/imgui.html.
+# lightweight widget toolkit
+This directory contains the source code of a lightweight widget toolkit.
 
 Right now, the toolkit is pretty empty as it contains only what is needed by GeneRogue. More widgets will be supported as the game UI gets more complex.
+
+# WIDGETS
+    - Label
+    - Button
+    - VPanel / HPanel
+    - Slider
+    - Draggable / DragTarget
+    - Frame
 
 # TODO
 

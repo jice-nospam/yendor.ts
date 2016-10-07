@@ -5,7 +5,7 @@ This directory contains the typescript source code of yendor.ts, umbra.ts and Ge
     * core : base utilities
     * yendor : the yendor.ts toolkit
     * umbra : the umbra.ts framework
-    * gui : an immediate widget library
+    * gui : a widget library
     * actors : creatures and items classes
     * map : map building and rendering
 * generogue : GeneRogue source code

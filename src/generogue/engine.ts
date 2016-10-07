@@ -41,7 +41,7 @@ import {registerPersistentClasses} from "./config_persistent";
  * to keep the game from trying to load data with an old format.
  * This should be an integer.
  */
-const SAVEFILE_VERSION: string = "18";
+const SAVEFILE_VERSION: string = "17";
 
 export abstract class DungeonScene extends Map.MapScene implements Umbra.IEventListener {
     protected _topotologyMap: Map.TopologyMap;
@@ -186,38 +186,35 @@ export class Engine extends DungeonScene implements Umbra.IEventListener {
 
         // starting inventory
         let player: Actors.Actor = Actors.Actor.specialActors[Actors.SpecialActorsEnum.PLAYER];
-        let torch = Actors.ActorFactory.create(ACTOR_TYPES.TORCH);
-        if ( torch ) {
-            torch.moveTo(player.pos.x, player.pos.y);
-            torch.register();
-            torch.pickable.pick(torch, player, false);
-        }
+        // let torch = Actors.ActorFactory.create(ACTOR_TYPES.TORCH);
+        // if ( torch ) {
+        //     torch.moveTo(player.pos.x, player.pos.y);
+        //     torch.register();
+        //     torch.pickable.pick(torch, player, false);
+        // }
 
-        // this helps debugging items
-        if (Umbra.logger.isDebugEnabled()) {
-            // a pouch with 5 gold pieces
-            let pouch: Actors.Actor|undefined = Actors.ActorFactory.create(ACTOR_TYPES.POUCH);
-            if ( pouch ) {
-                Actors.ActorFactory.createInContainer(pouch, [
-                    ACTOR_TYPES.GOLD_PIECE,
-                    ACTOR_TYPES.GOLD_PIECE,
-                    ACTOR_TYPES.GOLD_PIECE,
-                    ACTOR_TYPES.GOLD_PIECE,
-                    ACTOR_TYPES.GOLD_PIECE]);
-            }
-            let bag: Actors.Actor|undefined = Actors.ActorFactory.create(ACTOR_TYPES.BAG);
-            if ( bag ) {
-                if ( pouch ) {
-                    pouch.pickable.pick(pouch, bag, false);
-                }
-                Actors.ActorFactory.createInContainer(bag,
-                    [ACTOR_TYPES.LANTERN, ACTOR_TYPES.OIL_FLASK, ACTOR_TYPES.KNIFE]);
-                bag.moveTo(player.pos.x, player.pos.y);
-            }
-            Actors.ActorFactory.createInContainer(player,
-                [ACTOR_TYPES.WOODEN_SHIELD, ACTOR_TYPES.MAP_CASE,
-                ACTOR_TYPES.KEY_RING, ACTOR_TYPES.SCROLL_OF_FIREBALL, ACTOR_TYPES.SCROLL_OF_FIREBALL]);
+        // a pouch with 5 gold pieces
+        let pouch: Actors.Actor|undefined = Actors.ActorFactory.create(ACTOR_TYPES.POUCH);
+        if ( pouch ) {
+            Actors.ActorFactory.createInContainer(pouch, [
+                ACTOR_TYPES.GOLD_PIECE,
+                ACTOR_TYPES.GOLD_PIECE,
+                ACTOR_TYPES.GOLD_PIECE,
+                ACTOR_TYPES.GOLD_PIECE,
+                ACTOR_TYPES.GOLD_PIECE]);
         }
+        let bag: Actors.Actor|undefined = Actors.ActorFactory.create(ACTOR_TYPES.BAG);
+        if ( bag ) {
+            if ( pouch ) {
+                pouch.pickable.pick(pouch, bag, false);
+            }
+            Actors.ActorFactory.createInContainer(bag,
+                [ACTOR_TYPES.HEALTH_POTION]);
+            bag.moveTo(player.pos.x, player.pos.y);
+        }
+        Actors.ActorFactory.createInContainer(player,
+            [ACTOR_TYPES.TORCH, ACTOR_TYPES.MAP_CASE,
+            ACTOR_TYPES.KEY_RING, ACTOR_TYPES.KNIFE]);
         Actors.Actor.describeCell(player.pos);
     }
 
