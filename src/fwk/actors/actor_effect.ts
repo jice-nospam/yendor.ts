@@ -5,7 +5,7 @@ import * as Core from "../core/main";
 import * as Umbra from "../umbra/main";
 import * as Map from "../map/main";
 import {Actor, SpecialActorsEnum} from "./actor";
-import {TargetSelectionMethodEnum, ITargetSelectorDef, IInstantHealthEffectDef, IConditionDef,
+import {TargetSelectionMethodEnum, ITargetSelectorDef, IInstantHealthEffectDef, IConditionDef, IConditionEffectDef,
     IEventEffectDef} from "./actor_def";
 import {transformMessage} from "./base";
 import {Condition} from "./actor_condition";
@@ -174,6 +174,13 @@ export class TargetSelector {
  * =============================================================================
  */
 
+export enum EffectResult {
+    SUCCESS,
+    FAILURE,
+    SUCCESS_AND_STOP,
+    FAILURE_AND_STOP
+}
+
 /**
  * Interface: IEffect
  * Some effect that can be applied to actors. The effect might be triggered by using an item or casting a spell.
@@ -188,22 +195,37 @@ export interface IEffect {
      * Returns:
      * false if effect cannot be applied
      */
-    applyTo(actor: Actor, coef: number): boolean;
+    applyTo(actor: Actor, coef: number): EffectResult;
+}
+
+export abstract class Effect implements IEffect {
+    protected static booleanToEffectResult(result: boolean, singleActor: boolean): EffectResult {
+        if ( result ) {
+            return singleActor ? EffectResult.SUCCESS_AND_STOP : EffectResult.SUCCESS;
+        } else {
+            return singleActor ? EffectResult.FAILURE_AND_STOP : EffectResult.FAILURE;
+        }
+    }
+
+    public abstract applyTo(actor: Actor, coef: number): EffectResult;
 }
 
 /**
  * Class: InstantHealthEffect
  * Add or remove health points.
  */
-export class InstantHealthEffect implements IEffect {
+export class InstantHealthEffect extends Effect {
     private _amount: number = 0;
     private canResurrect: boolean = false;
     private successMessage: string|undefined;
     private failureMessage: string|undefined;
+    private _singleActor: boolean = false;
 
     get amount() { return this._amount; }
+    get singleActor() { return this._singleActor; }
 
     constructor(def: IInstantHealthEffectDef) {
+        super();
         if ( def ) {
             this._amount = def.amount;
             this.successMessage = def.successMessage;
@@ -211,35 +233,41 @@ export class InstantHealthEffect implements IEffect {
             if ( def.canResurrect !== undefined ) {
                 this.canResurrect = def.canResurrect;
             }
+            if ( def.singleActor !== undefined ) {
+                this._singleActor = def.singleActor;
+            }
         }
     }
 
-    public applyTo(actor: Actor, coef: number = 1.0): boolean {
+    public applyTo(actor: Actor, coef: number = 1.0): EffectResult {
         if (!actor.destructible) {
-            return false;
+            return EffectResult.FAILURE;
         }
         if (this._amount > 0) {
             if (this.canResurrect || !  actor.destructible.isDead()) {
-            return this.applyHealingEffectTo(actor, coef);
+                return this.applyHealingEffectTo(actor, coef);
             }
         }
         return this.applyWoundingEffectTo(actor, coef);
     }
 
-    private applyHealingEffectTo(actor: Actor, coef: number = 1.0): boolean {
+    private applyHealingEffectTo(actor: Actor, coef: number = 1.0): EffectResult {
         let healPointsCount: number = actor.destructible.heal(actor, coef * this._amount);
         let wearer: Actor|undefined = actor.getWearer();
-        let result: boolean = false;
+        let result: EffectResult = Effect.booleanToEffectResult(false, this._singleActor);
         if (healPointsCount > 0 && this.successMessage) {
             Umbra.logger.info(transformMessage(this.successMessage, actor, wearer, healPointsCount));
-            result = true;
+            result = Effect.booleanToEffectResult(true, this._singleActor);
         } else if (healPointsCount <= 0 && this.failureMessage) {
             Umbra.logger.info(transformMessage(this.failureMessage, actor));
         }
         return result;
     }
 
-    private applyWoundingEffectTo(actor: Actor, coef: number = 1.0): boolean {
+    private applyWoundingEffectTo(actor: Actor, coef: number = 1.0): EffectResult {
+        if ( actor.destructible.isDead()) {
+            return EffectResult.FAILURE;
+        }
         let realDefense: number = actor.destructible.computeRealDefense(actor);
         let damageDealt = -this._amount * coef - realDefense;
         let wearer: Actor|undefined = actor.getWearer();
@@ -248,7 +276,8 @@ export class InstantHealthEffect implements IEffect {
         } else if (damageDealt <= 0 && this.failureMessage) {
             Umbra.logger.info(transformMessage(this.failureMessage, actor, wearer));
         }
-        return actor.destructible.takeDamage(actor, -this._amount * coef) > 0;
+        return Effect.booleanToEffectResult(actor.destructible.takeDamage(actor, -this._amount * coef) > 0,
+            this._singleActor);
     }
 }
 
@@ -256,14 +285,15 @@ export class InstantHealthEffect implements IEffect {
  * Class: TeleportEffect
  * Teleport the target at a random location.
  */
-export class TeleportEffect implements IEffect {
+export class TeleportEffect extends Effect {
     private successMessage: string|undefined;
 
     constructor(successMessage?: string) {
+        super();
         this.successMessage = successMessage;
     }
 
-   public applyTo(actor: Actor, _coef: number = 1.0): boolean {
+   public applyTo(actor: Actor, _coef: number = 1.0): EffectResult {
         let x: number;
         let y: number;
         [x, y] = Map.Map.current.findRandomWamlkableCell();
@@ -271,7 +301,7 @@ export class TeleportEffect implements IEffect {
         if (this.successMessage) {
             Umbra.logger.info(transformMessage(this.successMessage, actor));
         }
-        return true;
+        return EffectResult.SUCCESS_AND_STOP;
     }
 }
 
@@ -279,19 +309,20 @@ export class TeleportEffect implements IEffect {
  * class: EventEffect
  * Sends an event
  */
-export class EventEffect implements IEffect {
+export class EventEffect extends Effect {
     private eventType: string;
     private eventData: any;
     constructor(def: IEventEffectDef) {
+        super();
         if ( def ) {
             this.eventType = def.eventType;
             this.eventData = def.eventData;
         }
     }
 
-    public applyTo(_actor: Actor, _coef: number = 1.0): boolean {
+    public applyTo(_actor: Actor, _coef: number = 1.0): EffectResult {
         Umbra.EventManager.publishEvent(this.eventType, this.eventData);
-        return true;
+        return EffectResult.SUCCESS;
     }
 }
 
@@ -299,33 +330,36 @@ export class EventEffect implements IEffect {
  * Class: ConditionEffect
  * Add a condition to an actor.
  */
-export class ConditionEffect implements IEffect {
+export class ConditionEffect extends Effect {
     private conditionDef: IConditionDef;
     private message: string|undefined;
-    constructor(def: IConditionDef, message?: string) {
+    private singleActor: boolean;
+    constructor(def: IConditionEffectDef, message?: string) {
+        super();
         this.message = message;
-        this.conditionDef = def;
+        this.conditionDef = def.condition;
+        this.singleActor = def.singleActor || false;
     }
 
-    public applyTo(actor: Actor, _coef: number = 1.0): boolean {
+    public applyTo(actor: Actor, _coef: number = 1.0): EffectResult {
         if (!actor.ai) {
-            return false;
+            return EffectResult.FAILURE;
         }
         actor.ai.addCondition(Condition.create(this.conditionDef), actor);
         if (this.message) {
             Umbra.logger.info(transformMessage(this.message, actor));
         }
-        return true;
+        return Effect.booleanToEffectResult(true, this.singleActor);
     }
 }
 
-export class MapRevealEffect implements IEffect {
-    public applyTo(actor: Actor, _coef: number = 1.0): boolean {
+export class MapRevealEffect extends Effect {
+    public applyTo(actor: Actor, _coef: number = 1.0): EffectResult {
         if (actor === Actor.specialActors[SpecialActorsEnum.PLAYER]) {
             Map.Map.current.reveal();
-            return true;
+            return EffectResult.SUCCESS;
         }
-        return false;
+        return EffectResult.FAILURE;
     }
 }
 
@@ -374,8 +408,12 @@ export class Effector {
         }
 
         for (let actor of actors) {
-            if (this._effect.applyTo(actor, this._coef)) {
+            let result: EffectResult = this._effect.applyTo(actor, this._coef);
+            if ( result === EffectResult.SUCCESS || result === EffectResult.SUCCESS_AND_STOP) {
                 success = true;
+            }
+            if ( result === EffectResult.SUCCESS_AND_STOP || result === EffectResult.FAILURE_AND_STOP) {
+                break;
             }
         }
         if (this.destroyOnEffect && success && wearer && wearer.container) {

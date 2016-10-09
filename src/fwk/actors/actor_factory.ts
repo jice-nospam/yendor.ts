@@ -13,7 +13,7 @@ import {Ai, XpHolder, ItemAi, MonsterAi, PlayerAi} from "./actor_creature";
 import {Light} from "./actor_light";
 import {IInventoryItemPicker, ILootHandler} from "./actor_creature";
 import {ITilePicker, Effector, TargetSelector, ConditionEffect, InstantHealthEffect, MapRevealEffect,
-    TeleportEffect, EventEffect} from "./actor_effect";
+    TeleportEffect, EventEffect, IEffect} from "./actor_effect";
 import {Condition} from "./actor_condition";
 import {PERSISTENCE_ACTORS_SEQ_KEY} from "./base";
 
@@ -315,22 +315,22 @@ export class ActorFactory {
         return new TargetSelector(def);
     }
 
-    private static createEffect(def: IEffectDef) {
+    private static createEffect(def: IEffectDef): IEffect {
         switch (def.type) {
             case EffectTypeEnum.CONDITION:
-                let conditionData: IConditionEffectDef = <IConditionEffectDef> def.data;
-                return new ConditionEffect(conditionData.condition, conditionData.successMessage);
+                let conditionData: IConditionEffectDef = <IConditionEffectDef> def;
+                return new ConditionEffect(conditionData, conditionData.successMessage);
             case EffectTypeEnum.INSTANT_HEALTH:
-                let instantHealthData: IInstantHealthEffectDef = <IInstantHealthEffectDef> def.data;
+                let instantHealthData: IInstantHealthEffectDef = <IInstantHealthEffectDef> def;
                 return new InstantHealthEffect(instantHealthData);
             case EffectTypeEnum.MAP_REVEAL:
                 return new MapRevealEffect();
             case EffectTypeEnum.TELEPORT:
-                let teleportData: ITeleportEffectDef = <ITeleportEffectDef> def.data;
+                let teleportData: ITeleportEffectDef = <ITeleportEffectDef> def;
                 return new TeleportEffect(teleportData.successMessage);
             case EffectTypeEnum.EVENT :
             default:
-                let eventData: IEventEffectDef = <IEventEffectDef> def.data;
+                let eventData: IEventEffectDef = <IEventEffectDef> def;
                 return new EventEffect(eventData);
         }
     }

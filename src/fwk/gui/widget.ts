@@ -39,7 +39,20 @@ export class Widget extends Umbra.Node implements Umbra.IEventListener {
         this.setZOrder(1);
     }
 
-    public isModal() { return this.modal; }
+    /**
+     * warning : walking parent hierarchy, we can reach Umbra nodes that aren't Widgets
+     * and have no isModal / isActive methods.
+     */
+    public isModal(): boolean { return this.modal
+        || (this.__parent === undefined || (<Widget> this.__parent).isModal === undefined
+            ? false : (<Widget> this.__parent).isModal()); }
+
+    public isActive(): boolean {
+        return Widget.activeModal === undefined
+            || ((this.modal && this === Widget.activeModal)
+                || (this.__parent === undefined || (<Widget> this.__parent).isActive === undefined ?
+                 false : (<Widget> this.__parent).isActive() ));
+    }
 
     public show() {
         if (this.modal) {
@@ -322,7 +335,7 @@ export class Draggable extends OptionWidget<IDragOption> implements Umbra.IEvent
     }
 
     public onStartDrag(_event: Umbra.IDragEvent) {
-        if ( this.isVisible() && this.containsAbsolute(Umbra.getMouseCellPosition())) {
+        if ( this.isVisible() && this.isActive() && this.containsAbsolute(Umbra.getMouseCellPosition())) {
             Draggable.drag = this;
             Draggable.dragZOrder = this.getZOrder();
             Draggable.startDrag.set(Umbra.getMouseCellPosition());
@@ -418,7 +431,8 @@ export class DragTarget extends OptionWidget<IDropOption> implements Umbra.IEven
     }
 
     public onDrop(draggable: Draggable) {
-        if (this.isVisible() && !this.contains(draggable) && this.containsAbsolute(Umbra.getMouseCellPosition())) {
+        if (this.isVisible() && this.isActive() && !this.contains(draggable)
+            && this.containsAbsolute(Umbra.getMouseCellPosition())) {
             if ( this.options.dropCallback) {
                 this.options.dropCallback(draggable, this, this.options.data);
             }
@@ -426,7 +440,7 @@ export class DragTarget extends OptionWidget<IDropOption> implements Umbra.IEven
     }
 
     public onPostRender(con: Yendor.Console) {
-        if ( Draggable.isDragging() ) {
+        if ( Draggable.isDragging() && this.isActive() ) {
             let pos: Core.Position = new Core.Position(this.boundingBox.x, this.boundingBox.y);
             (<Widget> this.__parent).local2Abs(pos);
             con.clearBack(getConfiguration().color.backgroundActive, pos.x, pos.y,
@@ -489,7 +503,7 @@ export class Button extends Label<IButtonOption> {
     public onRender(con: Yendor.Console) {
         let pos: Core.Position = new Core.Position(this.boundingBox.x, this.boundingBox.y);
         (<Widget> this.__parent).local2Abs(pos);
-        this.active = this.containsAbsolute(Umbra.getMouseCellPosition());
+        this.active = this.isActive() && this.containsAbsolute(Umbra.getMouseCellPosition());
         this.renderWithColor(con, pos,
             this.active ? getConfiguration().color.foregroundActive : getConfiguration().color.foreground,
             this.active ? getConfiguration().color.backgroundActive : getConfiguration().color.background,
@@ -500,7 +514,7 @@ export class Button extends Label<IButtonOption> {
     }
 
     public onUpdate(_time: number) {
-        this.active = this.containsAbsolute(Umbra.getMouseCellPosition());
+        this.active = this.isActive() && this.containsAbsolute(Umbra.getMouseCellPosition());
 
         this.pressed = this.active && Umbra.wasMouseButtonReleased(Umbra.MouseButtonEnum.LEFT);
         if (this.pressed || (this.options.asciiShortcut && Umbra.wasCharPressed(this.options.asciiShortcut))) {

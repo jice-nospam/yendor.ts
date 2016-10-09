@@ -108,8 +108,23 @@ export class Ai implements IActorFeature, IContainerListener {
         }
     }
 
-    public getConditionDescription(): string|undefined {
-        return this._conditions && this._conditions.length > 0 ? this._conditions[0].getName() : undefined;
+    public getConditionDescription(owner: Actor): string|undefined {
+        // find the first valid condition
+        if (! this._conditions) {
+            return undefined;
+        }
+        let i: number = 0;
+        while ( i < this._conditions.length ) {
+            let condition: Condition = this._conditions[i];
+            if ( condition.getName()) {
+                if (! condition.noDisplay
+                    && (!condition.noCorpse || ! owner.destructible || !owner.destructible.isDead())) {
+                    return condition.getName();
+                }
+            }
+            i++;
+        }
+        return undefined;
     }
 
     public hasActiveConditions(): boolean {
@@ -253,19 +268,14 @@ export class Ai implements IActorFeature, IContainerListener {
         }
     }
 
-    // private activateActor(owner: Actor, actor: Actor) {
-    //     if (actor.activable) {
-    //         actor.activable.switchLever(actor, owner);
-    //         owner.wait(this._walkTime);
-    //     } else if (actor.container && this.lootHandler) {
-    //         this.lootHandler.lootContainer(owner, actor);
-    //     }
-    // }
-
     private checkOverencumberedCondition(container: Container, owner: Actor) {
         if (!this.hasCondition(ConditionTypeEnum.OVERENCUMBERED)
             && container.computeTotalWeight() >= container.capacity * OVERENCUMBERED_THRESHOLD) {
-            this.addCondition(Condition.create({ nbTurns: -1, type: ConditionTypeEnum.OVERENCUMBERED }), owner);
+            this.addCondition(Condition.create({
+                nbTurns: -1,
+                type: ConditionTypeEnum.OVERENCUMBERED,
+                noCorpse: true,
+            }), owner);
         } else if (this.hasCondition(ConditionTypeEnum.OVERENCUMBERED)
             && container.computeTotalWeight() < container.capacity * OVERENCUMBERED_THRESHOLD) {
             this.removeCondition(ConditionTypeEnum.OVERENCUMBERED);
@@ -434,10 +444,10 @@ export class PlayerAi extends Ai {
         }
         // note : this time is spent before you select the target. loading the projectile takes time
         owner.wait(weapon.ranged.loadTime);
-        weapon.ranged.fire(owner).then((fired: boolean) => {
-            if ( fired ) {
-                owner.wait(this.walkTime);
-            }
+        weapon.ranged.fire(owner, weapon).then((_fired: boolean) => {
+            // if ( fired ) {
+            //     owner.wait(this.walkTime);
+            // }
         });
     }
 
@@ -458,7 +468,7 @@ export class PlayerAi extends Ai {
             return;
         }
         staff.magic.zap(staff, owner).then((_zapped: boolean) => {
-            owner.wait(this.walkTime);
+            //owner.wait(this.walkTime);
         });
     }
 
@@ -481,7 +491,7 @@ export class PlayerAi extends Ai {
 
     private throwItem(owner: Actor, item: Actor) {
         if (item.pickable) {
-            item.pickable.throw(item, Actor.specialActors[SpecialActorsEnum.PLAYER]).then(() => {
+            item.pickable.throw(item, Actor.specialActors[SpecialActorsEnum.PLAYER], false).then(() => {
                 owner.wait(this.walkTime);
             });
         }

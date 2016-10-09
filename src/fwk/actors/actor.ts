@@ -551,7 +551,7 @@ export class Actor extends Yendor.TimedEntity implements Yendor.IPersistent {
             }
         }
         if (this.ai) {
-            let condDesc: string|undefined = this.ai.getConditionDescription();
+            let condDesc: string|undefined = this.ai.getConditionDescription(this);
             if (condDesc) {
                 desc += ", " + condDesc;
             }

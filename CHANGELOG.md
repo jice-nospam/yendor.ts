@@ -1,4 +1,4 @@
-# 0.7.0 / 06-oct-2016
+# 0.7.0 / 09-oct-2016
 * switched to typescript 2.0 (this breaks node support for unit tests)
 
 * Yendor toolkit

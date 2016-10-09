@@ -532,15 +532,15 @@ export class MultiSlotContainerPanel extends SlotContainerPanel {
     private setCurrentCreature(index: number) {
         this.currentCreature = index;
         super.initForCreature(this.creatures[index], this.resolve, this.autoHideWidget, this.itemClassFilter);
-        if ( this.creatures.length > 1 ) {
+        if (this.creatures.length > 1) {
+            let title: string = this.creatures[index].getthename() + " " + (index + 1) + "/"
+                + this.creatures.length + " ";
+            this.setFrameTitle(title);
             this.nextItemButton.hide();
             this.prevItemButton.hide();
             this.computeBoundingBox();
-            let title: string|undefined = this.getFrameTitle();
-            if (title) {
-                this.nextItemButton.moveTo(Math.floor((this.boundingBox.w + title.length) / 2) - 1, 0);
-                this.prevItemButton.moveTo(Math.floor((this.boundingBox.w - title.length) / 2), 0);
-            }
+            this.nextItemButton.moveTo(Math.floor((this.boundingBox.w + title.length) / 2) - 1, 0);
+            this.prevItemButton.moveTo(Math.floor((this.boundingBox.w - title.length) / 2), 0);
             this.prevItemButton.show();
             this.nextItemButton.show();
         } else {

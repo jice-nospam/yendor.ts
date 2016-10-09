@@ -26,6 +26,9 @@ The name `GeneRogue` is a reference to Kornel Kisielewicz's mammoth [GenRogue pr
 * look with mouse. UI also works with mouse
 
 # WORK IN PROGRESS
+    - being able to drop a stack (but not throw/use...)
+    - being able to drop a bag
+    - no in-between turn when firing/zapping
 
 # TODO
 
@@ -47,7 +50,7 @@ Reminder for stuff that might be added to the game. Or not.
 
 * Gameplay
     - UI
-        - inventory : when dragging an item, highlight valid drop targets
+        - context menu to replace drop/throw commands
         - container qualified name : being able to configure pouch + gold pieces => gold pouch ?
     - item durability
         - grinding stone

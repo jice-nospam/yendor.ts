@@ -71,15 +71,16 @@ export enum EffectTypeEnum {
 
 export interface IEffectDef {
     type: EffectTypeEnum;
-    data?: IInstantHealthEffectDef | ITeleportEffectDef | IConditionEffectDef | IEventEffectDef;
+    /** effect can only affect one actor (arrow) or several (explosion) */
+    singleActor?: boolean;
 }
 
-export interface IEventEffectDef {
+export interface IEventEffectDef extends IEffectDef {
     eventType: string;
     eventData: any;
 }
 
-export interface IInstantHealthEffectDef {
+export interface IInstantHealthEffectDef extends IEffectDef {
     amount: number;
     /** does this effect also work on deads (defult : false) */
     canResurrect?: boolean;
@@ -89,7 +90,7 @@ export interface IInstantHealthEffectDef {
     failureMessage?: string;
 }
 
-export interface ITeleportEffectDef {
+export interface ITeleportEffectDef extends IEffectDef {
     successMessage: string;
 }
 
@@ -154,11 +155,13 @@ export interface IConditionDef {
     noDisplay?: boolean;
     /** for activable items */
     onlyIfActive?: boolean;
+    /** only display on living creatures (for example confused) */
+    noCorpse?: boolean;
     /** to override the condition's default name */
     name?: string;
 }
 
-export interface IConditionEffectDef {
+export interface IConditionEffectDef extends IEffectDef {
     condition: IConditionDef;
     successMessage: string;
 }

@@ -160,7 +160,12 @@ export class JSONSerializer {
             // use generic loading method
             for (let field in jsonData) {
                 if (jsonData.hasOwnProperty(field)) {
-                    object[field] = this.loadFromData(jsonData[field]);
+                    try {
+                        object[field] = this.loadFromData(jsonData[field]);
+                    } catch (err) {
+                        console.log("ERROR loading field " + field + " with value " + jsonData[field]
+                            + " on object " + object.constructor.name + " : " + err);
+                    }
                 }
             }
         }

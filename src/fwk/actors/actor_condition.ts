@@ -35,7 +35,15 @@ export class Condition {
         }
     }
 
-    private static condNames = ["confused", "stunned", "frozen", "regeneration", "overencumbered", "life detection"];
+    private static condNames = [
+        undefined,
+        "confused",
+        "stunned",
+        "frozen",
+        "regeneration",
+        "overencumbered",
+        "life detection",
+    ];
 
     public readonly onlyIfActive: boolean;
     public readonly initialTime: number;
@@ -47,22 +55,26 @@ export class Condition {
     protected _time: number;
     protected _type: ConditionTypeEnum;
     protected name: string|undefined;
-    protected noDisplay: boolean;
+    protected _noDisplay: boolean;
+    protected _noCorpse: boolean;
 
     protected constructor(def: IConditionDef) {
         if (def) {
             this.initialTime = def.nbTurns;
             this._time = def.nbTurns;
             this._type = def.type;
-            this.noDisplay = def.noDisplay || false;
+            this._noDisplay = def.noDisplay || false;
             this.name = def.name;
             this.onlyIfActive = def.onlyIfActive || false;
+            this._noCorpse = def.noCorpse || false;
         }
     }
 
     get type() { return this._type; }
     get time() { return this._time; }
-    public getName() { return this.noDisplay ? undefined : this.name ? this.name : Condition.condNames[this._type]; }
+    get noCorpse() { return this._noCorpse; }
+    get noDisplay() { return this._noDisplay; }
+    public getName() { return this._noDisplay ? undefined : this.name ? this.name : Condition.condNames[this._type]; }
 
     /**
      * Function: onApply

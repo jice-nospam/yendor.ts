@@ -41,7 +41,7 @@ import {registerPersistentClasses} from "./config_persistent";
  * to keep the game from trying to load data with an old format.
  * This should be an integer.
  */
-const SAVEFILE_VERSION: string = "17";
+const SAVEFILE_VERSION: string = "18";
 
 export abstract class DungeonScene extends Map.MapScene implements Umbra.IEventListener {
     protected _topotologyMap: Map.TopologyMap;

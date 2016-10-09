@@ -93,7 +93,7 @@ export class Destructible implements IActorFeature {
         if ( coef === this.qualifiers.length ) {
             coef = this.qualifiers.length - 1;
         }
-        return this.qualifiers[coef] + owner.getname(count);
+        return owner.getname(count) + (this.qualifiers[coef] ? ", " + this.qualifiers[coef] : "");
     }
 
     public computeRealDefense(owner: Actor): number {
@@ -751,7 +751,8 @@ export class Pickable implements IActorFeature {
      * maxRange - maximum distance where the item can be thrown.
      *      If not defined, max range is computed from the item's weight
      */
-    public throw(owner: Actor, wearer: Actor, maxRange?: number): Promise<void> {
+    public throw(owner: Actor, wearer: Actor, fromFire: boolean,
+                 maxRange?: number, damageCoef?: number): Promise<void> {
         return new Promise<void>((resolve) => {
             if (!maxRange) {
                 maxRange = owner.computeThrowRange(wearer);
@@ -762,7 +763,7 @@ export class Pickable implements IActorFeature {
                 wearer.ai.tilePicker.pickATile("Left-click where to throw the " + owner.name
                     + ",\nor right-click to cancel.", new Core.Position(wearer.pos.x, wearer.pos.y), maxRange).then(
                         (pos: Core.Position) => {
-                            this.throwOnPos(owner, wearer, false, pos);
+                            this.throwOnPos(owner, wearer, fromFire, pos, damageCoef);
                             resolve();
                         });
             }
@@ -962,7 +963,7 @@ export class Ranged implements IActorFeature {
         }
     }
 
-    public fire(wearer: Actor): Promise<boolean> {
+    public fire(wearer: Actor, weapon: Actor): Promise<boolean> {
         return new Promise<boolean>((resolve) => {
             let projectile: Actor|undefined = this.findCompatibleProjectile(wearer);
             if (!projectile) {
@@ -974,7 +975,7 @@ export class Ranged implements IActorFeature {
             } else {
                 this.projectileId = projectile.id;
                 Umbra.logger.info(transformMessage("[The actor1] fire[s] [a actor2].", wearer, projectile));
-                projectile.pickable.throw(projectile, wearer, this._range).then(() => {
+                projectile.pickable.throw(projectile, wearer, true, this._range, weapon.ranged.damageCoef).then(() => {
                     resolve(true);
                 });
             }

@@ -110,7 +110,7 @@ Actors.ActorFactory.registerActorDef({
     blockWalk: true,
     destructible: {
         corpseChar: "%",
-        qualifiers: ["almost dead ", "badly wounded ", "wounded ", "lightly wounded ", ""],
+        qualifiers: ["almost dead", "badly wounded", "wounded", "lightly wounded", ""],
     },
 });
 
@@ -229,12 +229,10 @@ Actors.ActorFactory.registerActorDef({
         onUseEffector: {
             destroyOnEffect: true,
             effect: {
-                data: {
-                    amount: 200,
-                    canResurrect: true,
-                    failureMessage: "The lantern is already full.",
-                    successMessage: "[The actor2] refill[s2] [its2] lantern.",
-                },
+                amount: 200,
+                canResurrect: true,
+                failureMessage: "The lantern is already full.",
+                successMessage: "[The actor2] refill[s2] [its2] lantern.",
                 type: Actors.EffectTypeEnum.INSTANT_HEALTH,
             },
             targetSelector: {
@@ -361,11 +359,9 @@ Actors.ActorFactory.registerActorDef({
         onThrowEffector: {
             destroyOnEffect: true,
             effect: {
-                data: {
-                    amount: 3,
-                    failureMessage: "The potion explodes on [the actor1] but it has no effect",
-                    successMessage: "The potion explodes on [the actor1], healing [it] for [value1] hit points.",
-                },
+                amount: 3,
+                failureMessage: "The potion explodes on [the actor1] but it has no effect",
+                successMessage: "The potion explodes on [the actor1], healing [it] for [value1] hit points.",
                 type: Actors.EffectTypeEnum.INSTANT_HEALTH,
             },
             targetSelector: { method: Actors.TargetSelectionMethodEnum.SELECTED_RANGE, radius: 1 },
@@ -373,11 +369,9 @@ Actors.ActorFactory.registerActorDef({
         onUseEffector: {
             destroyOnEffect: true,
             effect: {
-                data: {
-                    amount: 5,
-                    failureMessage: "[The actor1] drink[s] the health potion but it has no effect",
-                    successMessage: "[The actor1] drink[s] the health potion and regain[s] [value1] hit points.",
-                },
+                amount: 5,
+                failureMessage: "[The actor1] drink[s] the health potion but it has no effect",
+                successMessage: "[The actor1] drink[s] the health potion and regain[s] [value1] hit points.",
                 type: Actors.EffectTypeEnum.INSTANT_HEALTH,
             },
             targetSelector: { method: Actors.TargetSelectionMethodEnum.WEARER },
@@ -395,15 +389,13 @@ Actors.ActorFactory.registerActorDef({
         onThrowEffector: {
             destroyOnEffect: true,
             effect: {
-                data: {
-                    condition: {
-                        amount: 6,
-                        name: "regeneration",
-                        nbTurns: 12,
-                        type: Actors.ConditionTypeEnum.HEALTH_VARIATION,
-                    },
-                    successMessage: "The potion explodes on [the actor1].\nLife is flowing through [it].",
+                condition: {
+                    amount: 6,
+                    name: "regeneration",
+                    nbTurns: 12,
+                    type: Actors.ConditionTypeEnum.HEALTH_VARIATION,
                 },
+                successMessage: "The potion explodes on [the actor1].\nLife is flowing through [it].",
                 type: Actors.EffectTypeEnum.CONDITION,
             },
             targetSelector: { method: Actors.TargetSelectionMethodEnum.SELECTED_RANGE, radius: 1 },
@@ -411,16 +403,14 @@ Actors.ActorFactory.registerActorDef({
         onUseEffector: {
             destroyOnEffect: true,
             effect: {
-                data: {
-                    condition: {
-                        amount: 10,
-                        name: "regeneration",
-                        nbTurns: 20,
-                        type: Actors.ConditionTypeEnum.HEALTH_VARIATION,
-                    },
-                    successMessage: "[The actor1] drink[s] the regeneration potion and feel[s]\n"
-                        + "the life flowing through [it].",
+                condition: {
+                    amount: 10,
+                    name: "regeneration",
+                    nbTurns: 20,
+                    type: Actors.ConditionTypeEnum.HEALTH_VARIATION,
                 },
+                successMessage: "[The actor1] drink[s] the regeneration potion and feel[s]\n"
+                    + "the life flowing through [it].",
                 type: Actors.EffectTypeEnum.CONDITION,
             },
             targetSelector: { method: Actors.TargetSelectionMethodEnum.WEARER },
@@ -446,11 +436,9 @@ Actors.ActorFactory.registerActorDef({
         onUseEffector: {
             destroyOnEffect: true,
             effect: {
-                data: {
-                    amount: -20,
-                    successMessage: "A lightning bolt strikes [the actor1] with a loud thunder!\n" +
-                        "The damage is [value1] hit points.",
-                },
+                amount: -20,
+                successMessage: "A lightning bolt strikes [the actor1] with a loud thunder!\n" +
+                    "The damage is [value1] hit points.",
                 type: Actors.EffectTypeEnum.INSTANT_HEALTH,
             },
             targetSelector: { method: Actors.TargetSelectionMethodEnum.CLOSEST_ENEMY, range: 5 },
@@ -466,10 +454,8 @@ Actors.ActorFactory.registerActorDef({
         onUseEffector: {
             destroyOnEffect: true,
             effect: {
-                data: {
-                    amount: -12,
-                    successMessage: "[The actor1] get[s] burned for [value1] hit points.",
-                },
+                amount: -12,
+                successMessage: "[The actor1] get[s] burned for [value1] hit points.",
                 type: Actors.EffectTypeEnum.INSTANT_HEALTH,
             },
             message: "A fireball explodes, burning everything within 3 tiles.",
@@ -490,13 +476,12 @@ Actors.ActorFactory.registerActorDef({
         onUseEffector: {
             destroyOnEffect: true,
             effect: {
-                data: {
-                    condition: {
-                        nbTurns: 12,
-                        type: Actors.ConditionTypeEnum.CONFUSED,
-                    },
-                    successMessage: "[The actor1's] eyes look vacant,\nas [it] start[s] to stumble around!",
+                condition: {
+                    nbTurns: 12,
+                    type: Actors.ConditionTypeEnum.CONFUSED,
+                    noCorpse: true,
                 },
+                successMessage: "[The actor1's] eyes look vacant,\nas [it] start[s] to stumble around!",
                 type: Actors.EffectTypeEnum.CONDITION,
             },
             targetSelector: { method: Actors.TargetSelectionMethodEnum.SELECTED_ACTOR, range: 5 },
@@ -533,7 +518,7 @@ Actors.ActorFactory.registerActorDef({
     name: ACTOR_TYPES.CONSUMABLE_LIGHT,
     abstract: true,
     destructible: {
-        qualifiers: ["burnt out ", "almost burnt out ", "half burnt ", "slightly burnt ", ""],
+        qualifiers: ["burnt out", "almost burnt out", "half burnt", "slightly burnt", ""],
     },
     prototypes: [ACTOR_TYPES.PICKABLE_LIGHT],
 });
@@ -604,7 +589,7 @@ Actors.ActorFactory.registerActorDef({
     name: ACTOR_TYPES.REFILLABLE_LIGHT,
     abstract: true,
     destructible: {
-        qualifiers: ["empty ", "almost empty ", "half empty ", "", ""],
+        qualifiers: ["empty", "almost empty", "half empty", "", ""],
     },
     prototypes: [ACTOR_TYPES.PICKABLE_LIGHT],
 });
@@ -689,10 +674,8 @@ Actors.ActorFactory.registerActorDef({
         onThrowEffector: {
             destroyOnEffect: false,
             effect: {
-                data: {
-                    amount: -1,
-                    successMessage: "The sword hits [the actor1] for [value1] hit points.",
-                },
+                amount: -1,
+                successMessage: "The sword hits [the actor1] for [value1] hit points.",
                 type: Actors.EffectTypeEnum.INSTANT_HEALTH,
             },
             targetSelector: { method: Actors.TargetSelectionMethodEnum.ACTOR_ON_CELL },
@@ -710,10 +693,8 @@ Actors.ActorFactory.registerActorDef({
         onThrowEffector: {
             destroyOnEffect: false,
             effect: {
-                data: {
-                    amount: -4,
-                    successMessage: "The sword hits [the actor1] for [value1] hit points.",
-                },
+                amount: -4,
+                successMessage: "The sword hits [the actor1] for [value1] hit points.",
                 type: Actors.EffectTypeEnum.INSTANT_HEALTH,
             },
             targetSelector: { method: Actors.TargetSelectionMethodEnum.ACTOR_ON_CELL },
@@ -731,10 +712,8 @@ Actors.ActorFactory.registerActorDef({
         onThrowEffector: {
             destroyOnEffect: false,
             effect: {
-                data: {
-                    amount: -6,
-                    successMessage: "The sword hits [the actor1] for [value1] hit points.",
-                },
+                amount: -6,
+                successMessage: "The sword hits [the actor1] for [value1] hit points.",
                 type: Actors.EffectTypeEnum.INSTANT_HEALTH,
             },
             targetSelector: { method: Actors.TargetSelectionMethodEnum.ACTOR_ON_CELL },
@@ -752,10 +731,8 @@ Actors.ActorFactory.registerActorDef({
         onThrowEffector: {
             destroyOnEffect: false,
             effect: {
-                data: {
-                    amount: -10,
-                    successMessage: "The sword hits [the actor1] for [value1] hit points.",
-                },
+                amount: -10,
+                successMessage: "The sword hits [the actor1] for [value1] hit points.",
                 type: Actors.EffectTypeEnum.INSTANT_HEALTH,
             },
             targetSelector: { method: Actors.TargetSelectionMethodEnum.ACTOR_ON_CELL },
@@ -774,13 +751,12 @@ Actors.ActorFactory.registerActorDef({
         onThrowEffector: {
             destroyOnEffect: false,
             effect: {
-                data: {
-                    condition: {
-                        nbTurns: 2,
-                        type: Actors.ConditionTypeEnum.STUNNED,
-                    },
-                    successMessage: "The shield hits [the actor1] and stuns [it]!",
+                condition: {
+                    nbTurns: 2,
+                    type: Actors.ConditionTypeEnum.STUNNED,
+                    noCorpse: true,
                 },
+                successMessage: "The shield hits [the actor1] and stuns [it]!",
                 type: Actors.EffectTypeEnum.CONDITION,
             },
             targetSelector: { method: Actors.TargetSelectionMethodEnum.ACTOR_ON_CELL },
@@ -833,11 +809,10 @@ Actors.ActorFactory.registerActorDef({
         onThrowEffector: {
             destroyOnEffect: false,
             effect: {
-                data: {
-                    amount: -1,
-                    successMessage: "The arrow hits [the actor1] for [value1] points.",
-                },
+                amount: -1,
+                successMessage: "The arrow hits [the actor1] for [value1] points.",
                 type: Actors.EffectTypeEnum.INSTANT_HEALTH,
+                singleActor: true,
             },
             targetSelector: { method: Actors.TargetSelectionMethodEnum.ACTOR_ON_CELL },
         },
@@ -853,11 +828,10 @@ Actors.ActorFactory.registerActorDef({
         onThrowEffector: {
             destroyOnEffect: false,
             effect: {
-                data: {
-                    amount: -1.25,
-                    successMessage: "The arrow hits [the actor1] for [value1] points.",
-                },
+                amount: -1.25,
+                successMessage: "The arrow hits [the actor1] for [value1] points.",
                 type: Actors.EffectTypeEnum.INSTANT_HEALTH,
+                singleActor: true,
             },
             targetSelector: { method: Actors.TargetSelectionMethodEnum.ACTOR_ON_CELL },
         },
@@ -873,11 +847,10 @@ Actors.ActorFactory.registerActorDef({
         onThrowEffector: {
             destroyOnEffect: false,
             effect: {
-                data: {
-                    amount: -0.5,
-                    successMessage: "The bolt hits [the actor1] for [value1] points.",
-                },
+                amount: -0.5,
+                successMessage: "The bolt hits [the actor1] for [value1] points.",
                 type: Actors.EffectTypeEnum.INSTANT_HEALTH,
+                singleActor: true,
             },
             targetSelector: { method: Actors.TargetSelectionMethodEnum.ACTOR_ON_CELL },
         },
@@ -953,13 +926,12 @@ Actors.ActorFactory.registerActorDef({
         onFireEffect: {
             destroyOnEffect: false,
             effect: {
-                data: {
-                    condition: {
-                        nbTurns: 10,
-                        type: Actors.ConditionTypeEnum.FROZEN,
-                    },
-                    successMessage: "[The actor1] [is] covered with frost.",
+                condition: {
+                    nbTurns: 10,
+                    type: Actors.ConditionTypeEnum.FROZEN,
+                    noDisplay: true,
                 },
+                successMessage: "[The actor1] [is] covered with frost.",
                 type: Actors.EffectTypeEnum.CONDITION,
             },
             message: "[The actor1] zap[s] [its] wand.",
@@ -1002,8 +974,9 @@ Actors.ActorFactory.registerActorDef({
         onFireEffect: {
             destroyOnEffect: false,
             effect: {
-                data: { successMessage: "[The actor1] disappear[s] suddenly." },
+                successMessage: "[The actor1] disappear[s] suddenly.",
                 type: Actors.EffectTypeEnum.TELEPORT,
+                singleActor: true,
             },
             message: "[The actor1] zap[s] [its] staff.",
             targetSelector: { method: Actors.TargetSelectionMethodEnum.SELECTED_ACTOR, range: 5 },
@@ -1019,14 +992,12 @@ Actors.ActorFactory.registerActorDef({
         onFireEffect: {
             destroyOnEffect: false,
             effect: {
-                data: {
-                    condition: {
-                        nbTurns: 30,
-                        range: 15,
-                        type: Actors.ConditionTypeEnum.DETECT_LIFE,
-                    },
-                    successMessage: "[The actor1] [is] aware of life around [it].",
+                condition: {
+                    nbTurns: 30,
+                    range: 15,
+                    type: Actors.ConditionTypeEnum.DETECT_LIFE,
                 },
+                successMessage: "[The actor1] [is] aware of life around [it].",
                 type: Actors.EffectTypeEnum.CONDITION,
             },
             message: "[The actor1] zap[s] [its] staff.",
@@ -1126,10 +1097,8 @@ Actors.ActorFactory.registerActorDef({
         onActivateEffector: {
             destroyOnEffect: false,
             effect: {
-                data: {
-                    eventData: GameStatus.NEXT_LEVEL,
-                    eventType: EVENT_CHANGE_STATUS,
-                },
+                eventData: GameStatus.NEXT_LEVEL,
+                eventType: EVENT_CHANGE_STATUS,
                 type: Actors.EffectTypeEnum.EVENT,
             },
             targetSelector: {
