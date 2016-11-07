@@ -16,7 +16,6 @@ export const BASE_LIGHT_PATTERN_ASCIICODE: number = 48;
 export const PENUMBRA_THRESHOLD: number = 0.25;
 // character to use for actors in penumbra (63 = '?')
 export const PENUMBRA_ASCIICODE: number = 63;
-export const SCENT_THRESHOLD: number = 10;
 export const PLAYER_WALK_TIME: number = 5;
 // how many turns you are confused after being stunned
 export const AFTER_STUNNED_CONFUSION_DELAY: number = 3;

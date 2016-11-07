@@ -5,23 +5,28 @@ import * as Core from "../core/main";
 import * as Yendor from "../yendor/main";
 import * as Umbra from "../umbra/main";
 import * as Map from "../map/main";
-import {IActorDef, ConditionTypeEnum} from "./actor_def";
-import {IActorFeature, ActorId, ActorFeatureTypeEnum} from "./actor_feature";
-import {EVENT_LIGHT_ONOFF, SLOT_QUIVER, PERSISTENCE_ACTORS_KEY} from "./base";
-import {Destructible, Attacker, Activable, Container, Pickable, Equipment, Ranged, Magic, Lockable} from "./actor_item";
-import {Ai, XpHolder} from "./actor_creature";
-import {Light} from "./actor_light";
-import {ActorFactory} from "./actor_factory";
+import { IActorDef, ConditionTypeEnum } from "./actor_def";
+import { IActorFeature, ActorId, ActorFeatureTypeEnum } from "./actor_feature";
+import { EVENT_LIGHT_ONOFF, SLOT_QUIVER, PERSISTENCE_ACTORS_KEY } from "./base";
+import {
+    Destructible, Attacker, Activable, Container, Pickable,
+    Equipment, Ranged, Magic, Lockable,
+} from "./actor_item";
+import { BaseAi, XpHolder } from "./actor_creature";
+import { Light } from "./actor_light";
+import { ActorFactory } from "./actor_factory";
 
 /**
  * Probability for an actor class to spawn.
  * Can be used to configure dungeon creatures spawning or loot.
  * Use number matrix to give different probability for different
- * dungeon levels with format [[level1, prob1],[levelx, probx]]
+ * dungeon levels with format [[level1, prob1],[levelx, probx]].
+ * Value is interpolated between level1 and levelx.
+ * clazz can be undefined to define the probability to have no actor
  */
-export interface ItemProbability {
-    clazz: string|undefined;
-    prob: number|number[][];
+export interface IActorProbability {
+    clazz: string | undefined;
+    prob: number | number[][];
 }
 
 /**
@@ -31,10 +36,10 @@ export interface ItemProbability {
  * to fine tune the probability for a count value to be used.
  */
 export interface IProbabilityMap {
-    countProb?: {[index: number]: number};
+    countProb?: { [index: number]: number };
     minCount?: number;
     maxCount?: number;
-    classProb: ItemProbability[];
+    classProb: IActorProbability[];
 }
 
 /**
@@ -60,12 +65,12 @@ export class Actor extends Yendor.TimedEntity implements Yendor.IPersistent {
     /** list of all current actors in the game */
     public static list: Actor[] = [];
     /** fast way to retrieve some special actors like the player. SpecialActor => Actor */
-    public static specialActors: {[index: string]: Actor} = {};
+    public static specialActors: { [index: string]: Actor } = {};
     public static scheduler: Yendor.Scheduler = new Yendor.Scheduler();
     public static lootRng: Yendor.Random = new Yendor.CMWCRandom();
 
-    public static fromId(id: ActorId|undefined): Actor|undefined {
-        if (id === undefined ) {
+    public static fromId(id: ActorId | undefined): Actor | undefined {
+        if (id === undefined) {
             return undefined;
         }
         return Actor.map[id];
@@ -76,12 +81,12 @@ export class Actor extends Yendor.TimedEntity implements Yendor.IPersistent {
      * In the `actors` array, find the closest creature (except the player) from position `pos` within `range`.
      * If range is 0, no range limitation.
      */
-    public static findClosestEnemy(pos: Core.Position, range: number|undefined): Actor|undefined {
+    public static findClosestEnemy(pos: Core.Position, range: number | undefined): Actor | undefined {
         let bestDistance: number = 1E8;
-        let closestActor: Actor|undefined;
-        for ( let actor of Actor.list) {
+        let closestActor: Actor | undefined;
+        for (let actor of Actor.list) {
             if (actor !== Actor.specialActors[SpecialActorsEnum.PLAYER] && actor.isA("creature[s]")
-                && ! actor.destructible.isDead()) {
+                && !actor.destructible.isDead()) {
                 let distance: number = Core.Position.distance(pos, actor.pos);
                 if (distance < bestDistance && (range === undefined || distance < range || range === 0)) {
                     bestDistance = distance;
@@ -96,15 +101,15 @@ export class Actor extends Yendor.TimedEntity implements Yendor.IPersistent {
         return new Promise<void>((resolve) => {
             persister.loadFromKey(PERSISTENCE_ACTORS_KEY).then((_value) => {
                 for (let actor of Actor.list) {
-                    let specialActor: SpecialActorsEnum|undefined;
-                    if ( actor.isA("player")) {
+                    let specialActor: SpecialActorsEnum | undefined;
+                    if (actor.isA("player")) {
                         specialActor = SpecialActorsEnum.PLAYER;
-                    } else if ( actor.isA("stairs up")) {
+                    } else if (actor.isA("stairs up")) {
                         specialActor = SpecialActorsEnum.STAIR_UP;
-                    } else if ( actor.isA("stairs down")) {
+                    } else if (actor.isA("stairs down")) {
                         specialActor = SpecialActorsEnum.STAIR_DOWN;
                     }
-                    if ( specialActor !== undefined) {
+                    if (specialActor !== undefined) {
                         Actor.specialActors[specialActor] = actor;
                     }
                 }
@@ -122,14 +127,14 @@ export class Actor extends Yendor.TimedEntity implements Yendor.IPersistent {
             actor.pos.x === pos.x
             && actor.pos.y === pos.y
             && (withPlayer || actor !== Actor.specialActors[SpecialActorsEnum.PLAYER])
-            && (! actor.pickable || actor.pickable.containerId === undefined )
+            && (!actor.pickable || actor.pickable.containerId === undefined)
         )) {
             Umbra.logger.info(actor.getTheresaname() + " here.");
         }
     }
 
     /** associative map actorId => Actor */
-    private static map: {[index: number]: Actor} = {};
+    private static map: { [index: number]: Actor } = {};
 
     /** the name to be used by mouse look or the inventory screen */
     public type: string;
@@ -212,7 +217,7 @@ export class Actor extends Yendor.TimedEntity implements Yendor.IPersistent {
             // check for equipped weapons
             // TODO each equipped weapon should be used only once per turn
             for (let i: number = 0, n: number = this.container.size(); i < n; ++i) {
-                let item: Actor|undefined = this.container.get(i);
+                let item: Actor | undefined = this.container.get(i);
                 if (item && item.equipment && item.equipment.isEquipped() && item.attacker) {
                     return item.attacker;
                 }
@@ -222,7 +227,7 @@ export class Actor extends Yendor.TimedEntity implements Yendor.IPersistent {
     }
 
     public destroy() {
-        let wearer: Actor|undefined = this.getWearer();
+        let wearer: Actor | undefined = this.getWearer();
         if (wearer) {
             wearer.container.remove(this.id, wearer);
         }
@@ -234,9 +239,9 @@ export class Actor extends Yendor.TimedEntity implements Yendor.IPersistent {
         }
         if (this.container) {
             let i: number = this.container.size();
-            while ( i > 0 ) {
-                let actor: Actor|undefined = this.container.get(0);
-                if ( actor ) {
+            while (i > 0) {
+                let actor: Actor | undefined = this.container.get(0);
+                if (actor) {
                     actor.destroy();
                 }
                 --i;
@@ -244,7 +249,7 @@ export class Actor extends Yendor.TimedEntity implements Yendor.IPersistent {
         }
         delete Actor.map[this._id];
         let index = Actor.list.indexOf(this);
-        if ( index !== -1 ) {
+        if (index !== -1) {
             Actor.list.splice(index, 1);
         }
     }
@@ -300,8 +305,8 @@ export class Actor extends Yendor.TimedEntity implements Yendor.IPersistent {
         if (this.container) {
             // move items in inventory (needed for lights)
             for (let i: number = 0, len: number = this.container.size(); i < len; ++i) {
-                let actor: Actor|undefined = this.container.get(i);
-                if ( actor ) {
+                let actor: Actor | undefined = this.container.get(i);
+                if (actor) {
                     actor.moveTo(x, y);
                 }
             }
@@ -353,47 +358,47 @@ export class Actor extends Yendor.TimedEntity implements Yendor.IPersistent {
      * Function: getWearer
      * Return the actor wearing (containing) this actor
      */
-    public getWearer(): Actor|undefined {
+    public getWearer(): Actor | undefined {
         if (this.pickable && this.pickable.containerId) {
             return Actor.map[this.pickable.containerId];
         }
         return undefined;
     }
 
-    get destructible(): Destructible { return <Destructible> this.features[ActorFeatureTypeEnum.DESTRUCTIBLE]; }
+    get destructible(): Destructible { return <Destructible>this.features[ActorFeatureTypeEnum.DESTRUCTIBLE]; }
     set destructible(newValue: Destructible) { this.features[ActorFeatureTypeEnum.DESTRUCTIBLE] = newValue; }
 
-    get attacker(): Attacker { return <Attacker> this.features[ActorFeatureTypeEnum.ATTACKER]; }
+    get attacker(): Attacker { return <Attacker>this.features[ActorFeatureTypeEnum.ATTACKER]; }
     set attacker(newValue: Attacker) { this.features[ActorFeatureTypeEnum.ATTACKER] = newValue; }
 
-    get ai(): Ai { return <Ai> this.features[ActorFeatureTypeEnum.AI]; }
-    set ai(newValue: Ai) { this.features[ActorFeatureTypeEnum.AI] = newValue; }
+    get ai(): BaseAi { return <BaseAi>this.features[ActorFeatureTypeEnum.AI]; }
+    set ai(newValue: BaseAi) { this.features[ActorFeatureTypeEnum.AI] = newValue; }
 
-    get pickable(): Pickable { return <Pickable> this.features[ActorFeatureTypeEnum.PICKABLE]; }
+    get pickable(): Pickable { return <Pickable>this.features[ActorFeatureTypeEnum.PICKABLE]; }
     set pickable(newValue: Pickable) { this.features[ActorFeatureTypeEnum.PICKABLE] = newValue; }
 
-    get container(): Container { return <Container> this.features[ActorFeatureTypeEnum.CONTAINER]; }
+    get container(): Container { return <Container>this.features[ActorFeatureTypeEnum.CONTAINER]; }
     set container(newValue: Container) { this.features[ActorFeatureTypeEnum.CONTAINER] = newValue; }
 
-    get equipment(): Equipment { return <Equipment> this.features[ActorFeatureTypeEnum.EQUIPMENT]; }
+    get equipment(): Equipment { return <Equipment>this.features[ActorFeatureTypeEnum.EQUIPMENT]; }
     set equipment(newValue: Equipment) { this.features[ActorFeatureTypeEnum.EQUIPMENT] = newValue; }
 
-    get ranged(): Ranged { return <Ranged> this.features[ActorFeatureTypeEnum.RANGED]; }
+    get ranged(): Ranged { return <Ranged>this.features[ActorFeatureTypeEnum.RANGED]; }
     set ranged(newValue: Ranged) { this.features[ActorFeatureTypeEnum.RANGED] = newValue; }
 
-    get magic(): Magic { return <Magic> this.features[ActorFeatureTypeEnum.MAGIC]; }
+    get magic(): Magic { return <Magic>this.features[ActorFeatureTypeEnum.MAGIC]; }
     set magic(newValue: Magic) { this.features[ActorFeatureTypeEnum.MAGIC] = newValue; }
 
-    get activable(): Activable { return <Activable> this.features[ActorFeatureTypeEnum.ACTIVABLE]; }
+    get activable(): Activable { return <Activable>this.features[ActorFeatureTypeEnum.ACTIVABLE]; }
     set activable(newValue: Activable) { this.features[ActorFeatureTypeEnum.ACTIVABLE] = newValue; }
 
-    get lock(): Lockable { return <Lockable> this.features[ActorFeatureTypeEnum.LOCKABLE]; }
+    get lock(): Lockable { return <Lockable>this.features[ActorFeatureTypeEnum.LOCKABLE]; }
     set lock(newValue: Lockable) { this.features[ActorFeatureTypeEnum.LOCKABLE] = newValue; }
 
-    get light(): Light { return <Light> this.features[ActorFeatureTypeEnum.LIGHT]; }
+    get light(): Light { return <Light>this.features[ActorFeatureTypeEnum.LIGHT]; }
     set light(newValue: Light) { this.features[ActorFeatureTypeEnum.LIGHT] = newValue; }
 
-    get xpHolder(): XpHolder { return <XpHolder> this.features[ActorFeatureTypeEnum.XP_HOLDER]; }
+    get xpHolder(): XpHolder { return <XpHolder>this.features[ActorFeatureTypeEnum.XP_HOLDER]; }
     set xpHolder(newValue: XpHolder) { this.features[ActorFeatureTypeEnum.XP_HOLDER] = newValue; }
 
     public isInContainer(): boolean { return this.pickable && this.pickable.containerId !== undefined; }
@@ -403,7 +408,7 @@ export class Actor extends Yendor.TimedEntity implements Yendor.IPersistent {
 
     public getname(count: number = 1): string {
         let name = count > 1 ? this.pluralName : this.name;
-        if ( this.isPlayer()) {
+        if (this.isPlayer()) {
             return "you";
         }
         if (this.ai && this.ai.hasCondition(ConditionTypeEnum.FROZEN)) {
@@ -417,7 +422,7 @@ export class Actor extends Yendor.TimedEntity implements Yendor.IPersistent {
      * Returns " a <name>" or " an <name>" or " <name>"
      */
     public getaname(): string {
-        if ( this.isPlayer()) {
+        if (this.isPlayer()) {
             return "you";
         }
         if (!this.isSingular()) {
@@ -433,7 +438,7 @@ export class Actor extends Yendor.TimedEntity implements Yendor.IPersistent {
      * Returns "A <name>" or "An <name>" or "<name>"
      */
     public getAname(): string {
-        if ( this.isPlayer()) {
+        if (this.isPlayer()) {
             return "You";
         }
         if (!this.isSingular()) {
@@ -458,7 +463,7 @@ export class Actor extends Yendor.TimedEntity implements Yendor.IPersistent {
      * Returns " the <name>"
      */
     public getthename(count: number = 1): string {
-        if ( this.isPlayer()) {
+        if (this.isPlayer()) {
             return " you";
         }
         return count === 1 ?
@@ -471,7 +476,7 @@ export class Actor extends Yendor.TimedEntity implements Yendor.IPersistent {
      * Returns "The <name>"
      */
     public getThename(count: number = 1): string {
-        if ( this.isPlayer()) {
+        if (this.isPlayer()) {
             return "You";
         }
         return count === 1 ?
@@ -484,7 +489,7 @@ export class Actor extends Yendor.TimedEntity implements Yendor.IPersistent {
      * Returns "The <name>'s "
      */
     public getThenames(): string {
-        if ( this.isPlayer()) {
+        if (this.isPlayer()) {
             return "Your ";
         }
         return this.getThename() + "'s ";
@@ -495,41 +500,41 @@ export class Actor extends Yendor.TimedEntity implements Yendor.IPersistent {
      * Returns " the <name>'s "
      */
     public getthenames(): string {
-        if ( this.isPlayer()) {
-            return  " your ";
+        if (this.isPlayer()) {
+            return " your ";
         }
         return this.getthename() + "'s ";
     }
 
     public getits(): string {
-        if ( this.isPlayer()) {
-            return  " your ";
+        if (this.isPlayer()) {
+            return " your ";
         }
         return " its ";
     }
 
     public getit(): string {
-        if ( this.isPlayer()) {
-            return  " you";
+        if (this.isPlayer()) {
+            return " you";
         }
         return " it";
     }
 
     public getis(): string {
-        if ( this.isPlayer()) {
-            return  " are";
+        if (this.isPlayer()) {
+            return " are";
         }
         return this.isSingular() ? " is" : " are";
     }
 
     public getVerbEnd(): string {
-        if ( this.isPlayer()) {
-            return  "";
+        if (this.isPlayer()) {
+            return "";
         }
         return this.isSingular() ? "s" : "";
     }
 
-    public getInventoryQualifier(): string|undefined {
+    public getInventoryQualifier(): string | undefined {
         let actor: Actor = this;
         for (let clazz of actor.getClasses()) {
             let def: IActorDef = ActorFactory.getActorDef(clazz);
@@ -541,7 +546,7 @@ export class Actor extends Yendor.TimedEntity implements Yendor.IPersistent {
     }
 
     public getDescription(count: number = 1): string {
-        let desc = (this.container && ! this.isA("creature[s]")) ? this.container.getQualifiedName(this, count) :
+        let desc = (this.container && !this.isA("creature[s]")) ? this.container.getQualifiedName(this, count) :
             this.destructible ? this.destructible.getQualifiedName(this, count) : this.getname(count);
         if (this.magic) {
             if (this.magic.charges > 0) {
@@ -551,7 +556,7 @@ export class Actor extends Yendor.TimedEntity implements Yendor.IPersistent {
             }
         }
         if (this.ai) {
-            let condDesc: string|undefined = this.ai.getConditionDescription(this);
+            let condDesc: string | undefined = this.ai.getConditionDescription(this);
             if (condDesc) {
                 desc += ", " + condDesc;
             }

@@ -1,9 +1,9 @@
 import * as Core from "../core/main";
 import * as Yendor from "../yendor/main";
 import * as Actors from "../actors/main";
-import {TopologyMap, TopologyAnalyzer, Connector} from "./map_topology";
-import {Map} from "./map";
-import {PUZZLE_STEP_PROBABILITY} from "./constants";
+import { TopologyMap, TopologyAnalyzer, Connector } from "./map_topology";
+import { Map } from "./map";
+import { PUZZLE_STEP_PROBABILITY } from "./constants";
 
 /**
  * ==============================================================================
@@ -22,6 +22,9 @@ export interface IDungeonConfig {
     noItem?: boolean;
     minTorches: number;
     maxTorches: number;
+    /** name of the behavior tree to use for monsters guarding loots */
+    guardAI: string;
+    guardTargetCtxKey: string;
 }
 /**
  * Class: AbstractDungeonBuilder
@@ -35,9 +38,9 @@ export class AbstractDungeonBuilder {
     private itemProbabilities: Actors.IProbabilityMap;
     private creatureProbabilities: Actors.IProbabilityMap;
     private lootProbabilities: Actors.IProbabilityMap;
-    private doorProbabilities: {[index: string]: number};
-    private wallLightProbabilities: {[index: string]: number};
-    private keyProbabilities: {[index: string]: number};
+    private doorProbabilities: { [index: string]: number };
+    private wallLightProbabilities: { [index: string]: number };
+    private keyProbabilities: { [index: string]: number };
 
     get topologyMap() { return this._topologyMap; }
 
@@ -49,7 +52,7 @@ export class AbstractDungeonBuilder {
         this.lootProbabilities = config.lootProbabilities;
         this.doorProbabilities = Actors.ActorFactory.computeLevelProbabilities(config.doorProbabilities, dungeonLevel);
         this.wallLightProbabilities = Actors.ActorFactory.computeLevelProbabilities(
-                config.wallLightProbabilities, dungeonLevel);
+            config.wallLightProbabilities, dungeonLevel);
         this.keyProbabilities = Actors.ActorFactory.computeLevelProbabilities(config.keyProbabilities, dungeonLevel);
         this.rng = new Yendor.CMWCRandom();
     }
@@ -135,21 +138,21 @@ export class AbstractDungeonBuilder {
     }
 
     protected createDoor(pos: Core.Position) {
-        let doorType: string = <string> this.rng.getRandomChance(this.doorProbabilities);
-        let door: Actors.Actor|undefined = Actors.ActorFactory.create(doorType);
-        if ( door ) {
+        let doorType: string = <string>this.rng.getRandomChance(this.doorProbabilities);
+        let door: Actors.Actor | undefined = Actors.ActorFactory.create(doorType);
+        if (door) {
             door.register();
             door.moveTo(pos.x, pos.y);
         }
     }
 
-    protected getDoor(pos: Core.Position): Actors.Actor|undefined {
+    protected getDoor(pos: Core.Position): Actors.Actor | undefined {
         let doors: Actors.Actor[] = Actors.Actor.list.filter((actor: Actors.Actor) =>
             actor.pos.equals(pos) && actor.isA("door[s]"));
         return doors && doors.length === 0 ? undefined : doors[0];
     }
 
-    protected findVDoorPosition(map: Map, x: number, y1: number, y2: number): Core.Position|undefined {
+    protected findVDoorPosition(map: Map, x: number, y1: number, y2: number): Core.Position | undefined {
         let y = y1 < y2 ? y1 : y2;
         let endy = y1 < y2 ? y2 : y1;
         do {
@@ -161,7 +164,7 @@ export class AbstractDungeonBuilder {
         return undefined;
     }
 
-    protected findHDoorPosition(map: Map, x1: number, x2: number, y: number): Core.Position|undefined {
+    protected findHDoorPosition(map: Map, x1: number, x2: number, y: number): Core.Position | undefined {
         let x = x1 < x2 ? x1 : x2;
         let endx = x1 < x2 ? x2 : x1;
         do {
@@ -210,10 +213,10 @@ export class AbstractDungeonBuilder {
             && this.isEmptyCell(map, x, y + 1) && this.isEmptyCell(map, x, y - 1);
     }
 
-    private createActor(probabilityMap: {[index: string]: number}): Actors.Actor|undefined {
-        let actorType: string = <string> this.rng.getRandomChance(probabilityMap);
+    private createActor(probabilityMap: { [index: string]: number }): Actors.Actor | undefined {
+        let actorType: string = <string>this.rng.getRandomChance(probabilityMap);
         // TODO AI tile and inventory pickers for intelligent creatures
-        if (actorType !== undefined ) {
+        if (actorType !== undefined) {
             return Actors.ActorFactory.create(actorType, undefined, undefined);
         }
         return undefined;
@@ -221,7 +224,7 @@ export class AbstractDungeonBuilder {
 
     private createMonsters(x1: number, y1: number, x2: number, y2: number, map: Map) {
         let monsters: Actors.Actor[] = Actors.ActorFactory.createRandomActors(
-                this.creatureProbabilities, this.dungeonLevel);
+            this.creatureProbabilities, this.dungeonLevel);
         for (let monster of monsters) {
             let x = this.rng.getNumber(x1, x2);
             let y = this.rng.getNumber(y1, y2);
@@ -232,17 +235,17 @@ export class AbstractDungeonBuilder {
     }
 
     private createWallTorches(map: Map, minCount: number, maxCount: number) {
-        let count: number =  this.rng.getNumber(minCount, maxCount);
-        while ( count > 0 ) {
-            let wallTorch: Actors.Actor|undefined = this.createActor(this.wallLightProbabilities);
-            if ( wallTorch ) {
+        let count: number = this.rng.getNumber(minCount, maxCount);
+        while (count > 0) {
+            let wallTorch: Actors.Actor | undefined = this.createActor(this.wallLightProbabilities);
+            if (wallTorch) {
                 // the position is not important. it will be fixed after dungeon building. see <fixWallItems()>
                 let x = this.rng.getNumber(0, map.w - 1);
                 let y = this.rng.getNumber(0, map.h - 1);
                 wallTorch.moveTo(x, y);
                 wallTorch.register();
             }
-            count --;
+            count--;
         }
     }
 
@@ -250,10 +253,10 @@ export class AbstractDungeonBuilder {
         let foundWall: boolean = false;
         let x: number = pos.x;
         let y: number = pos.y;
-        while (! foundWall) {
-            if ( x === map.w - 1 ) {
+        while (!foundWall) {
+            if (x === map.w - 1) {
                 x = 0;
-                if ( y === map.h - 1 ) {
+                if (y === map.h - 1) {
                     y = 0;
                 } else {
                     y = y + 1;
@@ -261,15 +264,15 @@ export class AbstractDungeonBuilder {
             } else {
                 x = x + 1;
             }
-            if (x === pos.x && y === pos.y ) {
+            if (x === pos.x && y === pos.y) {
                 // scanned the whole map without finding a cell
                 return;
             }
             let floorPos = map.isWallWithAdjacentFloor(x, y);
-            if ( floorPos !== undefined ) {
+            if (floorPos !== undefined) {
                 let actorsOnCell: Actors.Actor[] = Actors.Actor.list.filter((actor: Actors.Actor) =>
                     actor.pos.x === x && actor.pos.y === y);
-                if ( actorsOnCell.length === 0 ) {
+                if (actorsOnCell.length === 0) {
                     foundWall = true;
                     pos.moveTo(x, y);
                 }
@@ -287,7 +290,7 @@ export class AbstractDungeonBuilder {
             if (actor.wallActor && !map.isWallWithAdjacentFloor(actor.pos.x, actor.pos.y)) {
                 this.findWallWithAdjacentFloor(map, actor.pos);
                 actor.moveTo(actor.pos.x, actor.pos.y);
-                if ( actor.light ) {
+                if (actor.light) {
                     actor.light.position = actor.pos;
                 }
             }
@@ -325,14 +328,14 @@ export class AbstractDungeonBuilder {
                 continue;
             }
             let connector: Connector = this._topologyMap.getConnector(puzzleStep.connectorId);
-            let door: Actors.Actor|undefined = this.getDoor(connector.pos);
+            let door: Actors.Actor | undefined = this.getDoor(connector.pos);
             if (!door) {
                 throw "Error : connector " + connector.id + " with no door";
             }
             // found a door to be locked. look for a position for the key
             let pos: Core.Position = this._topologyMap.getRandomPositionInSector(puzzleStep.keySectorId, this.rng);
-            let key: Actors.Actor|undefined = this.createActor(this.keyProbabilities);
-            if ( key) {
+            let key: Actors.Actor | undefined = this.createActor(this.keyProbabilities);
+            if (key) {
                 key.moveTo(pos.x, pos.y);
                 key.register();
                 Actors.ActorFactory.setLock(door, key);
@@ -341,18 +344,29 @@ export class AbstractDungeonBuilder {
     }
 
     private createLoot() {
+        let player: Actors.Actor = Actors.Actor.specialActors[Actors.SpecialActorsEnum.PLAYER];
+        let playerSectorId: number = this._topologyMap.getObjectId(player.pos);
         for (let sector of this._topologyMap.sectors) {
-            if (sector.isDeadEnd()) {
-                let pos: Core.Position = this._topologyMap.getRandomPositionInSector(sector.id, this.rng);
-                let items: Actors.Actor[] = Actors.ActorFactory.createRandomActors(
-                    this.lootProbabilities, this.dungeonLevel);
-                let container: Actors.Actor|undefined = Actors.ActorFactory.createRandomActor(
+            if (sector.id !== playerSectorId && sector.isDeadEnd()) {
+                let container: Actors.Actor | undefined = Actors.ActorFactory.createRandomActor(
                     this.config.lootContainerType);
                 if (container) {
-                    container.moveTo(pos.x, pos.y);
+                    let containerPos: Core.Position = this._topologyMap.getRandomPositionInSector(sector.id, this.rng);
+                    container.moveTo(containerPos.x, containerPos.y);
+                    let items: Actors.Actor[] = Actors.ActorFactory.createRandomActors(
+                        this.lootProbabilities, this.dungeonLevel);
                     for (let actor of items) {
-                        actor.moveTo(pos.x, pos.y);
+                        actor.moveTo(containerPos.x, containerPos.y);
                         actor.pickable.pick(actor, container, false, true);
+                    }
+                    let guardians: Actors.Actor[] = Actors.ActorFactory.createRandomActors(
+                        this.creatureProbabilities, this.dungeonLevel);
+                    for (let creature of guardians) {
+                        let pos: Core.Position = this._topologyMap.getRandomPositionInSector(sector.id, this.rng);
+                        creature.moveTo(pos.x, pos.y);
+                        creature.ai.behaviorTree = Actors.ActorFactory.getBehaviorTree(this.config.guardAI);
+                        creature.ai.context.set(this.config.guardTargetCtxKey, container);
+
                     }
                 }
             }

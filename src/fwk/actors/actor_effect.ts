@@ -333,12 +333,14 @@ export class EventEffect extends Effect {
 export class ConditionEffect extends Effect {
     private conditionDef: IConditionDef;
     private message: string|undefined;
-    private singleActor: boolean;
+    private singleActor: boolean = false;
     constructor(def: IConditionEffectDef, message?: string) {
         super();
         this.message = message;
-        this.conditionDef = def.condition;
-        this.singleActor = def.singleActor || false;
+        if ( def ) {
+            this.conditionDef = def.condition;
+            this.singleActor = def.singleActor || false;
+        }
     }
 
     public applyTo(actor: Actor, _coef: number = 1.0): EffectResult {

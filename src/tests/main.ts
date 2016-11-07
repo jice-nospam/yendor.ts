@@ -1,20 +1,21 @@
 import * as $ from "jquery";
 import * as tsUnit from "./tsUnit";
 import * as Yendor from "../fwk/yendor/main";
-import {RngTests} from "./yendor/rng";
-import {BspTests} from "./yendor/bsp";
-import {FovTests} from "./yendor/fov";
-import {NoiseTests} from "./yendor/noise";
-import {ColorTests} from "./core/color";
-import {PathTests} from "./yendor/path";
-import {GameplayTests} from "./generogue/gameplay";
-import {GuiTests} from "./generogue/gui";
-import {CoreTests} from "./core/main";
-import {NodeTests} from "./umbra/node";
-import {PersistenceTests} from "./core/persistence";
+import { RngTests } from "./yendor/rng";
+import { BspTests } from "./yendor/bsp";
+import { FovTests } from "./yendor/fov";
+import { NoiseTests } from "./yendor/noise";
+import { ColorTests } from "./core/color";
+import { PathTests } from "./yendor/path";
+import { BehaviorTests } from "./yendor/behavior";
+import { GameplayTests } from "./generogue/gameplay";
+import { GuiTests } from "./generogue/gui";
+import { CoreTests } from "./core/main";
+import { NodeTests } from "./umbra/node";
+import { PersistenceTests } from "./core/persistence";
 
-if ( Yendor.isBrowser() ) {
-    $(function() {
+if (Yendor.isBrowser()) {
+    $(function () {
         runTests(true);
     });
 } else {
@@ -22,6 +23,7 @@ if ( Yendor.isBrowser() ) {
 }
 
 function runTests(browser: boolean) {
+    Yendor.init();
     // new instance of tsUnit
     let test = new tsUnit.Test();
 
@@ -39,6 +41,7 @@ function runTests(browser: boolean) {
     test.addTestClass(new FovTests(), "yendor/fov", FovTests);
     test.addTestClass(new NoiseTests(), "yendor/noise", NoiseTests);
     test.addTestClass(new PathTests(), "yendor/path", PathTests);
+    test.addTestClass(new BehaviorTests(), "yendor/behavior", BehaviorTests);
 
     // umbra tests
     test.addTestClass(new NodeTests(), "umbra/node", NodeTests);

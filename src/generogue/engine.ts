@@ -24,16 +24,15 @@ import {
     URL_PARAM_NO_ITEM,
     URL_PARAM_NO_MONSTER,
 } from "./base";
-import {StatusPanel} from "./gui_status";
-import {InventoryPanel} from "./gui_inventory";
-import {LootPanel} from "./gui_loot";
-import {TilePicker} from "./gui_tilepicker";
-import {NumberSelector} from "./gui_input_number";
-import {MainMenu} from "./gui_menu";
-import {DebugMenu} from "./gui_debug";
-import {ACTOR_TYPES} from "./config_actors";
-import {dungeonConfig} from "./config_dungeons";
-import {registerPersistentClasses} from "./config_persistent";
+import { StatusPanel } from "./gui_status";
+import { InventoryPanel } from "./gui_inventory";
+import { LootPanel } from "./gui_loot";
+import { TilePicker } from "./gui_tilepicker";
+import { NumberSelector } from "./gui_input_number";
+import { MainMenu } from "./gui_menu";
+import { DebugMenu } from "./gui_debug";
+import { ACTOR_TYPES } from "./config_actors";
+import { dungeonConfig } from "./config_dungeons";
 
 /**
  * Property: SAVEFILE_VERSION
@@ -65,7 +64,7 @@ export abstract class DungeonScene extends Map.MapScene implements Umbra.IEventL
         let player: Actors.Actor = Actors.Actor.specialActors[Actors.SpecialActorsEnum.PLAYER];
         let toRemove: Actors.Actor[] = [];
         for (let actor of Actors.Actor.list) {
-            if ( actor !== player && (actor.isA("key[s]") || !player.contains(actor.id, true))) {
+            if (actor !== player && (actor.isA("key[s]") || !player.contains(actor.id, true))) {
                 toRemove.push(actor);
             }
         }
@@ -89,13 +88,13 @@ export abstract class DungeonScene extends Map.MapScene implements Umbra.IEventL
      * actors will be placed by the dungeon builder.
      */
     public createStairs() {
-        let stairUp: Actors.Actor|undefined = Actors.ActorFactory.create(ACTOR_TYPES.STAIRS_UP);
+        let stairUp: Actors.Actor | undefined = Actors.ActorFactory.create(ACTOR_TYPES.STAIRS_UP);
         if (!stairUp) {
             Umbra.logger.critical("Missing actor type " + ACTOR_TYPES.STAIRS_UP);
             return;
         }
         Actors.Actor.specialActors[Actors.SpecialActorsEnum.STAIR_UP] = stairUp;
-        let stairDown: Actors.Actor|undefined = Actors.ActorFactory.create(ACTOR_TYPES.STAIRS_DOWN);
+        let stairDown: Actors.Actor | undefined = Actors.ActorFactory.create(ACTOR_TYPES.STAIRS_DOWN);
         if (!stairDown) {
             Umbra.logger.critical("Missing actor type " + ACTOR_TYPES.STAIRS_DOWN);
             return;
@@ -105,9 +104,9 @@ export abstract class DungeonScene extends Map.MapScene implements Umbra.IEventL
     }
 
     public createPlayer() {
-        let player: Actors.Actor|undefined = Actors.ActorFactory.create(ACTOR_TYPES.PLAYER,
+        let player: Actors.Actor | undefined = Actors.ActorFactory.create(ACTOR_TYPES.PLAYER,
             this.playerTilePicker, this.playerInventoryPicker, this.playerLootHandler);
-        if ( !player) {
+        if (!player) {
             Umbra.logger.critical("Missing actor type " + ACTOR_TYPES.PLAYER);
             return;
         }
@@ -142,7 +141,6 @@ export class Engine extends DungeonScene implements Umbra.IEventListener {
 
     public onInit(): void {
         this.status = GameStatus.INITIALIZING;
-        registerPersistentClasses();
 
         super.onInit();
         this.createGui();
@@ -150,7 +148,7 @@ export class Engine extends DungeonScene implements Umbra.IEventListener {
         Umbra.EventManager.registerEventListener(this, EVENT_CHANGE_STATUS);
         Umbra.EventManager.registerEventListener(this, EVENT_NEW_GAME);
 
-        if ( Yendor.urlParams[URL_PARAM_CLEAR_SAVEGAME] ) {
+        if (Yendor.urlParams[URL_PARAM_CLEAR_SAVEGAME]) {
             this.onNewGame();
         } else {
             this.persister.loadFromKey(PERSISTENCE_VERSION_KEY).then((savedVersion) => {
@@ -194,8 +192,8 @@ export class Engine extends DungeonScene implements Umbra.IEventListener {
         // }
 
         // a pouch with 5 gold pieces
-        let pouch: Actors.Actor|undefined = Actors.ActorFactory.create(ACTOR_TYPES.POUCH);
-        if ( pouch ) {
+        let pouch: Actors.Actor | undefined = Actors.ActorFactory.create(ACTOR_TYPES.POUCH);
+        if (pouch) {
             Actors.ActorFactory.createInContainer(pouch, [
                 ACTOR_TYPES.GOLD_PIECE,
                 ACTOR_TYPES.GOLD_PIECE,
@@ -203,9 +201,9 @@ export class Engine extends DungeonScene implements Umbra.IEventListener {
                 ACTOR_TYPES.GOLD_PIECE,
                 ACTOR_TYPES.GOLD_PIECE]);
         }
-        let bag: Actors.Actor|undefined = Actors.ActorFactory.create(ACTOR_TYPES.BAG);
-        if ( bag ) {
-            if ( pouch ) {
+        let bag: Actors.Actor | undefined = Actors.ActorFactory.create(ACTOR_TYPES.BAG);
+        if (bag) {
+            if (pouch) {
                 pouch.pickable.pick(pouch, bag, false);
             }
             Actors.ActorFactory.createInContainer(bag,
@@ -238,18 +236,18 @@ export class Engine extends DungeonScene implements Umbra.IEventListener {
      * time - elapsed time since the last update in milliseconds
      */
     public onUpdate(time: number): void {
-        if ( this.status === GameStatus.INITIALIZING ) {
-                    return;
+        if (this.status === GameStatus.INITIALIZING) {
+            return;
         }
         let player: Actors.Actor = Actors.Actor.specialActors[Actors.SpecialActorsEnum.PLAYER];
         if (player && !player.destructible.isDead()) {
             let schedulerPaused = Actors.Actor.scheduler.isPaused();
-            if ( this.status === GameStatus.NEXT_TURN) {
+            if (this.status === GameStatus.NEXT_TURN) {
                 this.forceNextTurn = true;
                 this.status = GameStatus.RUNNING;
             }
             super.onUpdate(time);
-            if ( ! schedulerPaused && Actors.Actor.scheduler.isPaused()) {
+            if (!schedulerPaused && Actors.Actor.scheduler.isPaused()) {
                 // save every time the scheduler pauses
                 this.persister.saveToKey(Actors.PERSISTENCE_ACTORS_KEY, Actors.Actor.list);
                 this.onSaveGame(this.persister);
@@ -275,7 +273,7 @@ export class Engine extends DungeonScene implements Umbra.IEventListener {
         this.gui = {
             inventory: new InventoryPanel(numberSelector),
             loot: new LootPanel(numberSelector),
-            mainMenu : new MainMenu(),
+            mainMenu: new MainMenu(),
             status: new StatusPanel(),
             tilePicker: new TilePicker(),
         };

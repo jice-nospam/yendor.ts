@@ -1,17 +1,30 @@
 {
-  "extends": "tslint:recommended",
-  "rules": {
-    "no-bitwise": false,
-    "variable-name": [
-      true,
-      "ban-keywords",
-      "check-format",
-      "allow-leading-underscore"
-    ],
-    "no-console": [
-      false
-    ],
-    "no-empty": false,
-    "object-literal-sort-keys": false
-  }
+    "extends": "tslint:recommended",
+    "rules": {
+        "no-bitwise": false,
+        "variable-name": [
+            true,
+            "ban-keywords",
+            "check-format",
+            "allow-leading-underscore"
+        ],
+        "no-console": [
+            false
+        ],
+        "no-empty": false,
+        "object-literal-sort-keys": false,
+        "whitespace": [
+            true,
+            "check-branch",
+            "check-decl",
+            "check-module",
+            "check-operator",
+            "check-separator",
+            "check-type"
+        ],
+        "align": [
+            true,
+            "statements"
+        ]
+    }
 }

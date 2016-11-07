@@ -26,9 +26,6 @@ The name `GeneRogue` is a reference to Kornel Kisielewicz's mammoth [GenRogue pr
 * look with mouse. UI also works with mouse
 
 # WORK IN PROGRESS
-    - being able to drop a stack (but not throw/use...)
-    - being able to drop a bag
-    - no in-between turn when firing/zapping
 
 # TODO
 
@@ -51,6 +48,8 @@ Reminder for stuff that might be added to the game. Or not.
 * Gameplay
     - UI
         - context menu to replace drop/throw commands
+            - being able to drop a stack (but not throw/use...)
+            - being able to drop a bag
         - container qualified name : being able to configure pouch + gold pieces => gold pouch ?
     - item durability
         - grinding stone
@@ -67,8 +66,6 @@ Reminder for stuff that might be added to the game. Or not.
         - more monsters near loots
         - cell description : being able to display "There are 2 dead orcs here".
     - A.I.
-        - behavior tree toolkit
-        - guard loot AI
         - beast A.I. should move randomly when no scent is detected
         - orcs should have humanoid A.I. (can open door, use equipment)
         - humanoid A.I. (can use weapons and wear armors)
@@ -83,6 +80,7 @@ Reminder for stuff that might be added to the game. Or not.
         - gems and weapons/armors slots
         - jewelry (necklace, rings)
         - item randomization (every item is unique)
+        - auto put key in keyring, scrolls in map case ?
     - player character
         - new XP level : being able to increase some stat (health, inventory, ...)
         - implement classical DEX/INT/CON/CHA/WIS stats
@@ -93,6 +91,7 @@ Reminder for stuff that might be added to the game. Or not.
         - dodge + parry
         - shield should block only one hit per turn
         - dual wielding (you attack with the fastest weapon first, then with the slowest one. Total waitTime is smaller than the sum of the weapons waitTimes. watch out for special cases like crossbow + sword)
+        - no in-between turn when firing/zapping
 
 * Eye candy
     - end of turn animation (flying arrows, explosions, ...)

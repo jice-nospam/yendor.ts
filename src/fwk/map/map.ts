@@ -25,7 +25,7 @@ export class Map extends Core.Rect implements Yendor.IPersistent {
     private tiles: Tile[][];
     private __inFov: boolean[][];
     private _fov: Yendor.Fov;
-    private _currentScentValue: number = Actors.SCENT_THRESHOLD;
+    private _currentScentValue: number = 0;
     // whether we must recompute fov
     private _dirty: boolean = true;
     private __renderer: MapRendererNode;

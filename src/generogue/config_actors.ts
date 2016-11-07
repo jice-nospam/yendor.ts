@@ -2,6 +2,8 @@
  * Section: actors
  */
 import * as Actors from "../fwk/actors/main";
+import * as Yendor from "../fwk/yendor/main";
+import * as Ai from "../fwk/ai/main";
 import {
     GameStatus,
     BONE_COLOR,
@@ -20,7 +22,16 @@ import {
     WOOD_COLOR,
     XP_BASE_LEVEL,
     XP_NEW_LEVEL,
+    SCENT_THRESHOLD,
+    MIN_GUARD_RANGE,
+    MAX_GUARD_RANGE,
+    CTX_KEY_GUARD,
 } from "./base";
+import { registerPersistentClasses } from "./config_persistent";
+
+// persistent classes must be registered before actors
+// as behavior trees are created using the JSONSerializer
+registerPersistentClasses();
 
 /**
  * Const: ACTOR_TYPES
@@ -28,85 +39,112 @@ import {
  */
 export const ACTOR_TYPES = {
     CREATURE: "creature[s]",
-        HUMANOID: "humanoid[s]",
-            GOBLIN: "goblin[s]",
-            ORC: "orc[s]",
-            TROLL: "troll[s]",
-            HUMAN: "human[s]",
-                PLAYER: "player",
+    HUMANOID: "humanoid[s]",
+    HOSTILE_HUMANOID: "hostile humanoid[s]",
+    GOBLIN: "goblin[s]",
+    ORC: "orc[s]",
+    TROLL: "troll[s]",
+    HUMAN: "human[s]",
+    PLAYER: "player",
     MAGIC: "magic",
     ITEM: "item[s]",
-        FLASK: "flask[s]",
-            OIL_FLASK: "oil flask[s]",
-        MONEY: "money",
-            GOLD_PIECE: "gold piece[s]",
-        CONTAINER: "container[s]",
-            STATIC_CONTAINER: "static container[s]",
-                SMALL_CHEST: "small chest[s]",
-                CHEST: "chest[s]",
-                CRATE: "crate[s]",
-                BARREL: "barrel[s]",
-            PICKABLE_CONTAINER: "pickable container[s]",
-                POUCH: "pouch[es]",
-                BAG: "bag[s]",
-                SATCHEL: "satchel[s]",
-                PACK: "pack[s]",
-                MAP_CASE: "map case[s]",
-                KEY_RING: "key ring[s]",
-        POTION: "potion[s]",
-            HEALTH_POTION: "health potion[s]",
-            REGENERATION_POTION: "regeneration potion[s]",
-        SCROLL: "scroll[s]",
-            SCROLL_OF_LIGHTNING_BOLT: "scroll[s] of lighting bolt",
-            SCROLL_OF_FIREBALL: "scroll[s] of fireball",
-            SCROLL_OF_CONFUSION: "scroll[s] of confusion",
-        WEAPON: "weapon[s]",
-            BLADE: "blade[s]",
-                KNIFE: "knife[s]",
-                SHORT_SWORD: "short sword[s]",
-                LONGSWORD: "longsword[s]",
-                GREATSWORD: "greatsword[s]",
-            SHIELD: "shield[s]",
-                WOODEN_SHIELD: "wooden shield[s]",
-                IRON_SHIELD: "iron shield[s]",
-            RANGED: "ranged",
-                SHORT_BOW: "short bow[s]",
-                LONG_BOW: "long bow[s]",
-                CROSSBOW: "crossbow[s]",
-            WAND: "wand[s]",
-                WAND_OF_FROST: "wand[s] of frost",
-            STAFF: "staff[s]",
-                STAFF_OF_TELEPORTATION: "staff[s] of teleportation",
-                STAFF_OF_LIFE_DETECTION: "staff[s] of life detection",
-                STAFF_OF_MAPPING: "staff[s] of mapping",
-                SUNROD: "sunrod[s]",
-        PROJECTILE: "projectile[s]",
-            ARROW: "arrow[s]",
-                BONE_ARROW: "bone arrow[s]",
-                IRON_ARROW: "iron arrow[s]",
-            BOLT: "bolt[s]",
-        LIGHT: "light[s]",
-            PICKABLE_LIGHT: "pickable light[s]",
-                CONSUMABLE_LIGHT: "consumable light[s]",
-                    CANDLE: "candle[s]",
-                    TORCH: "torch[es]",
-                REFILLABLE_LIGHT: "refillable light[s]",
-                    LANTERN: "lantern[s]",
-        KEY: "key[s]",
+    FLASK: "flask[s]",
+    OIL_FLASK: "oil flask[s]",
+    MONEY: "money",
+    GOLD_PIECE: "gold piece[s]",
+    CONTAINER: "container[s]",
+    STATIC_CONTAINER: "static container[s]",
+    SMALL_CHEST: "small chest[s]",
+    CHEST: "chest[s]",
+    CRATE: "crate[s]",
+    BARREL: "barrel[s]",
+    PICKABLE_CONTAINER: "pickable container[s]",
+    POUCH: "pouch[es]",
+    BAG: "bag[s]",
+    SATCHEL: "satchel[s]",
+    PACK: "pack[s]",
+    MAP_CASE: "map case[s]",
+    KEY_RING: "key ring[s]",
+    POTION: "potion[s]",
+    HEALTH_POTION: "health potion[s]",
+    REGENERATION_POTION: "regeneration potion[s]",
+    SCROLL: "scroll[s]",
+    SCROLL_OF_LIGHTNING_BOLT: "scroll[s] of lighting bolt",
+    SCROLL_OF_FIREBALL: "scroll[s] of fireball",
+    SCROLL_OF_CONFUSION: "scroll[s] of confusion",
+    WEAPON: "weapon[s]",
+    BLADE: "blade[s]",
+    KNIFE: "knife[s]",
+    SHORT_SWORD: "short sword[s]",
+    LONGSWORD: "longsword[s]",
+    GREATSWORD: "greatsword[s]",
+    SHIELD: "shield[s]",
+    WOODEN_SHIELD: "wooden shield[s]",
+    IRON_SHIELD: "iron shield[s]",
+    RANGED: "ranged",
+    SHORT_BOW: "short bow[s]",
+    LONG_BOW: "long bow[s]",
+    CROSSBOW: "crossbow[s]",
+    WAND: "wand[s]",
+    WAND_OF_FROST: "wand[s] of frost",
+    STAFF: "staff[s]",
+    STAFF_OF_TELEPORTATION: "staff[s] of teleportation",
+    STAFF_OF_LIFE_DETECTION: "staff[s] of life detection",
+    STAFF_OF_MAPPING: "staff[s] of mapping",
+    SUNROD: "sunrod[s]",
+    PROJECTILE: "projectile[s]",
+    ARROW: "arrow[s]",
+    BONE_ARROW: "bone arrow[s]",
+    IRON_ARROW: "iron arrow[s]",
+    BOLT: "bolt[s]",
+    LIGHT: "light[s]",
+    PICKABLE_LIGHT: "pickable light[s]",
+    CONSUMABLE_LIGHT: "consumable light[s]",
+    CANDLE: "candle[s]",
+    TORCH: "torch[es]",
+    REFILLABLE_LIGHT: "refillable light[s]",
+    LANTERN: "lantern[s]",
+    KEY: "key[s]",
     DEVICE: "device[s]",
-        WALL_TORCH: "wall torch[es]",
-        STAIRS: "stairs",
-            STAIRS_UP: "stairs up",
-            STAIRS_DOWN: "stairs down",
-        DOOR: "door[s]",
-            WOODEN_DOOR: "wooden door[s]",
-            IRON_PORTCULLIS: "iron portcullis[es]",
+    WALL_TORCH: "wall torch[es]",
+    STAIRS: "stairs",
+    STAIRS_UP: "stairs up",
+    STAIRS_DOWN: "stairs down",
+    DOOR: "door[s]",
+    WOODEN_DOOR: "wooden door[s]",
+    IRON_PORTCULLIS: "iron portcullis[es]",
 };
 
+export const BEHAVIOR_TREES = {
+    BASIC_HOSTILE: "basic hostile",
+    GUARD: "guard",
+};
+
+// ================================== behavior trees ==================================
+// Attack on sight AI
+Actors.ActorFactory.registerBehaviorTree(new Yendor.BehaviorTree(BEHAVIOR_TREES.BASIC_HOSTILE,
+    new Yendor.SequenceNode([
+        new Yendor.SelectorNode([
+            new Ai.MoveToActionNode(Ai.CTX_KEY_PLAYER),
+            new Ai.TrackScentActionNode(SCENT_THRESHOLD),
+            new Yendor.InverterNode(new Ai.WaitActionNode()),
+        ]),
+        new Ai.AttackPlayerActionNode(),
+    ]))
+);
+// Guard treasure AI
+Actors.ActorFactory.registerBehaviorTree(new Yendor.BehaviorTree(BEHAVIOR_TREES.GUARD,
+    new Yendor.SelectorNode([
+        new Ai.RangeCompareNode(CTX_KEY_GUARD, MAX_GUARD_RANGE, Yendor.NodeOperatorEnum.GREATER,
+            new Ai.MoveToActionNode(CTX_KEY_GUARD, MIN_GUARD_RANGE)
+        ),
+        new Yendor.RunTreeNode(Actors.ActorFactory.getBehaviorTree(BEHAVIOR_TREES.BASIC_HOSTILE)),
+    ]))
+);
 // ================================== creatures ==================================
 Actors.ActorFactory.registerActorDef({
-    abstract: true,
     name: ACTOR_TYPES.CREATURE,
+    abstract: true,
     blockWalk: true,
     destructible: {
         corpseChar: "%",
@@ -115,8 +153,8 @@ Actors.ActorFactory.registerActorDef({
 });
 
 Actors.ActorFactory.registerActorDef({
-    abstract: true,
     name: ACTOR_TYPES.HUMANOID,
+    abstract: true,
     container: {
         capacity: 20,
         slots: [Actors.SLOT_LEFT_HAND, Actors.SLOT_RIGHT_HAND, Actors.SLOT_BOTH_HANDS],
@@ -125,20 +163,35 @@ Actors.ActorFactory.registerActorDef({
 });
 
 Actors.ActorFactory.registerActorDef({
+    name: ACTOR_TYPES.HOSTILE_HUMANOID,
+    abstract: true,
+    ai: {
+        type: Actors.AiTypeEnum.MONSTER,
+        walkTime: 4,
+        // shorter syntax
+        treeName: BEHAVIOR_TREES.BASIC_HOSTILE,
+    },
+    prototypes: [ACTOR_TYPES.HUMANOID],
+});
+
+Actors.ActorFactory.registerActorDef({
     name: ACTOR_TYPES.GOBLIN,
     ai: { type: Actors.AiTypeEnum.MONSTER, walkTime: 4 },
     attacker: { attackTime: 4, hitPoints: 1 },
     ch: "g",
     color: 0x3F7F3F,
-    destructible: { corpseName: "goblin corpse", defense: 0, healthPoints: 3,
-        loot: { classProb: [
-            { clazz: ACTOR_TYPES.GOLD_PIECE, prob: 1},
-            { clazz: ACTOR_TYPES.TORCH, prob: 1},
-            { clazz: undefined, prob: 3},
-        ]},
+    destructible: {
+        corpseName: "goblin corpse", defense: 0, healthPoints: 3,
+        loot: {
+            classProb: [
+                { clazz: ACTOR_TYPES.GOLD_PIECE, prob: 1 },
+                { clazz: ACTOR_TYPES.TORCH, prob: 1 },
+                { clazz: undefined, prob: 3 },
+            ],
+        },
         xp: 10,
     },
-    prototypes: [ACTOR_TYPES.HUMANOID],
+    prototypes: [ACTOR_TYPES.HOSTILE_HUMANOID],
 });
 
 Actors.ActorFactory.registerActorDef({
@@ -153,15 +206,15 @@ Actors.ActorFactory.registerActorDef({
         healthPoints: 9,
         loot: {
             classProb: [
-                { clazz: ACTOR_TYPES.GOLD_PIECE, prob: 1},
-                { clazz: ACTOR_TYPES.TORCH, prob: 1},
-                { clazz: ACTOR_TYPES.POTION, prob: 1},
+                { clazz: ACTOR_TYPES.GOLD_PIECE, prob: 1 },
+                { clazz: ACTOR_TYPES.TORCH, prob: 1 },
+                { clazz: ACTOR_TYPES.POTION, prob: 1 },
             ],
-            countProb: {0: 30, 1: 50, 2: 20},
+            countProb: { 0: 30, 1: 50, 2: 20 },
         },
         xp: 35,
     },
-    prototypes: [ACTOR_TYPES.HUMANOID],
+    prototypes: [ACTOR_TYPES.HOSTILE_HUMANOID],
 });
 
 Actors.ActorFactory.registerActorDef({
@@ -177,38 +230,42 @@ Actors.ActorFactory.registerActorDef({
         healthPoints: 15,
         loot: {
             classProb: [
-                { clazz: ACTOR_TYPES.GOLD_PIECE, prob: 1},
-                { clazz: ACTOR_TYPES.TORCH, prob: 1},
-                { clazz: ACTOR_TYPES.POTION, prob: 1},
+                { clazz: ACTOR_TYPES.GOLD_PIECE, prob: 1 },
+                { clazz: ACTOR_TYPES.TORCH, prob: 1 },
+                { clazz: ACTOR_TYPES.POTION, prob: 1 },
             ],
-            countProb: {0: 15, 1: 60, 2: 25},
+            countProb: { 0: 15, 1: 60, 2: 25 },
         },
         xp: 100,
     },
-    prototypes: [ACTOR_TYPES.HUMANOID],
+    prototypes: [ACTOR_TYPES.HOSTILE_HUMANOID],
 });
 
 Actors.ActorFactory.registerActorDef({
     name: ACTOR_TYPES.HUMAN,
     abstract: true,
     ch: "@",
-    container: { capacity: 20, slots: [Actors.SLOT_LEFT_HAND, Actors.SLOT_RIGHT_HAND,
-        Actors.SLOT_BOTH_HANDS, Actors.SLOT_QUIVER] },
+    container: {
+        capacity: 20, slots: [Actors.SLOT_LEFT_HAND, Actors.SLOT_RIGHT_HAND,
+        Actors.SLOT_BOTH_HANDS, Actors.SLOT_QUIVER],
+    },
     prototypes: [ACTOR_TYPES.HUMANOID],
 });
 
 Actors.ActorFactory.registerActorDef({
     name: ACTOR_TYPES.PLAYER,
-    ai: { type: Actors.AiTypeEnum.PLAYER, walkTime: Actors.PLAYER_WALK_TIME},
+    ai: { type: Actors.AiTypeEnum.PLAYER, walkTime: Actors.PLAYER_WALK_TIME },
     attacker: { attackTime: Actors.PLAYER_WALK_TIME, hitPoints: 2 },
     blockWalk: false,
     color: 0xFFFFFF,
     destructible: { corpseName: "your cadaver", defense: 0, healthPoints: 30 },
-    light: {color: NOLIGHT_COLOR,
+    light: {
+        color: NOLIGHT_COLOR,
         falloffType: Actors.LightFalloffTypeEnum.NORMAL, range: 3,
-        renderMode: Actors.LightRenderModeEnum.MAX },
+        renderMode: Actors.LightRenderModeEnum.MAX,
+    },
     prototypes: [ACTOR_TYPES.HUMAN],
-    xpHolder: {baseLevel: XP_BASE_LEVEL, newLevel: XP_NEW_LEVEL},
+    xpHolder: { baseLevel: XP_BASE_LEVEL, newLevel: XP_NEW_LEVEL },
 });
 // ================================== items  ==================================
 Actors.ActorFactory.registerActorDef({
@@ -250,7 +307,7 @@ Actors.ActorFactory.registerActorDef({
     abstract: true,
     ch: "$",
     containerQualifier: true,
-    pickable: {weight: 0.05},
+    pickable: { weight: 0.05 },
     plural: true,
     prototypes: [ACTOR_TYPES.ITEM],
 });
@@ -278,25 +335,25 @@ Actors.ActorFactory.registerActorDef({
 
 Actors.ActorFactory.registerActorDef({
     name: ACTOR_TYPES.SMALL_CHEST,
-    container: {capacity: 5},
+    container: { capacity: 5 },
     prototypes: [ACTOR_TYPES.STATIC_CONTAINER],
 });
 
 Actors.ActorFactory.registerActorDef({
     name: ACTOR_TYPES.CHEST,
-    container: {capacity: 15},
+    container: { capacity: 15 },
     prototypes: [ACTOR_TYPES.STATIC_CONTAINER],
 });
 
 Actors.ActorFactory.registerActorDef({
     name: ACTOR_TYPES.CRATE,
-    container: {capacity: 20},
+    container: { capacity: 20 },
     prototypes: [ACTOR_TYPES.STATIC_CONTAINER],
 });
 
 Actors.ActorFactory.registerActorDef({
     name: ACTOR_TYPES.BARREL,
-    container: {capacity: 30},
+    container: { capacity: 30 },
     prototypes: [ACTOR_TYPES.STATIC_CONTAINER],
 });
 
@@ -304,42 +361,42 @@ Actors.ActorFactory.registerActorDef({
     name: ACTOR_TYPES.PICKABLE_CONTAINER,
     abstract: true,
     color: WOOD_COLOR,
-    pickable: {weight: 0.2},
+    pickable: { weight: 0.2 },
     prototypes: [ACTOR_TYPES.CONTAINER, ACTOR_TYPES.ITEM],
 });
 
 Actors.ActorFactory.registerActorDef({
     name: ACTOR_TYPES.POUCH,
-    container: { capacity: 2},
+    container: { capacity: 2 },
     prototypes: [ACTOR_TYPES.PICKABLE_CONTAINER],
 });
 Actors.ActorFactory.registerActorDef({
     name: ACTOR_TYPES.BAG,
-    container: { capacity: 5},
+    container: { capacity: 5 },
     prototypes: [ACTOR_TYPES.PICKABLE_CONTAINER],
 });
 
 Actors.ActorFactory.registerActorDef({
     name: ACTOR_TYPES.SATCHEL,
-    container: { capacity: 10},
+    container: { capacity: 10 },
     prototypes: [ACTOR_TYPES.PICKABLE_CONTAINER],
 });
 
 Actors.ActorFactory.registerActorDef({
     name: ACTOR_TYPES.PACK,
-    container: { capacity: 40},
+    container: { capacity: 40 },
     prototypes: [ACTOR_TYPES.PICKABLE_CONTAINER],
 });
 
 Actors.ActorFactory.registerActorDef({
     name: ACTOR_TYPES.KEY_RING,
-    container: { capacity: 5, filter: [ACTOR_TYPES.KEY]},
+    container: { capacity: 5, filter: [ACTOR_TYPES.KEY] },
     prototypes: [ACTOR_TYPES.PICKABLE_CONTAINER],
 });
 
 Actors.ActorFactory.registerActorDef({
     name: ACTOR_TYPES.MAP_CASE,
-    container: { capacity: 5, filter: [ACTOR_TYPES.SCROLL]},
+    container: { capacity: 5, filter: [ACTOR_TYPES.SCROLL] },
     prototypes: [ACTOR_TYPES.PICKABLE_CONTAINER],
 });
 
@@ -410,7 +467,7 @@ Actors.ActorFactory.registerActorDef({
                     type: Actors.ConditionTypeEnum.HEALTH_VARIATION,
                 },
                 successMessage: "[The actor1] drink[s] the regeneration potion and feel[s]\n"
-                    + "the life flowing through [it].",
+                + "the life flowing through [it].",
                 type: Actors.EffectTypeEnum.CONDITION,
             },
             targetSelector: { method: Actors.TargetSelectionMethodEnum.WEARER },
@@ -438,7 +495,7 @@ Actors.ActorFactory.registerActorDef({
             effect: {
                 amount: -20,
                 successMessage: "A lightning bolt strikes [the actor1] with a loud thunder!\n" +
-                    "The damage is [value1] hit points.",
+                "The damage is [value1] hit points.",
                 type: Actors.EffectTypeEnum.INSTANT_HEALTH,
             },
             targetSelector: { method: Actors.TargetSelectionMethodEnum.CLOSEST_ENEMY, range: 5 },
@@ -463,7 +520,7 @@ Actors.ActorFactory.registerActorDef({
                 method: Actors.TargetSelectionMethodEnum.SELECTED_RANGE,
                 radius: 3,
                 range: 10,
-             },
+            },
         },
         weight: 0.1,
     },
@@ -877,7 +934,7 @@ Actors.ActorFactory.registerActorDef({
         loadTime: 4,
         projectileType: ACTOR_TYPES.ARROW,
         range: 15,
-     },
+    },
 });
 
 Actors.ActorFactory.registerActorDef({
@@ -889,7 +946,7 @@ Actors.ActorFactory.registerActorDef({
         loadTime: 6,
         projectileType: ACTOR_TYPES.ARROW,
         range: 30,
-     },
+    },
 });
 
 Actors.ActorFactory.registerActorDef({
@@ -901,7 +958,7 @@ Actors.ActorFactory.registerActorDef({
         loadTime: 5,
         projectileType: ACTOR_TYPES.BOLT,
         range: 10,
-     },
+    },
 });
 
 // ================================== staffs and wands ==================================
@@ -1048,7 +1105,7 @@ Actors.ActorFactory.registerActorDef({
 
 Actors.ActorFactory.registerActorDef({
     name: ACTOR_TYPES.WOODEN_DOOR,
-    activable: <Actors.IDoorDef> {
+    activable: <Actors.IDoorDef>{
         activateMessage: "[The actor1] is open",
         deactivateMessage: "[The actor1] is closed.",
         seeThrough: false,
@@ -1061,7 +1118,7 @@ Actors.ActorFactory.registerActorDef({
 
 Actors.ActorFactory.registerActorDef({
     name: ACTOR_TYPES.IRON_PORTCULLIS,
-    activable: <Actors.IDoorDef> {
+    activable: <Actors.IDoorDef>{
         activateMessage: "[The actor1] is open",
         deactivateMessage: "[The actor1] is closed.",
         seeThrough: true,

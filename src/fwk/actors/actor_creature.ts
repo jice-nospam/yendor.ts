@@ -5,15 +5,19 @@ import * as Core from "../core/main";
 import * as Yendor from "../yendor/main";
 import * as Umbra from "../umbra/main";
 import * as Map from "../map/main";
-import {IActorFeature, ActorId} from "./actor_feature";
-import { transformMessage, PlayerActionEnum, getLastPlayerAction, convertActionToPosition} from "./base";
-import {Actor, SpecialActorsEnum} from "./actor";
-import {ConditionTypeEnum, IXpHolderDef} from "./actor_def";
-import {Condition} from "./actor_condition";
-import {IContainerListener, Attacker, Container} from "./actor_item";
-import { SLOT_BOTH_HANDS, SLOT_LEFT_HAND, SLOT_RIGHT_HAND, OVERENCUMBERED_MULTIPLIER,
-    FROZEN_MULTIPLIER, OVERENCUMBERED_THRESHOLD, SCENT_THRESHOLD} from "./base";
-import {ITilePicker} from "./actor_effect";
+import * as Ai from "../ai/main";
+import { IActorFeature, ActorId } from "./actor_feature";
+import { transformMessage, PlayerActionEnum, getLastPlayerAction, convertActionToPosition } from "./base";
+import { Actor, SpecialActorsEnum } from "./actor";
+import { ConditionTypeEnum, IXpHolderDef } from "./actor_def";
+import { Condition } from "./actor_condition";
+import { IContainerListener, Attacker, Container } from "./actor_item";
+import {
+    SLOT_BOTH_HANDS, SLOT_LEFT_HAND, SLOT_RIGHT_HAND, OVERENCUMBERED_MULTIPLIER,
+    FROZEN_MULTIPLIER, OVERENCUMBERED_THRESHOLD,
+} from "./base";
+import { ITilePicker } from "./actor_effect";
+import { ActorFactory } from "./actor_factory";
 
 /**
  * ==============================================================================
@@ -22,21 +26,45 @@ import {ITilePicker} from "./actor_effect";
  */
 
 /**
- * Class: Ai
+ * Class: BaseAi
  * Owned by self-updating actors
  */
-export class Ai implements IActorFeature, IContainerListener {
+export class BaseAi implements IActorFeature, IContainerListener {
+    protected __context: Yendor.Context;
+    private __behaviorTree: Yendor.BehaviorTree | undefined;
+
+    private behaviorTreeName: string;
     private _conditions: Condition[];
     // time to make a step
     private _walkTime: number;
-    private __tilePicker: ITilePicker|undefined;
-    private __inventoryItemPicker: IInventoryItemPicker|undefined;
-    private __lootHandler: ILootHandler|undefined;
+    private __tilePicker: ITilePicker | undefined;
+    private __inventoryItemPicker: IInventoryItemPicker | undefined;
+    private __lootHandler: ILootHandler | undefined;
+
+    public get context(): Yendor.Context { return this.__context; }
+    public get behaviorTree(): Yendor.BehaviorTree | undefined { return this.__behaviorTree; }
+    public set behaviorTree(tree: Yendor.BehaviorTree | undefined) {
+        this.__behaviorTree = tree;
+        if (tree) {
+            this.behaviorTreeName = tree.name;
+            if (this.__context === undefined) {
+                this.__context = new Yendor.Context();
+                // TODO this should be global
+                this.__context.set(Ai.CTX_KEY_PLAYER, Actor.specialActors[SpecialActorsEnum.PLAYER]);
+            }
+        }
+    }
 
     constructor(walkTime: number, tilePicker?: ITilePicker, inventoryItemPicker?: IInventoryItemPicker,
-                lootHandler?: ILootHandler) {
+        lootHandler?: ILootHandler) {
         this._walkTime = walkTime;
         this.setPickers(tilePicker, inventoryItemPicker, lootHandler);
+    }
+
+    public postLoad() {
+        if (this.behaviorTreeName !== undefined) {
+            this.__behaviorTree = ActorFactory.getBehaviorTree(this.behaviorTreeName);
+        }
     }
 
     /**
@@ -60,11 +88,11 @@ export class Ai implements IActorFeature, IContainerListener {
         return multiplier;
     }
 
-    get tilePicker(): ITilePicker|undefined { return this.__tilePicker; }
+    get tilePicker(): ITilePicker | undefined { return this.__tilePicker; }
 
-    get inventoryItemPicker(): IInventoryItemPicker|undefined { return this.__inventoryItemPicker; }
+    get inventoryItemPicker(): IInventoryItemPicker | undefined { return this.__inventoryItemPicker; }
 
-    get lootHandler(): ILootHandler|undefined { return this.__lootHandler; }
+    get lootHandler(): ILootHandler | undefined { return this.__lootHandler; }
 
     get conditions(): Condition[] { return this._conditions; }
 
@@ -108,17 +136,17 @@ export class Ai implements IActorFeature, IContainerListener {
         }
     }
 
-    public getConditionDescription(owner: Actor): string|undefined {
+    public getConditionDescription(owner: Actor): string | undefined {
         // find the first valid condition
-        if (! this._conditions) {
+        if (!this._conditions) {
             return undefined;
         }
         let i: number = 0;
-        while ( i < this._conditions.length ) {
+        while (i < this._conditions.length) {
             let condition: Condition = this._conditions[i];
-            if ( condition.getName()) {
-                if (! condition.noDisplay
-                    && (!condition.noCorpse || ! owner.destructible || !owner.destructible.isDead())) {
+            if (condition.getName()) {
+                if (!condition.noDisplay
+                    && (!condition.noCorpse || !owner.destructible || !owner.destructible.isDead())) {
                     return condition.getName();
                 }
             }
@@ -137,7 +165,7 @@ export class Ai implements IActorFeature, IContainerListener {
         return false;
     }
 
-    public getCondition(type: ConditionTypeEnum): Condition|undefined {
+    public getCondition(type: ConditionTypeEnum): Condition | undefined {
         let n: number = this._conditions ? this._conditions.length : 0;
         for (let i: number = 0; i < n; i++) {
             if (this._conditions[i].type === type) {
@@ -160,15 +188,49 @@ export class Ai implements IActorFeature, IContainerListener {
         this.checkOverencumberedCondition(container, owner);
     }
 
+    public moveToCell(owner: Actor, pos: Core.Position, attack: boolean) {
+        let dx: number = pos.x - owner.pos.x;
+        let dy: number = pos.y - owner.pos.y;
+        // compute the move vector
+        let stepdx: number = dx > 0 ? 1 : (dx < 0 ? -1 : 0);
+        let stepdy: number = dy > 0 ? 1 : (dy < 0 ? -1 : 0);
+        this.move(owner, stepdx, stepdy, attack);
+    }
+
+    /**
+     * Function: move
+     * Move to a destination cell, avoiding potential obstacles (walls, other creatures)
+     * Parameters:
+     * stepdx - horizontal direction
+     * stepdy - vertical direction
+     */
+    public move(owner: Actor, stepdx: number, stepdy: number, attack: boolean) {
+        let x: number = owner.pos.x;
+        let y: number = owner.pos.y;
+        let currentMap: Map.Map = Map.Map.current;
+        if (currentMap.canWalk(x + stepdx, y + stepdy)) {
+            // can walk
+            x += stepdx;
+            y += stepdy;
+        } else if (currentMap.canWalk(x + stepdx, y)) {
+            // horizontal slide
+            x += stepdx;
+        } else if (currentMap.canWalk(x, y + stepdy)) {
+            // vertical slide
+            y += stepdy;
+        }
+        this.moveOrAttack(owner, x, y, attack);
+    }
+
     /**
      * Function: tryActivate
      * Activate the first found lever in an adjacent tile
      */
     protected tryActivate(owner: Actor) {
         // try on the creature's cell
-        let actors: Actor[] = Actor.list.filter( (actor: Actor) =>
-            ( (actor.activable && ! actor.pickable)
-              || (actor.container && (! actor.pickable || actor.pickable.containerId === undefined)))
+        let actors: Actor[] = Actor.list.filter((actor: Actor) =>
+            ((actor.activable && !actor.pickable)
+                || (actor.container && (!actor.pickable || actor.pickable.containerId === undefined)))
             && actor.pos.equals(owner.pos)
             && actor !== owner
         );
@@ -177,9 +239,9 @@ export class Ai implements IActorFeature, IContainerListener {
             return;
         }
         // check on adjacent cells
-        actors = Actor.list.filter( (actor: Actor) =>
-            ( (actor.activable && ! actor.pickable)
-              || (actor.container && (! actor.pickable || actor.pickable.containerId === undefined)))
+        actors = Actor.list.filter((actor: Actor) =>
+            ((actor.activable && !actor.pickable)
+                || (actor.container && (!actor.pickable || actor.pickable.containerId === undefined)))
             && actor.pos.isAdjacent(owner.pos)
             && actor !== owner
         );
@@ -197,7 +259,7 @@ export class Ai implements IActorFeature, IContainerListener {
      * Returns:
      * true if the owner actually moved to the new cell
      */
-    protected moveOrAttack(owner: Actor, x: number, y: number): boolean {
+    protected moveOrAttack(owner: Actor, x: number, y: number, attack: boolean = true): boolean {
         if (this.hasCondition(ConditionTypeEnum.STUNNED)) {
             owner.wait(this._walkTime);
             return false;
@@ -224,11 +286,16 @@ export class Ai implements IActorFeature, IContainerListener {
             && !actor.destructible.isDead()
         );
         if (actors.length > 0) {
-            // attack the first living actor found on the cell
-            let attacker: Attacker = owner.getAttacker();
-            attacker.attack(owner, actors[0]);
-            owner.wait(attacker.attackTime);
-            return false;
+            if (attack) {
+                // attack the first living actor found on the cell
+                let attacker: Attacker = owner.getAttacker();
+                attacker.attack(owner, actors[0]);
+                owner.wait(attacker.attackTime);
+                return false;
+            } else {
+                owner.wait(this._walkTime);
+                return true;
+            }
         }
         // check for a closed door
         actors = Actor.list.filter((actor: Actor) =>
@@ -263,7 +330,7 @@ export class Ai implements IActorFeature, IContainerListener {
                 containers.push(actor);
             }
         }
-        if ( containers.length > 0  && this.lootHandler) {
+        if (containers.length > 0 && this.lootHandler) {
             this.lootHandler.lootContainer(owner, containers);
         }
     }
@@ -283,7 +350,7 @@ export class Ai implements IActorFeature, IContainerListener {
     }
 }
 
-export class ItemAi extends Ai {
+export class ItemAi extends BaseAi {
     constructor(walkTime: number) {
         super(walkTime, undefined, undefined, undefined);
     }
@@ -299,16 +366,16 @@ export interface IInventoryItemPicker {
 }
 
 export interface ILootHandler {
-    lootContainer(actor: Actor, containers: Actor[]|Actor): void;
+    lootContainer(actor: Actor, containers: Actor[] | Actor): void;
 }
 
 /**
  * Class: PlayerAi
  * Handles player input. Determin if a new game turn must be started.
  */
-export class PlayerAi extends Ai {
+export class PlayerAi extends BaseAi {
     constructor(walkTime: number, tilePicker?: ITilePicker, inventoryPicker?: IInventoryItemPicker,
-                lootHandler?: ILootHandler) {
+        lootHandler?: ILootHandler) {
         super(walkTime, tilePicker, inventoryPicker, lootHandler);
     }
 
@@ -317,8 +384,8 @@ export class PlayerAi extends Ai {
      * Updates the player.
      */
     public update(owner: Actor) {
-        let action: PlayerActionEnum|undefined = getLastPlayerAction();
-        if ( action === undefined ) {
+        let action: PlayerActionEnum | undefined = getLastPlayerAction();
+        if (action === undefined) {
             if (!Actor.scheduler.isPaused()) {
                 Actor.scheduler.pause();
             }
@@ -431,7 +498,7 @@ export class PlayerAi extends Ai {
      */
     private fire(owner: Actor) {
         // load the weapon and starts the tile picker
-        let weapon: Actor|undefined = owner.container.getFromSlot(SLOT_RIGHT_HAND);
+        let weapon: Actor | undefined = owner.container.getFromSlot(SLOT_RIGHT_HAND);
         if (!weapon || !weapon.ranged) {
             weapon = owner.container.getFromSlot(SLOT_BOTH_HANDS);
         }
@@ -456,7 +523,7 @@ export class PlayerAi extends Ai {
      * Use a magic wand/staff/rod.
      */
     private zap(owner: Actor) {
-        let staff: Actor|undefined = owner.container.getFromSlot(SLOT_RIGHT_HAND);
+        let staff: Actor | undefined = owner.container.getFromSlot(SLOT_RIGHT_HAND);
         if (!staff || !staff.magic) {
             staff = owner.container.getFromSlot(SLOT_BOTH_HANDS);
         }
@@ -468,14 +535,14 @@ export class PlayerAi extends Ai {
             return;
         }
         staff.magic.zap(staff, owner).then((_zapped: boolean) => {
-            //owner.wait(this.walkTime);
+            // owner.wait(this.walkTime);
         });
     }
 
     private useItem(owner: Actor, item: Actor) {
         if (item.pickable) {
             item.pickable.use(item, owner).then((used: boolean) => {
-                if ( used ) {
+                if (used) {
                     owner.wait(this.walkTime);
                 }
             });
@@ -524,12 +591,13 @@ export class PlayerAi extends Ai {
  * NPC monsters articial intelligence. Attacks the player when he is at melee range,
  * else moves towards him using scent tracking.
  */
-export class MonsterAi extends Ai {
-    private static __pathFinder: Yendor.PathFinder;
-    private __path: Core.Position[]|undefined;
-    constructor(walkTime: number) {
+export class MonsterAi extends BaseAi {
+    constructor(walkTime: number, template: BaseAi | undefined) {
         // TODO AI tile picker and inventory item picker for intelligent creatures
         super(walkTime, undefined, undefined, undefined);
+        if (template && template.behaviorTree) {
+            this.behaviorTree = template.behaviorTree;
+        }
     }
 
     public update(owner: Actor) {
@@ -540,138 +608,8 @@ export class MonsterAi extends Ai {
             owner.wait(this.walkTime);
             return;
         }
-        // attack the player when at melee range, else try to track his scent
-        this.searchPlayer(owner);
-    }
-
-    /**
-     * Function: searchPlayer
-     * If the player is at range, attack him. If in sight, move towards him, else try to track his scent.
-     */
-    public searchPlayer(owner: Actor) {
-        let currentMap: Map.Map = Map.Map.current;
-        if (currentMap.isInFov(owner.pos.x, owner.pos.y)) {
-            // player is visible, go towards him
-            let player: Actor = Actor.specialActors[SpecialActorsEnum.PLAYER];
-            let dx = player.pos.x - owner.pos.x;
-            let dy = player.pos.y - owner.pos.y;
-            if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
-                if ((!this.__path || this.__path.length === 0 )
-                    || this.__path[0].x !== player.pos.x || this.__path[0].y !== player.pos.y) {
-                    if (!MonsterAi.__pathFinder) {
-                        MonsterAi.__pathFinder = new Yendor.PathFinder(currentMap.w, currentMap.h,
-                            function(_from: Core.Position, to: Core.Position): number {
-                                return currentMap.canWalk(to.x, to.y) ? 1 : 0;
-                            });
-                    }
-                    this.__path = MonsterAi.__pathFinder.getPath(owner.pos, player.pos);
-                }
-                if (this.__path) {
-                    this.followPath(owner);
-                } else {
-                    owner.wait(this.walkTime);
-                }
-            } else {
-                // at melee range. attack
-                this.move(owner, dx, dy);
-            }
-        } else {
-            if (this.hasPath()) {
-                // go to last known position
-                this.followPath(owner);
-            } else {
-                // player not visible. Use scent tracking
-                this.trackScent(owner);
-            }
-        }
-    }
-
-    private hasPath() {
-        return this.__path && this.__path.length > 0;
-    }
-
-    private followPath(owner: Actor) {
-        // use precomputed path
-        if ( this.__path) {
-            let pos: Core.Position|undefined = this.__path.pop();
-            if ( pos ) {
-                this.moveToCell(owner, pos);
-            }
-        }
-    }
-
-    private moveToCell(owner: Actor, pos: Core.Position) {
-        let dx: number = pos.x - owner.pos.x;
-        let dy: number = pos.y - owner.pos.y;
-        // compute the move vector
-        let stepdx: number = dx > 0 ? 1 : (dx < 0 ? -1 : 0);
-        let stepdy: number = dy > 0 ? 1 : (dy < 0 ? -1 : 0);
-        this.move(owner, stepdx, stepdy);
-    }
-
-    /**
-     * Function: move
-     * Move to a destination cell, avoiding potential obstacles (walls, other creatures)
-     * Parameters:
-     * stepdx - horizontal direction
-     * stepdy - vertical direction
-     */
-    private move(owner: Actor, stepdx: number, stepdy: number) {
-        let x: number = owner.pos.x;
-        let y: number = owner.pos.y;
-        let currentMap: Map.Map = Map.Map.current;
-        if (currentMap.canWalk(x + stepdx, y + stepdy)) {
-            // can walk
-            x += stepdx;
-            y += stepdy;
-        } else if (currentMap.canWalk(x + stepdx, y)) {
-            // horizontal slide
-            x += stepdx;
-        } else if (currentMap.canWalk(x, y + stepdy)) {
-            // vertical slide
-            y += stepdy;
-        }
-        super.moveOrAttack(owner, x, y);
-    }
-
-    /**
-     * Function: findHighestScentCell
-     * Find the adjacent cell with the highest scent value
-     * Returns:
-     * the cell position or undefined if no adjacent cell has enough scent.
-     */
-    private findHighestScentCell(owner: Actor): Core.Position|undefined {
-        let bestScentLevel: number = 0;
-        let bestCell: Core.Position|undefined;
-        let currentMap: Map.Map = Map.Map.current;
-        let adjacentCells: Core.Position[] = owner.pos.getAdjacentCells(currentMap.w, currentMap.h);
-        // scan all 8 adjacent cells
-        for (let cell of adjacentCells) {
-            if (!currentMap.isWall(cell.x, cell.y)) {
-                // not a wall, check if scent is higher
-                let scentAmount = currentMap.getScent(cell.x, cell.y);
-                if (scentAmount > currentMap.currentScentValue - SCENT_THRESHOLD
-                    && scentAmount > bestScentLevel) {
-                    // scent is higher. New candidate
-                    bestScentLevel = scentAmount;
-                    bestCell = cell;
-                }
-            }
-        }
-        return bestCell;
-    }
-
-    /**
-     * Function: trackScent
-     * Move towards the adjacent cell with the highest scent value
-     */
-    private trackScent(owner: Actor) {
-        // get the adjacent cell with the highest scent value
-        let bestCell: Core.Position|undefined = this.findHighestScentCell(owner);
-        if (bestCell) {
-            this.moveToCell(owner, bestCell);
-        } else {
-            owner.wait(this.walkTime);
+        if (this.behaviorTree) {
+            this.behaviorTree.tick(this.__context, owner);
         }
     }
 }

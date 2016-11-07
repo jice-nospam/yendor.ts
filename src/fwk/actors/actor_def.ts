@@ -2,7 +2,7 @@
 	Section: actors
 */
 import * as Core from "../core/main";
-import {IProbabilityMap} from "./actor";
+import { IProbabilityMap } from "./actor";
 
 /**
  * =============================================================================
@@ -223,6 +223,8 @@ export interface IAiDef {
     type: AiTypeEnum;
     walkTime: number;
     conditions?: IConditionDef[];
+    /** name of the behavior tree */
+    treeName?: string;
 }
 
 export interface IXpHolderDef {

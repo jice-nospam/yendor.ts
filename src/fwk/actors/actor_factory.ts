@@ -1,21 +1,28 @@
 /**
  * Section: actors
  */
+import * as Core from "../core/main";
 import * as Yendor from "../yendor/main";
 import * as Umbra from "../umbra/main";
-import {Actor, IProbabilityMap} from "./actor";
-import {IActorDef, IDoorDef, IEffectorDef, IEventEffectDef, IEffectDef,
+import { Actor, IProbabilityMap } from "./actor";
+import {
+    IActorDef, IDoorDef, IEffectorDef, IEventEffectDef, IEffectDef,
     ActivableTypeEnum, ITargetSelectorDef, EffectTypeEnum, IConditionEffectDef, IInstantHealthEffectDef,
-    ITeleportEffectDef, IConditionDef, AiTypeEnum, IAiDef} from "./actor_def";
-import {Destructible, Attacker, Activable, Container, Pickable, Equipment, Ranged,
-    Magic, Lockable, Door, Lever} from "./actor_item";
-import {Ai, XpHolder, ItemAi, MonsterAi, PlayerAi} from "./actor_creature";
-import {Light} from "./actor_light";
-import {IInventoryItemPicker, ILootHandler} from "./actor_creature";
-import {ITilePicker, Effector, TargetSelector, ConditionEffect, InstantHealthEffect, MapRevealEffect,
-    TeleportEffect, EventEffect, IEffect} from "./actor_effect";
-import {Condition} from "./actor_condition";
-import {PERSISTENCE_ACTORS_SEQ_KEY} from "./base";
+    ITeleportEffectDef, IConditionDef, AiTypeEnum, IAiDef,
+} from "./actor_def";
+import {
+    Destructible, Attacker, Activable, Container, Pickable, Equipment, Ranged,
+    Magic, Lockable, Door, Lever,
+} from "./actor_item";
+import { BaseAi, XpHolder, ItemAi, MonsterAi, PlayerAi } from "./actor_creature";
+import { Light } from "./actor_light";
+import { IInventoryItemPicker, ILootHandler } from "./actor_creature";
+import {
+    ITilePicker, Effector, TargetSelector, ConditionEffect, InstantHealthEffect, MapRevealEffect,
+    TeleportEffect, EventEffect, IEffect,
+} from "./actor_effect";
+import { Condition } from "./actor_condition";
+import { PERSISTENCE_ACTORS_SEQ_KEY } from "./base";
 
 /**
  * =============================================================================
@@ -27,7 +34,13 @@ import {PERSISTENCE_ACTORS_SEQ_KEY} from "./base";
  * Built an actor.
  */
 export class ActorFactory {
-    public static registerActorDef(actorDef: IActorDef ) {
+
+    public static registerBehaviorTree(tree: Yendor.BehaviorTree) {
+        let nameHash: number = Core.crc32(tree.name);
+        ActorFactory.btTrees[nameHash] = tree;
+    }
+
+    public static registerActorDef(actorDef: IActorDef) {
         ActorFactory.actorDefs[actorDef.name] = actorDef;
         ActorFactory.actorTypes.push(actorDef.name);
     }
@@ -44,16 +57,17 @@ export class ActorFactory {
         return ActorFactory.actorTypes;
     }
 
-    public static computeLevelProbabilities(probabilities: IProbabilityMap, level: number): {[index: string]: number} {
-        let ret: {[index: string]: number} = {};
+    public static computeLevelProbabilities(probabilities: IProbabilityMap,
+        level: number): { [index: string]: number } {
+        let ret: { [index: string]: number } = {};
         for (let itemProb of probabilities.classProb) {
-            if (! itemProb.clazz) {
+            if (!itemProb.clazz) {
                 continue;
             }
-            if (typeof(itemProb.prob) === "number") {
-                ret[itemProb.clazz] = <number> itemProb.prob;
+            if (typeof (itemProb.prob) === "number") {
+                ret[itemProb.clazz] = <number>itemProb.prob;
             } else {
-                ret[itemProb.clazz] = ActorFactory.getValueForLevel(<number[][]> itemProb.prob, level);
+                ret[itemProb.clazz] = ActorFactory.getValueForLevel(<number[][]>itemProb.prob, level);
             }
         }
         return ret;
@@ -62,31 +76,31 @@ export class ActorFactory {
     public static createRandomActors(map: IProbabilityMap, level: number): Actor[] {
         let count: number = ActorFactory.getRandomCountFromMap(map);
         let result: Actor[] = [];
-        let probMap: {[index: string]: number} = ActorFactory.computeLevelProbabilities(map, level);
-        while ( count > 0) {
-            let clazz: string = <string> Actor.lootRng.getRandomChance(probMap);
-            if ( clazz && clazz !== "undefined") {
-                let actor: Actor|undefined = this.createRandomActor(clazz);
-                if ( actor ) {
+        let probMap: { [index: string]: number } = ActorFactory.computeLevelProbabilities(map, level);
+        while (count > 0) {
+            let clazz: string = <string>Actor.lootRng.getRandomChance(probMap);
+            if (clazz && clazz !== "undefined") {
+                let actor: Actor | undefined = this.createRandomActor(clazz);
+                if (actor) {
                     result.push(actor);
                 }
             }
-            count --;
+            count--;
         }
         return result;
     }
 
-    public static createRandomActor(clazz: string): Actor|undefined {
+    public static createRandomActor(clazz: string): Actor | undefined {
         let def: IActorDef = ActorFactory.getActorDef(clazz);
-        if ( !def ) {
+        if (!def) {
             Umbra.logger.warn("WARN : unknown actor type " + clazz);
             return undefined;
         } else {
-            if ( def.abstract ) {
+            if (def.abstract) {
                 clazz = ActorFactory.getRandomActorClass(clazz);
             }
-            let actor: Actor|undefined = ActorFactory.create(clazz);
-            if ( actor ) {
+            let actor: Actor | undefined = ActorFactory.create(clazz);
+            if (actor) {
                 actor.register();
             }
             return actor;
@@ -102,7 +116,7 @@ export class ActorFactory {
      * inventoryPicker - way for the actor to chose an item in its inventory
      */
     public static create(type: string, tilePicker?: ITilePicker, inventoryPicker?: IInventoryItemPicker,
-                         lootHandler?: ILootHandler): Actor|undefined {
+        lootHandler?: ILootHandler): Actor | undefined {
         if (ActorFactory.actorDefs[type]) {
             return ActorFactory.createActor(ActorFactory.actorDefs[type], tilePicker,
                 inventoryPicker, lootHandler);
@@ -115,11 +129,11 @@ export class ActorFactory {
     }
 
     public static createInContainer(container: Actor, types: string[]) {
-        for ( let type of types ) {
-            let actor: Actor|undefined = ActorFactory.create(type);
-            if ( actor ) {
+        for (let type of types) {
+            let actor: Actor | undefined = ActorFactory.create(type);
+            if (actor) {
                 actor.register();
-                if ( actor.pickable ) {
+                if (actor.pickable) {
                     actor.pickable.pick(actor, container, false);
                 }
             }
@@ -155,31 +169,37 @@ export class ActorFactory {
 
     public static getActorTypeName(type: string, count: number): string {
         let def: IActorDef = ActorFactory.getActorDef(type);
-        if (! def) {
+        if (!def) {
             Umbra.logger.error("Unknown actor type " + type);
             return "";
         }
-        if ( count === 1 ) {
-            if ( def.name.indexOf("[s]") !== -1 ) {
+        if (count === 1) {
+            if (def.name.indexOf("[s]") !== -1) {
                 return def.name.replace("[s]", "");
-            } else if ( def.name.indexOf("[es]") !== -1 ) {
+            } else if (def.name.indexOf("[es]") !== -1) {
                 return def.name.replace("[es]", "");
             }
             return def.name;
         } else {
-            if ( def.name.indexOf("[s]") !== -1 ) {
+            if (def.name.indexOf("[s]") !== -1) {
                 return def.name.replace("[s]", "s");
-            } else if ( def.name.indexOf("[es]") !== -1 ) {
+            } else if (def.name.indexOf("[es]") !== -1) {
                 return def.name.replace("[es]", "es");
             }
             return def.pluralName === undefined ? def.name : def.pluralName;
         }
     }
 
+    public static getBehaviorTree(name: string): Yendor.BehaviorTree {
+        let nameHash: number = Core.crc32(name);
+        return ActorFactory.btTrees[nameHash];
+    }
+
     private static seq: number = 1;
     private static unknownClasses: { [index: string]: boolean } = {};
     private static actorDefs: { [index: string]: IActorDef } = {};
     private static actorTypes: string[] = [];
+    private static btTrees: { [index: string]: Yendor.BehaviorTree } = {};
 
     /**
      * Function: getValueForDungeon
@@ -200,8 +220,8 @@ export class ActorFactory {
     private static getRandomCountFromMap(map: IProbabilityMap): number {
         if (map.maxCount !== undefined) {
             return Actor.lootRng.getNumber(map.minCount || 0, map.maxCount);
-        } else if ( map.countProb !== undefined ) {
-            return <number> Actor.lootRng.getRandomChance(map.countProb);
+        } else if (map.countProb !== undefined) {
+            return <number>Actor.lootRng.getRandomChance(map.countProb);
         } else {
             return 0;
         }
@@ -213,10 +233,10 @@ export class ActorFactory {
     private static getConcreteActorClass(clazz: string, candidates?: string[]) {
         candidates = candidates || [];
         for (let type in ActorFactory.actorDefs) {
-            if ( ActorFactory.actorDefs.hasOwnProperty(type)) {
+            if (ActorFactory.actorDefs.hasOwnProperty(type)) {
                 let def: IActorDef = ActorFactory.actorDefs[type];
-                if ( def.prototypes && def.prototypes.indexOf(clazz) !== -1) {
-                    if ( def.abstract ) {
+                if (def.prototypes && def.prototypes.indexOf(clazz) !== -1) {
+                    if (def.abstract) {
                         ActorFactory.getConcreteActorClass(type, candidates);
                     } else {
                         candidates.push(type);
@@ -234,7 +254,7 @@ export class ActorFactory {
     }
 
     private static createActor(def: IActorDef, tilePicker?: ITilePicker,
-                               inventoryPicker?: IInventoryItemPicker, lootHandler?: ILootHandler) {
+        inventoryPicker?: IInventoryItemPicker, lootHandler?: ILootHandler) {
         let actor: Actor = new Actor(def.name + "|" + ActorFactory.seq);
         ActorFactory.seq++;
         ActorFactory.populateActor(actor, def, tilePicker, inventoryPicker, lootHandler);
@@ -247,7 +267,7 @@ export class ActorFactory {
     }
 
     private static populateActor(actor: Actor, def: IActorDef, tilePicker?: ITilePicker,
-                                 inventoryPicker?: IInventoryItemPicker, lootHandler?: ILootHandler) {
+        inventoryPicker?: IInventoryItemPicker, lootHandler?: ILootHandler) {
         if (def.prototypes) {
             for (let className of def.prototypes) {
                 if (ActorFactory.actorDefs[className]) {
@@ -291,18 +311,18 @@ export class ActorFactory {
             actor.container = new Container(def.container, actor.ai);
         }
         if (def.activable) {
-            if ( actor.activable ) {
+            if (actor.activable) {
                 actor.activable.init(def.activable);
             } else {
                 switch (def.activable.type) {
-                    case ActivableTypeEnum.SINGLE :
-                    case ActivableTypeEnum.TOGGLE :
+                    case ActivableTypeEnum.SINGLE:
+                    case ActivableTypeEnum.TOGGLE:
                         actor.activable = new Activable(def.activable);
                         break;
-                    case ActivableTypeEnum.DOOR :
-                        actor.activable = new Door(<IDoorDef> def.activable);
+                    case ActivableTypeEnum.DOOR:
+                        actor.activable = new Door(<IDoorDef>def.activable);
                         break;
-                    case ActivableTypeEnum.LEVER :
+                    case ActivableTypeEnum.LEVER:
                         actor.activable = new Lever(def.activable);
                         break;
                     default: break;
@@ -318,19 +338,19 @@ export class ActorFactory {
     private static createEffect(def: IEffectDef): IEffect {
         switch (def.type) {
             case EffectTypeEnum.CONDITION:
-                let conditionData: IConditionEffectDef = <IConditionEffectDef> def;
+                let conditionData: IConditionEffectDef = <IConditionEffectDef>def;
                 return new ConditionEffect(conditionData, conditionData.successMessage);
             case EffectTypeEnum.INSTANT_HEALTH:
-                let instantHealthData: IInstantHealthEffectDef = <IInstantHealthEffectDef> def;
+                let instantHealthData: IInstantHealthEffectDef = <IInstantHealthEffectDef>def;
                 return new InstantHealthEffect(instantHealthData);
             case EffectTypeEnum.MAP_REVEAL:
                 return new MapRevealEffect();
             case EffectTypeEnum.TELEPORT:
-                let teleportData: ITeleportEffectDef = <ITeleportEffectDef> def;
+                let teleportData: ITeleportEffectDef = <ITeleportEffectDef>def;
                 return new TeleportEffect(teleportData.successMessage);
-            case EffectTypeEnum.EVENT :
+            case EffectTypeEnum.EVENT:
             default:
-                let eventData: IEventEffectDef = <IEventEffectDef> def;
+                let eventData: IEventEffectDef = <IEventEffectDef>def;
                 return new EventEffect(eventData);
         }
     }
@@ -340,14 +360,14 @@ export class ActorFactory {
     }
 
     private static createAi(owner: Actor, def: IAiDef, tilePicker?: ITilePicker, inventoryPicker?: IInventoryItemPicker,
-                            lootHandler?: ILootHandler): Ai {
-        let ai: Ai;
+        lootHandler?: ILootHandler): BaseAi {
+        let ai: BaseAi;
         switch (def.type) {
             case AiTypeEnum.ITEM:
                 ai = new ItemAi(def.walkTime);
                 break;
             case AiTypeEnum.MONSTER:
-                ai = new MonsterAi(def.walkTime);
+                ai = new MonsterAi(def.walkTime, owner.ai);
                 break;
             case AiTypeEnum.PLAYER:
             default:
@@ -358,6 +378,9 @@ export class ActorFactory {
             for (let conditionDef of def.conditions) {
                 ai.addCondition(ActorFactory.createCondition(conditionDef), owner);
             }
+        }
+        if (def.treeName) {
+            ai.behaviorTree = ActorFactory.getBehaviorTree(def.treeName);
         }
         return ai;
     }

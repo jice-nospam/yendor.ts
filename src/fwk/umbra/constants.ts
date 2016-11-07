@@ -3,8 +3,6 @@
  */
 import * as Core from "../core/main";
 
-export const VERSION = "0.1.0";
-
 // default configuration
 export const DEFAULT_CONSOLE_WIDTH: number = 80;
 export const DEFAULT_CONSOLE_HEIGHT: number = 34;

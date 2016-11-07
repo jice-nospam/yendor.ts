@@ -24,6 +24,7 @@ export class DebugMenu extends Gui.Widget {
         vpanel.addChild(this.mapRenderModeButton("dbg map transp", Map.MapRenderModeEnum.TRANSPARENCY));
         vpanel.addChild(this.mapRenderModeButton("dbg map light", Map.MapRenderModeEnum.LIGHTMAP));
         vpanel.addChild(this.mapRenderModeButton("dbg map fov", Map.MapRenderModeEnum.FOV));
+        vpanel.addChild(this.mapRenderModeButton("dbg map all", Map.MapRenderModeEnum.ALL_SEEING_EYE));
         vpanel.addChild(this.mapRenderModeButton("dbg map normal", Map.MapRenderModeEnum.NORMAL));
         vpanel.addChild(new Gui.Button({
             autoHideWidget: this,
@@ -49,7 +50,7 @@ export class DebugMenu extends Gui.Widget {
                 Map.Map.current.renderer.setRenderMode(mode);
                 return true;
             },
-            label : label,
+            label: label,
         });
     }
 }

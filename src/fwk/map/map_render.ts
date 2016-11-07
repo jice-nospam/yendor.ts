@@ -7,8 +7,8 @@ import * as Core from "../core/main";
 import * as Yendor from "../yendor/main";
 import * as Umbra from "../umbra/main";
 import * as Actors from "../actors/main";
-import {IMapShader} from "./map_shading";
-import {Map} from "./map";
+import { IMapShader } from "./map_shading";
+import { Map } from "./map";
 
 /**
  * enum: ActorRenderModeEnum
@@ -42,6 +42,8 @@ export enum MapRenderModeEnum {
     LIGHTMAP,
     /** debug mode : display the player field of view */
     FOV,
+    /** debug mode : see all the  map  */
+    ALL_SEEING_EYE,
 }
 
 /**
@@ -92,22 +94,25 @@ export class DungeonRendererNode extends MapRendererNode {
     public onRender(con: Yendor.Console) {
         // compute the field of view if needed
         let player = Actors.Actor.specialActors[Actors.SpecialActorsEnum.PLAYER];
-        if (! Map.current || ! player) {
+        if (!Map.current || !player) {
             return;
         }
         switch (this.__renderMode) {
-            case MapRenderModeEnum.NORMAL :
+            case MapRenderModeEnum.NORMAL:
                 this.renderNormal(con);
-            break;
-            case MapRenderModeEnum.TRANSPARENCY :
+                break;
+            case MapRenderModeEnum.TRANSPARENCY:
                 this.renderTransparency(con);
-            break;
-            case MapRenderModeEnum.LIGHTMAP :
+                break;
+            case MapRenderModeEnum.LIGHTMAP:
                 this.renderLightmap(con);
-            break;
-            case MapRenderModeEnum.FOV :
+                break;
+            case MapRenderModeEnum.FOV:
                 this.renderFov(con);
-            break;
+                break;
+            case MapRenderModeEnum.ALL_SEEING_EYE:
+                this.renderAllSeeingEye(con);
+                break;
             default: break;
         }
     }
@@ -128,37 +133,41 @@ export class DungeonRendererNode extends MapRendererNode {
     }
 
     public canIdentifyActor(actor: Actors.Actor): boolean {
-        return this.shader.canIdentifyActor(actor);
+        return this.__renderMode === MapRenderModeEnum.ALL_SEEING_EYE ? true : this.shader.canIdentifyActor(actor);
     }
 
     public getCellLightLevel(x: number, y: number): CellLightLevelEnum {
-        return this.shader.getCellLightLevel(x, y);
+        return this.__renderMode === MapRenderModeEnum.ALL_SEEING_EYE ?
+            CellLightLevelEnum.LIGHT : this.shader.getCellLightLevel(x, y);
     }
 
     protected renderActor(con: Yendor.Console, actor: Actors.Actor, detectRange: number) {
         let renderMode: ActorRenderModeEnum = this.getActorRenderMode(actor, detectRange);
         if (renderMode !== ActorRenderModeEnum.NONE) {
             let pos: Core.Position = actor.pos;
-            con.text[pos.x][pos.y] = this.shader.getActorCharCode(actor, renderMode);
-            con.fore[pos.x][pos.y] = this.shader.getActorColor(actor, renderMode);
+            con.text[pos.x][pos.y] = this.__renderMode === MapRenderModeEnum.ALL_SEEING_EYE ?
+                actor.charCode : this.shader.getActorCharCode(actor, renderMode);
+            con.fore[pos.x][pos.y] = this.__renderMode === MapRenderModeEnum.ALL_SEEING_EYE ?
+                actor.col :
+                this.shader.getActorColor(actor, renderMode);
         }
     }
 
     private renderActors(con: Yendor.Console) {
         let player: Actors.Actor = Actors.Actor.specialActors[Actors.SpecialActorsEnum.PLAYER];
         let detectLifeCond: Actors.DetectLifeCondition =
-            <Actors.DetectLifeCondition> player.ai.getCondition(Actors.ConditionTypeEnum.DETECT_LIFE);
+            <Actors.DetectLifeCondition>player.ai.getCondition(Actors.ConditionTypeEnum.DETECT_LIFE);
         let detectRange = detectLifeCond ? detectLifeCond.range : 0;
         for (let actor of Actors.Actor.list) {
-            if ( actor.pickable && actor.pickable.containerId ) {
+            if (actor.pickable && actor.pickable.containerId) {
                 continue;
             }
             let actorPriority = this.basePriority;
-            if ( actor.isA("key[s]")) {
+            if (actor.isA("key[s]")) {
                 actorPriority += 2;
-            } else if ( actor.isA("item[s]")) {
+            } else if (actor.isA("item[s]")) {
                 actorPriority++;
-            } else if ( actor.isA("creature[s]") && ! actor.destructible.isDead()) {
+            } else if (actor.isA("creature[s]") && !actor.destructible.isDead()) {
                 actorPriority += 3;
             }
             let mapPriority: number = this.actorPriorityMap[actor.pos.x][actor.pos.y];
@@ -172,7 +181,7 @@ export class DungeonRendererNode extends MapRendererNode {
 
     private renderMap(con: Yendor.Console) {
         let map: Map = Map.current;
-        if (! this.actorPriorityMap) {
+        if (!this.actorPriorityMap) {
             this.actorPriorityMap = Core.buildMatrix<number>(map.w);
         }
         for (let x = 0; x < map.w; x++) {
@@ -180,6 +189,17 @@ export class DungeonRendererNode extends MapRendererNode {
                 con.back[x][y] = this.shader.getBackgroundColor(map, x, y);
             }
         }
+    }
+
+    private renderAllSeeingEye(con: Yendor.Console) {
+        let player = Actors.Actor.specialActors[Actors.SpecialActorsEnum.PLAYER];
+        con.clearText();
+        Map.current.resetFov(true);
+        this.shader.prepareFrame();
+        this.renderMap(con);
+        this.renderActors(con);
+        Map.current.setDirty();
+        Map.current.computeFov(player.pos.x, player.pos.y, Actors.FOV_RADIUS);
     }
 
     private renderNormal(con: Yendor.Console) {

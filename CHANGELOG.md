@@ -1,3 +1,9 @@
+# 0.8.0 / TBD
+* Yendor toolkit
+    - added behavior tree toolkit
+* GeneRogue
+    - as a behavior tree usage demonstration, some creatures in rooms containing a chest have a "guardian AI". They won't go too far from the chest they guard.
+
 # 0.7.0 / 09-oct-2016
 * switched to typescript 2.0 (this breaks node support for unit tests)
 

@@ -62,8 +62,8 @@ export interface IPersister {
  * All persisted class must be registered as I didn't find a way to get the class from its name with ES6 modules
  */
 export class Persistence {
-    public static registerClass(name: string, clas: any) {
-        Persistence.classes[name] = clas;
+    public static registerClass(clas: any) {
+        Persistence.classes[clas.name] = clas;
     }
 
     public static getClass(name: string) {
@@ -102,6 +102,19 @@ export class JSONSerializer {
         }
     }
 
+    public static loadFromData(jsonData: any, object?: any): any {
+        if ( jsonData === null || jsonData === undefined ) {
+            return undefined;
+        }
+        if (jsonData instanceof Array) {
+            return JSONSerializer.loadArrayFromData(jsonData, object);
+        } else if (typeof jsonData === "object") {
+            return JSONSerializer.loadObjectFromData(jsonData, object);
+        }
+        // basic field, number, string, boolean, ...
+        return jsonData;
+    }
+
     private static needsClassName(object: any): boolean {
         return object && typeof object === "object" && object.constructor.name !== "Array";
     }
@@ -116,19 +129,6 @@ export class JSONSerializer {
             value.className = value.constructor.name;
         }
         return value;
-    }
-
-    private static loadFromData(jsonData: any, object?: any): any {
-        if ( jsonData === null || jsonData === undefined ) {
-            return undefined;
-        }
-        if (jsonData instanceof Array) {
-            return JSONSerializer.loadArrayFromData(jsonData, object);
-        } else if (typeof jsonData === "object") {
-            return JSONSerializer.loadObjectFromData(jsonData, object);
-        }
-        // basic field, number, string, boolean, ...
-        return jsonData;
     }
 
     private static loadArrayFromData(jsonData: any, object?: any): Array<any> {

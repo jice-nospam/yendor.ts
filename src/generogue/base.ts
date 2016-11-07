@@ -71,6 +71,12 @@ export const XP_BASE_LEVEL: number = 200;
 // xp level required for level n = BASE_LEVEL + n * NEW_LEVEL
 export const XP_NEW_LEVEL: number = 150;
 
+// A.I.
+export const SCENT_THRESHOLD: number = 10;
+export const MIN_GUARD_RANGE: number = 3;
+export const MAX_GUARD_RANGE: number = 15;
+export const CTX_KEY_GUARD: string = "guard";
+
 // persistence local storage keys
 export const PERSISTENCE_VERSION_KEY: string = "version";
 export const PERSISTENCE_DUNGEON_LEVEL: string = "dungeonLevel";

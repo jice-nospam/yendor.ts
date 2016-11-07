@@ -5,6 +5,8 @@ This directory contains the source code of yendor.ts, a lightweight toolkit for 
 
 Reminder for stuff that might be added to the framework. Or not.
 
+* Behavior tree
+
 * BSP
 
 * Console

@@ -7,7 +7,7 @@
 import * as Core from "../core/main";
 import * as Yendor from "../yendor/main";
 import * as Actors from "../actors/main";
-import {Map} from "./map";
+import { Map } from "./map";
 
 type TopologyObjectId = number;
 const NONE: TopologyObjectId = -1;
@@ -40,7 +40,7 @@ export class Connector extends TopologyObject {
      * Property: lock
      * If not undefined, this connector is locked. This is the key number
      */
-    public lock: number|undefined;
+    public lock: number | undefined;
 
     constructor(id: TopologyObjectId, pos: Core.Position, sector1Id: TopologyObjectId) {
         super(id);
@@ -233,26 +233,26 @@ export class TopologyMap {
      */
     public computePath(id1: TopologyObjectId, id2: TopologyObjectId): TopologyObjectId[] {
         let dist: number[] = [];
-        let prev: (number|undefined)[] = [];
+        let prev: (number | undefined)[] = [];
         let queue: Yendor.BinaryHeap<Sector> = new Yendor.BinaryHeap((o: Sector) => { return dist[o.id]; });
         dist[id1] = 0;
         prev[id1] = undefined;
-        queue.push(<Sector> this.objects[id1]);
+        queue.push(<Sector>this.objects[id1]);
 
-        let sector: Sector|undefined = queue.pop();
+        let sector: Sector | undefined = queue.pop();
         while (sector) {
             // get sector with lowest distance
             if (sector.id === id2) {
                 break;
             }
             for (let connectorId of sector.connectors) {
-                let connector: Connector = <Connector> this.objects[connectorId];
+                let connector: Connector = <Connector>this.objects[connectorId];
                 if (connector.lock === undefined) {
                     let sector2Id: TopologyObjectId = connector.sector1Id === sector.id
                         ? connector.sector2Id : connector.sector1Id;
                     let altDist: number = dist[sector.id] + 1;
                     if (dist[sector2Id] === undefined || dist[sector2Id] > altDist) {
-                        let sector2: Sector = <Sector> this.objects[sector2Id];
+                        let sector2: Sector = <Sector>this.objects[sector2Id];
                         dist[sector2Id] = altDist;
                         prev[sector2Id] = sector.id;
                         if (!queue.contains(sector2)) {
@@ -265,7 +265,7 @@ export class TopologyMap {
         }
 
         let path: TopologyObjectId[] = [];
-        let curSectorId: TopologyObjectId|undefined = id2;
+        let curSectorId: TopologyObjectId | undefined = id2;
         while (curSectorId !== undefined && prev[curSectorId] !== undefined) {
             path.splice(0, 0, curSectorId);
             curSectorId = prev[curSectorId];
@@ -307,7 +307,7 @@ export class TopologyMap {
         if (!(o instanceof Sector)) {
             throw "TopologyMap : object " + id + " is not a sector";
         }
-        return <Sector> o;
+        return <Sector>o;
     }
 
     private getSectorFromPosition(pos: Core.Position): Sector {
@@ -319,7 +319,7 @@ export class TopologyMap {
         if (!(o instanceof Connector)) {
             throw "TopologyMap : object " + id + " is not a connector";
         }
-        return <Connector> o;
+        return <Connector>o;
     }
 
     private getConnectorFromPos(pos: Core.Position): Connector {
@@ -382,7 +382,7 @@ export class TopologyAnalyzer {
         }
         let pathIndex: number = 0;
         let currentSector: Sector = this.topologyMap.getSector(path[pathIndex]);
-        let lastConnector: Connector|undefined = undefined;
+        let lastConnector: Connector | undefined = undefined;
         pathIndex++;
         // find the first gut connector along the reverse path
         do {
@@ -396,7 +396,7 @@ export class TopologyAnalyzer {
                     break;
                 }
             }
-        } while (pathIndex < path.length && (lastConnector === undefined ||!lastConnector.gut));
+        } while (pathIndex < path.length && (lastConnector === undefined || !lastConnector.gut));
         if (lastConnector && lastConnector.gut) {
             // found a gut connector. lock its door
             lastConnector.lock = keyNumber;
@@ -419,7 +419,7 @@ export class TopologyAnalyzer {
         this.topologyMap = new TopologyMap(map.w, map.h);
         this.sectorSeeds.push(seed);
         while (this.sectorSeeds.length !== 0) {
-            let pos: Core.Position|undefined = this.sectorSeeds.shift();
+            let pos: Core.Position | undefined = this.sectorSeeds.shift();
             // in case of doors not connecting two sectors, the other side of the door is already visited
             if (pos && this.topologyMap.getObjectId(pos) === NONE) {
                 this.floodFill(map, pos.x, pos.y);
@@ -440,8 +440,8 @@ export class TopologyAnalyzer {
         sector.cellCount++;
         cellsToVisit.push(seed);
         while (cellsToVisit.length !== 0) {
-            let pos: Core.Position|undefined = cellsToVisit.shift();
-            if (! pos ) {
+            let pos: Core.Position | undefined = cellsToVisit.shift();
+            if (!pos) {
                 break;
             }
             let adjacentCells: Core.Position[] = pos.getAdjacentCells(map.w, map.h);
@@ -473,7 +473,8 @@ export class TopologyAnalyzer {
     }
 
     private hasDoor(_map: Map, pos: Core.Position): boolean {
-        return Actors.Actor.list.filter((actor: Actors.Actor) => actor.pos.equals(pos) && actor.isA("door[s]")).length > 0;
+        return Actors.Actor.list.filter((actor: Actors.Actor) =>
+            actor.pos.equals(pos) && actor.isA("door[s]")).length > 0;
     }
 
     private newConnector(from: Core.Position, pos: Core.Position, sector1Id: TopologyObjectId): TopologyObjectId {
@@ -481,7 +482,7 @@ export class TopologyAnalyzer {
         // add a new sector seed on the other side of the door
         // note that this cell might be in the same sector as from
         // this could be used to remove useless doors
-        let sectorSeed: Core.Position|undefined;
+        let sectorSeed: Core.Position | undefined;
         if (from.x === pos.x - 1) {
             sectorSeed = new Core.Position(pos.x + 1, pos.y);
         } else if (from.x === pos.x + 1) {
@@ -491,7 +492,7 @@ export class TopologyAnalyzer {
         } else if (from.y === pos.y + 1) {
             sectorSeed = new Core.Position(pos.x, pos.y - 1);
         }
-        if ( sectorSeed) {
+        if (sectorSeed) {
             this.sectorSeeds.push(sectorSeed);
         }
         return connector.id;
@@ -518,7 +519,7 @@ export class TopologyAnalyzer {
         let explored: TopologyObjectId[] = [];
         toExplore.push(connector.sector1Id);
         while (toExplore.length > 0) {
-            let sectorId: TopologyObjectId|undefined = toExplore.shift();
+            let sectorId: TopologyObjectId | undefined = toExplore.shift();
             if (sectorId === undefined || sectorId === connector.sector2Id) {
                 // found an alternative path
                 return false;
