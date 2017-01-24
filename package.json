@@ -15,7 +15,7 @@
         "build:webpack:generogue:release": "node node_modules/webpack/bin/webpack --optimize-minimize -d build/generogue/main.js build/main.min.js && rm -rf build/generogue build/fwk"
     },
     "devDependencies": {
-        "typescript": "^2.0.3",
+        "typescript": "2.0.3",
         "webpack": "^1.13.2"
     },
     "dependencies": {
