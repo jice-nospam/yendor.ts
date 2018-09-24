@@ -16,14 +16,14 @@
     },
     "devDependencies": {
         "typescript": "2.0.3",
-        "webpack": "^1.13.2"
+        "webpack": "1.13.2"
     },
     "dependencies": {
-        "express": "~4.13.1",
-        "dexie": "~1.4.1",
-        "jquery": "^2",
-        "@types/jquery": "^2.0.32",
-        "pixi.js": "^4.0.2",
-        "@types/pixi.js": "^3.0.30"
+        "express": "4.13.1",
+        "dexie": "1.4.1",
+        "jquery": "2",
+        "@types/jquery": "2.0.32",
+        "pixi.js": "4.0.2",
+        "@types/pixi.js": "3.0.30"
     }
 }
