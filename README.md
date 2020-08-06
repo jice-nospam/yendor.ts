@@ -41,10 +41,6 @@ GeneRogue is a generic roguelike loosely based on the famous [python roguelike t
 
  * For pixi renderers, check [pixi.js](http://www.pixijs.com/) documentation
 
-# Links
-* [Play GeneRogue online](http://roguecentral.org/doryen/yendor.ts/game/index.html)
-* [Run the benchmark online](http://roguecentral.org/doryen/yendor.ts/bench/index.html)
-
 # Quick Start
 
 ## pre-requisites
