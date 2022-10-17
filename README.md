@@ -1,5 +1,7 @@
 # Introduction
 
+Disclaimer : this project is no longer maintained. If you're looking for a roguelike toolkit for the web, you can check [doryen-rs](https://github.com/jice-nospam/doryen-rs/)
+
 yendor.ts is a [TypeScript](http://www.typescriptlang.org) toolkit for roguelike developers. It provides a true color console, a robust random number generator, a field of view toolkit, and other utilities frequently used in roguelikes.
 
 umbra.ts is a [TypeScript](http://www.typescriptlang.org) lightweight game framework built on top of yendor.ts. It handles player input and the game scene graph.
