@@ -19,7 +19,7 @@
         "webpack": "1.13.2"
     },
     "dependencies": {
-        "express": "4.13.1",
+        "express": "4.19.2",
         "dexie": "1.4.1",
         "jquery": "3",
         "@types/jquery": "2.0.32",
