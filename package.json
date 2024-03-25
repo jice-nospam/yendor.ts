@@ -20,7 +20,7 @@
     },
     "dependencies": {
         "express": "4.19.2",
-        "dexie": "1.4.1",
+        "dexie": "3.2.2",
         "jquery": "3",
         "@types/jquery": "2.0.32",
         "pixi.js": "4.0.2",
